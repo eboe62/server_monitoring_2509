@@ -49,15 +49,26 @@ chmod +x ./scripts/*.sh
 USO
 ==========================================
 Levantar los servicios principales:
+cd /opt/monitoring/smtp-relay
 make up
 
 Verificar estado y logs:
 make status
 make logs
 
-Ejecutar auditorías y monitores manualmente:
+cd /opt/monitoring/
+# Construir la imagen base (se usa como caché para las demás)
+docker build -f Dockerfile.base -t monitoring-base .
+
+# Construir la imagen Python
+docker build -f python/Dockerfile -t monitoring-python .
+
+# Construir la imagen Cron
+docker build -t monitoring-cron cron/
+
+Ejecución manual de auditorías y limpieza:
 ./scripts/docker_resources.sh
-./scripts/alert_risk.sh
+./scripts/cleanup_docker.sh (ATENCION hacer snapshot previo - riesgo de perdida no deseada de binarios)
 
 ==========================================
 TAREAS PROGRAMADAS
