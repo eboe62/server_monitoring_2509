@@ -1,0 +1,74 @@
+version: "3.8"
+
+services:
+  promtail:
+    image: grafana/promtail:latest
+    container_name: ${PROMTAIL_CONTAINER_NAME}
+    volumes:
+      - /var/log:/var/log:rw  # Permitir escritura para actualizar promtail-positions.yaml
+      - ./config/promtail-config.yaml:/etc/promtail/promtail-config.yaml:ro  # Configuración de Promtail
+    command: -config.file=/etc/promtail/promtail-config.yaml
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 250M
+          cpus: "0.25"
+    ports:
+      - "${PROMTAIL_PORT}:9080"
+
+  loki:
+    image: grafana/loki:latest
+    container_name: ${LOKI_CONTAINER_NAME}
+    volumes:
+      - ./config/loki-config.yaml:/etc/loki/loki-config.yaml:ro  # Configuración de Loki
+#      - ./data/loki:/var/lib/loki  # Persistencia de datos para Loki
+      - loki-data:/var/lib/loki  # Persistencia de datos para Loki
+    ports:
+      - "${LOKI_PORT}:3100"
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 500M
+          cpus: "0.5"
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: ${GRAFANA_CONTAINER_NAME}
+    network_mode: host  # importante para acceso a localhost:2526 y 127.0.0.1
+    volumes:
+      - grafana-data:/var/lib/grafana  # Persistencia de datos
+      - ./config/datasource.yaml:/etc/grafana/provisioning/datasources/datasource.yaml:ro  # Configuración de Grafana
+#    ports:
+#      - "${GRAFANA_PORT}:3000"  # Asignamos un puerto diferente para evitar conflictos con CapRover
+    environment:
+#      - GF_AUTH_ANONYMOUS_ENABLED=${GF_AUTH_ANONYMOUS_ENABLED}
+#      - GF_AUTH_ANONYMOUS_ORG_ROLE=${GF_AUTH_ANONYMOUS_ORG_ROLE}
+#      - GF_LOG_LEVEL=${GF_LOG_LEVEL}
+      - GF_SECURITY_ADMIN_USER=admin  # Cambia este usuario y contraseña según tus políticas
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SERVER_HTTP_PORT=3001
+      - GF_SERVER_ROOT_URL=http://localhost:${GRAFANA_PORT} # Indica a Grafana cuál es la URL pública
+      - GF_SERVER_SERVE_FROM_SUB_PATH=true  # Permite servir desde un subpath
+      - GF_SMTP_ENABLED=true
+      - GF_SMTP_HOST=127.0.0.1:2526  # Al tener network_mode: "host" estamos compartiendo red con el host y ya podemos usar 127.0.0.1
+      - GF_SMTP_FROM_ADDRESS=alertas@em9870.appvisibility.es
+      - GF_SMTP_FROM_NAME=Grafana Alerts
+      - GF_ALERTING_ENABLED=true
+      - GF_ALERTING_EXECUTE_ALERTS=true
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 300M
+          cpus: "0.3"
+
+volumes:
+  shared-data:  # Volumen explícito global
+    external: true
+  loki-data:
+    driver: local
+  grafana-data:
+    driver: local
+

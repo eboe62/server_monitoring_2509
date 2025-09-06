@@ -1,0 +1,20 @@
+# Auditoria de Binarios (con log propio)
+0 11 * * * /opt/monitoring/scripts/auditoria_binarios.sh
+
+# Recursos Docker cada hora (usa docker_resources.sh con logging incluido)
+*/10 * * * * /opt/monitoring/scripts/docker_resources.sh
+
+# Jobs de log_ingestor (cada 10 min, con wrappers que redirigen logs)
+*/10 * * * * /opt/monitoring/scripts/log_ingest_batch.sh
+*/10 * * * * /opt/monitoring/scripts/log_fail2ban_batch.sh
+*/10 * * * * /opt/monitoring/scripts/log_kern_batch.sh
+*/10 * * * * /opt/monitoring/scripts/log_ip_geolocation.sh
+
+# Alertas de riesgo a las 10h y 22h
+0 10,22 * * * /opt/monitoring/scripts/alert_risk.sh
+
+# Prueba de alertas (cada minuto, solo si se necesita debug)
+# * * * * * /opt/monitoring/scripts/alert_risk.sh
+# * * * * * /opt/monitoring/scripts/docker_resources.sh
+# * * * * * /opt/monitoring/scripts/log_ingest_batch.sh
+

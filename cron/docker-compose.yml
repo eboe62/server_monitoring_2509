@@ -1,0 +1,27 @@
+version: "3.8"
+
+services:
+  monitoring-cron:
+    image: monitoring-cron:latest
+    container_name: monitoring-cron
+    restart: unless-stopped
+    volumes:
+      # Montamos el cronfile en la ruta que espera supercronic
+      - /opt/monitoring/cron/monitoring.cron:/opt/monitoring/cronjobs/monitoring.cron:ro
+
+      # Montamos la estructura completa del proyecto
+      - /opt/monitoring:/opt/monitoring
+
+      # Logs del host para que los scripts puedan escribir ahí
+      - /var/log:/var/log
+
+      # Acceso al socket de Docker (para docker_resources.sh y .py)
+      - /var/run/docker.sock:/var/run/docker.sock
+
+    networks:
+      - captain-overlay-network
+
+networks:
+  captain-overlay-network:
+    external: true
+

@@ -1,0 +1,35 @@
+# === Archivos sensibles de SMTP Relay ===
+smtp_relay/secrets/smtp_user
+smtp_relay/secrets/smtp_pass
+smtp_relay/config/sasl_passwd
+smtp_relay/config/sasl_passwd.db
+
+# === Entornos virtuales Python ===
+log_ingestor/venv/
+**/venv/
+*.pyc
+__pycache__/
+
+# === Logs ===
+*.log
+/var/log/*
+log_ingestor/*.log
+resource_monitor/*.log
+
+# === Archivos temporales / swap ===
+*.swp
+*.swo
+*~
+.DS_Store
+
+# === Docker ===
+*.pid
+*.sock
+.env
+.env.*
+docker-compose.override.yml
+
+# === Otros ===
+/*.bak
+*.tmp
+

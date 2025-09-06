@@ -1,0 +1,146 @@
+server:
+  http_listen_port: 9080  # Puerto donde Promtail escucha las solicitudes HTTP
+  grpc_listen_port: 0     # GRPC deshabilitado para simplificar la configuración
+
+clients:
+  - url: http://165.22.87.56:3100/loki/api/v1/push  # URL del endpoint de Loki donde se enviarán los logs
+
+positions:
+  filename: /var/log/promtail-positions.yaml  # Archivo para rastrear las posiciones de lectura de logs
+
+scrape_configs:
+  - job_name: auth_logs  # Nombre descriptivo del trabajo
+    # Captura de todos los logs .log y sus versiones rotadas
+    static_configs:
+      - targets:
+          - localhost  # Dirección del servidor donde se leen los logs
+        labels:
+          job: reason  # Etiqueta común para los logs
+          service_name: auth_logs  # Nombre del servicio que queremos identificar
+          __path__: /var/log/*.log  # Patrón para incluir logs específicos (excluye logs rotados)
+
+    # Configuración del pipeline para procesamiento con deduplicación
+    pipeline_stages:
+      # Etapa para excluir logs rotados
+      - match:
+          selector: '{job="reason"}'
+          stages:
+            - drop:
+                expression: ".*\\.log\\.\\d+$"  # Excluye archivos rotados
+#                expression: '.*\\.log\\.\\d+.*'  # Excluye archivos rotados
+
+      # Etapa para excluir logs específicos de ruido
+      - drop:
+#          expression: "(INPUT DROP|pam_unix\\(sudo:session\\): session (opened|closed)|pam_unix\\(cron:session\\): session (opened|closed)|pam_unix\\(sshd:session\\): session (opened|closed)|CRON|Session\\([^)]+\\)|New session\\([^)]+\\))" # Excluye logs de INPUT DROP, pam_unix, y CRON
+#          expression: "(INPUT DROP|pam_unix\\(.*?:session\\): session (opened|closed)|CRON|Session\\([^)]+\\)|New session\\([^)]+\\))" # Excluye logs de INPUT DROP, pam_unix, y CRON
+          expression: "(INPUT DROP|pam_unix\\(.*?:session\\): session (opened|closed)|CRON|Session \\d+|New session \\d+|banner exchange|Server listening)"
+
+
+      # Etapa para deduplicación basada en contenido
+#      - match:
+#          selector: '{job="reason"}'
+#          stages:
+#            - drop_duplicates:
+#                interval: 5s  # Intervalo para la detección de duplicados
+#            - dedupe: {}  # Activa la deduplicación automática en base al contenido
+
+      # Etapa para extraer información de "Accepted publickey"
+      - match:
+          selector: '{job="reason"}'
+          stages:
+            - regex:
+                # Expresión regular corregida para "Accepted publickey"
+                expression: '\\]: (?P<reason>Accepted publickey) (?:for )?(?P<user>\\S+) (?:with )?(?:from )?(?P<ip>[0-9.]+) port (?P<port>[0-9]+)'
+            - labels:
+                reason: '{{ .reason }}'
+                user: '{{ .user }}' # Etiqueta para el usuario autenticado
+                ip: '{{ .ip }}'  # Etiqueta para la dirección IP de origen
+                port: '{{ .port }}'  # Etiqueta para el puerto de origen
+
+      # Etapa para manejar "Connection closed by invalid user"
+      - match:
+          selector: '{job="reason"}'
+          stages:
+            - regex:
+                # Extraer razón del log "Connection closed by <razón>"
+#                expression: 'Connection closed by (?P<reason>.*?)(?: port \d+|\[.*\]|$)'
+                expression: '\\]: (?P<reason>(Invalid user|Connection closed by invalid user|Disconnected from invalid user)) (?P<user>\\S+) (?:with )?(?:from )?(?P<ip>[0-9.]+) port (?P<port>[0-9]+)'
+            - labels:
+                reason: 'Invalid user'
+#                reason: '{{ .reason }}'
+                user: '{{ .user }}'
+                ip: '{{ .ip }}'
+                port: '{{ .port }}'
+
+      # Etapa para manejar "Received disconnect"
+      - match:
+          selector: '{job="reason"}'
+          stages:
+            - regex:
+                expression: '\\]: (?P<reason>(Received disconnect|Disconecting authenticating|error: maximum)) from (?P<ip>[0-9.]+) port (?P<port>[0-9]+)'
+            - labels:
+                reason: 'Desconexion expulsado'
+#                reason: '{{ .reason }}'
+                ip: '{{ .ip }}'
+                port: '{{ .port }}'
+
+      # Etapa para manejar "Removed session"
+      - match:
+          selector: '{job="reason"}'
+          stages:
+            - regex:
+                expression: '\\]: (?P<reason>Removed session) (?P<session_id>\\d+)'
+            - labels:
+                reason: '{{ .reason }}'
+                session_id: '{{ .session_id }}'
+
+      # Etapa para extraer información de "Unable to negotiate with"
+      - match:
+          selector: '{job="reason"}'
+          stages:
+            - regex:
+                # Extraer razón del log "Unable to negotiate with"
+                expression: '\\]: (?P<reason>Unable to negotiate) (?:with )?(?P<ip>[0-9.]+) port (?P<port>[0-9]+)'
+            - labels:
+                reason: '{{ .reason }}'
+                ip: '{{ .ip }}'
+                port: '{{ .port }}'
+
+#      - match:
+#          selector: '{job="reason"}'
+#          stages:
+#            - regex:
+#                expression: '\\]: (?P<reason>Session) (?P<session_id>\\d+) logged out'
+#                expression: '\\]: (?P<reason>Session\\([^)]+\\)|New session\\([^)]+\\))'
+#                expression: '\\]: (?P<reason>(?:New )?Session\\([^)]+\\))'
+#            - labels:
+#                reason: '{{ .reason }}'
+#                session_id: '{{ .session_id }}'
+
+      # Etapa para etiquetar el nombre del archivo de origen
+      - match:
+          selector: '{job="reason"}'
+          stages:
+            - regex:
+                # Extrae el nombre del archivo de los logs
+                expression: '/var/log/(?P<filename>[^/]+)\\.log(?:\\.\\d+)?$'
+            - labels:
+                filename: '{{ .filename }}'
+
+      # Etapa para capturar razones generales con las dos primeras palabras después de "]:"
+#      - match:
+#          selector: '{job="reason"}'
+#          stages:
+#            - regex:
+                # Captura razón después de "]:" para logs generales
+#                expression: '\\]: (?P<reason>\\S+\\s\\S+)'
+#            - labels:
+#                reason: '{{ .reason }}'  # Asignar razón genérica desde los logs
+
+      # Etapa final para etiquetar logs no categorizados como "Otros"
+      - match:
+          selector: '{job="reason"}'
+          stages:
+            - labels:
+                reason: 'Otros'
+

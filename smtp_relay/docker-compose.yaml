@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  smtp-relay:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ${SMTP_RELAY_CONTAINER_NAME}
+    hostname: smtp-relay.local
+    restart: always
+    env_file: .env
+    secrets:
+      - smtp_user
+      - smtp_pass
+    ports:
+      - "127.0.0.1:2526:587"   # SMTP local, no exponer a internet
+    healthcheck:
+      test: ["CMD", "sh", "-c", "postfix status"]
+      interval: 30s
+      retries: 3
+    environment:
+      - SMTP_SERVER=${SMTP_SERVER}
+      - SMTP_PORT=${SMTP_PORT}
+      - RELAYHOST=[${SMTP_SERVER}]:${SMTP_PORT}
+      - FROM_ADDRESS=${EMAIL_FROM}
+      - MYNETWORKS=127.0.0.0/8 172.16.0.0/12 [::1]/128
+      - LOG_LEVEL=debug
+      - ALLOWED_SENDER_DOMAINS=${EMAIL_DOMAIN}
+      - ALLOW_EMPTY_SENDER_DOMAINS=true
+
+secrets:
+  smtp_user:
+    file: ./secrets/smtp_user
+  smtp_pass:
+    file: ./secrets/smtp_pass

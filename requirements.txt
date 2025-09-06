@@ -1,0 +1,7 @@
+psycopg2-binary     # Conexión PostgreSQL
+python-dotenv       # Cargar variables desde .env
+requests            # (probablemente usado en geolocalización)
+pandas              # análisis / manipulación de datos en lotes
+numpy               # soporte numérico para pandas
+schedule            # ejecución periódica (por si lo usas dentro de scripts)
+

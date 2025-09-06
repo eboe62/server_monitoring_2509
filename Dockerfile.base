@@ -1,0 +1,20 @@
+# Imagen base con Python y dependencias comunes
+FROM python:3.12-slim AS monitoring-base
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
+
+WORKDIR /opt/monitoring
+
+# Instalar cliente docker-cli y limpiar cache
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends docker-cli && \
+    rm -rf /var/lib/apt/lists/*
+
+# Copiar requirements y dependencias
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copiar todo el proyecto
+COPY . .
+
