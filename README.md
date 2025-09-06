@@ -10,23 +10,14 @@ Incluye componentes para observabilidad, ingesta de logs, monitorización de rec
 ESTRUCTURA DEL PROYECTO
 ==========================================
 monitoring/
-│
 ├── cron/ 		# Definiciones de cronjobs y contenedor para tareas programadas
-│
 ├── log_ingestor/ 	# Módulos Python para ingesta y procesado de logs
-│
 ├── observability/ 	# Configuración de Loki, Promtail, Grafana, etc.
-│
 ├── resource_monitor/ 	# Scripts de control de recursos Docker
-│
 ├── scripts/ 		# Wrappers en bash para ejecución periódica
-│
 ├── smtp_relay/ 	# Servicio de relay SMTP en contenedor Postfix
-│
 ├── Dockerfile.base 	# Imagen base común
-│
 ├── Makefile 		# Tareas comunes de build y despliegue
-│
 └── requirements.txt 	# Dependencias Python
 
 ==========================================
@@ -41,7 +32,6 @@ INSTALACION
 ==========================================
 Clonar el repositorio:
 
-```bash
 git clone <repo>
 cd monitoring
 
