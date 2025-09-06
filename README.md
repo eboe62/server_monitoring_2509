@@ -1,6 +1,4 @@
-==========================================
 MONITORING STACK 2509
-==========================================
 
 Este repositorio contiene la pila de monitorización y utilidades desplegadas en el servidor DigitalOcean.  
 Incluye componentes para observabilidad, ingesta de logs, monitorización de recursos y un servicio de **SMTP Relay**.
@@ -8,7 +6,6 @@ Incluye componentes para observabilidad, ingesta de logs, monitorización de rec
 ==========================================
 ESTRUCTURA DEL PROYECTO
 ==========================================
-
 monitoring/
 ├── cron/ # Definiciones de cronjobs y contenedor para tareas programadas
 ├── log_ingestor/ # Módulos Python para ingesta y procesado de logs
@@ -23,7 +20,6 @@ monitoring/
 ==========================================
 REQUISITOS PREVIOS
 ==========================================
-
 - Docker y Docker Compose instalados
 - Python 3.12+ disponible en `/usr/local/bin/python3`
 - Acceso a Git y credenciales configuradas
@@ -31,7 +27,6 @@ REQUISITOS PREVIOS
 ==========================================
 INSTALACION
 ==========================================
-
 Clonar el repositorio:
 
 ```bash
