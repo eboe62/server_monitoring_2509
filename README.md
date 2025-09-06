@@ -1,4 +1,7 @@
+```bash
+==========================================
 MONITORING STACK 2509
+==========================================
 
 Este repositorio contiene la pila de monitorización y utilidades desplegadas en el servidor DigitalOcean.  
 Incluye componentes para observabilidad, ingesta de logs, monitorización de recursos y un servicio de **SMTP Relay**.
@@ -7,15 +10,24 @@ Incluye componentes para observabilidad, ingesta de logs, monitorización de rec
 ESTRUCTURA DEL PROYECTO
 ==========================================
 monitoring/
-├── cron/ # Definiciones de cronjobs y contenedor para tareas programadas
-├── log_ingestor/ # Módulos Python para ingesta y procesado de logs
-├── observability/ # Configuración de Loki, Promtail, Grafana, etc.
-├── resource_monitor/ # Scripts de control de recursos Docker
-├── scripts/ # Wrappers en bash para ejecución periódica
-├── smtp_relay/ # Servicio de relay SMTP en contenedor Postfix
-├── Dockerfile.base # Imagen base común
-├── Makefile # Tareas comunes de build y despliegue
-└── requirements.txt # Dependencias Python
+│
+├── cron/ 		# Definiciones de cronjobs y contenedor para tareas programadas
+│
+├── log_ingestor/ 	# Módulos Python para ingesta y procesado de logs
+│
+├── observability/ 	# Configuración de Loki, Promtail, Grafana, etc.
+│
+├── resource_monitor/ 	# Scripts de control de recursos Docker
+│
+├── scripts/ 		# Wrappers en bash para ejecución periódica
+│
+├── smtp_relay/ 	# Servicio de relay SMTP en contenedor Postfix
+│
+├── Dockerfile.base 	# Imagen base común
+│
+├── Makefile 		# Tareas comunes de build y despliegue
+│
+└── requirements.txt 	# Dependencias Python
 
 ==========================================
 REQUISITOS PREVIOS
