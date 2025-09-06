@@ -34,3 +34,45 @@ clean-logs:
 	rm -f /var/log/*.log
 	@echo "[OK] Logs limpiados"
 
+
+
+.PHONY: all snapshot deploy build-cron logs status
+
+# Ruta base
+BASE_DIR := /opt/monitoring
+
+# --- Snapshots ---
+snapshot:
+	@echo "Creando snapshot previo con fecha..."
+	snap_name="predeploy-$$(date +%Y%m%d%H%M%S)" && \
+	doctl compute snapshot create "$$snap_name" --droplet-id <DROPLET_ID>
+
+# --- Servicios principales ---
+up-services:
+	cd $(BASE_DIR)/smtp-relay && make up
+
+status:
+	cd $(BASE_DIR)/smtp-relay && make status
+
+logs:
+	cd $(BASE_DIR)/smtp-relay && make logs
+
+# --- Builds ---
+build-base:
+	docker build -f Dockerfile.base -t monitoring-base $(BASE_DIR)
+
+build-python:
+	docker build -f python/Dockerfile -t monitoring-python $(BASE_DIR)
+
+build-cron:
+	docker build -t monitoring-cron $(BASE_DIR)/cron
+
+# --- Cron ---
+deploy-cron:
+	cd $(BASE_DIR)/cron && \
+	docker-compose down -v && \
+	docker-compose build --no-cache && \
+	docker-compose up -d
+
+# --- Despliegue completo ---
+deploy: up-services build-base build-python build-cron deploy-cron
