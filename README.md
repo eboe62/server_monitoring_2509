@@ -57,14 +57,20 @@ make status
 make logs
 
 cd /opt/monitoring/
-# Construir la imagen base (se usa como caché para las demás)
+
+Construir la imagen base (se usa como caché para las demás)
 docker build -f Dockerfile.base -t monitoring-base .
 
-# Construir la imagen Python
+Construir la imagen Python
 docker build -f python/Dockerfile -t monitoring-python .
 
-# Construir la imagen Cron
+Construir la imagen Cron
 docker build -t monitoring-cron cron/
+
+Levantar contenedor monitoring-cron (Supercronic)
+docker-compose -f /opt/monitoring/cron/docker-compose.yml down -v
+docker-compose -f /opt/monitoring/cron/docker-compose.yml build --no-cache
+docker-compose -f /opt/monitoring/cron/docker-compose.yml up -d
 
 Ejecución manual de auditorías y limpieza:
 ./scripts/docker_resources.sh
