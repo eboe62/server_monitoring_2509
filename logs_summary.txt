@@ -1,0 +1,284 @@
+==> /var/log/alternatives.log <==
+
+==> /var/log/apport.log <==
+
+==> /var/log/auth.log <==
+2025-09-08T17:31:05.464312+00:00 eob-250501a sshd[1077338]: Received disconnect from 152.32.130.118 port 46996:11: Bye Bye [preauth]
+2025-09-08T17:31:05.464748+00:00 eob-250501a sshd[1077338]: Disconnected from authenticating user root 152.32.130.118 port 46996 [preauth]
+2025-09-08T17:31:36.352689+00:00 eob-250501a sshd[1077825]: Received disconnect from 91.224.92.32 port 20802:11:  [preauth]
+2025-09-08T17:31:36.354062+00:00 eob-250501a sshd[1077825]: Disconnected from authenticating user root 91.224.92.32 port 20802 [preauth]
+2025-09-08T17:32:16.614849+00:00 eob-250501a sshd[1077924]: Invalid user db from 152.32.130.118 port 34052
+2025-09-08T17:32:16.800807+00:00 eob-250501a sshd[1077924]: Received disconnect from 152.32.130.118 port 34052:11: Bye Bye [preauth]
+2025-09-08T17:32:16.801029+00:00 eob-250501a sshd[1077924]: Disconnected from invalid user db 152.32.130.118 port 34052 [preauth]
+2025-09-08T17:34:13.533095+00:00 eob-250501a sshd[1078616]: Received disconnect from 141.98.11.34 port 22858:11:  [preauth]
+2025-09-08T17:34:13.534857+00:00 eob-250501a sshd[1078616]: Disconnected from authenticating user root 141.98.11.34 port 22858 [preauth]
+2025-09-08T17:35:01.750525+00:00 eob-250501a CRON[1078719]: pam_unix(cron:session): session opened for user root(uid=0) by root(uid=0)
+2025-09-08T17:35:01.756900+00:00 eob-250501a CRON[1078719]: pam_unix(cron:session): session closed for user root
+2025-09-08T17:35:03.310700+00:00 eob-250501a sshd[1078655]: Accepted publickey for root from 91.126.43.112 port 17165 ssh2: RSA SHA256:YUDRPAU115MCwkF4S/wLFXV0Y7kLUTQ4QUL7H3Lc0ac
+2025-09-08T17:35:03.312963+00:00 eob-250501a sshd[1078655]: pam_unix(sshd:session): session opened for user root(uid=0) by root(uid=0)
+2025-09-08T17:35:03.322325+00:00 eob-250501a systemd-logind[737]: New session 678 of user root.
+2025-09-08T17:36:45.834622+00:00 eob-250501a sshd[1079447]: Received disconnect from 91.224.92.28 port 10830:11:  [preauth]
+2025-09-08T17:36:45.836805+00:00 eob-250501a sshd[1079447]: Disconnected from authenticating user root 91.224.92.28 port 10830 [preauth]
+2025-09-08T17:37:42.601291+00:00 eob-250501a sshd[1080013]: error: userauth_pubkey: parse key: Invalid key length [preauth]
+2025-09-08T17:37:42.672795+00:00 eob-250501a sshd[1080013]: userauth_pubkey: signature algorithm ssh-rsa not in PubkeyAcceptedAlgorithms [preauth]
+2025-09-08T17:37:42.745789+00:00 eob-250501a sshd[1080013]: error: Received disconnect from 98.159.234.106 port 60366:14: No supported authentication methods available [preauth]
+2025-09-08T17:37:42.745902+00:00 eob-250501a sshd[1080013]: Disconnected from authenticating user root 98.159.234.106 port 60366 [preauth]
+
+==> /var/log/batch_attacking_logs.log <==
+mnt-info: 2025-09-08T17:10:36.003846 - [✅]: Conexión a la base de datos exitosa.
+mnt-info: 2025-09-08T17:10:36.098206 - [✅]: attacking_no actualizado correctamente.
+mnt-info: 2025-09-08T17:20:33.394320 - [🚀]: Iniciando procesamiento de logs...
+mnt-info: 2025-09-08T17:20:33.900861 - [✅]: Conexión a la base de datos exitosa.
+mnt-info: 2025-09-08T17:20:34.295050 - [📜]: Líneas obtenidas del log: 5485
+mnt-info: 2025-09-08T17:20:34.999233 - [⚡]: Líneas después del filtrado: 78
+mnt-info: 2025-09-08T17:20:34.999571 - [📜]: Total de líneas obtenidas del log: 78
+mnt-info: 2025-09-08T17:20:35.499886 - [✅]: Conexión a la base de datos exitosa.
+mnt-info: 2025-09-08T17:20:35.992979 - [✅]: 71 registros insertados en la base de datos.
+mnt-info: 2025-09-08T17:20:36.199844 - [✅]: Conexión a la base de datos exitosa.
+mnt-info: 2025-09-08T17:20:36.298085 - [✅]: attacking_no actualizado correctamente.
+mnt-info: 2025-09-08T17:30:33.499118 - [🚀]: Iniciando procesamiento de logs...
+mnt-info: 2025-09-08T17:30:33.898840 - [✅]: Conexión a la base de datos exitosa.
+mnt-info: 2025-09-08T17:30:34.200917 - [📜]: Líneas obtenidas del log: 5521
+mnt-info: 2025-09-08T17:30:34.999396 - [⚡]: Líneas después del filtrado: 36
+mnt-info: 2025-09-08T17:30:35.092943 - [📜]: Total de líneas obtenidas del log: 36
+mnt-info: 2025-09-08T17:30:35.493020 - [✅]: Conexión a la base de datos exitosa.
+mnt-info: 2025-09-08T17:30:35.602041 - [✅]: 28 registros insertados en la base de datos.
+mnt-info: 2025-09-08T17:30:35.893052 - [✅]: Conexión a la base de datos exitosa.
+mnt-info: 2025-09-08T17:30:35.998159 - [✅]: attacking_no actualizado correctamente.
+
+==> /var/log/batch_ip_geolocation.log <==
+mnt-info: 2025-09-08T16:00:40.502104 - [ℹ️] Se encontraron 5 IPs para actualizar.
+mnt-info: 2025-09-08T16:00:46.626571 - [🏁] Proceso de actualización finalizado.
+mnt-info: 2025-09-08T16:10:39.598634 - [ℹ️] Se encontraron 7 IPs para actualizar.
+mnt-info: 2025-09-08T16:10:48.423873 - [🏁] Proceso de actualización finalizado.
+mnt-info: 2025-09-08T16:20:38.901651 - [ℹ️] Se encontraron 4 IPs para actualizar.
+mnt-info: 2025-09-08T16:20:43.826952 - [🏁] Proceso de actualización finalizado.
+mnt-info: 2025-09-08T16:30:39.700788 - [ℹ️] Se encontraron 6 IPs para actualizar.
+mnt-info: 2025-09-08T16:30:47.024939 - [🏁] Proceso de actualización finalizado.
+mnt-info: 2025-09-08T16:40:38.898784 - [ℹ️] Se encontraron 4 IPs para actualizar.
+mnt-info: 2025-09-08T16:40:43.827487 - [🏁] Proceso de actualización finalizado.
+mnt-info: 2025-09-08T16:50:39.700308 - [ℹ️] Se encontraron 5 IPs para actualizar.
+mnt-info: 2025-09-08T16:50:45.831293 - [🏁] Proceso de actualización finalizado.
+mnt-info: 2025-09-08T17:00:41.097996 - [ℹ️] Se encontraron 8 IPs para actualizar.
+mnt-info: 2025-09-08T17:00:50.821296 - [🏁] Proceso de actualización finalizado.
+mnt-info: 2025-09-08T17:10:38.905149 - [ℹ️] Se encontraron 7 IPs para actualizar.
+mnt-info: 2025-09-08T17:10:47.620910 - [🏁] Proceso de actualización finalizado.
+mnt-info: 2025-09-08T17:20:39.504232 - [ℹ️] Se encontraron 7 IPs para actualizar.
+mnt-info: 2025-09-08T17:20:48.025275 - [🏁] Proceso de actualización finalizado.
+mnt-info: 2025-09-08T17:30:39.099546 - [ℹ️] Se encontraron 6 IPs para actualizar.
+mnt-info: 2025-09-08T17:30:46.422931 - [🏁] Proceso de actualización finalizado.
+
+==> /var/log/batch_kern_logs.log <==
+mnt-info: 2025-09-08T17:00:34.900643 - [🚀]: Iniciando procesamiento de logs...
+mnt-info: 2025-09-08T17:00:35.302830 - [✅]: Conexión a la base de datos exitosa.
+mnt-info: 2025-09-08T17:00:35.398431 - [📜]: Líneas obtenidas del log: 0
+mnt-info: 2025-09-08T17:00:35.398475 - [📜]: Total de líneas obtenidas del log: 0
+mnt-info: 2025-09-08T17:00:35.398484 - [🔍]: No hay nuevas líneas en el log.
+mnt-info: 2025-09-08T17:10:33.298602 - [🚀]: Iniciando procesamiento de logs...
+mnt-info: 2025-09-08T17:10:33.695424 - [✅]: Conexión a la base de datos exitosa.
+mnt-info: 2025-09-08T17:10:33.711639 - [📜]: Líneas obtenidas del log: 0
+mnt-info: 2025-09-08T17:10:33.711677 - [📜]: Total de líneas obtenidas del log: 0
+mnt-info: 2025-09-08T17:10:33.711687 - [🔍]: No hay nuevas líneas en el log.
+mnt-info: 2025-09-08T17:20:33.899976 - [🚀]: Iniciando procesamiento de logs...
+mnt-info: 2025-09-08T17:20:34.297417 - [✅]: Conexión a la base de datos exitosa.
+mnt-info: 2025-09-08T17:20:34.393342 - [📜]: Líneas obtenidas del log: 0
+mnt-info: 2025-09-08T17:20:34.393397 - [📜]: Total de líneas obtenidas del log: 0
+mnt-info: 2025-09-08T17:20:34.393408 - [🔍]: No hay nuevas líneas en el log.
+mnt-info: 2025-09-08T17:30:33.694413 - [🚀]: Iniciando procesamiento de logs...
+mnt-info: 2025-09-08T17:30:34.008192 - [✅]: Conexión a la base de datos exitosa.
+mnt-info: 2025-09-08T17:30:34.193172 - [📜]: Líneas obtenidas del log: 0
+mnt-info: 2025-09-08T17:30:34.193229 - [📜]: Total de líneas obtenidas del log: 0
+mnt-info: 2025-09-08T17:30:34.193240 - [🔍]: No hay nuevas líneas en el log.
+
+==> /var/log/cloud-init-output.log <==
+ci-info: |   3   | 165.22.80.0 |   0.0.0.0   | 255.255.240.0 |    eth0   |   U   |
+ci-info: +-------+-------------+-------------+---------------+-----------+-------+
+ci-info: +++++++++++++++++++Route IPv6 info+++++++++++++++++++
+ci-info: +-------+-------------+---------+-----------+-------+
+ci-info: | Route | Destination | Gateway | Interface | Flags |
+ci-info: +-------+-------------+---------+-----------+-------+
+ci-info: |   0   |  fe80::/64  |    ::   |    eth0   |   U   |
+ci-info: |   1   |  fe80::/64  |    ::   |    eth1   |   U   |
+ci-info: |   3   |    local    |    ::   |    eth1   |   U   |
+ci-info: |   4   |    local    |    ::   |    eth0   |   U   |
+ci-info: |   5   |  multicast  |    ::   |    eth0   |   U   |
+ci-info: |   6   |  multicast  |    ::   |    eth1   |   U   |
+ci-info: +-------+-------------+---------+-----------+-------+
++ cloud-init-per instance do-resolved-conf /bin/false
++ exit 0
++ logger -t DigitalOcean adding random seed to /dev/urandom
++ base64 -d
+Cloud-init v. 25.1.4-0ubuntu0~24.04.1 running 'modules:config' at Sat, 06 Sep 2025 18:16:25 +0000. Up 13.67 seconds.
+Cloud-init v. 25.1.4-0ubuntu0~24.04.1 running 'modules:final' at Sat, 06 Sep 2025 18:16:30 +0000. Up 18.60 seconds.
+Cloud-init v. 25.1.4-0ubuntu0~24.04.1 finished at Sat, 06 Sep 2025 18:16:30 +0000. Datasource DataSourceConfigDrive [net,ver=2][source=/dev/vdb].  Up 18.70 seconds
+
+==> /var/log/cloud-init.log <==
+2025-09-06 18:16:30,176 - modules.py[DEBUG]: Running module install_hotplug (<module 'cloudinit.config.cc_install_hotplug' from '/usr/lib/python3/dist-packages/cloudinit/config/cc_install_hotplug.py'>) with frequency once-per-instance
+2025-09-06 18:16:30,176 - handlers.py[DEBUG]: start: modules-final/config-install_hotplug: running config-install_hotplug with frequency once-per-instance
+2025-09-06 18:16:30,176 - helpers.py[DEBUG]: config-install_hotplug already ran (freq=once-per-instance)
+2025-09-06 18:16:30,177 - handlers.py[DEBUG]: finish: modules-final/config-install_hotplug: SUCCESS: config-install_hotplug previously ran
+2025-09-06 18:16:30,177 - modules.py[DEBUG]: Running module final_message (<module 'cloudinit.config.cc_final_message' from '/usr/lib/python3/dist-packages/cloudinit/config/cc_final_message.py'>) with frequency always
+2025-09-06 18:16:30,177 - handlers.py[DEBUG]: start: modules-final/config-final_message: running config-final_message with frequency always
+2025-09-06 18:16:30,177 - helpers.py[DEBUG]: Running config-final_message using lock (<cloudinit.helpers.DummyLock object at 0x718bdcf14b60>)
+2025-09-06 18:16:30,177 - util.py[DEBUG]: Reading from /proc/uptime (quiet=False)
+2025-09-06 18:16:30,177 - util.py[DEBUG]: Reading 11 bytes from /proc/uptime
+2025-09-06 18:16:30,186 - log_util.py[DEBUG]: Cloud-init v. 25.1.4-0ubuntu0~24.04.1 finished at Sat, 06 Sep 2025 18:16:30 +0000. Datasource DataSourceConfigDrive [net,ver=2][source=/dev/vdb].  Up 18.70 seconds
+2025-09-06 18:16:30,186 - util.py[DEBUG]: Writing to /var/lib/cloud/instance/boot-finished - wb: [644] 69 bytes
+2025-09-06 18:16:30,189 - handlers.py[DEBUG]: finish: modules-final/config-final_message: SUCCESS: config-final_message ran successfully and took 0.012 seconds
+2025-09-06 18:16:30,189 - main.py[DEBUG]: Ran 10 modules with 0 failures
+2025-09-06 18:16:30,190 - util.py[DEBUG]: Reading from /proc/uptime (quiet=False)
+2025-09-06 18:16:30,190 - util.py[DEBUG]: Reading 11 bytes from /proc/uptime
+2025-09-06 18:16:30,191 - atomic_helper.py[DEBUG]: Atomically writing to file /var/lib/cloud/data/status.json (via temporary file /var/lib/cloud/data/tmpgp16_iqm) - w: [644] 534 bytes/chars
+2025-09-06 18:16:30,191 - atomic_helper.py[DEBUG]: Atomically writing to file /var/lib/cloud/data/result.json (via temporary file /var/lib/cloud/data/tmpx85o05_r) - w: [644] 101 bytes/chars
+2025-09-06 18:16:30,192 - util.py[DEBUG]: Creating symbolic link from '/run/cloud-init/result.json' => '../../var/lib/cloud/data/result.json'
+2025-09-06 18:16:30,192 - performance.py[DEBUG]: cloud-init stage: 'modules-final' took 0.151 seconds
+2025-09-06 18:16:30,192 - handlers.py[DEBUG]: finish: modules-final: SUCCESS: running modules for final
+
+==> /var/log/configure_docker_limits.log <==
+2025-09-08 17:30:01 [⚙️]: Aplicando límites al contenedor aa8b3cab2dbb...
+aa8b3cab2dbb
+2025-09-08 17:30:01 [✅]: Límites aplicados correctamente a aa8b3cab2dbb.
+2025-09-08 17:30:01 [🔍]: Verificando el contenedor 9c4a181e0bdb...
+2025-09-08 17:30:01 [⚙️]: Aplicando límites al contenedor 9c4a181e0bdb...
+9c4a181e0bdb
+2025-09-08 17:30:01 [✅]: Límites aplicados correctamente a 9c4a181e0bdb.
+2025-09-08 17:30:01 [🔍]: Verificando el contenedor bf18914327e6...
+2025-09-08 17:30:01 [⚙️]: Aplicando límites al contenedor bf18914327e6...
+bf18914327e6
+2025-09-08 17:30:02 [✅]: Límites aplicados correctamente a bf18914327e6.
+2025-09-08 17:30:02 [🔍]: Verificando el contenedor 9a111f205da3...
+2025-09-08 17:30:02 [ℹ️]: El contenedor 9a111f205da3 ya tiene límites configurados.
+2025-09-08 17:30:02 [🔍]: Verificando el contenedor 7302011f1f37...
+2025-09-08 17:30:02 [ℹ️]: El contenedor 7302011f1f37 ya tiene límites configurados.
+2025-09-08 17:30:02 [🔍]: Verificando el contenedor d6c1a1db1647...
+2025-09-08 17:30:02 [ℹ️]: El contenedor d6c1a1db1647 ya tiene límites configurados.
+2025-09-08 17:30:02 [🔍]: Verificando el contenedor 2845a26076ba...
+2025-09-08 17:30:02 [ℹ️]: El contenedor 2845a26076ba ya tiene límites configurados.
+2025-09-08 17:30:02 [🎯]: Proceso de configuración de límites completado.
+
+==> /var/log/docker_resources.log <==
+mnt-info: | 0.0%         | 7.7%       | 30.2       | 393.0      | smtp-relay                |
+mnt-info: | 1.7%         | 11.8%      | 46.3       | 393.0      | srv-captain--security250226app.1.u56hpycx0l54z204j9fn43w4e |
+mnt-info: | 0.0%         | 0.6%       | 2.5        | 393.0      | data-container_data-container_1 |
+mnt-info: +--------------+------------+------------+------------+-----------------------------------------------------------+
+mnt-info: 2025-09-08T17:20:36.593592 - No se han detectado contenedores en riesgo.
+mnt-info: 2025-09-08T17:20:36.593605 - ===== Fin de ejecución =====
+mnt-info: 2025-09-08T17:30:32.296333 - ===== Inicio de ejecución =====
+mnt-info: +--------------+------------+------------+------------+-----------------------------------------------------------+
+mnt-info: |    CPU %     |   MEM %    |   Uso_MB   |  Limite_MB |                         Contenedor                        |
+mnt-info: +--------------+------------+------------+------------+-----------------------------------------------------------+
+mnt-info: | 0.0%         | 0.4%       | 1.6        | 393.0      | captain-certbot.1.z47vmrgvfoelp5vbrdblq72y4 |
+mnt-info: | 0.0%         | 0.7%       | 2.7        | 393.0      | captain-nginx.1.iikb722896kkml4uzg39my1ub |
+mnt-info: | 0.0%         | 9.9%       | 38.9       | 393.0      | captain-captain.1.xr218gb02yf1r0akwauw3p4nu |
+mnt-info: | 10.1%        | 29.0%      | 113.8      | 393.0      | monitoring-cron           |
+mnt-info: | 0.0%         | 7.7%       | 30.2       | 393.0      | smtp-relay                |
+mnt-info: | 0.5%         | 11.8%      | 46.2       | 393.0      | srv-captain--security250226app.1.u56hpycx0l54z204j9fn43w4e |
+mnt-info: | 0.0%         | 0.6%       | 2.5        | 393.0      | data-container_data-container_1 |
+mnt-info: +--------------+------------+------------+------------+-----------------------------------------------------------+
+mnt-info: 2025-09-08T17:30:36.005360 - No se han detectado contenedores en riesgo.
+mnt-info: 2025-09-08T17:30:36.005376 - ===== Fin de ejecución =====
+
+==> /var/log/docker_resources_history.log <==
+mnt-info: | 0.0%         | 0.4%       | 1.6        | 393.0      | captain-certbot.1.jdryw40durl4ygktnl8ofxtg1 |
+mnt-info: | 0.0%         | 0.7%       | 2.7        | 393.0      | captain-nginx.1.mldha9pg2h50w7y4n2wcejdy2 |
+mnt-info: | 0.0%         | 9.8%       | 38.5       | 393.0      | captain-captain.1.t1r7armby5fqr52ob61m021nr |
+mnt-info: | 10.1%        | 24.1%      | 94.8       | 393.0      | monitoring-cron           |
+mnt-info: | 0.0%         | 7.7%       | 30.2       | 393.0      | smtp-relay                |
+mnt-info: | 1.7%         | 11.8%      | 46.3       | 393.0      | srv-captain--security250226app.1.u56hpycx0l54z204j9fn43w4e |
+mnt-info: | 0.0%         | 0.6%       | 2.5        | 393.0      | data-container_data-container_1 |
+mnt-info: +--------------+------------+------------+------------+-----------------------------------------------------------+
+mnt-info: [2025-09-08 17:30:36]
+mnt-info: +--------------+------------+------------+------------+-----------------------------------------------------------+
+mnt-info: |    CPU %     |   MEM %    |   Uso_MB   |  Limite_MB |                         Contenedor                        |
+mnt-info: +--------------+------------+------------+------------+-----------------------------------------------------------+
+mnt-info: | 0.0%         | 0.4%       | 1.6        | 393.0      | captain-certbot.1.z47vmrgvfoelp5vbrdblq72y4 |
+mnt-info: | 0.0%         | 0.7%       | 2.7        | 393.0      | captain-nginx.1.iikb722896kkml4uzg39my1ub |
+mnt-info: | 0.0%         | 9.9%       | 38.9       | 393.0      | captain-captain.1.xr218gb02yf1r0akwauw3p4nu |
+mnt-info: | 10.1%        | 29.0%      | 113.8      | 393.0      | monitoring-cron           |
+mnt-info: | 0.0%         | 7.7%       | 30.2       | 393.0      | smtp-relay                |
+mnt-info: | 0.5%         | 11.8%      | 46.2       | 393.0      | srv-captain--security250226app.1.u56hpycx0l54z204j9fn43w4e |
+mnt-info: | 0.0%         | 0.6%       | 2.5        | 393.0      | data-container_data-container_1 |
+mnt-info: +--------------+------------+------------+------------+-----------------------------------------------------------+
+==> /var/log/dpkg.log <==
+2025-09-07 06:26:31 startup packages remove
+2025-09-07 06:26:31 status installed linux-image-6.8.0-71-generic:amd64 6.8.0-71.71
+2025-09-07 06:26:31 remove linux-image-6.8.0-71-generic:amd64 6.8.0-71.71 <none>
+2025-09-07 06:26:31 status half-configured linux-image-6.8.0-71-generic:amd64 6.8.0-71.71
+2025-09-07 06:26:32 status half-installed linux-image-6.8.0-71-generic:amd64 6.8.0-71.71
+2025-09-07 06:26:33 status config-files linux-image-6.8.0-71-generic:amd64 6.8.0-71.71
+2025-09-07 06:26:33 status installed linux-modules-6.8.0-71-generic:amd64 6.8.0-71.71
+2025-09-07 06:26:33 remove linux-modules-6.8.0-71-generic:amd64 6.8.0-71.71 <none>
+2025-09-07 06:26:33 status half-configured linux-modules-6.8.0-71-generic:amd64 6.8.0-71.71
+2025-09-07 06:26:33 status half-installed linux-modules-6.8.0-71-generic:amd64 6.8.0-71.71
+2025-09-07 06:26:33 status config-files linux-modules-6.8.0-71-generic:amd64 6.8.0-71.71
+2025-09-07 06:26:33 startup packages configure
+2025-09-07 06:26:37 startup packages remove
+2025-09-07 06:26:37 status installed linux-headers-6.8.0-71:all 6.8.0-71.71
+2025-09-07 06:26:37 remove linux-headers-6.8.0-71:all 6.8.0-71.71 <none>
+2025-09-07 06:26:37 status half-configured linux-headers-6.8.0-71:all 6.8.0-71.71
+2025-09-07 06:26:37 status half-installed linux-headers-6.8.0-71:all 6.8.0-71.71
+2025-09-07 06:26:38 status config-files linux-headers-6.8.0-71:all 6.8.0-71.71
+2025-09-07 06:26:38 status not-installed linux-headers-6.8.0-71:all <none>
+2025-09-07 06:26:38 startup packages configure
+
+==> /var/log/droplet-agent.update.log <==
+Waiting 830 seconds
+Checking architecture support...OK
+Preparing to check for update
+Package Host: https://repos-droplet.digitalocean.com
+Package Path: apt/droplet-agent/pool/main/main/d/droplet-agent/droplet-agent_
+Keyring Path: apt/droplet-agent/pool/main/main/d/droplet-agent-keyring/droplet-agent-keyring_
+Local Keyring:2.0.0
+Local Version:1.2.11
+Checking Latest Version...
+Latest keyring package:2.0.0
+Latest agent package:1.2.1
+Updating droplet-agent deb package
+
+==> /var/log/fail2ban.log <==
+2025-09-08 15:17:39,185 fail2ban.filter         [918]: INFO    [sshd] Found 80.94.95.15 - 2025-09-08 15:17:38
+2025-09-08 15:18:06,934 fail2ban.filter         [918]: INFO    [sshd] Found 80.94.95.112 - 2025-09-08 15:18:06
+2025-09-08 15:51:46,677 fail2ban.filter         [918]: INFO    [sshd] Found 80.94.95.112 - 2025-09-08 15:51:46
+2025-09-08 16:06:29,935 fail2ban.filter         [918]: INFO    [sshd] Found 139.19.117.130 - 2025-09-08 16:06:29
+2025-09-08 16:25:17,184 fail2ban.filter         [918]: INFO    [sshd] Found 64.62.197.78 - 2025-09-08 16:25:16
+2025-09-08 16:30:25,685 fail2ban.filter         [918]: INFO    [sshd] Found 80.94.95.112 - 2025-09-08 16:30:25
+2025-09-08 16:43:03,699 fail2ban.filter         [918]: INFO    [sshd] Found 80.94.95.15 - 2025-09-08 16:43:03
+2025-09-08 16:45:49,684 fail2ban.filter         [918]: INFO    [sshd] Found 80.94.95.15 - 2025-09-08 16:45:49
+2025-09-08 16:49:00,017 fail2ban.filter         [918]: INFO    [sshd] Found 80.94.95.112 - 2025-09-08 16:48:59
+2025-09-08 16:56:48,685 fail2ban.filter         [918]: INFO    [sshd] Found 172.245.88.11 - 2025-09-08 16:56:48
+2025-09-08 16:59:04,184 fail2ban.filter         [918]: INFO    [sshd] Found 172.245.88.11 - 2025-09-08 16:59:03
+2025-09-08 17:01:16,934 fail2ban.filter         [918]: INFO    [sshd] Found 172.245.88.11 - 2025-09-08 17:01:16
+2025-09-08 17:01:17,230 fail2ban.actions        [918]: NOTICE  [sshd] Ban 172.245.88.11
+2025-09-08 17:13:35,435 fail2ban.filter         [918]: INFO    [sshd] Found 43.163.97.137 - 2025-09-08 17:13:35
+2025-09-08 17:14:22,535 fail2ban.filter         [918]: INFO    [sshd] Found 152.32.130.118 - 2025-09-08 17:14:22
+2025-09-08 17:22:39,685 fail2ban.filter         [918]: INFO    [sshd] Found 152.32.130.118 - 2025-09-08 17:22:39
+2025-09-08 17:25:01,185 fail2ban.filter         [918]: INFO    [sshd] Found 80.94.95.112 - 2025-09-08 17:25:00
+2025-09-08 17:28:38,434 fail2ban.filter         [918]: INFO    [sshd] Found 152.32.130.118 - 2025-09-08 17:28:38
+2025-09-08 17:29:28,409 fail2ban.filter         [918]: INFO    [sshd] Found 80.94.95.15 - 2025-09-08 17:29:28
+2025-09-08 17:32:16,934 fail2ban.filter         [918]: INFO    [sshd] Found 152.32.130.118 - 2025-09-08 17:32:16
+
+==> /var/log/kern.log <==
+
+==> /var/log/log_fail2ban_logs.log <==
+mnt-info: 2025-09-08T17:10:35.500739 - [✅]: Conexión a la base de datos exitosa.
+mnt-info: 2025-09-08T17:10:35.596781 - [✅]: attacking_no actualizado correctamente.
+mnt-info: 2025-09-08T17:20:34.396287 - [🚀]: Iniciando procesamiento de logs...
+mnt-info: 2025-09-08T17:20:34.793932 - [✅]: Conexión a la base de datos exitosa.
+mnt-info: 2025-09-08T17:20:34.901666 - [📜]: Líneas obtenidas del log: 846
+mnt-info: 2025-09-08T17:20:35.800059 - [⚡]: Líneas después del filtrado: 2
+mnt-info: 2025-09-08T17:20:35.800199 - [📜]: Total de líneas obtenidas del log: 2
+mnt-info: 2025-09-08T17:20:36.093095 - [✅]: Conexión a la base de datos exitosa.
+mnt-info: 2025-09-08T17:20:36.096914 - [✅]: 2 registros insertados en la base de datos.
+mnt-info: 2025-09-08T17:20:36.294833 - [✅]: Conexión a la base de datos exitosa.
+mnt-info: 2025-09-08T17:20:36.495139 - [✅]: attacking_no actualizado correctamente.
+mnt-info: 2025-09-08T17:30:33.604214 - [🚀]: Iniciando procesamiento de logs...
+mnt-info: 2025-09-08T17:30:33.996849 - [✅]: Conexión a la base de datos exitosa.
+mnt-info: 2025-09-08T17:30:34.102166 - [📜]: Líneas obtenidas del log: 850
+mnt-info: 2025-09-08T17:30:35.098369 - [⚡]: Líneas después del filtrado: 4
+mnt-info: 2025-09-08T17:30:35.098464 - [📜]: Total de líneas obtenidas del log: 4
+mnt-info: 2025-09-08T17:30:35.493543 - [✅]: Conexión a la base de datos exitosa.
+mnt-info: 2025-09-08T17:30:35.504010 - [✅]: 4 registros insertados en la base de datos.
+mnt-info: 2025-09-08T17:30:35.704491 - [✅]: Conexión a la base de datos exitosa.
+mnt-info: 2025-09-08T17:30:35.800846 - [✅]: attacking_no actualizado correctamente.
+
+==> /var/log/mail.log <==
