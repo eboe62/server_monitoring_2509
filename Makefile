@@ -41,10 +41,10 @@ snapshot:  ## Crea snapshot previo al despliegue. ATENCION: Esta acción mejor l
 
 # --- Servicios principales ---
 up-services:
-	cd $(BASE_DIR)/smtp-relay && make up
+	cd $(BASE_DIR)/smtp_relay && make up
 
 status:
-	cd $(BASE_DIR)/smtp-relay && make status
+	cd $(BASE_DIR)/smtp_relay && make status
 
 # --- Logs ---
 logs:  ## Muestra últimos registros y genera logs_summary.txt
