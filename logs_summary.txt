@@ -3,12 +3,6 @@
 ==> /var/log/apport.log <==
 
 ==> /var/log/auth.log <==
-2025-09-08T17:29:28.410465+00:00 eob-250501a sshd[1076546]: Disconnected from invalid user telnet 80.94.95.15 port 5792 [preauth]
-2025-09-08T17:29:53.311408+00:00 eob-250501a sshd[1076755]: Received disconnect from 152.32.130.118 port 35430:11: Bye Bye [preauth]
-2025-09-08T17:29:53.312777+00:00 eob-250501a sshd[1076755]: Disconnected from authenticating user root 152.32.130.118 port 35430 [preauth]
-2025-09-08T17:30:01.406347+00:00 eob-250501a CRON[1076778]: pam_unix(cron:session): session opened for user root(uid=0) by root(uid=0)
-2025-09-08T17:30:02.327004+00:00 eob-250501a CRON[1076778]: pam_unix(cron:session): session closed for user root
-2025-09-08T17:30:54.742505+00:00 eob-250501a CRON[1071748]: pam_unix(cron:session): session closed for user root
 2025-09-08T17:31:05.464312+00:00 eob-250501a sshd[1077338]: Received disconnect from 152.32.130.118 port 46996:11: Bye Bye [preauth]
 2025-09-08T17:31:05.464748+00:00 eob-250501a sshd[1077338]: Disconnected from authenticating user root 152.32.130.118 port 46996 [preauth]
 2025-09-08T17:31:36.352689+00:00 eob-250501a sshd[1077825]: Received disconnect from 91.224.92.32 port 20802:11:  [preauth]
@@ -23,6 +17,12 @@
 2025-09-08T17:35:03.310700+00:00 eob-250501a sshd[1078655]: Accepted publickey for root from 91.126.43.112 port 17165 ssh2: RSA SHA256:YUDRPAU115MCwkF4S/wLFXV0Y7kLUTQ4QUL7H3Lc0ac
 2025-09-08T17:35:03.312963+00:00 eob-250501a sshd[1078655]: pam_unix(sshd:session): session opened for user root(uid=0) by root(uid=0)
 2025-09-08T17:35:03.322325+00:00 eob-250501a systemd-logind[737]: New session 678 of user root.
+2025-09-08T17:36:45.834622+00:00 eob-250501a sshd[1079447]: Received disconnect from 91.224.92.28 port 10830:11:  [preauth]
+2025-09-08T17:36:45.836805+00:00 eob-250501a sshd[1079447]: Disconnected from authenticating user root 91.224.92.28 port 10830 [preauth]
+2025-09-08T17:37:42.601291+00:00 eob-250501a sshd[1080013]: error: userauth_pubkey: parse key: Invalid key length [preauth]
+2025-09-08T17:37:42.672795+00:00 eob-250501a sshd[1080013]: userauth_pubkey: signature algorithm ssh-rsa not in PubkeyAcceptedAlgorithms [preauth]
+2025-09-08T17:37:42.745789+00:00 eob-250501a sshd[1080013]: error: Received disconnect from 98.159.234.106 port 60366:14: No supported authentication methods available [preauth]
+2025-09-08T17:37:42.745902+00:00 eob-250501a sshd[1080013]: Disconnected from authenticating user root 98.159.234.106 port 60366 [preauth]
 
 ==> /var/log/batch_attacking_logs.log <==
 mnt-info: 2025-09-08T17:10:36.003846 - [✅]: Conexión a la base de datos exitosa.
