@@ -104,12 +104,11 @@ Detalles del proyecto:
 ==========================================
 
 https://github.com/eboe62/server_monitoring_2509.git
+https://github.com/eboe62/server_monitoring_2509/tree/develop
 
 Ubicación de Servidor_DigitalOcean_Definicion_Proyecto_2509.txt
 
-
 Ubicación de logs_sumary.txt
-https://github.com/eboe62/server_monitoring_2509/tree/develop
 
 
 [168][root@eob-250501a: ~]$ docker ps
