@@ -85,6 +85,17 @@ Los cronjobs definidos en cron/monitoring.cron incluyen:
 - Ingesta de logs (fail2ban, kernel, IP geolocation) cada 10 min
 - Alertas de riesgo a las 10:00 y 22:00
 
+# Añadir el siguiente código al crontab
+[root]$ crontab -e
+# Configurar permisos y ejecutar configure_docker_limits.sh al reiniciar
+@reboot chmod +x /usr/local/bin/configure_docker_limits.sh && sleep 60 && /bin/bash /usr/local/bin/configure_docker_limits.sh > /var/log/configure_docker_limits.log 2>&1
+
+# Ejecutar configure_docker_limits.sh cada 10 minutos
+*/10 * * * * /usr/local/bin/configure_docker_limits.sh > /var/log/configure_docker_limits.log 2>&1
+
+# Configuramos la prevención de saturación por ataques masivos
+@reboot /opt/monitoring/scripts/apply_ssh_ratelimit.sh > /var/log/apply_ssh_ratelimit.log 2>&1
+
 ==========================================
 PENDIENTE
 ==========================================
