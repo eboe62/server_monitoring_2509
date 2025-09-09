@@ -1,7 +1,7 @@
-psycopg2-binary     # Conexión PostgreSQL
-python-dotenv       # Cargar variables desde .env
-requests            # (probablemente usado en geolocalización)
-pandas              # análisis / manipulación de datos en lotes
-numpy               # soporte numérico para pandas
-schedule            # ejecución periódica (por si lo usas dentro de scripts)
-
+# requirements.txt
+psycopg2-binary>=2.9      # Conexión PostgreSQL
+python-dotenv>=1.0.0      # Cargar variables desde .env
+requests>=2.32            # Cliente HTTP (usado en geolocalización)
+pandas>=2.2               # Análisis / manipulación de datos en lotes
+numpy>=1.26               # Soporte numérico para pandas
+schedule>=1.2             # Ejecución periódica dentro de scripts
