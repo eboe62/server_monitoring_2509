@@ -2,7 +2,7 @@
 # Uso: make <target>
 # P.e.: make deploy
 
-.PHONY: help all symlinks audit check-cron clean-logs snapshot up-services status logs build-base build-python build-cron deploy-cron deploy
+.PHONY: help all symlinks audit check-cron clean-logs snapshot up-services status logs build-base build-python build-cron deploy-cron deploy rebuild rebuild-all
 
 # Ruta base
 BASE_DIR := /opt/monitoring
@@ -56,15 +56,19 @@ logs:  ## Muestra últimos registros y genera logs_summary.txt
 	git commit -m "logs latest $$(date +%Y%m%d%H%M%S)"
 	git push origin develop
 
-# --- Builds ---
-build-base:  ## Construye imagen base
-	docker build -f Dockerfile.base -t monitoring-base $(BASE_DIR)
+# --- Builds (siempre con no-cache) ---
+build-base:  ## Construye imagen base sin cache
+	docker build --no-cache -f Dockerfile.base -t monitoring-base $(BASE_DIR)
 
-build-python:  ## Construye imagen Python
-	docker build -f python/Dockerfile -t monitoring-python $(BASE_DIR)
+build-python:  ## Construye imagen Python sin cache
+	docker build --no-cache -f python/Dockerfile -t monitoring-python $(BASE_DIR)
 
-build-cron:  ## Construye imagen Cron
-	docker build -t monitoring-cron $(BASE_DIR)/cron
+build-cron:  ## Construye imagen Cron sin cache
+	docker build --no-cache -t monitoring-cron $(BASE_DIR)/cron
+
+# --- Atajos de rebuild ---
+rebuild: build-base build-python build-cron  ## Reconstruye todas las imágenes sin cache
+rebuild-all: rebuild deploy-cron  ## Reconstruye e inmediatamente redepliega cron
 
 # --- Cron ---
 deploy-cron:  ## Despliega contenedor de cron jobs
@@ -74,4 +78,5 @@ deploy-cron:  ## Despliega contenedor de cron jobs
 	docker-compose up -d
 
 # --- Despliegue completo ---
-deploy: up-services build-base build-python build-cron deploy-cron logs  ## Despliegue completo con logs al final
+deploy: up-services rebuild-all logs  ## Despliegue completo con rebuild y logs al final
+
