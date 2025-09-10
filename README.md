@@ -37,12 +37,45 @@ cd monitoring
 
 Configurar variables de entorno y credenciales según cada servicio (ejemplo para SMTP Relay):
 
+cd /opt/monitoring
 nano smtp_relay/.env
+
+=====================
+SMTP_RELAY_CONTAINER_NAME=smtp-relay
+
+# Configuración SMTP común
+SMTP_SERVER=smtp.postmarkapp.com
+SMTP_PORT=9999
+
+# Postmark SMTP credentials
+EMAIL_FROM=noreply@tudominio.com
+EMAIL_DOMAIN=tudominio.com
+EMAIL_TO=contacto@tudominio.com
+
+# Redes permitidas para relay
+MYNETWORKS=127.0.0.0/8 172.16.0.0/12 [::1]/128
+
+# Configuración de la base de datos
+# DB_HOST = "localhost"  # Si estás ejecutando en el mismo contenedor o servidor
+DB_HOST=srv-captain--security999999app # Si estás ejecutando en remoto
+DB_NAME=security9999
+DB_USER=user
+DB_PASSWORD=999999999
+=====================
+
+cd /opt/monitoring
 nano smtp_relay/secrets/smtp_user
+=====================
+99x9xx99-9x99-9x99-99x9-99xx9xxx9xxx (token https://postmarkapp.com)
+=====================
+
+cd /opt/monitoring
 nano smtp_relay/secrets/smtp_pass
+=====================
+99x9xx99-9x99-9x99-99x9-99xx9xxx9xxx (token https://postmarkapp.com)
+=====================
 
 Dar permisos a los scripts:
-
 chmod +x ./scripts/*.sh
 
 ==========================================
