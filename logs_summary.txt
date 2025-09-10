@@ -5,92 +5,92 @@
 ==> /var/log/apport.log <==
 
 ==> /var/log/auth.log <==
-2025-09-09T22:12:51.310622+00:00 eob-250501a sshd[2632]: Disconnected from authenticating user root 117.53.46.76 port 40586 [preauth]
-2025-09-09T22:13:24.942879+00:00 eob-250501a CRON[954]: pam_unix(cron:session): session closed for user root
-2025-09-09T22:15:01.950014+00:00 eob-250501a CRON[3618]: pam_unix(cron:session): session opened for user root(uid=0) by root(uid=0)
-2025-09-09T22:15:01.957098+00:00 eob-250501a CRON[3618]: pam_unix(cron:session): session closed for user root
-2025-09-09T22:15:40.691186+00:00 eob-250501a sshd[3631]: Received disconnect from 117.53.46.76 port 57982:11: Bye Bye [preauth]
-2025-09-09T22:15:40.693395+00:00 eob-250501a sshd[3631]: Disconnected from authenticating user root 117.53.46.76 port 57982 [preauth]
-2025-09-09T22:15:52.082192+00:00 eob-250501a sshd[3638]: Received disconnect from 103.59.95.142 port 52318:11: Bye Bye [preauth]
-2025-09-09T22:15:52.083079+00:00 eob-250501a sshd[3638]: Disconnected from authenticating user root 103.59.95.142 port 52318 [preauth]
-2025-09-09T22:16:58.511319+00:00 eob-250501a sshd[4191]: Received disconnect from 117.53.46.76 port 39330:11: Bye Bye [preauth]
-2025-09-09T22:16:58.513099+00:00 eob-250501a sshd[4191]: Disconnected from authenticating user root 117.53.46.76 port 39330 [preauth]
-2025-09-09T22:17:01.962219+00:00 eob-250501a CRON[4193]: pam_unix(cron:session): session opened for user root(uid=0) by root(uid=0)
-2025-09-09T22:17:14.246817+00:00 eob-250501a sshd[4204]: Received disconnect from 103.59.95.142 port 53776:11: Bye Bye [preauth]
-2025-09-09T22:17:14.249561+00:00 eob-250501a sshd[4204]: Disconnected from authenticating user root 103.59.95.142 port 53776 [preauth]
-2025-09-09T22:18:15.589856+00:00 eob-250501a sshd[4724]: Received disconnect from 117.53.46.76 port 58852:11: Bye Bye [preauth]
-2025-09-09T22:18:15.592316+00:00 eob-250501a sshd[4724]: Disconnected from authenticating user root 117.53.46.76 port 58852 [preauth]
-2025-09-09T22:18:42.530494+00:00 eob-250501a sshd[6687]: Received disconnect from 103.59.95.142 port 33630:11: Bye Bye [preauth]
-2025-09-09T22:18:42.532181+00:00 eob-250501a sshd[6687]: Disconnected from authenticating user root 103.59.95.142 port 33630 [preauth]
-2025-09-09T22:19:29.736074+00:00 eob-250501a sshd[7290]: Invalid user datascientist from 117.53.46.76 port 34250
-2025-09-09T22:19:29.911546+00:00 eob-250501a sshd[7290]: Received disconnect from 117.53.46.76 port 34250:11: Bye Bye [preauth]
-2025-09-09T22:19:29.912940+00:00 eob-250501a sshd[7290]: Disconnected from invalid user datascientist 117.53.46.76 port 34250 [preauth]
+2025-09-10T17:30:13.038375+00:00 eob-250501a sshd[453544]: Received disconnect from 91.224.92.108 port 33684:11:  [preauth]
+2025-09-10T17:30:13.038967+00:00 eob-250501a sshd[453544]: Disconnected from authenticating user root 91.224.92.108 port 33684 [preauth]
+2025-09-10T17:32:22.657303+00:00 eob-250501a sshd[454241]: Connection closed by 150.139.194.15 port 49540 [preauth]
+2025-09-10T17:34:06.572232+00:00 eob-250501a sshd[454918]: Invalid user super from 101.126.143.71 port 59914
+2025-09-10T17:34:06.802894+00:00 eob-250501a sshd[454918]: Received disconnect from 101.126.143.71 port 59914:11: Bye Bye [preauth]
+2025-09-10T17:34:06.803076+00:00 eob-250501a sshd[454918]: Disconnected from invalid user super 101.126.143.71 port 59914 [preauth]
+2025-09-10T17:34:25.105725+00:00 eob-250501a sshd[454926]: Received disconnect from 124.223.108.129 port 55098:11: Bye Bye [preauth]
+2025-09-10T17:34:25.106975+00:00 eob-250501a sshd[454926]: Disconnected from authenticating user root 124.223.108.129 port 55098 [preauth]
+2025-09-10T17:35:01.479144+00:00 eob-250501a CRON[455339]: pam_unix(cron:session): session opened for user root(uid=0) by root(uid=0)
+2025-09-10T17:35:01.484038+00:00 eob-250501a CRON[455339]: pam_unix(cron:session): session closed for user root
+2025-09-10T17:35:21.911514+00:00 eob-250501a sshd[455412]: Invalid user edu from 14.63.196.175 port 48206
+2025-09-10T17:35:22.270797+00:00 eob-250501a sshd[455412]: Received disconnect from 14.63.196.175 port 48206:11: Bye Bye [preauth]
+2025-09-10T17:35:22.270985+00:00 eob-250501a sshd[455412]: Disconnected from invalid user edu 14.63.196.175 port 48206 [preauth]
+2025-09-10T17:35:34.489054+00:00 eob-250501a sshd[455580]: Received disconnect from 80.94.93.119 port 39810:11:  [preauth]
+2025-09-10T17:35:34.490064+00:00 eob-250501a sshd[455580]: Disconnected from authenticating user root 80.94.93.119 port 39810 [preauth]
+2025-09-10T17:35:51.143585+00:00 eob-250501a sshd[455583]: Received disconnect from 124.223.108.129 port 46700:11: Bye Bye [preauth]
+2025-09-10T17:35:51.145311+00:00 eob-250501a sshd[455583]: Disconnected from authenticating user root 124.223.108.129 port 46700 [preauth]
+2025-09-10T17:37:17.178168+00:00 eob-250501a sshd[456062]: Accepted publickey for root from 91.126.43.112 port 16467 ssh2: RSA SHA256:YUDRPAU115MCwkF4S/wLFXV0Y7kLUTQ4QUL7H3Lc0ac
+2025-09-10T17:37:17.181724+00:00 eob-250501a sshd[456062]: pam_unix(sshd:session): session opened for user root(uid=0) by root(uid=0)
+2025-09-10T17:37:17.187552+00:00 eob-250501a systemd-logind[736]: New session 285 of user root.
 
 ==> /var/log/batch_attacking_logs.log <==
-    load_dotenv("/opt/monitoring/smtp_relay/.env")
-    ^^^^^^^^^^^
-NameError: name 'load_dotenv' is not defined
-Traceback (most recent call last):
-  File "/opt/monitoring/log_ingestor/log_ingest_batch.py", line 10, in <module>
-    load_dotenv("/opt/monitoring/smtp_relay/.env")
-    ^^^^^^^^^^^
-NameError: name 'load_dotenv' is not defined
-Traceback (most recent call last):
-  File "/opt/monitoring/log_ingestor/log_ingest_batch.py", line 10, in <module>
-    load_dotenv("/opt/monitoring/smtp_relay/.env")
-    ^^^^^^^^^^^
-NameError: name 'load_dotenv' is not defined
-2025-08-24 18:30:03 [🚀]: Iniciando procesamiento de logs...
-2025-08-24 18:30:03 [❌]: Error conectando a la base de datos: could not translate host name "srv-captain--security250226app" to address: Temporary failure in name resolution
-
-2025-08-24 18:30:03 [📜]: Líneas obtenidas del log: 170
-2025-08-24 18:30:03 [📜]: Total de líneas obtenidas del log: 170
-2025-08-24 18:30:03 [❌]: Error conectando a la base de datos: could not translate host name "srv-captain--security250226app" to address: Temporary failure in name resolution
-
+mnt-info: 2025-09-10T17:10:36.015295 - [✅]: Conexión a la base de datos exitosa.
+mnt-info: 2025-09-10T17:10:36.116984 - [✅]: attacking_no actualizado correctamente.
+mnt-info: 2025-09-10T17:20:33.812274 - [🚀]: Iniciando procesamiento de logs...
+mnt-info: 2025-09-10T17:20:34.221437 - [✅]: Conexión a la base de datos exitosa.
+mnt-info: 2025-09-10T17:20:34.521541 - [📜]: Líneas obtenidas del log: 3929
+mnt-info: 2025-09-10T17:20:35.207314 - [⚡]: Líneas después del filtrado: 59
+mnt-info: 2025-09-10T17:20:35.207654 - [📜]: Total de líneas obtenidas del log: 59
+mnt-info: 2025-09-10T17:20:35.614622 - [✅]: Conexión a la base de datos exitosa.
+mnt-info: 2025-09-10T17:20:35.914782 - [✅]: 41 registros insertados en la base de datos.
+mnt-info: 2025-09-10T17:20:36.126033 - [✅]: Conexión a la base de datos exitosa.
+mnt-info: 2025-09-10T17:20:36.309090 - [✅]: attacking_no actualizado correctamente.
+mnt-info: 2025-09-10T17:30:33.508636 - [🚀]: Iniciando procesamiento de logs...
+mnt-info: 2025-09-10T17:30:33.921201 - [✅]: Conexión a la base de datos exitosa.
+mnt-info: 2025-09-10T17:30:34.215295 - [📜]: Líneas obtenidas del log: 3967
+mnt-info: 2025-09-10T17:30:34.809291 - [⚡]: Líneas después del filtrado: 39
+mnt-info: 2025-09-10T17:30:34.809595 - [📜]: Total de líneas obtenidas del log: 39
+mnt-info: 2025-09-10T17:30:35.307238 - [✅]: Conexión a la base de datos exitosa.
+mnt-info: 2025-09-10T17:30:35.417817 - [✅]: 24 registros insertados en la base de datos.
+mnt-info: 2025-09-10T17:30:35.708584 - [✅]: Conexión a la base de datos exitosa.
+mnt-info: 2025-09-10T17:30:35.809978 - [✅]: attacking_no actualizado correctamente.
 
 ==> /var/log/batch_ip_geolocation.log <==
-Traceback (most recent call last):
-  File "/opt/monitoring/log_ingestor/log_ip_geolocation.py", line 11, in <module>
-    load_dotenv("/opt/monitoring/smtp_relay/.env")
-    ^^^^^^^^^^^
-NameError: name 'load_dotenv' is not defined
-Traceback (most recent call last):
-  File "/opt/monitoring/log_ingestor/log_ip_geolocation.py", line 11, in <module>
-    load_dotenv("/opt/monitoring/smtp_relay/.env")
-    ^^^^^^^^^^^
-NameError: name 'load_dotenv' is not defined
-Traceback (most recent call last):
-  File "/opt/monitoring/log_ingestor/log_ip_geolocation.py", line 11, in <module>
-    load_dotenv("/opt/monitoring/smtp_relay/.env")
-    ^^^^^^^^^^^
-NameError: name 'load_dotenv' is not defined
-Traceback (most recent call last):
-  File "/opt/monitoring/log_ingestor/log_ip_geolocation.py", line 14, in <module>
-    DB_HOST = os.getenv("DB_HOST", "localhost")
-              ^^
-NameError: name 'os' is not defined. Did you forget to import 'os'?
+mnt-info: 2025-09-10T16:00:41.313809 - [ℹ️] Se encontraron 3 IPs para actualizar.
+mnt-info: 2025-09-10T16:00:45.039165 - [🏁] Proceso de actualización finalizado.
+mnt-info: 2025-09-10T16:10:39.314607 - [ℹ️] Se encontraron 6 IPs para actualizar.
+mnt-info: 2025-09-10T16:10:46.639307 - [🏁] Proceso de actualización finalizado.
+mnt-info: 2025-09-10T16:20:39.073371 - [ℹ️] Se encontraron 6 IPs para actualizar.
+mnt-info: 2025-09-10T16:20:46.335492 - [🏁] Proceso de actualización finalizado.
+mnt-info: 2025-09-10T16:30:39.118687 - [ℹ️] Se encontraron 4 IPs para actualizar.
+mnt-info: 2025-09-10T16:30:44.035542 - [🏁] Proceso de actualización finalizado.
+mnt-info: 2025-09-10T16:40:38.712711 - [ℹ️] Se encontraron 4 IPs para actualizar.
+mnt-info: 2025-09-10T16:40:43.638418 - [🏁] Proceso de actualización finalizado.
+mnt-info: 2025-09-10T16:50:38.719005 - [ℹ️] Se encontraron 7 IPs para actualizar.
+mnt-info: 2025-09-10T16:50:47.237295 - [🏁] Proceso de actualización finalizado.
+mnt-info: 2025-09-10T17:00:41.517634 - [ℹ️] Se encontraron 10 IPs para actualizar.
+mnt-info: 2025-09-10T17:00:53.642135 - [🏁] Proceso de actualización finalizado.
+mnt-info: 2025-09-10T17:10:39.513245 - [ℹ️] Se encontraron 10 IPs para actualizar.
+mnt-info: 2025-09-10T17:10:51.635690 - [🏁] Proceso de actualización finalizado.
+mnt-info: 2025-09-10T17:20:39.619390 - [ℹ️] Se encontraron 11 IPs para actualizar.
+mnt-info: 2025-09-10T17:20:52.937889 - [🏁] Proceso de actualización finalizado.
+mnt-info: 2025-09-10T17:30:39.116411 - [ℹ️] Se encontraron 9 IPs para actualizar.
+mnt-info: 2025-09-10T17:30:50.043246 - [🏁] Proceso de actualización finalizado.
 
 ==> /var/log/batch_kern_logs.log <==
-  File "/opt/monitoring/log_ingestor/log_kern_batch.py", line 10, in <module>
-    load_dotenv("/opt/monitoring/smtp_relay/.env")
-    ^^^^^^^^^^^
-NameError: name 'load_dotenv' is not defined
-Traceback (most recent call last):
-  File "/opt/monitoring/log_ingestor/log_kern_batch.py", line 10, in <module>
-    load_dotenv("/opt/monitoring/smtp_relay/.env")
-    ^^^^^^^^^^^
-NameError: name 'load_dotenv' is not defined
-Traceback (most recent call last):
-  File "/opt/monitoring/log_ingestor/log_kern_batch.py", line 10, in <module>
-    load_dotenv("/opt/monitoring/smtp_relay/.env")
-    ^^^^^^^^^^^
-NameError: name 'load_dotenv' is not defined
-2025-08-24 18:30:03 [🚀]: Iniciando procesamiento de logs...
-2025-08-24 18:30:03 [❌]: Error conectando a la base de datos: could not translate host name "srv-captain--security250226app" to address: Temporary failure in name resolution
-
-2025-08-24 18:30:03 [📜]: Líneas obtenidas del log: 0
-2025-08-24 18:30:03 [📜]: Total de líneas obtenidas del log: 0
-2025-08-24 18:30:03 [🔍]: No hay nuevas líneas en el log.
+mnt-info: 2025-09-10T17:00:35.711268 - [🚀]: Iniciando procesamiento de logs...
+mnt-info: 2025-09-10T17:00:36.111103 - [✅]: Conexión a la base de datos exitosa.
+mnt-info: 2025-09-10T17:00:36.211236 - [📜]: Líneas obtenidas del log: 0
+mnt-info: 2025-09-10T17:00:36.211294 - [📜]: Total de líneas obtenidas del log: 0
+mnt-info: 2025-09-10T17:00:36.211302 - [🔍]: No hay nuevas líneas en el log.
+mnt-info: 2025-09-10T17:10:33.728500 - [🚀]: Iniciando procesamiento de logs...
+mnt-info: 2025-09-10T17:10:34.114618 - [✅]: Conexión a la base de datos exitosa.
+mnt-info: 2025-09-10T17:10:34.211150 - [📜]: Líneas obtenidas del log: 0
+mnt-info: 2025-09-10T17:10:34.211204 - [📜]: Total de líneas obtenidas del log: 0
+mnt-info: 2025-09-10T17:10:34.211214 - [🔍]: No hay nuevas líneas en el log.
+mnt-info: 2025-09-10T17:20:34.118763 - [🚀]: Iniciando procesamiento de logs...
+mnt-info: 2025-09-10T17:20:34.609481 - [✅]: Conexión a la base de datos exitosa.
+mnt-info: 2025-09-10T17:20:34.712450 - [📜]: Líneas obtenidas del log: 0
+mnt-info: 2025-09-10T17:20:34.712507 - [📜]: Total de líneas obtenidas del log: 0
+mnt-info: 2025-09-10T17:20:34.712517 - [🔍]: No hay nuevas líneas en el log.
+mnt-info: 2025-09-10T17:30:33.509851 - [🚀]: Iniciando procesamiento de logs...
+mnt-info: 2025-09-10T17:30:33.925051 - [✅]: Conexión a la base de datos exitosa.
+mnt-info: 2025-09-10T17:30:34.110200 - [📜]: Líneas obtenidas del log: 0
+mnt-info: 2025-09-10T17:30:34.110254 - [📜]: Total de líneas obtenidas del log: 0
+mnt-info: 2025-09-10T17:30:34.110264 - [🔍]: No hay nuevas líneas en el log.
 
 ==> /var/log/cloud-init-output.log <==
 ci-info: |   3   | 165.22.80.0 |   0.0.0.0   | 255.255.240.0 |    eth0   |   U   |
@@ -137,131 +137,150 @@ Cloud-init v. 25.1.4-0ubuntu0~24.04.1 finished at Tue, 09 Sep 2025 22:12:31 +000
 2025-09-09 22:12:31,371 - handlers.py[DEBUG]: finish: modules-final: SUCCESS: running modules for final
 
 ==> /var/log/configure_docker_limits.log <==
-2025-09-09 22:13:24 [✅]: Docker está en ejecución.
-2025-09-09 22:13:24 [🔍]: Verificando el contenedor f378768d0810...
-2025-09-09 22:13:24 [⚙️]: Aplicando límites al contenedor f378768d0810...
-f378768d0810
-2025-09-09 22:13:24 [✅]: Límites aplicados correctamente a f378768d0810.
-2025-09-09 22:13:24 [🔍]: Verificando el contenedor 56cb025684b3...
-2025-09-09 22:13:24 [⚙️]: Aplicando límites al contenedor 56cb025684b3...
-56cb025684b3
-2025-09-09 22:13:24 [✅]: Límites aplicados correctamente a 56cb025684b3.
-2025-09-09 22:13:24 [🔍]: Verificando el contenedor 07de94f6ee4c...
-2025-09-09 22:13:24 [⚙️]: Aplicando límites al contenedor 07de94f6ee4c...
-07de94f6ee4c
-2025-09-09 22:13:24 [✅]: Límites aplicados correctamente a 07de94f6ee4c.
-2025-09-09 22:13:24 [🔍]: Verificando el contenedor e8b3c91d5357...
-2025-09-09 22:13:24 [⚙️]: Aplicando límites al contenedor e8b3c91d5357...
-e8b3c91d5357
-2025-09-09 22:13:24 [✅]: Límites aplicados correctamente a e8b3c91d5357.
-2025-09-09 22:13:24 [🔍]: Verificando el contenedor 2845a26076ba...
-2025-09-09 22:13:24 [ℹ️]: El contenedor 2845a26076ba ya tiene límites configurados.
-2025-09-09 22:13:24 [🎯]: Proceso de configuración de límites completado.
+2025-09-10 17:30:01 [⚙️]: Aplicando límites al contenedor 3c45d5b125b3...
+3c45d5b125b3
+2025-09-10 17:30:01 [✅]: Límites aplicados correctamente a 3c45d5b125b3.
+2025-09-10 17:30:01 [🔍]: Verificando el contenedor 62eef21eac48...
+2025-09-10 17:30:02 [⚙️]: Aplicando límites al contenedor 62eef21eac48...
+62eef21eac48
+2025-09-10 17:30:02 [✅]: Límites aplicados correctamente a 62eef21eac48.
+2025-09-10 17:30:02 [🔍]: Verificando el contenedor 29fcafb4ee09...
+2025-09-10 17:30:02 [⚙️]: Aplicando límites al contenedor 29fcafb4ee09...
+29fcafb4ee09
+2025-09-10 17:30:02 [✅]: Límites aplicados correctamente a 29fcafb4ee09.
+2025-09-10 17:30:02 [🔍]: Verificando el contenedor 1ece97e488a0...
+2025-09-10 17:30:02 [ℹ️]: El contenedor 1ece97e488a0 ya tiene límites configurados.
+2025-09-10 17:30:02 [🔍]: Verificando el contenedor d20bffa62529...
+2025-09-10 17:30:02 [ℹ️]: El contenedor d20bffa62529 ya tiene límites configurados.
+2025-09-10 17:30:02 [🔍]: Verificando el contenedor e8b3c91d5357...
+2025-09-10 17:30:02 [ℹ️]: El contenedor e8b3c91d5357 ya tiene límites configurados.
+2025-09-10 17:30:02 [🔍]: Verificando el contenedor 2845a26076ba...
+2025-09-10 17:30:02 [ℹ️]: El contenedor 2845a26076ba ya tiene límites configurados.
+2025-09-10 17:30:02 [🎯]: Proceso de configuración de límites completado.
 
 ==> /var/log/docker_resources.log <==
-Traceback (most recent call last):
-  File "/usr/local/bin/docker_resources.py", line 5, in <module>
-    from scripts.utils import log_info, send_email
-ModuleNotFoundError: No module named 'scripts'
-Traceback (most recent call last):
-  File "/usr/local/bin/docker_resources.py", line 5, in <module>
-    from scripts.utils import log_info, send_email
-ModuleNotFoundError: No module named 'scripts'
-Traceback (most recent call last):
-  File "/usr/local/bin/docker_resources.py", line 5, in <module>
-    from scripts.utils import log_info, send_email
-ModuleNotFoundError: No module named 'scripts'
-Traceback (most recent call last):
-  File "/usr/local/bin/docker_resources.py", line 5, in <module>
-    from scripts.utils import log_info, send_email
-ModuleNotFoundError: No module named 'scripts'
-Traceback (most recent call last):
-  File "/usr/local/bin/docker_resources.py", line 5, in <module>
-    from scripts.utils import log_info, send_email
-ModuleNotFoundError: No module named 'scripts'
+mnt-info: | 0.0%         | 9.5%       | 37.4       | 393.0      | smtp-relay                |
+mnt-info: | 2.7%         | 13.3%      | 52.3       | 393.0      | srv-captain--security250226app.1.wpn1r8tvr9wl9uk153xpb6nsx |
+mnt-info: | 0.0%         | 0.7%       | 2.6        | 393.0      | data-container_data-container_1 |
+mnt-info: +--------------+------------+------------+------------+-----------------------------------------------------------+
+mnt-info: 2025-09-10T17:20:36.907141 - No se han detectado contenedores en riesgo.
+mnt-info: 2025-09-10T17:20:36.907176 - ===== Fin de ejecución =====
+mnt-info: 2025-09-10T17:30:33.008012 - ===== Inicio de ejecución =====
+mnt-info: +--------------+------------+------------+------------+-----------------------------------------------------------+
+mnt-info: |    CPU %     |   MEM %    |   Uso_MB   |  Limite_MB |                         Contenedor                        |
+mnt-info: +--------------+------------+------------+------------+-----------------------------------------------------------+
+mnt-info: | 0.0%         | 0.4%       | 1.6        | 393.0      | captain-certbot.1.ftdmlk9jwyb460xkwrj3azxif |
+mnt-info: | 0.0%         | 0.7%       | 2.7        | 393.0      | captain-nginx.1.3dvy4qsc295yv2mws7cofwrkt |
+mnt-info: | 0.0%         | 10.0%      | 39.1       | 393.0      | captain-captain.1.umoeqmpohh1p7fmpmht8eu54g |
+mnt-info: | 10.1%        | 37.0%      | 145.5      | 393.0      | monitoring-cron           |
+mnt-info: | 0.0%         | 9.5%       | 37.4       | 393.0      | smtp-relay                |
+mnt-info: | 5.4%         | 12.1%      | 47.7       | 393.0      | srv-captain--security250226app.1.wpn1r8tvr9wl9uk153xpb6nsx |
+mnt-info: | 0.0%         | 0.7%       | 2.6        | 393.0      | data-container_data-container_1 |
+mnt-info: +--------------+------------+------------+------------+-----------------------------------------------------------+
+mnt-info: 2025-09-10T17:30:36.613478 - No se han detectado contenedores en riesgo.
+mnt-info: 2025-09-10T17:30:36.613501 - ===== Fin de ejecución =====
 
 ==> /var/log/docker_resources_history.log <==
-dr-info: +--------------+----------------------------------+----------------------------------+-------------------------------+--------------------------------------------------------------+
-dr-info: | CONTAINER ID | MEM USAGE/LIMIT                  | SWAP USAGE/LIMIT                 | CPU USAGE/LIMIT               | NAME                                                             
-dr-info: +--------------+----------------------------------+----------------------------------+-------------------------------+--------------------------------------------------------------+
-dr-info: | 3c9ebefd8d2d | 51.32MiB / No definido (N/A %)   | 51.32MiB / No definido (N/A %)   | N/A % / No definido           | captain-captain.1.nqmy79ajr06glvpd8f51ggh49                      
-dr-info: | 7f13309d6403 | 1.582MiB / 393 MiB (0.5 %)       | 1.582MiB / 786 MiB (0.3 %)       | N/A % / 100 MiliCores         | captain-certbot.1.m009zohpfl8zfk2w8isdqc5l0                      
-dr-info: | 85e0f44c1489 | 0B / 393 MiB (0.0 %)             | 0B / 786 MiB (0.0 %)             | N/A % / 100 MiliCores         | captain-nginx.1.qtfkqqcyxtiq40dq9116b8zyo                        
-dr-info: | 99aba7115a2a | 59.97MiB / 393 MiB (15.3 %)      | 59.97MiB / 786 MiB (7.6 %)       | N/A % / 100 MiliCores         | srv-captain--security250226app.1.gtcghw45t9o2im9q839g9dqjl       
-dr-info: | 2845a26076ba | 7.27MiB / 393 MiB (1.8 %)        | 7.27MiB / 786 MiB (0.9 %)        | N/A % / 100 MiliCores         | data-container_data-container_1                                  
-dr-info: +--------------+----------------------------------+----------------------------------+-------------------------------+--------------------------------------------------------------+
-dr-info: ===== 2025-08-24 18:30:01 =====
-dr-info: ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++Docker Resources+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-dr-info: +--------------+----------------------------------+----------------------------------+-------------------------------+--------------------------------------------------------------+
-dr-info: | CONTAINER ID | MEM USAGE/LIMIT                  | SWAP USAGE/LIMIT                 | CPU USAGE/LIMIT               | NAME                                                             
-dr-info: +--------------+----------------------------------+----------------------------------+-------------------------------+--------------------------------------------------------------+
-dr-info: | d37816bebd3a | 1.617MiB / No definido (N/A %)   | 1.617MiB / No definido (N/A %)   | N/A % / No definido           | captain-certbot.1.00kqlkv25xs6gey72705immyq                      
-dr-info: | 5b28c617fae9 | 2.707MiB / 393 MiB (0.8 %)       | 2.707MiB / 786 MiB (0.4 %)       | N/A % / 100 MiliCores         | captain-nginx.1.if8neg7tjaqcsuoksrmpfygih                        
-dr-info: | 700d23dbd7e3 | 38.99MiB / 393 MiB (9.9 %)       | 38.99MiB / 786 MiB (5.0 %)       | N/A % / 100 MiliCores         | captain-captain.1.hxqcsby7v3gjfzu9h82xttpsp                      
-dr-info: | 3612e9a401d3 | 56.09MiB / 393 MiB (14.2 %)      | 56.09MiB / 786 MiB (7.1 %)       | N/A % / 100 MiliCores         | srv-captain--security250226app.1.tmovpk0y629d30g34zif2rucr       
-dr-info: | 2845a26076ba | 7.195MiB / 393 MiB (1.8 %)       | 7.195MiB / 786 MiB (0.9 %)       | N/A % / 100 MiliCores         | data-container_data-container_1                                  
-dr-info: +--------------+----------------------------------+----------------------------------+-------------------------------+--------------------------------------------------------------+
-
+mnt-info: | 0.0%         | 0.4%       | 1.6        | 393.0      | captain-certbot.1.0aexm22pt4chcl338moqtih2o |
+mnt-info: | 0.0%         | 0.7%       | 2.7        | 393.0      | captain-nginx.1.zizh2snflqt0ncbb5my2qi8c9 |
+mnt-info: | 0.4%         | 9.9%       | 38.7       | 393.0      | captain-captain.1.n7x4tp2tt0g3rhr986zidd4ho |
+mnt-info: | 10.0%        | 37.0%      | 145.4      | 393.0      | monitoring-cron           |
+mnt-info: | 0.0%         | 9.5%       | 37.4       | 393.0      | smtp-relay                |
+mnt-info: | 2.7%         | 13.3%      | 52.3       | 393.0      | srv-captain--security250226app.1.wpn1r8tvr9wl9uk153xpb6nsx |
+mnt-info: | 0.0%         | 0.7%       | 2.6        | 393.0      | data-container_data-container_1 |
+mnt-info: +--------------+------------+------------+------------+-----------------------------------------------------------+
+mnt-info: [2025-09-10 17:30:36]
+mnt-info: +--------------+------------+------------+------------+-----------------------------------------------------------+
+mnt-info: |    CPU %     |   MEM %    |   Uso_MB   |  Limite_MB |                         Contenedor                        |
+mnt-info: +--------------+------------+------------+------------+-----------------------------------------------------------+
+mnt-info: | 0.0%         | 0.4%       | 1.6        | 393.0      | captain-certbot.1.ftdmlk9jwyb460xkwrj3azxif |
+mnt-info: | 0.0%         | 0.7%       | 2.7        | 393.0      | captain-nginx.1.3dvy4qsc295yv2mws7cofwrkt |
+mnt-info: | 0.0%         | 10.0%      | 39.1       | 393.0      | captain-captain.1.umoeqmpohh1p7fmpmht8eu54g |
+mnt-info: | 10.1%        | 37.0%      | 145.5      | 393.0      | monitoring-cron           |
+mnt-info: | 0.0%         | 9.5%       | 37.4       | 393.0      | smtp-relay                |
+mnt-info: | 5.4%         | 12.1%      | 47.7       | 393.0      | srv-captain--security250226app.1.wpn1r8tvr9wl9uk153xpb6nsx |
+mnt-info: | 0.0%         | 0.7%       | 2.6        | 393.0      | data-container_data-container_1 |
+mnt-info: +--------------+------------+------------+------------+-----------------------------------------------------------+
 ==> /var/log/dpkg.log <==
-2025-09-06 06:36:48 startup archives unpack
-2025-09-06 06:36:49 upgrade do-agent:amd64 3.16.11 3.18.2
-2025-09-06 06:36:49 status half-configured do-agent:amd64 3.16.11
-2025-09-06 06:36:49 status unpacked do-agent:amd64 3.16.11
-2025-09-06 06:36:49 status half-installed do-agent:amd64 3.16.11
-2025-09-06 06:36:49 status unpacked do-agent:amd64 3.18.2
-2025-09-06 06:36:49 startup packages configure
-2025-09-06 06:36:49 configure do-agent:amd64 3.18.2 <none>
-2025-09-06 06:36:49 status unpacked do-agent:amd64 3.18.2
-2025-09-06 06:36:49 status half-configured do-agent:amd64 3.18.2
-2025-09-06 06:36:50 status installed do-agent:amd64 3.18.2
+2025-09-09 22:24:51 status half-installed linux-headers-6.8.0-71-generic:amd64 6.8.0-71.71
+2025-09-09 22:24:51 status config-files linux-headers-6.8.0-71-generic:amd64 6.8.0-71.71
+2025-09-09 22:24:51 status not-installed linux-headers-6.8.0-71-generic:amd64 <none>
+2025-09-09 22:24:51 startup packages configure
+2025-09-09 22:24:54 startup packages remove
+2025-09-09 22:24:54 status installed linux-tools-6.8.0-71:amd64 6.8.0-71.71
+2025-09-09 22:24:54 remove linux-tools-6.8.0-71:amd64 6.8.0-71.71 <none>
+2025-09-09 22:24:54 status half-configured linux-tools-6.8.0-71:amd64 6.8.0-71.71
+2025-09-09 22:24:54 status half-installed linux-tools-6.8.0-71:amd64 6.8.0-71.71
+2025-09-09 22:24:54 status config-files linux-tools-6.8.0-71:amd64 6.8.0-71.71
+2025-09-09 22:24:54 status not-installed linux-tools-6.8.0-71:amd64 <none>
+2025-09-09 22:24:54 startup packages configure
+2025-09-09 22:24:57 startup packages remove
+2025-09-09 22:24:57 status installed linux-headers-6.8.0-71:all 6.8.0-71.71
+2025-09-09 22:24:57 remove linux-headers-6.8.0-71:all 6.8.0-71.71 <none>
+2025-09-09 22:24:57 status half-configured linux-headers-6.8.0-71:all 6.8.0-71.71
+2025-09-09 22:24:57 status half-installed linux-headers-6.8.0-71:all 6.8.0-71.71
+2025-09-09 22:24:58 status config-files linux-headers-6.8.0-71:all 6.8.0-71.71
+2025-09-09 22:24:58 status not-installed linux-headers-6.8.0-71:all <none>
+2025-09-09 22:24:58 startup packages configure
 
 ==> /var/log/droplet-agent.update.log <==
-Waiting 222 seconds
+Waiting 278 seconds
+Checking architecture support...OK
+Preparing to check for update
+Package Host: https://repos-droplet.digitalocean.com
+Package Path: apt/droplet-agent/pool/main/main/d/droplet-agent/droplet-agent_
+Keyring Path: apt/droplet-agent/pool/main/main/d/droplet-agent-keyring/droplet-agent-keyring_
+Local Keyring:2.0.0
+Local Version:1.2.11
+Checking Latest Version...
+Latest keyring package:2.0.0
+Latest agent package:1.2.1
+Updating droplet-agent deb package
 
 ==> /var/log/fail2ban.log <==
-2025-09-09 22:12:25,970 fail2ban.filter         [917]: INFO      findtime: 600
-2025-09-09 22:12:25,970 fail2ban.actions        [917]: INFO      banTime: 3600
-2025-09-09 22:12:25,970 fail2ban.filter         [917]: INFO      encoding: UTF-8
-2025-09-09 22:12:25,970 fail2ban.jail           [917]: INFO    Creating new jail 'nginx-limit-req'
-2025-09-09 22:12:25,970 fail2ban.jail           [917]: INFO    Jail 'nginx-limit-req' uses systemd {}
-2025-09-09 22:12:25,991 fail2ban.jail           [917]: INFO    Initiated 'systemd' backend
-2025-09-09 22:12:25,995 fail2ban.filtersystemd  [917]: INFO    [nginx-limit-req] Added journal match for: '_SYSTEMD_UNIT=nginx.service + _COMM=nginx'
-2025-09-09 22:12:25,995 fail2ban.filter         [917]: INFO      maxRetry: 20
-2025-09-09 22:12:25,995 fail2ban.filter         [917]: INFO      findtime: 60
-2025-09-09 22:12:25,995 fail2ban.actions        [917]: INFO      banTime: 3600
-2025-09-09 22:12:25,995 fail2ban.filter         [917]: INFO      encoding: UTF-8
-2025-09-09 22:12:25,997 fail2ban.transmitter    [917]: ERROR   Jail 'nginx-badbots' skipped, because of wrong configuration: Unable to read the filter 'nginx-badbots'
-2025-09-09 22:12:25,997 fail2ban.transmitter    [917]: ERROR   Jail 'nginx-noscript' skipped, because of wrong configuration: Unable to read the filter 'nginx-noscript'
-2025-09-09 22:12:26,005 fail2ban.jail           [917]: INFO    Jail 'sshd' started
-2025-09-09 22:12:26,013 fail2ban.jail           [917]: INFO    Jail 'nginx-http-auth' started
-2025-09-09 22:12:26,022 fail2ban.jail           [917]: INFO    Jail 'nginx-limit-req' started
-2025-09-09 22:12:26,337 fail2ban.filtersystemd  [917]: INFO    [nginx-limit-req] Jail is in operation now (process new journal entries)
-2025-09-09 22:12:26,337 fail2ban.filtersystemd  [917]: INFO    [nginx-http-auth] Jail is in operation now (process new journal entries)
-2025-09-09 22:12:26,797 fail2ban.filtersystemd  [917]: INFO    [sshd] Jail is in operation now (process new journal entries)
-2025-09-09 22:19:30,056 fail2ban.filter         [917]: INFO    [sshd] Found 117.53.46.76 - 2025-09-09 22:19:29
+2025-09-10 17:09:42,768 fail2ban.actions        [917]: NOTICE  [sshd] Unban 176.94.185.62
+2025-09-10 17:12:35,304 fail2ban.filter         [917]: INFO    [sshd] Found 68.183.90.146 - 2025-09-10 17:12:35
+2025-09-10 17:14:59,553 fail2ban.filter         [917]: INFO    [sshd] Found 101.126.143.71 - 2025-09-10 17:14:59
+2025-09-10 17:15:36,134 fail2ban.filter         [917]: INFO    [sshd] Found 68.183.90.146 - 2025-09-10 17:15:35
+2025-09-10 17:17:35,252 fail2ban.filter         [917]: INFO    [sshd] Found 80.94.95.15 - 2025-09-10 17:17:34
+2025-09-10 17:17:50,053 fail2ban.filter         [917]: INFO    [sshd] Found 146.70.251.81 - 2025-09-10 17:17:49
+2025-09-10 17:18:31,142 fail2ban.filter         [917]: INFO    [sshd] Found 68.183.90.146 - 2025-09-10 17:18:30
+2025-09-10 17:18:31,243 fail2ban.actions        [917]: NOTICE  [sshd] Ban 68.183.90.146
+2025-09-10 17:18:58,303 fail2ban.filter         [917]: INFO    [sshd] Found 150.139.194.15 - 2025-09-10 17:18:58
+2025-09-10 17:20:21,553 fail2ban.filter         [917]: INFO    [sshd] Found 64.62.197.63 - 2025-09-10 17:20:21
+2025-09-10 17:20:44,053 fail2ban.filter         [917]: INFO    [sshd] Found 80.94.95.112 - 2025-09-10 17:20:43
+2025-09-10 17:20:59,298 fail2ban.filter         [917]: INFO    [sshd] Found 146.70.251.81 - 2025-09-10 17:20:58
+2025-09-10 17:22:07,759 fail2ban.filter         [917]: INFO    [sshd] Found 146.70.251.81 - 2025-09-10 17:22:07
+2025-09-10 17:22:08,062 fail2ban.actions        [917]: NOTICE  [sshd] Ban 146.70.251.81
+2025-09-10 17:24:32,802 fail2ban.filter         [917]: INFO    [sshd] Found 80.94.95.112 - 2025-09-10 17:24:32
+2025-09-10 17:24:49,718 fail2ban.filter         [917]: INFO    [sshd] Found 101.126.143.71 - 2025-09-10 17:24:49
+2025-09-10 17:25:30,021 fail2ban.filter         [917]: INFO    [sshd] Found 14.63.196.175 - 2025-09-10 17:25:29
+2025-09-10 17:28:10,009 fail2ban.filter         [917]: INFO    [sshd] Found 150.139.194.15 - 2025-09-10 17:28:09
+2025-09-10 17:34:07,054 fail2ban.filter         [917]: INFO    [sshd] Found 101.126.143.71 - 2025-09-10 17:34:06
+2025-09-10 17:35:22,009 fail2ban.filter         [917]: INFO    [sshd] Found 14.63.196.175 - 2025-09-10 17:35:21
 
 ==> /var/log/kern.log <==
 
 ==> /var/log/log_fail2ban_logs.log <==
-    ^^^^^^^^^^^
-NameError: name 'load_dotenv' is not defined
-Traceback (most recent call last):
-  File "/opt/monitoring/log_ingestor/log_fail2ban_batch.py", line 11, in <module>
-    load_dotenv("/opt/monitoring/smtp_relay/.env")
-    ^^^^^^^^^^^
-NameError: name 'load_dotenv' is not defined
-Traceback (most recent call last):
-  File "/opt/monitoring/log_ingestor/log_fail2ban_batch.py", line 11, in <module>
-    load_dotenv("/opt/monitoring/smtp_relay/.env")
-    ^^^^^^^^^^^
-NameError: name 'load_dotenv' is not defined
-2025-08-24 18:30:03 [🚀]: Iniciando procesamiento de logs...
-2025-08-24 18:30:03 [❌]: Error conectando a la base de datos: could not translate host name "srv-captain--security250226app" to address: Temporary failure in name resolution
-
-2025-08-24 18:30:03 [📜]: Líneas obtenidas del log: 230
-2025-08-24 18:30:03 [⚡]: Líneas después del filtrado: 230
-2025-08-24 18:30:03 [📜]: Total de líneas obtenidas del log: 230
-2025-08-24 18:30:03 [❌]: Error conectando a la base de datos: could not translate host name "srv-captain--security250226app" to address: Temporary failure in name resolution
-
+mnt-info: 2025-09-10T17:10:36.108308 - [✅]: Conexión a la base de datos exitosa.
+mnt-info: 2025-09-10T17:10:36.209158 - [✅]: attacking_no actualizado correctamente.
+mnt-info: 2025-09-10T17:20:34.114004 - [🚀]: Iniciando procesamiento de logs...
+mnt-info: 2025-09-10T17:20:34.512111 - [✅]: Conexión a la base de datos exitosa.
+mnt-info: 2025-09-10T17:20:34.616727 - [📜]: Líneas obtenidas del log: 526
+mnt-info: 2025-09-10T17:20:35.318059 - [⚡]: Líneas después del filtrado: 9
+mnt-info: 2025-09-10T17:20:35.318152 - [📜]: Total de líneas obtenidas del log: 9
+mnt-info: 2025-09-10T17:20:35.713584 - [✅]: Conexión a la base de datos exitosa.
+mnt-info: 2025-09-10T17:20:35.812007 - [✅]: 9 registros insertados en la base de datos.
+mnt-info: 2025-09-10T17:20:36.107227 - [✅]: Conexión a la base de datos exitosa.
+mnt-info: 2025-09-10T17:20:36.216003 - [✅]: attacking_no actualizado correctamente.
+mnt-info: 2025-09-10T17:30:33.518777 - [🚀]: Iniciando procesamiento de logs...
+mnt-info: 2025-09-10T17:30:33.928116 - [✅]: Conexión a la base de datos exitosa.
+mnt-info: 2025-09-10T17:30:34.114729 - [📜]: Líneas obtenidas del log: 534
+mnt-info: 2025-09-10T17:30:34.909511 - [⚡]: Líneas después del filtrado: 8
+mnt-info: 2025-09-10T17:30:34.909624 - [📜]: Total de líneas obtenidas del log: 8
+mnt-info: 2025-09-10T17:30:35.307827 - [✅]: Conexión a la base de datos exitosa.
+mnt-info: 2025-09-10T17:30:35.317019 - [✅]: 8 registros insertados en la base de datos.
+mnt-info: 2025-09-10T17:30:35.607206 - [✅]: Conexión a la base de datos exitosa.
+mnt-info: 2025-09-10T17:30:35.713992 - [✅]: attacking_no actualizado correctamente.
 
 ==> /var/log/mail.log <==
