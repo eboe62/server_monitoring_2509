@@ -1,0 +1,24 @@
+version: "3.8"
+
+services:
+  monitoring-python:
+    image: monitoring-python:latest
+    container_name: monitoring-python
+    restart: unless-stopped
+    volumes:
+      # Montamos la estructura completa del proyecto
+      - /opt/monitoring:/opt/monitoring
+
+      # Logs del host para que los scripts puedan escribir ahí
+      - /var/log:/var/log
+
+      # Acceso al socket de Docker (para docker_resources.sh y .py)
+      - /var/run/docker.sock:/var/run/docker.sock
+
+    networks:
+      - captain-overlay-network
+
+networks:
+  captain-overlay-network:
+    external: true
+

@@ -70,9 +70,20 @@ build-cron:  ## Construye imagen Cron sin cache
 rebuild: build-base build-python build-cron  ## Reconstruye todas las imágenes sin cache
 rebuild-all: rebuild deploy-cron  ## Reconstruye e inmediatamente redepliega cron
 
+# --- Base ---
+build-base:  ## Construye imagen base con requirements
+	docker build -t monitoring-base -f Dockerfile.base .
+
 # --- Cron ---
-deploy-cron:  ## Despliega contenedor de cron jobs
+deploy-cron: build-base  ## Despliega contenedor de cron jobs
 	cd $(BASE_DIR)/cron && \
+	docker-compose down -v && \
+	docker-compose build --no-cache && \
+	docker-compose up -d
+
+# --- Python ---
+deploy-python: build-base  ## Despliega contenedor python
+	cd $(BASE_DIR)/python && \
 	docker-compose down -v && \
 	docker-compose build --no-cache && \
 	docker-compose up -d
