@@ -57,9 +57,6 @@ logs:  ## Muestra últimos registros y genera logs_summary.txt
 	git push origin develop
 
 # --- Builds (siempre con no-cache) ---
-build-base:  ## Construye imagen base sin cache
-	docker build --no-cache -f Dockerfile.base -t monitoring-base $(BASE_DIR)
-
 build-python:  ## Construye imagen Python sin cache
 	docker build --no-cache -f python/Dockerfile -t monitoring-python $(BASE_DIR)
 
@@ -71,8 +68,9 @@ rebuild: build-base build-python build-cron  ## Reconstruye todas las imágenes 
 rebuild-all: rebuild deploy-cron  ## Reconstruye e inmediatamente redepliega cron
 
 # --- Base ---
-build-base:  ## Construye imagen base con requirements
-	docker build -t monitoring-base -f Dockerfile.base .
+build-base:  ## Construye imagen base sin cache (incluye requirements)
+	docker build --no-cache -f Dockerfile.base -t monitoring-base $(BASE_DIR)
+
 
 # --- Cron ---
 deploy-cron: build-base  ## Despliega contenedor de cron jobs
