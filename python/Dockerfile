@@ -1,6 +1,7 @@
 # Imagen para ejecutar scripts Python
 FROM monitoring-base
 
-# ENTRYPOINT genérico para ejecutar scripts
-ENTRYPOINT ["python3"]
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+ENTRYPOINT ["docker-entrypoint.sh"]
 

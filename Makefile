@@ -50,11 +50,7 @@ status:
 logs:  ## Muestra últimos registros y genera logs_summary.txt
 	@echo "=== Mostrando últimos 20 registros ==="
 	@sleep 40  # latencia para dar tiempo a que arranquen los contenedores
-	@tail -n 20 /var/log/*.log | tee logs_summary.txt
-	@echo "Resumen generado en logs_summary.txt"
-	git add logs_summary.txt
-	git commit -m "logs latest $$(date +%Y%m%d%H%M%S)"
-	git push origin develop
+	@tail -n 20 /var/log/*.log
 
 # --- Builds (siempre con no-cache) ---
 build-python:  ## Construye imagen Python sin cache
