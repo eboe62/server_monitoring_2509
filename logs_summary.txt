@@ -5,26 +5,26 @@
 ==> /var/log/apport.log <==
 
 ==> /var/log/auth.log <==
-2025-09-10T23:12:00.076407+00:00 eob-250501a sshd[2430]: Received disconnect from 207.180.229.239 port 45056:11: Bye Bye [preauth]
-2025-09-10T23:12:00.077833+00:00 eob-250501a sshd[2430]: Disconnected from authenticating user root 207.180.229.239 port 45056 [preauth]
-2025-09-10T23:12:12.371286+00:00 eob-250501a sshd[2470]: Accepted publickey for root from 91.126.43.112 port 17124 ssh2: RSA SHA256:YUDRPAU115MCwkF4S/wLFXV0Y7kLUTQ4QUL7H3Lc0ac
-2025-09-10T23:12:12.375020+00:00 eob-250501a sshd[2470]: pam_unix(sshd:session): session opened for user root(uid=0) by root(uid=0)
-2025-09-10T23:12:12.398245+00:00 eob-250501a systemd-logind[736]: New session 3 of user root.
-2025-09-10T23:12:12.428642+00:00 eob-250501a (systemd): pam_unix(systemd-user:session): session opened for user root(uid=0) by root(uid=0)
-2025-09-10T23:12:30.568546+00:00 eob-250501a CRON[955]: pam_unix(cron:session): session closed for user root
-2025-09-10T23:13:07.436522+00:00 eob-250501a sshd[2976]: Invalid user test3 from 207.180.229.239 port 43132
-2025-09-10T23:13:07.460591+00:00 eob-250501a sshd[2976]: Received disconnect from 207.180.229.239 port 43132:11: Bye Bye [preauth]
-2025-09-10T23:13:07.460733+00:00 eob-250501a sshd[2976]: Disconnected from invalid user test3 207.180.229.239 port 43132 [preauth]
-2025-09-10T23:14:12.486983+00:00 eob-250501a sshd[5374]: Invalid user UBUNTU from 207.180.229.239 port 41202
-2025-09-10T23:14:12.500786+00:00 eob-250501a sshd[5374]: Received disconnect from 207.180.229.239 port 41202:11: Bye Bye [preauth]
-2025-09-10T23:14:12.500942+00:00 eob-250501a sshd[5374]: Disconnected from invalid user UBUNTU 207.180.229.239 port 41202 [preauth]
-2025-09-10T23:14:27.580304+00:00 eob-250501a sshd[5446]: Received disconnect from 193.46.255.33 port 48372:11:  [preauth]
-2025-09-10T23:14:27.584360+00:00 eob-250501a sshd[5446]: Disconnected from authenticating user root 193.46.255.33 port 48372 [preauth]
-2025-09-10T23:15:01.574753+00:00 eob-250501a CRON[6046]: pam_unix(cron:session): session opened for user root(uid=0) by root(uid=0)
-2025-09-10T23:15:01.581759+00:00 eob-250501a CRON[6046]: pam_unix(cron:session): session closed for user root
-2025-09-10T23:15:17.217968+00:00 eob-250501a sshd[6079]: Invalid user odoo from 207.180.229.239 port 39272
-2025-09-10T23:15:17.227741+00:00 eob-250501a sshd[6079]: Received disconnect from 207.180.229.239 port 39272:11: Bye Bye [preauth]
-2025-09-10T23:15:17.227863+00:00 eob-250501a sshd[6079]: Disconnected from invalid user odoo 207.180.229.239 port 39272 [preauth]
+2025-09-11T17:54:41.269131+00:00 eob-250501a sshd[4127]: Invalid user userm from 118.194.230.231 port 47264
+2025-09-11T17:54:41.527443+00:00 eob-250501a sshd[4127]: Received disconnect from 118.194.230.231 port 47264:11: Bye Bye [preauth]
+2025-09-11T17:54:41.527550+00:00 eob-250501a sshd[4127]: Disconnected from invalid user userm 118.194.230.231 port 47264 [preauth]
+2025-09-11T17:55:01.105857+00:00 eob-250501a CRON[4151]: pam_unix(cron:session): session opened for user root(uid=0) by root(uid=0)
+2025-09-11T17:55:01.112938+00:00 eob-250501a CRON[4151]: pam_unix(cron:session): session closed for user root
+2025-09-11T17:55:14.591095+00:00 eob-250501a sshd[4159]: Invalid user sshadmin from 194.0.234.93 port 28458
+2025-09-11T17:55:14.645534+00:00 eob-250501a sshd[4159]: Connection closed by invalid user sshadmin 194.0.234.93 port 28458 [preauth]
+2025-09-11T17:55:29.757496+00:00 eob-250501a sshd[4163]: Received disconnect from 193.46.255.99 port 51478:11:  [preauth]
+2025-09-11T17:55:29.758495+00:00 eob-250501a sshd[4163]: Disconnected from authenticating user root 193.46.255.99 port 51478 [preauth]
+2025-09-11T17:55:30.259009+00:00 eob-250501a sshd[4161]: Accepted publickey for root from 91.126.43.112 port 16510 ssh2: RSA SHA256:YUDRPAU115MCwkF4S/wLFXV0Y7kLUTQ4QUL7H3Lc0ac
+2025-09-11T17:55:30.263510+00:00 eob-250501a sshd[4161]: pam_unix(sshd:session): session opened for user root(uid=0) by root(uid=0)
+2025-09-11T17:55:30.303118+00:00 eob-250501a systemd-logind[739]: New session 5 of user root.
+2025-09-11T17:55:30.354021+00:00 eob-250501a (systemd): pam_unix(systemd-user:session): session opened for user root(uid=0) by root(uid=0)
+2025-09-11T17:55:39.812672+00:00 eob-250501a sshd[4448]: Invalid user username from 103.174.114.229 port 42668
+2025-09-11T18:00:01.117988+00:00 eob-250501a CRON[6036]: pam_unix(cron:session): session opened for user root(uid=0) by root(uid=0)
+2025-09-11T18:00:01.781262+00:00 eob-250501a CRON[6036]: pam_unix(cron:session): session closed for user root
+2025-09-11T18:00:50.530286+00:00 eob-250501a sshd[6283]: Received disconnect from 193.46.255.103 port 56340:11:  [preauth]
+2025-09-11T18:00:50.531536+00:00 eob-250501a sshd[6283]: Disconnected from authenticating user root 193.46.255.103 port 56340 [preauth]
+2025-09-11T18:04:58.361649+00:00 eob-250501a sshd[9967]: Invalid user user from 194.0.234.93 port 33880
+2025-09-11T18:04:58.422225+00:00 eob-250501a sshd[9967]: Connection closed by invalid user user 194.0.234.93 port 33880 [preauth]
 
 ==> /var/log/batch_attacking_logs.log <==
     load_dotenv("/opt/monitoring/smtp_relay/.env")
@@ -110,53 +110,52 @@ ci-info: +-------+-------------+---------+-----------+-------+
 + exit 0
 + logger -t DigitalOcean adding random seed to /dev/urandom
 + base64 -d
-Cloud-init v. 25.1.4-0ubuntu0~24.04.1 running 'modules:config' at Wed, 10 Sep 2025 23:11:31 +0000. Up 12.52 seconds.
-Cloud-init v. 25.1.4-0ubuntu0~24.04.1 running 'modules:final' at Wed, 10 Sep 2025 23:11:36 +0000. Up 17.39 seconds.
-Cloud-init v. 25.1.4-0ubuntu0~24.04.1 finished at Wed, 10 Sep 2025 23:11:36 +0000. Datasource DataSourceConfigDrive [net,ver=2][source=/dev/vdb].  Up 17.48 seconds
+Cloud-init v. 25.1.4-0ubuntu0~24.04.1 running 'modules:config' at Thu, 11 Sep 2025 17:49:27 +0000. Up 14.03 seconds.
+Cloud-init v. 25.1.4-0ubuntu0~24.04.1 running 'modules:final' at Thu, 11 Sep 2025 17:49:32 +0000. Up 19.30 seconds.
+Cloud-init v. 25.1.4-0ubuntu0~24.04.1 finished at Thu, 11 Sep 2025 17:49:32 +0000. Datasource DataSourceConfigDrive [net,ver=2][source=/dev/vdb].  Up 19.39 seconds
 
 ==> /var/log/cloud-init.log <==
-2025-09-10 23:11:36,469 - handlers.py[DEBUG]: start: modules-final/config-install_hotplug: running config-install_hotplug with frequency once-per-instance
-2025-09-10 23:11:36,469 - helpers.py[DEBUG]: config-install_hotplug already ran (freq=once-per-instance)
-2025-09-10 23:11:36,470 - handlers.py[DEBUG]: finish: modules-final/config-install_hotplug: SUCCESS: config-install_hotplug previously ran
-2025-09-10 23:11:36,470 - modules.py[DEBUG]: Running module final_message (<module 'cloudinit.config.cc_final_message' from '/usr/lib/python3/dist-packages/cloudinit/config/cc_final_message.py'>) with frequency always
-2025-09-10 23:11:36,470 - handlers.py[DEBUG]: start: modules-final/config-final_message: running config-final_message with frequency always
-2025-09-10 23:11:36,470 - helpers.py[DEBUG]: Running config-final_message using lock (<cloudinit.helpers.DummyLock object at 0x7e0f6ef6e210>)
-2025-09-10 23:11:36,470 - util.py[DEBUG]: Reading from /proc/uptime (quiet=False)
-2025-09-10 23:11:36,470 - util.py[DEBUG]: Reading 11 bytes from /proc/uptime
-2025-09-10 23:11:36,482 - performance.py[DEBUG]: Rendering jinja2 template took 0.012 seconds
-2025-09-10 23:11:36,482 - log_util.py[DEBUG]: Cloud-init v. 25.1.4-0ubuntu0~24.04.1 finished at Wed, 10 Sep 2025 23:11:36 +0000. Datasource DataSourceConfigDrive [net,ver=2][source=/dev/vdb].  Up 17.48 seconds
-2025-09-10 23:11:36,482 - util.py[DEBUG]: Writing to /var/lib/cloud/instance/boot-finished - wb: [644] 69 bytes
-2025-09-10 23:11:36,490 - handlers.py[DEBUG]: finish: modules-final/config-final_message: SUCCESS: config-final_message ran successfully and took 0.020 seconds
-2025-09-10 23:11:36,490 - main.py[DEBUG]: Ran 10 modules with 0 failures
-2025-09-10 23:11:36,490 - util.py[DEBUG]: Reading from /proc/uptime (quiet=False)
-2025-09-10 23:11:36,490 - util.py[DEBUG]: Reading 11 bytes from /proc/uptime
-2025-09-10 23:11:36,495 - atomic_helper.py[DEBUG]: Atomically writing to file /var/lib/cloud/data/status.json (via temporary file /var/lib/cloud/data/tmpvj2bz3j8) - w: [644] 533 bytes/chars
-2025-09-10 23:11:36,496 - atomic_helper.py[DEBUG]: Atomically writing to file /var/lib/cloud/data/result.json (via temporary file /var/lib/cloud/data/tmpi8h_qjwl) - w: [644] 101 bytes/chars
-2025-09-10 23:11:36,498 - util.py[DEBUG]: Creating symbolic link from '/run/cloud-init/result.json' => '../../var/lib/cloud/data/result.json'
-2025-09-10 23:11:36,499 - performance.py[DEBUG]: cloud-init stage: 'modules-final' took 0.150 seconds
-2025-09-10 23:11:36,499 - handlers.py[DEBUG]: finish: modules-final: SUCCESS: running modules for final
+2025-09-11 17:49:32,898 - handlers.py[DEBUG]: start: modules-final/config-install_hotplug: running config-install_hotplug with frequency once-per-instance
+2025-09-11 17:49:32,899 - helpers.py[DEBUG]: config-install_hotplug already ran (freq=once-per-instance)
+2025-09-11 17:49:32,899 - handlers.py[DEBUG]: finish: modules-final/config-install_hotplug: SUCCESS: config-install_hotplug previously ran
+2025-09-11 17:49:32,899 - modules.py[DEBUG]: Running module final_message (<module 'cloudinit.config.cc_final_message' from '/usr/lib/python3/dist-packages/cloudinit/config/cc_final_message.py'>) with frequency always
+2025-09-11 17:49:32,899 - handlers.py[DEBUG]: start: modules-final/config-final_message: running config-final_message with frequency always
+2025-09-11 17:49:32,899 - helpers.py[DEBUG]: Running config-final_message using lock (<cloudinit.helpers.DummyLock object at 0x74d902193c80>)
+2025-09-11 17:49:32,899 - util.py[DEBUG]: Reading from /proc/uptime (quiet=False)
+2025-09-11 17:49:32,899 - util.py[DEBUG]: Reading 11 bytes from /proc/uptime
+2025-09-11 17:49:32,913 - performance.py[DEBUG]: Rendering jinja2 template took 0.013 seconds
+2025-09-11 17:49:32,915 - log_util.py[DEBUG]: Cloud-init v. 25.1.4-0ubuntu0~24.04.1 finished at Thu, 11 Sep 2025 17:49:32 +0000. Datasource DataSourceConfigDrive [net,ver=2][source=/dev/vdb].  Up 19.39 seconds
+2025-09-11 17:49:32,915 - util.py[DEBUG]: Writing to /var/lib/cloud/instance/boot-finished - wb: [644] 69 bytes
+2025-09-11 17:49:32,916 - handlers.py[DEBUG]: finish: modules-final/config-final_message: SUCCESS: config-final_message ran successfully and took 0.017 seconds
+2025-09-11 17:49:32,916 - main.py[DEBUG]: Ran 10 modules with 0 failures
+2025-09-11 17:49:32,916 - util.py[DEBUG]: Reading from /proc/uptime (quiet=False)
+2025-09-11 17:49:32,916 - util.py[DEBUG]: Reading 11 bytes from /proc/uptime
+2025-09-11 17:49:32,917 - atomic_helper.py[DEBUG]: Atomically writing to file /var/lib/cloud/data/status.json (via temporary file /var/lib/cloud/data/tmpe_5pkopv) - w: [644] 534 bytes/chars
+2025-09-11 17:49:32,918 - atomic_helper.py[DEBUG]: Atomically writing to file /var/lib/cloud/data/result.json (via temporary file /var/lib/cloud/data/tmp3cfd2k9t) - w: [644] 101 bytes/chars
+2025-09-11 17:49:32,918 - util.py[DEBUG]: Creating symbolic link from '/run/cloud-init/result.json' => '../../var/lib/cloud/data/result.json'
+2025-09-11 17:49:32,918 - performance.py[DEBUG]: cloud-init stage: 'modules-final' took 0.151 seconds
+2025-09-11 17:49:32,918 - handlers.py[DEBUG]: finish: modules-final: SUCCESS: running modules for final
 
 ==> /var/log/configure_docker_limits.log <==
-2025-09-10 23:12:30 [✅]: Docker está en ejecución.
-2025-09-10 23:12:30 [🔍]: Verificando el contenedor ac4b55470ca9...
-2025-09-10 23:12:30 [⚙️]: Aplicando límites al contenedor ac4b55470ca9...
-ac4b55470ca9
-2025-09-10 23:12:30 [✅]: Límites aplicados correctamente a ac4b55470ca9.
-2025-09-10 23:12:30 [🔍]: Verificando el contenedor 53d3f808366a...
-2025-09-10 23:12:30 [⚙️]: Aplicando límites al contenedor 53d3f808366a...
-53d3f808366a
-2025-09-10 23:12:30 [✅]: Límites aplicados correctamente a 53d3f808366a.
-2025-09-10 23:12:30 [🔍]: Verificando el contenedor 214b26e61ea8...
-2025-09-10 23:12:30 [⚙️]: Aplicando límites al contenedor 214b26e61ea8...
-214b26e61ea8
-2025-09-10 23:12:30 [✅]: Límites aplicados correctamente a 214b26e61ea8.
-2025-09-10 23:12:30 [🔍]: Verificando el contenedor d15ed24954aa...
-2025-09-10 23:12:30 [⚙️]: Aplicando límites al contenedor d15ed24954aa...
-d15ed24954aa
-2025-09-10 23:12:30 [✅]: Límites aplicados correctamente a d15ed24954aa.
-2025-09-10 23:12:30 [🔍]: Verificando el contenedor 2845a26076ba...
-2025-09-10 23:12:30 [ℹ️]: El contenedor 2845a26076ba ya tiene límites configurados.
-2025-09-10 23:12:30 [🎯]: Proceso de configuración de límites completado.
+2025-09-11 18:00:01 [🚀]: Esperando a que Docker se inicie...
+2025-09-11 18:00:01 [✅]: Docker está en ejecución.
+2025-09-11 18:00:01 [🔍]: Verificando el contenedor 1bee30c6cadf...
+2025-09-11 18:00:01 [⚙️]: Aplicando límites al contenedor 1bee30c6cadf...
+1bee30c6cadf
+2025-09-11 18:00:01 [✅]: Límites aplicados correctamente a 1bee30c6cadf.
+2025-09-11 18:00:01 [🔍]: Verificando el contenedor 8379292a68bd...
+2025-09-11 18:00:01 [⚙️]: Aplicando límites al contenedor 8379292a68bd...
+8379292a68bd
+2025-09-11 18:00:01 [✅]: Límites aplicados correctamente a 8379292a68bd.
+2025-09-11 18:00:01 [🔍]: Verificando el contenedor 0feee187cdef...
+2025-09-11 18:00:01 [⚙️]: Aplicando límites al contenedor 0feee187cdef...
+0feee187cdef
+2025-09-11 18:00:01 [✅]: Límites aplicados correctamente a 0feee187cdef.
+2025-09-11 18:00:01 [🔍]: Verificando el contenedor 7c002dffd261...
+2025-09-11 18:00:01 [ℹ️]: El contenedor 7c002dffd261 ya tiene límites configurados.
+2025-09-11 18:00:01 [🔍]: Verificando el contenedor 2845a26076ba...
+2025-09-11 18:00:01 [ℹ️]: El contenedor 2845a26076ba ya tiene límites configurados.
+2025-09-11 18:00:01 [🎯]: Proceso de configuración de límites completado.
 
 ==> /var/log/docker_resources.log <==
 Traceback (most recent call last):
@@ -230,26 +229,26 @@ Latest agent package:1.2.1
 Updating droplet-agent deb package
 
 ==> /var/log/fail2ban.log <==
-2025-09-10 23:11:30,998 fail2ban.jail           [916]: INFO    Creating new jail 'nginx-limit-req'
-2025-09-10 23:11:30,998 fail2ban.jail           [916]: INFO    Jail 'nginx-limit-req' uses systemd {}
-2025-09-10 23:11:31,011 fail2ban.jail           [916]: INFO    Initiated 'systemd' backend
-2025-09-10 23:11:31,017 fail2ban.filtersystemd  [916]: INFO    [nginx-limit-req] Added journal match for: '_SYSTEMD_UNIT=nginx.service + _COMM=nginx'
-2025-09-10 23:11:31,017 fail2ban.filter         [916]: INFO      maxRetry: 20
-2025-09-10 23:11:31,017 fail2ban.filter         [916]: INFO      findtime: 60
-2025-09-10 23:11:31,017 fail2ban.actions        [916]: INFO      banTime: 3600
-2025-09-10 23:11:31,018 fail2ban.filter         [916]: INFO      encoding: UTF-8
-2025-09-10 23:11:31,018 fail2ban.transmitter    [916]: ERROR   Jail 'nginx-badbots' skipped, because of wrong configuration: Unable to read the filter 'nginx-badbots'
-2025-09-10 23:11:31,018 fail2ban.transmitter    [916]: ERROR   Jail 'nginx-noscript' skipped, because of wrong configuration: Unable to read the filter 'nginx-noscript'
-2025-09-10 23:11:31,025 fail2ban.jail           [916]: INFO    Jail 'sshd' started
-2025-09-10 23:11:31,030 fail2ban.jail           [916]: INFO    Jail 'nginx-http-auth' started
-2025-09-10 23:11:31,040 fail2ban.jail           [916]: INFO    Jail 'nginx-limit-req' started
-2025-09-10 23:11:31,334 fail2ban.filtersystemd  [916]: INFO    [nginx-http-auth] Jail is in operation now (process new journal entries)
-2025-09-10 23:11:31,335 fail2ban.filtersystemd  [916]: INFO    [nginx-limit-req] Jail is in operation now (process new journal entries)
-2025-09-10 23:11:31,751 fail2ban.filtersystemd  [916]: INFO    [sshd] Jail is in operation now (process new journal entries)
-2025-09-10 23:13:07,933 fail2ban.filter         [916]: INFO    [sshd] Found 207.180.229.239 - 2025-09-10 23:13:07
-2025-09-10 23:14:12,680 fail2ban.filter         [916]: INFO    [sshd] Found 207.180.229.239 - 2025-09-10 23:14:12
-2025-09-10 23:15:17,428 fail2ban.filter         [916]: INFO    [sshd] Found 207.180.229.239 - 2025-09-10 23:15:17
-2025-09-10 23:15:17,709 fail2ban.actions        [916]: NOTICE  [sshd] Ban 207.180.229.239
+2025-09-11 17:49:27,496 fail2ban.actions        [928]: INFO      banTime: 3600
+2025-09-11 17:49:27,496 fail2ban.filter         [928]: INFO      encoding: UTF-8
+2025-09-11 17:49:27,497 fail2ban.transmitter    [928]: ERROR   Jail 'nginx-badbots' skipped, because of wrong configuration: Unable to read the filter 'nginx-badbots'
+2025-09-11 17:49:27,497 fail2ban.transmitter    [928]: ERROR   Jail 'nginx-noscript' skipped, because of wrong configuration: Unable to read the filter 'nginx-noscript'
+2025-09-11 17:49:27,506 fail2ban.jail           [928]: INFO    Jail 'sshd' started
+2025-09-11 17:49:27,514 fail2ban.jail           [928]: INFO    Jail 'nginx-http-auth' started
+2025-09-11 17:49:27,520 fail2ban.jail           [928]: INFO    Jail 'nginx-limit-req' started
+2025-09-11 17:49:27,897 fail2ban.filtersystemd  [928]: INFO    [nginx-http-auth] Jail is in operation now (process new journal entries)
+2025-09-11 17:49:27,902 fail2ban.filtersystemd  [928]: INFO    [nginx-limit-req] Jail is in operation now (process new journal entries)
+2025-09-11 17:49:28,403 fail2ban.filtersystemd  [928]: INFO    [sshd] Jail is in operation now (process new journal entries)
+2025-09-11 17:49:39,657 fail2ban.filter         [928]: INFO    [sshd] Found 103.174.114.229 - 2025-09-11 17:49:39
+2025-09-11 17:49:57,179 fail2ban.filter         [928]: INFO    [sshd] Found 118.194.230.231 - 2025-09-11 17:49:56
+2025-09-11 17:51:48,677 fail2ban.filter         [928]: INFO    [sshd] Found 195.178.110.133 - 2025-09-11 17:51:48
+2025-09-11 17:52:24,126 fail2ban.filter         [928]: INFO    [sshd] Found 118.194.230.231 - 2025-09-11 17:52:23
+2025-09-11 17:54:11,880 fail2ban.filter         [928]: INFO    [sshd] Found 103.174.114.229 - 2025-09-11 17:54:11
+2025-09-11 17:54:41,528 fail2ban.filter         [928]: INFO    [sshd] Found 118.194.230.231 - 2025-09-11 17:54:41
+2025-09-11 17:54:41,679 fail2ban.actions        [928]: NOTICE  [sshd] Ban 118.194.230.231
+2025-09-11 17:55:14,929 fail2ban.filter         [928]: INFO    [sshd] Found 194.0.234.93 - 2025-09-11 17:55:14
+2025-09-11 17:55:39,815 fail2ban.filter         [928]: INFO    [sshd] Found 103.174.114.229 - 2025-09-11 17:55:39
+2025-09-11 17:55:39,972 fail2ban.actions        [928]: NOTICE  [sshd] Ban 103.174.114.229
 
 ==> /var/log/kern.log <==
 
