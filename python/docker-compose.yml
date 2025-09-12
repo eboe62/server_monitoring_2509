@@ -2,9 +2,14 @@ version: "3.8"
 
 services:
   monitoring-python:
+    build:
+      context: ..
+      dockerfile: python/Dockerfile
     image: monitoring-python:latest
     container_name: monitoring-python
     restart: unless-stopped
+    env_file:
+      - ../smtp_relay/.env
     volumes:
       # Montamos la estructura completa del proyecto
       - /opt/monitoring:/opt/monitoring
