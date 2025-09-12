@@ -60,7 +60,7 @@ logs:  ## Muestra últimos registros y genera logs_summary.txt
 # --- Builds (siempre con no-cache) ---
 # --- Base ---
 build-base:  ## Construye imagen base sin cache (incluye requirements)
-        docker build --no-cache -f Dockerfile.base -t monitoring-base .
+    docker build --no-cache -f Dockerfile.base -t monitoring-base .
 
 build-python:  ## Construye imagen Python sin cache
 	docker build --no-cache -t monitoring-python $(BASE_DIR)/python
