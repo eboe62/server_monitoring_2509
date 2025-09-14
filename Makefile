@@ -83,7 +83,7 @@ deploy-cron: build-base build-cron ## Despliega contenedor de cron jobs
 deploy-python: build-base build-python ## Despliega contenedor python
 	cd $(BASE_DIR)/python && \
 	docker-compose down -v && \
-#   docker-compose build --no-cache && \
+#	docker-compose build --no-cache && \
 	docker-compose up -d
 
 # --- Despliegue completo ---
