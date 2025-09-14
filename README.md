@@ -4,20 +4,20 @@ MONITORING STACK 2509
 ==========================================
 
 Este repositorio contiene la pila de monitorización y utilidades desplegadas en el servidor DigitalOcean.  
-Incluye componentes para observabilidad, ingesta de logs, monitorización de recursos y un servicio de **SMTP Relay**.
+Incluye componentes para observabilidad, ingesta de logs, monitorización de recursos y un servicio de SMTP Relay.
 
 ==========================================
 ESTRUCTURA DEL PROYECTO
 ==========================================
 monitoring/
-├── cron/ 		# Definiciones de cronjobs y contenedor para tareas programadas
-├── log_ingestor/ 	# Módulos Python para ingesta y procesado de logs
-├── observability/ 	# Configuración de Loki, Promtail, Grafana, etc.
+├── cron/ 		        # Definiciones de cronjobs y contenedor para tareas programadas
+├── log_ingestor/ 	    # Módulos Python para ingesta y procesado de logs
+├── observability/ 	    # Configuración de Loki, Promtail, Grafana, etc.
 ├── resource_monitor/ 	# Scripts de control de recursos Docker
-├── scripts/ 		# Wrappers en bash para ejecución periódica
-├── smtp_relay/ 	# Servicio de relay SMTP en contenedor Postfix
+├── scripts/ 		    # Wrappers en bash para ejecución periódica
+├── smtp_relay/ 	    # Servicio de relay SMTP en contenedor Postfix
 ├── Dockerfile.base 	# Imagen base común
-├── Makefile 		# Tareas comunes de build y despliegue
+├── Makefile 		    # Tareas comunes de build y despliegue
 └── requirements.txt 	# Dependencias Python
 
 ==========================================
@@ -32,8 +32,8 @@ INSTALACION
 ==========================================
 Clonar el repositorio:
 
+cd /opt/monitoring
 git clone <repo>
-cd monitoring
 
 Configurar variables de entorno y credenciales según cada servicio (ejemplo para SMTP Relay):
 
@@ -81,29 +81,16 @@ chmod +x ./scripts/*.sh
 ==========================================
 USO
 ==========================================
-Levantar los servicios principales:
-cd /opt/monitoring/smtp-relay
-make up
+Makefile gestiona las operaciones principales precediendo el comando correspondiente con la palabra "make ..."
 
-Verificar estado y logs:
-make status
+Levantar los servicios principales:
+cd /opt/monitoring
+make deploy
+
+Verificar logs:
 make logs
 
 cd /opt/monitoring/
-
-Construir la imagen base (se usa como caché para las demás)
-docker build -f Dockerfile.base -t monitoring-base .
-
-Construir la imagen Python
-docker build -f python/Dockerfile -t monitoring-python .
-
-Construir la imagen Cron
-docker build -t monitoring-cron cron/
-
-Levantar contenedor monitoring-cron (Supercronic)
-docker-compose -f /opt/monitoring/cron/docker-compose.yml down -v
-docker-compose -f /opt/monitoring/cron/docker-compose.yml build --no-cache
-docker-compose -f /opt/monitoring/cron/docker-compose.yml up -d
 
 Ejecución manual de auditorías y limpieza:
 ./scripts/docker_resources.sh
@@ -113,10 +100,10 @@ Ejecución manual de auditorías y limpieza:
 TAREAS PROGRAMADAS
 ==========================================
 Los cronjobs definidos en cron/monitoring.cron incluyen:
-- Auditoría diaria de binarios
-- Monitorización de recursos Docker cada 10 min
-- Ingesta de logs (fail2ban, kernel, IP geolocation) cada 10 min
-- Alertas de riesgo a las 10:00 y 22:00
+- Auditoría diaria de binarios (./scripts/auditoria_binarios.sh)
+- Monitorización de recursos Docker cada 10 min (./scripts/docker_resources.sh)
+- Ingesta de logs (fail2ban, kernel, IP geolocation) cada 10 min (./scripts/log_ingest_batch.sh, etc)
+- Alertas de riesgo a las 10:00 y 22:00 (./scripts/alert_risk.sh)
 
 # Añadir el siguiente código al crontab
 [root]$ crontab -e

@@ -59,7 +59,7 @@ logs:  ## Muestra últimos registros y genera logs_summary.txt
 
 # --- Builds (siempre con no-cache) ---
 # --- Base ---
-build-base:  ## Construye imagen base sin cache (incluye requirements)
+build-base:  ## Construye imagen base sin cache (incluye requirements) y se usa como caché para las demás imágenes (cron, python, ...)
 	docker build --no-cache -f Dockerfile.base -t monitoring-base .
 
 build-python:  ## Construye imagen Python sin cache
@@ -83,7 +83,7 @@ deploy-cron: build-base build-cron ## Despliega contenedor de cron jobs
 deploy-python: build-base build-python ## Despliega contenedor python
 	cd $(BASE_DIR)/python && \
 	docker-compose down -v && \
-	docker-compose build --no-cache && \
+#   docker-compose build --no-cache && \
 	docker-compose up -d
 
 # --- Despliegue completo ---
