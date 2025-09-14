@@ -6,6 +6,3 @@ RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 ENTRYPOINT ["docker-entrypoint.sh"]
 
-# ENTRYPOINT genérico para ejecutar scripts
-# ENTRYPOINT ["python3"]
-
