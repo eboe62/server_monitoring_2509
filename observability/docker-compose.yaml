@@ -16,6 +16,8 @@ services:
           cpus: "0.25"
     ports:
       - "${PROMTAIL_PORT}:9080"
+    networks:
+      - monitoring-net
 
   loki:
     image: grafana/loki:latest
@@ -32,6 +34,8 @@ services:
         limits:
           memory: 500M
           cpus: "0.5"
+    networks:
+      - monitoring-net
 
   grafana:
     image: grafana/grafana:latest
@@ -63,6 +67,8 @@ services:
         limits:
           memory: 300M
           cpus: "0.3"
+    networks:
+      - monitoring-net
 
 volumes:
   shared-data:  # Volumen explícito global
@@ -72,3 +78,6 @@ volumes:
   grafana-data:
     driver: local
 
+networks:
+  monitoring-net:
+    external: true

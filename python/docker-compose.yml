@@ -21,9 +21,8 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
 
     networks:
-      - captain-overlay-network
+      - monitoring-net
 
 networks:
-  captain-overlay-network:
+  monitoring-net:
     external: true
-
