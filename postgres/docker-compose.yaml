@@ -6,7 +6,7 @@ services:
     container_name: ${DB_CONTAINER_NAME}
     restart: unless-stopped
     env_file:
-      - ../smtp_relay/.env
+      - .env
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
@@ -30,3 +30,4 @@ volumes:
 networks:
   monitoring-net:
     external: true
+
