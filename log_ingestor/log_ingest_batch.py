@@ -1,21 +1,11 @@
+#!/usr/bin/env python3
 # log_ingest_batch.py
 import re
-import psycopg2
 import subprocess
 import os
 from datetime import datetime
-from dotenv import load_dotenv
-from common.utils import log_info
+from common.utils import log_info, connect_db, close_db
 
-
-# Configuración de la base de datos
-# Cargar variables desde .env
-load_dotenv("/opt/monitoring/smtp_relay/.env")
-
-DB_HOST = os.getenv("DB_HOST", "localhost")
-DB_NAME = os.getenv("DB_NAME", "postgres")
-DB_USER = os.getenv("DB_USER", "postgres")
-DB_PASSWORD = os.getenv("DB_PASSWORD", "")
 LOG_FILE = "/var/log/auth.log"
 
 # Expresiones regulares para detectar ataques
@@ -39,29 +29,15 @@ pattern_names = [
     "06_login_accepted",
 ]
 
-# Función para conectar a PostgreSQL
-def connect_db():
-    try:
-        conn = psycopg2.connect(
-            host=DB_HOST,
-            dbname=DB_NAME,
-            user=DB_USER,
-            password=DB_PASSWORD,
-            connect_timeout=5,
-            keepalives=1
-        )
-        log_info(f"[✅]: Conexión a la base de datos exitosa.")
-        return conn
-    except Exception as e:
-        log_info(f"[❌]: Error conectando a la base de datos: {e}")
-        return None
-
 # Función para actualizar el número de ataques por IP
 def update_attacking_no():
-    conn = connect_db()
-    if not conn:
-        return
+    conn, cursor = None, None
     try:
+        conn = connect_db()
+        if not conn:
+            log_info("[❌]:  No se pudo establecer conexión a la base de datos.")
+            return
+
         cursor = conn.cursor()
         cursor.execute("SELECT update_attacking_no();")
         conn.commit()
@@ -69,16 +45,17 @@ def update_attacking_no():
     except Exception as e:
         log_info(f"[❌]: Error actualizando attacking_no: {e}")
     finally:
-        cursor.close()
-        conn.close()
-
+        close_db(cursor, conn)
+            
 # Obtener el último timestamp registrado en la base de datos
 def get_last_timestamp():
-    conn = connect_db()
-    if not conn:
-        return None
-
+    conn, cursor = None, None
     try:
+        conn = connect_db()
+        if not conn:
+            log_info("[❌]:  No se pudo establecer conexión a la base de datos.")
+            return
+
         cursor = conn.cursor()
         cursor.execute("SELECT MAX(timestamp) FROM attacking_logs")
         result = cursor.fetchone()
@@ -88,8 +65,7 @@ def get_last_timestamp():
         log_info(f"[❌]: Error obteniendo el último timestamp: {e}")
         return None
     finally:
-        cursor.close()
-        conn.close()
+        close_db(cursor, conn)
 
 # Función para convertir el timestamp del log a formato datetime
 def parse_timestamp(log_line):
@@ -140,11 +116,13 @@ def get_log_lines():
 
 # Función para insertar registros en la base de datos
 def insert_into_db(entries):
-    conn = connect_db()
-    if not conn:
-        return
-
+    conn, cursor = None, None
     try:
+        conn = connect_db()
+        if not conn:
+            log_info("[❌]:  No se pudo establecer conexión a la base de datos.")
+            return
+
         cursor = conn.cursor()
         query = """
         INSERT INTO attacking_logs (
@@ -159,8 +137,7 @@ def insert_into_db(entries):
     except Exception as e:
         log_info(f"[❌]: Error al insertar en la base de datos: {e}")
     finally:
-        cursor.close()
-        conn.close()
+        close_db(cursor, conn)
 
 # Función para procesar los logs y extraer información
 def process_logs():

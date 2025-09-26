@@ -1,12 +1,6 @@
+#!/usr/bin/env python3
 # alert_risk.py
-import os
-import psycopg2
-from datetime import datetime
-from dotenv import load_dotenv
-from common.utils import log_info, send_email
-
-# Cargar variables desde .env
-load_dotenv("/opt/monitoring/smtp_relay/.env")
+from common.utils import log_info, connect_db, close_db, send_email
 
 with open("/opt/monitoring/smtp_relay/secrets/smtp_user") as f:
     SMTP_USER = f.read().strip()        # Clave API
@@ -14,33 +8,17 @@ with open("/opt/monitoring/smtp_relay/secrets/smtp_user") as f:
 with open("/opt/monitoring/smtp_relay/secrets/smtp_pass") as f:
     SMTP_PASS = f.read().strip()        # Clave API
 
-# Configuración de la base de datos
-# Cargar variables desde .env
-load_dotenv("/opt/monitoring/smtp_relay/.env")
-
-DB_HOST = os.getenv("DB_HOST", "localhost")
-DB_NAME = os.getenv("DB_NAME", "postgres")
-DB_USER = os.getenv("DB_USER", "postgres")
-DB_PASSWORD = os.getenv("DB_PASSWORD", "")
-
 # Función principal
-def main():
+def process_alert():
     # 1. Conectar a la base de datos
+    conn, cursor = None, None
     try:
-        conn = psycopg2.connect(
-            host=DB_HOST,
-            dbname=DB_NAME,
-            user=DB_USER,
-            password=DB_PASSWORD,
-            connect_timeout=5
-        )
-        log_info("[✅]: Conexión a la base de datos exitosa.")
-    except Exception as e:
-        log_info(f"[❌]: Error conectando a la base de datos: {e}")
-        return
+        conn = connect_db()
+        if not conn:
+            log_info("[❌]:  No se pudo establecer conexión a la base de datos.")
+            return
 
-    cursor = conn.cursor()
-    try:
+        cursor = conn.cursor()
         # Consulta SQL para obtener amenazas de alto riesgo
         query = """
             WITH attacks_last_period AS (
@@ -158,13 +136,8 @@ def main():
     except Exception as e:
         log_info(f"[❌]: Error en la consulta o procesamiento del mail de alerta: {e}")
     finally:
-        try:
-            cursor.close()
-            conn.close()
-            log_info("[✅]: Conexión a la base de datos cerrada.")
-        except:
-            pass
+        close_db(cursor, conn)
 
 # Ejecutar script
 if __name__ == "__main__":
-    main()
+    process_alert()

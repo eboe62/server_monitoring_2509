@@ -17,6 +17,13 @@ services:
       - postgres-data:/var/lib/postgresql/data
     networks:
       - monitoring-net
+    # Añadido healthcheck para detectar cuando la BBDD no está operativa
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 30s               # cada cuánto se prueba
+      timeout: 10s                # cuánto espera la prueba
+      retries: 5                  # cuántos fallos consecutivos para marcar unhealthy
+      start_period: 30s           # tiempo inicial de gracia tras arrancar el contenedor
     deploy:
       resources:
         limits:
@@ -30,4 +37,3 @@ volumes:
 networks:
   monitoring-net:
     external: true
-
