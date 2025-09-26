@@ -3,6 +3,7 @@
 import os
 import smtplib
 from dotenv import load_dotenv
+import psycopg2
 from email.mime.text import MIMEText
 from email.utils import formataddr
 from email.mime.multipart import MIMEMultipart
