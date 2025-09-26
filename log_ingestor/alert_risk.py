@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # alert_risk.py
-from common.utils import log_info, connect_db, close_db, send_email
+from common.config import log_info, connect_db, close_db, send_email
 
 with open("/opt/monitoring/smtp_relay/secrets/smtp_user") as f:
     SMTP_USER = f.read().strip()        # Clave API

@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 # log_fail2ban_batch.py
 import re
-
 import subprocess
 import os
 import pytz
 from datetime import datetime
-from common.utils import log_info, connect_db, close_db
+from common.config import log_info, connect_db, close_db
 
 LOG_FILE = "/var/log/fail2ban.log"
 

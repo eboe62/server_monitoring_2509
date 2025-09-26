@@ -2,7 +2,7 @@
 import subprocess
 import json
 from datetime import datetime
-from common.utils import log_info, send_email
+from common.config import log_info, send_email
 
 # Configuración
 THRESHOLD_MEM = 80.0  # %

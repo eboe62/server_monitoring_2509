@@ -2,7 +2,7 @@
 # log_ip_geolocation.py
 import requests
 import time
-from common.utils import log_info, connect_db, close_db
+from common.config import log_info, connect_db, close_db
 
 # Configuración
 IPINFO_TOKEN = "9620b4b5ca0f27"  # Reemplaza con tu token de ipinfo.io

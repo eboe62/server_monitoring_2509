@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# utils.py
+# config.py
 import os
 import smtplib
 from dotenv import load_dotenv
@@ -60,7 +60,7 @@ def connect_db():
     except Exception as e:
         log_info(f"[❌]: Error conectando a la base de datos: {e}")
         return None
-    
+
 # ------------------------------------------------------------------
 # CIERRE DE CURSOR Y CONEXIÓN
 # ------------------------------------------------------------------
@@ -78,12 +78,6 @@ def close_db(cursor=None, conn=None):
             log_info("[✅]: Conexión a la base de datos cerrada.")
         except Exception as e:
             log_info(f"[⚠️]: Error cerrando conexión: {e}")
-
-# ------------------------------------------------------------------
-# CONFIG LOGS
-# ------------------------------------------------------------------
-def log_info(msg: str):
-    print(f"mnt-info: {datetime.now().isoformat()} - {msg}")
 
 # ------------------------------------------------------------------
 # ENVIAR CORREO con smtplib
@@ -115,3 +109,9 @@ def send_email(subject: str, html_content: str):
         log_info("[✅]: Correo enviado correctamente")
     except Exception as e:
         log_info(f"[❌]: Error enviando correo: {e}")
+
+# ------------------------------------------------------------------
+# CONFIG LOGS
+# ------------------------------------------------------------------
+def log_info(msg: str):
+    print(f"mnt-info: {datetime.now().isoformat()} - {msg}")

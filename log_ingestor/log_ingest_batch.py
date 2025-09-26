@@ -4,7 +4,7 @@ import re
 import subprocess
 import os
 from datetime import datetime
-from common.utils import log_info, connect_db, close_db
+from common.config import log_info, connect_db, close_db
 
 LOG_FILE = "/var/log/auth.log"
 
