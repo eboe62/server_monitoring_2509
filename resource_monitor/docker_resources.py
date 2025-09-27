@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
 import subprocess
 import json
+import os
+import pickle
 from datetime import datetime
 from common.config import log_info, send_email
 
 # Configuración
 THRESHOLD_MEM = 80.0  # %
 THRESHOLD_CPU = 80.0  # %
+HYSTERESIS_COUNT = 2  # número de muestreos consecutivos requeridos
+STATE_FILE = "/tmp/docker_resources_state.pkl"
 LOG_FILE = "/var/log/docker_resources_history.log"
 
 def get_docker_stats():
@@ -93,12 +97,31 @@ def log_stats(stats):
         f.write(f"\nmnt-info: [{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}]\n")
         f.write(build_table(stats))
 
+
+def load_state():
+    if os.path.exists(STATE_FILE):
+        try:
+            with open(STATE_FILE, "rb") as f:
+                return pickle.load(f)
+        except Exception:
+            return {}
+    return {}
+
+
+def save_state(state):
+    with open(STATE_FILE, "wb") as f:
+        pickle.dump(state, f)
+
+
 def main():
     log_info("===== Inicio de ejecución =====")
 
     stats = get_docker_stats()
     processed_stats = []
     alerts = []
+
+    # Cargar estado previo
+    state = load_state()
 
     for container in stats:
         cpu = parse_percentage(container["CPUPerc"])
@@ -114,8 +137,18 @@ def main():
         }
         processed_stats.append(entry)
 
+        # Comprobar límites
         if cpu > THRESHOLD_CPU or mem_percent > THRESHOLD_MEM:
+            state[container["Name"]] = state.get(container["Name"], 0) + 1
+        else:
+            state[container["Name"]] = 0
+
+        # Solo alertar si supera consecutivamente N veces
+        if state[container["Name"]] >= HYSTERESIS_COUNT:
             alerts.append(entry)
+
+    # Guardar estado actualizado
+    save_state(state)
 
     # Guardar en log histórico
     log_stats(processed_stats)
@@ -135,4 +168,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
