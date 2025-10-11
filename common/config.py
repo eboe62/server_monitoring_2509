@@ -8,6 +8,7 @@ from email.mime.text import MIMEText
 from email.utils import formataddr
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime
+import requests
 
 # Cargar variables desde .env
 load_dotenv("/opt/monitoring/smtp_relay/.env")
@@ -115,3 +116,27 @@ def send_email(subject: str, html_content: str):
 # ------------------------------------------------------------------
 def log_info(msg: str):
     print(f"mnt-info: {datetime.now().isoformat()} - {msg}")
+
+# ------------------------------------------------------------------
+# GEOLOCALIZACIÓN IP
+# ------------------------------------------------------------------
+
+IPINFO_TOKEN = os.getenv("IPINFO_TOKEN") # Token IP Geolocalización https://ipinfo.io/
+
+# Función para obtener datos de geolocalización
+def get_ip_info(ip):
+    """Consulta IPInfo.io y devuelve país, ciudad, latitud y longitud."""
+    url = f"https://ipinfo.io/{ip}/json?token={IPINFO_TOKEN}"
+    try:
+        response = requests.get(url, timeout=5)
+        response.raise_for_status()  # Lanza error si la solicitud falla
+        data = response.json()
+        return {
+            "country": data.get("country", "Unknown"),
+            "city": data.get("city", "Unknown"),
+            "lat": data.get("loc", "0,0").split(",")[0],
+            "long": data.get("loc", "0,0").split(",")[1]
+        }
+    except requests.exceptions.RequestException as e:
+        log_info(f"[❌] Error obteniendo datos para {ip}: {e}")
+        return None

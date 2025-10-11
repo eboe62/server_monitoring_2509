@@ -14,7 +14,8 @@ services:
       - smtp_user
       - smtp_pass
     ports:
-      - "127.0.0.1:2526:587"   # SMTP local, no exponer a internet
+#      - "127.0.0.1:2526:587"   # SMTP local, no exponer a internet
+      - "2526:587"   # Puerto expuesto en host (para debug/test manuales SMTP). Se podría eliminar la línea
     healthcheck:
       test: ["CMD", "sh", "-c", "postfix status"]
       interval: 30s
@@ -29,7 +30,7 @@ services:
       - ALLOWED_SENDER_DOMAINS=${EMAIL_DOMAIN}
       - ALLOW_EMPTY_SENDER_DOMAINS=true
     networks:
-      - monitoring-net
+      - monitoring-net  # Red compartida (Grafana, Loki, Postgres, SMTP relay...)
 
 secrets:
   smtp_user:

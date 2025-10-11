@@ -11,7 +11,7 @@ services:
     env_file:
       - ../smtp_relay/.env
     volumes:
-      # Montamos la estructura completa del proyecto
+      # Monta el proyecto para ejecutar scripts Python
       - /opt/monitoring:/opt/monitoring
 
       # Logs del host para que los scripts puedan escribir ahí
@@ -21,7 +21,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
 
     networks:
-      - monitoring-net
+      - monitoring-net  # Red compartida (Grafana, Loki, Postgres, SMTP relay...)
 
 networks:
   monitoring-net:

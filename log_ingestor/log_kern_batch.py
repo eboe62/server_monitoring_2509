@@ -6,14 +6,6 @@ import os
 from datetime import datetime
 from common.config import log_info, connect_db, close_db
 
-# Configuración de la base de datos
-# Cargar variables desde .env
-load_dotenv("/opt/monitoring/smtp_relay/.env")
-
-DB_HOST = os.getenv("DB_HOST", "localhost")
-DB_NAME = os.getenv("DB_NAME", "postgres")
-DB_USER = os.getenv("DB_USER", "postgres")
-DB_PASSWORD = os.getenv("DB_PASSWORD", "")
 LOG_FILE = "/var/log/kern.log"
 
 # Expresiones regulares para detectar eventos de red (posibles ataques)
