@@ -9,6 +9,7 @@ positions:
   filename: /var/log/promtail-positions.yaml  # Archivo para rastrear las posiciones de lectura de logs
 
 scrape_configs:
+#   Logs de autenticación del sistema
   - job_name: auth_logs  # Nombre descriptivo del trabajo
     # Captura de todos los logs .log y sus versiones rotadas
     static_configs:
@@ -144,3 +145,20 @@ scrape_configs:
             - labels:
                 reason: 'Otros'
 
+# Logs del honeypot nginx (CapRover)
+  - job_name: honeypot # Nombre descriptivo del trabajo
+    static_configs:
+      - targets:
+          - localhost # Dirección del servidor donde se leen los logs
+        labels:
+          job: honeypot-nginx # Etiqueta común para los logs
+          honeypot: "true"
+          __path__: /var/lib/docker/containers/*/*.log # Patrón para incluir logs específicos
+    pipeline_stages:
+      - json:
+          expressions:
+            log: log
+      - regex:
+          expression: 'client: (?P<client_ip>[0-9.]+)'
+      - labels:
+          client_ip:
