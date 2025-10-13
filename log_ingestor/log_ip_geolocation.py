@@ -4,7 +4,7 @@ import time
 from common.config import log_info, connect_db, close_db, get_ip_info
 
 def extract_ips_from_bbdd():
-    """Lee BBDD y devuelve IPs sin datos de geolocalización."""
+    """Lee BBDD y extrae IPs sin datos de geolocalización."""
     log_info(f"[✅] Extrayendo IPs de tabla attacking_logs ...")
     conn, cursor = None, None
     ips = []
@@ -39,7 +39,7 @@ def update_database():
     log_info(f"[✅]: Iniciando geolocalización de IPs...")
     ips = extract_ips_from_bbdd()
     if not ips:
-        log_info("[ℹ️] No hay IPs pendientes de geolocalizar.")
+        log_info("[ℹ️]: No hay IPs pendientes de geolocalizar.")
         return
 
     conn, cursor = None, None
