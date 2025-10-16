@@ -5,7 +5,7 @@ import time
 from common.config import log_info, connect_db, close_db, get_ip_info
 import re
 import requests
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 # Configuración
 LOKI_URL = "http://loki:3100/loki/api/v1/query_range"
@@ -17,7 +17,7 @@ def extract_ips_from_loki():
     """Lee logs de Loki (nginx) y extrae IPs únicas del label honeypot=true."""
     log_info(f"[✅]: Extrayendo IPs de Loki ...")
 
-    # Calcula rango de tiempo en nanosegundos
+    # Calcula rango de tiempo en nanosegundos (UTC)
     end = int(datetime.now(timezone.utc).timestamp() * 1e9)
     start = end - (TIME_RANGE_MINUTES * 60 * 1e9)
 
@@ -77,17 +77,26 @@ def update_database():
             ip_info = get_ip_info(ip)
             if not ip_info:
                 continue
+
+            # Generar timestamp con formato local (UTC+2) y milisegundos
+            local_time = datetime.now(timezone.utc) + timedelta(hours=2)
+            timestamp_str = local_time.strftime("%Y-%m-%d %H:%M:%S.%f %z")
+
+            # Extraer primeros tres octetos
+            attacking_octets = ".".join(ip.split(".")[:3])
+
             cursor.execute("""
-                INSERT INTO honeypot_logs (attacking_ip, attacking_country, attacking_town, attacking_long, attacking_lat, timestamp)
-                VALUES (%s, %s, %s, %s, %s, %s)
-                ON CONFLICT (attacking_ip) DO UPDATE
-                SET attacking_country = EXCLUDED.attacking_country,
+                INSERT INTO honeypot_logs (attacking_ip, attacking_octets, attacking_country, attacking_town, attacking_long, attacking_lat, timestamp)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (attacking_octets) DO UPDATE
+                SET attacking_octets = EXCLUDED.attacking_octets,
+                    attacking_country = EXCLUDED.attacking_country,
                     attacking_town = EXCLUDED.attacking_town,
                     attacking_long = EXCLUDED.attacking_long,
                     attacking_lat = EXCLUDED.attacking_lat,
                     timestamp = EXCLUDED.timestamp;
             """, (
-                ip, ip_info["country"], ip_info["city"], ip_info["long"], ip_info["lat"], datetime.now(timezone.utc)))
+                ip, attacking_octets, ip_info["country"], ip_info["city"], ip_info["long"], ip_info["lat"], timestamp_str))
             conn.commit()
 #            log_info(f"[✅]: {ip} actualizado correctamente.")
             time.sleep(1)  # evita rate-limiting

@@ -15,6 +15,7 @@ services:
       - "${DB_PORT}:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data # Persistencia de la BBDD de monitorización
+      - /opt/monitoring/backups:/backups # Ubicación de backups de la BBDD
     networks:
       - monitoring-net # Red compartida (Grafana, Loki, Postgres, SMTP relay...)
     # Añadido healthcheck para detectar cuando la BBDD no está operativa

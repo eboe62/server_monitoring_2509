@@ -19,3 +19,5 @@
 # * * * * * /opt/monitoring/scripts/docker_resources.sh
 # * * * * * /opt/monitoring/scripts/log_ingest_batch.sh
 
+# Backup de BBDD monitoring-postgres
+5 22 * * * bash /opt/monitoring/scripts/backup_postgres.sh
