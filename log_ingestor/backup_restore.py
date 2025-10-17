@@ -1,33 +1,36 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# backup_restore.py
 """
 Restaura una base de datos PostgreSQL desde el último backup disponible.
+El script se ejecuta desde monitoring-python, pero los comandos SQL
+y la restauración se realizan dentro de monitoring-postgres.
 """
-import sys, os
+
+import sys, os, subprocess
 sys.path.append("/opt/monitoring")
 
-import subprocess
-import os
 from datetime import datetime
 from common.config import log_info, send_email
 from dotenv import load_dotenv
 
-# Configuración de la Base de Datos
-load_dotenv("/opt/observability/smtp_relay/.env")
+# ------------------------------------------------------------
+# Configuración BBDD
+# ------------------------------------------------------------
+load_dotenv("/opt/monitoring/smtp_relay/.env")
 
-DB_USER = os.getenv("DB_USER")
-DB_PASSWORD = os.getenv("DB_PASSWORD")
-DB_SOURCE = os.getenv("DB_NAME")
-DB_DEST = os.getenv("DB_NAME" + "_restored")
-DB_CONTAINER_NAME = os.getenv("DB_CONTAINER_NAME")
+DB_USER = os.getenv("DB_USER", "postgres")
+DB_PASSWORD = os.getenv("DB_PASSWORD", "")
+DB_NAME = os.getenv("DB_NAME", "monitoring_db")
+DB_DEST = f"{DB_NAME}_restored"
+DB_CONTAINER_NAME = os.getenv("DB_CONTAINER_NAME", "monitoring-postgres")
 
-# Ruta en host y contenedor
-BACKUP_DIR_HOST = "/var/lib/postgresql/data/backups"
+BACKUP_DIR_HOST = "/opt/monitoring/backups"
 BACKUP_CONTAINER_PATH = "/tmp/restore.backup"
 BACKUP_SQL = "/tmp/restore.sql"
 
-# Verificar si el archivo de backup está vacio o no existe
+# ------------------------------------------------------------
+# Seleccionar backup más reciente
+# ------------------------------------------------------------
 try:
     backups = sorted(
         [f for f in os.listdir(BACKUP_DIR_HOST) if f.endswith(".backup")],
@@ -42,50 +45,63 @@ except Exception as e:
     log_info(f"[❌]: Error buscando backup: {e}")
     raise SystemExit(1)
 
-env = os.environ.copy()
-env["DB_USER"] = DB_USER
-env["DB_PASSWORD"] = DB_PASSWORD
+# ------------------------------------------------------------
+# Función auxiliar
+# ------------------------------------------------------------
+def exec_in_postgres(cmd):
+    """Ejecuta comandos dentro del contenedor de PostgreSQL"""
+    full_cmd = ["docker", "exec", "-i", DB_CONTAINER_NAME] + cmd
+    subprocess.run(full_cmd, check=True)
 
-def exec_docker_cmd(cmd):
-    subprocess.run(["docker", "exec", "-i", DB_CONTAINER_NAME] + cmd, check=True, env=env)
-
+# ------------------------------------------------------------
+# Proceso principal
+# ------------------------------------------------------------
 try:
-    # Copiar el backup al contenedor
-    subprocess.run(["docker", "cp", BACKUP_FILE_HOST, f"{DB_CONTAINER_NAME}:{BACKUP_CONTAINER_PATH}"], check=True)
+    log_info(f"[🚀]: Iniciando restauración de {DB_NAME} dentro de {DB_CONTAINER_NAME}...")
+
+    # Copiar backup al contenedor de Postgres
+    subprocess.run(
+        ["docker", "cp", BACKUP_FILE_HOST, f"{DB_CONTAINER_NAME}:{BACKUP_CONTAINER_PATH}"],
+        check=True
+    )
 
     # Eliminar DB destino si existe
-    exec_docker_cmd([
-        "psql", "-U", "postgres", "-d", "template1",
+    exec_in_postgres([
+        "psql", "-U", DB_USER, "-d", "template1",
         "-c", f"DROP DATABASE IF EXISTS {DB_DEST};"
     ])
+    log_info(f"[ℹ️]: Base de datos {DB_DEST} eliminada si existía.")
 
-    # Crear la base de datos
-    exec_docker_cmd([
-        "psql", "-U", "postgres", "-d", "template1",
+    # Crear DB destino
+    exec_in_postgres([
+        "psql", "-U", DB_USER, "-d", "template1",
         "-c", f"CREATE DATABASE {DB_DEST};"
     ])
+    log_info(f"[✅]: Base de datos {DB_DEST} creada.")
 
-    # Convertir y restaurar
-    exec_docker_cmd([
+    # Restaurar dentro del contenedor
+    exec_in_postgres([
         "sh", "-c",
-        f"pg_restore -U postgres -f {BACKUP_SQL} -F c {BACKUP_CONTAINER_PATH}"
+        f"pg_restore -U {DB_USER} -F c -f {BACKUP_SQL} {BACKUP_CONTAINER_PATH}"
     ])
-    exec_docker_cmd([
-        "psql", "-U", "postgres", "-d", DB_DEST, "-f", BACKUP_SQL
+    exec_in_postgres([
+        "psql", "-U", DB_USER, "-d", DB_DEST, "-f", BACKUP_SQL
     ])
+    log_info(f"[✅]: Restauración completada correctamente en {DB_DEST}.")
 
-    log_info(f"[✅]: Restauración completada con éxito en {DB_DEST}")
+# ------------------------------------------------------------
+# Notificar por mail
+# ------------------------------------------------------------
     send_email(
         subject=f"Restauración completada ({DB_DEST})",
         html_content=f"Se ha restaurado correctamente la base de datos desde {latest_backup}."
     )
 
-
 except subprocess.CalledProcessError as e:
     log_info(f"[❌]: Error en restauración: {e}")
     send_email(
         subject=f"Error restaurando {DB_DEST}",
-        html_content=f"Error durante la restauración: {e}"
+        html_content=f"Ocurrió un error durante la restauración: {e}"
     )
     raise SystemExit(1)
 

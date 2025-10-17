@@ -5,17 +5,18 @@
 Realiza un backup completo de la base de datos PostgreSQL dentro del contenedor monitoring-postgres
 y envía notificación por correo usando smtp_relay.
 """
-import sys, os
+
+import sys, os, subprocess
 sys.path.append("/opt/monitoring")
 
-import subprocess
-import os
 from datetime import datetime
 from common.config import log_info, send_email
 from dotenv import load_dotenv
 
-# Configuración de la Base de Datos
-load_dotenv("/opt/observability/smtp_relay/.env")
+# ------------------------------------------------------------
+# Configuración BBDD
+# ------------------------------------------------------------
+load_dotenv("/opt/monitoring/smtp_relay/.env")
 
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
@@ -42,6 +43,9 @@ env = os.environ.copy()
 env["DB_USER"] = DB_USER
 env["DB_PASSWORD"] = DB_PASSWORD
 
+# ------------------------------------------------------------
+# Proceso principal
+# ------------------------------------------------------------
 try:
     subprocess.run(
         [
@@ -53,6 +57,10 @@ try:
         env=env
     )
     log_info(f"[✅]: Backup realizado con éxito: {BACKUP_FILE_HOST}")
+
+# ------------------------------------------------------------
+# Notificar por mail
+# ------------------------------------------------------------
     send_email(
         subject=f"Backup exitoso de {DB_NAME}",
         html_content=f"Backup completado correctamente.<br>Ubicación: {BACKUP_FILE_HOST}"
@@ -66,7 +74,9 @@ except subprocess.CalledProcessError as e:
     )
     raise SystemExit(1)
 
+# ------------------------------------------------------------
 # Eliminar copias con más de 7 días
+# ------------------------------------------------------------
 try:
     subprocess.run(
         ["find", BACKUP_DIR_HOST, "-type", "f", "-name", "*.backup", "-mtime", "+7", "-delete"],
