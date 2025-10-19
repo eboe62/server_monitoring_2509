@@ -192,22 +192,65 @@ chmod +x ./scripts/*.sh
 ```
 ## 🚀 Uso
 
-```bash
-Makefile gestiona las operaciones principales precediendo el comando correspondiente con la palabra "make ..."
+El proyecto incorpora un **Makefile global** que permite construir, desplegar y gestionar los contenedores principales sin necesidad de recordar comandos largos de Docker.  
+Basta con anteponer la palabra `make` al comando correspondiente.
 
-Levantar los servicios principales:
+```
+▶️ Levantar el servicio de email para el envío de alertas
 cd /opt/monitoring/smtp_relay
 make up
 
+Inicia el contenedor SMTP Relay encargado del envío de alertas y notificaciones por correo.
+```
+```
+▶️ Despliegue completo de todo el stack (SMTP, Python, Cron)
 cd /opt/monitoring
 make deploy
 
-Verificar logs:
+Ejecuta la reconstrucción completa, levanta los servicios SMTP, Python y Cron, y muestra los últimos logs al finalizar.
+Tras el despliegue, verificar los contenedores activos:
+docker ps
+```
+```
+▶️ Verificar logs:
+Y revisar los logs más recientes:
 make logs
+```
+```
+▶️ Arrancar contenedores Python y Cron
+make deploy-python
 
+Levanta el contenedor Python (backup_resotre, etc.)
+```
+```
+▶️ Desplegar solo Cron
+cd /opt/monitoring
+make deploy-cron
+
+Levanta el contenedor Cron (supercronic con jobs definidos)
+
+Ambos comandos reconstruyen automáticamente la imagen base si es necesario y arrancan los servicios correspondientes dentro de sus rutas (/opt/monitoring/python o /opt/monitoring/cron).
+```
+```
+▶️ Despliegue centralizado de Observability (Grafana, Loki, Promtail)
+cd /opt/monitoring
+make deploy-observability
+
+
+Reinicia completamente el stack de observabilidad
+Este comando permite reconstruir desde cero y relanzar Grafana, Loki y Promtail, asegurando un entorno limpio de logs y métricas.
+```
+```
+▶️ Reconstruir imágenes desde cero (sin cache)
+make rebuild
+Reconstruye todas las imágenes (base, python y cron) sin usar cache.
+```
+```
+▶️ Otras funcionalidades no definidas en Makefile
 cd /opt/monitoring/
-
-Ejecución manual de auditorías y limpieza:
+```
+```
+▶️ Ejecución manual de auditorías y limpieza:
 ./scripts/docker_resources.sh
 ./scripts/cleanup_docker.sh (ATENCION hacer snapshot previo - riesgo de perdida no deseada de binarios)
 ```

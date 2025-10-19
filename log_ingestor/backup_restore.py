@@ -4,6 +4,10 @@
 Restaura una base de datos PostgreSQL desde el último backup disponible.
 El script se ejecuta desde monitoring-python, pero los comandos SQL
 y la restauración se realizan dentro de monitoring-postgres.
+Usa en el host el comando: bash /opt/monitoring/scripts/backup_restore.sh
+Comprueba con el comando: cat /var/log/backup_restore.log
+o el comando de Makefile:
+make restore-backup
 """
 
 import sys, os, subprocess

@@ -33,3 +33,5 @@ docker-compose.override.yml
 /*.bak
 *.tmp
 
+# === Backups de base de datos ===
+/backups/

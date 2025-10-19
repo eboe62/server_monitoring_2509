@@ -72,6 +72,9 @@ build-cron:  ## Construye imagen Cron sin cache
 rebuild: build-base build-python build-cron  ## Reconstruye todas las imágenes sin cache
 rebuild-all: rebuild deploy-cron ## Reconstruye e inmediatamente redepliega cron
 
+# --- Despliegue completo ---
+deploy: up-services rebuild-all logs  ## Despliegue completo con rebuild y logs al final
+
 # --- Cron ---
 deploy-cron: build-base build-cron ## Despliega contenedor de cron jobs
 	cd $(BASE_DIR)/cron && \
@@ -86,6 +89,17 @@ deploy-python: build-base build-python ## Despliega contenedor python
 #	docker-compose build --no-cache && \
 	docker-compose up -d
 
-# --- Despliegue completo ---
-deploy: up-services rebuild-all logs  ## Despliegue completo con rebuild y logs al final
+# --- Observability Stack ---
+deploy-observability:  ## Despliega el stack centralizado de Observability (Grafana, Loki, Promtail)
+	@echo "=== [🚀] Desplegando Observability Stack ==="
+	docker-compose -f $(BASE_DIR)/observability/docker-compose.yaml down -v
+	docker-compose -f $(BASE_DIR)/observability/docker-compose.yaml build --no-cache
+	docker-compose -f $(BASE_DIR)/observability/docker-compose.yaml up -d
+	@echo "=== [✅] Observability Stack desplegado correctamente ==="
 
+# --- Restauración de Backups ---
+restore-backup:  ## Restaura la última copia de seguridad de la BBDD y muestra el log
+	@echo "=== [🧩] Iniciando restauración de backup ==="
+	bash $(BASE_DIR)/scripts/backup_restore.sh
+	@echo "=== [📄] Log de restauración (/var/log/backup_restore.log): ==="
+	@tail -n 20 /var/log/backup_restore.log
