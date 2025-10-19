@@ -213,8 +213,9 @@ docker ps
 ```
 ```
 ▶️ Verificar logs:
-Y revisar los logs más recientes:
 make logs
+
+Muestra los logs más recientes del sistema. 
 ```
 ```
 ▶️ Arrancar contenedores Python y Cron
@@ -230,6 +231,19 @@ make deploy-cron
 Levanta el contenedor Cron (supercronic con jobs definidos)
 
 Ambos comandos reconstruyen automáticamente la imagen base si es necesario y arrancan los servicios correspondientes dentro de sus rutas (/opt/monitoring/python o /opt/monitoring/cron).
+```
+```
+▶️ Restauración de Backups de PostgreSQL
+make restore-backup
+
+
+Internamente ejecuta el script:
+bash /opt/monitoring/scripts/backup_restore.sh
+
+Los resultados y el estado del proceso se registran en:
+cat /var/log/backup_restore.log
+
+💡 Este proceso realiza la restauración dentro del contenedor monitoring-python, comunicándose con el contenedor monitoring-postgres para reconstruir la base de datos a partir del último backup disponible en /opt/monitoring/backups/.
 ```
 ```
 ▶️ Despliegue centralizado de Observability (Grafana, Loki, Promtail)
@@ -248,11 +262,12 @@ Reconstruye todas las imágenes (base, python y cron) sin usar cache.
 ```
 ▶️ Otras funcionalidades no definidas en Makefile
 cd /opt/monitoring/
-```
-```
-▶️ Ejecución manual de auditorías y limpieza:
+
+Ejecución manual de auditorías y limpieza:
 ./scripts/docker_resources.sh
-./scripts/cleanup_docker.sh (ATENCION hacer snapshot previo - riesgo de perdida no deseada de binarios)
+./scripts/cleanup_docker.sh 
+
+⚠️ ATENCION: Antes de ejecutar limpieza, crea un snapshot previo — existe riesgo de pérdida no deseada de binarios.
 ```
 
 ---
