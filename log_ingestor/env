@@ -1,0 +1,13 @@
+# Para utilizar Postfix como servicio systemctl directamente desde el host
+# SMTP_SERVER=xxxx.xxxxxxxxxxx.xxx
+# SMTP_PORT=9999
+
+# Para utilizar Postfix a través del contenedor smtp-relay que gestiona Postfix
+SMTP_SERVER=xxxxxxxxx
+SMTP_PORT=9999
+
+# Postmark SMTP credentials
+EMAIL_USER=99x9xx99-9x99-9x99-99x9-99xx9xxx9xxx
+EMAIL_PASS=99x9xx99-9x99-9x99-99x9-99xx9xxx9xxx
+EMAIL_FROM=xxxxxxx@xxxxxxxxxxxxx.xx
+EMAIL_TO=xxxxxxxx@xxxxxxxxxxxxx.xx

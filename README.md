@@ -236,12 +236,11 @@ Ambos comandos reconstruyen automáticamente la imagen base si es necesario y ar
 ▶️ Restauración de Backups de PostgreSQL
 make restore-backup
 
-
 Internamente ejecuta el script:
 bash /opt/monitoring/scripts/backup_restore.sh
 
 Los resultados y el estado del proceso se registran en:
-cat /var/log/backup_restore.log
+cat /var/log/backup_restore.log | tail -n 30
 
 💡 Este proceso realiza la restauración dentro del contenedor monitoring-python, comunicándose con el contenedor monitoring-postgres para reconstruir la base de datos a partir del último backup disponible en /opt/monitoring/backups/.
 ```
