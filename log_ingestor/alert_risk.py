@@ -8,19 +8,23 @@ with open("/opt/monitoring/smtp_relay/secrets/smtp_user") as f:
 with open("/opt/monitoring/smtp_relay/secrets/smtp_pass") as f:
     SMTP_PASS = f.read().strip()        # Clave API
 
-# Función principal
 def process_alert():
-    # 1. Conectar a la base de datos
+    # ------------------------------------------------------------------
+    # Conectar a la base de datos
+    # ------------------------------------------------------------------
     conn, cursor = None, None
+    html_table = ""  # Inicializamos para evitar NameError
     try:
         conn = connect_db()
         if not conn:
-            log_info("[❌]:  No se pudo establecer conexión a la base de datos.")
+            log_info("[❌]: No se pudo establecer conexión a la base de datos.")
             return
 
         cursor = conn.cursor()
+        # ------------------------------------------------------------------
         # Consulta SQL para obtener amenazas de alto riesgo
-        query = """
+        # ------------------------------------------------------------------
+        query = f"""
             WITH attacks_last_period AS (
                 SELECT *
                 FROM public.attacking_logs
@@ -74,70 +78,80 @@ def process_alert():
             WHERE risk_score > 6
             ORDER BY risk_score DESC;
         """
+
         cursor.execute(query)
         rows = cursor.fetchall()
 
-        if rows:
-            log_info(f"[✅]: Se detectaron {len(rows)} amenazas con riesgo > 6.")
-
-            # Genera informe HTML
-            html_table = """
-            <html>
-            <body>
-            <p><strong>Se han detectado las siguientes amenazas de alto riesgo:</strong></p>
-            <table border="1" cellpadding="4" cellspacing="0" style="border-collapse: collapse;">
-                <thead>
-                    <tr style="background-color: #f2f2f2;">
-                        <th>Fecha</th>
-                        <th>Referencia</th>
-                        <th>Tipo</th>
-                        <th># Ataques</th>
-                        <th>IP</th>
-                        <th>Usuario</th>
-                        <th>Puerto</th>
-                        <th>País</th>
-                        <th>Ciudad</th>
-                        <th>Riesgo</th>
-                    </tr>
-                </thead>
-                <tbody>
-            """
-
-            for row in rows:
-                fecha, referencia, tipo, ataques, ip, user, port, pais, ciudad, riesgo = \
-                    row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10]
-                html_table += f"""
-                    <tr>
-                        <td>{fecha.strftime('%Y-%m-%d %H:%M:%S')}</td>
-                        <td>{referencia}</td>
-                        <td>{tipo}</td>
-                        <td>{ataques}</td>
-                        <td>{ip}</td>
-                        <td>{user}</td>
-                        <td>{port}</td>
-                        <td>{pais}</td>
-                        <td>{ciudad}</td>
-                        <td><strong>{riesgo}</strong></td>
-                    </tr>
-                """
-
-            html_table += """
-                </tbody>
-                </table>
-                </body>
-                </html>
-            """
-
-            # 4. Enviar correo usando el contenedor smtp-relay que gestiona Postfix
-            send_email("🚨 Alerta: Ataques de alto riesgo", html_table)
-        else:
+        if not rows:
             log_info("[ℹ️]: No se ha completado el reporte de amenazas con riesgo > 7")
+            return
+
+        log_info(f"[✅]: Se detectaron {len(rows)} amenazas con riesgo > 6.")
+
+        # ------------------------------------------------------------------
+        # Generar informe HTML
+        # ------------------------------------------------------------------
+        html_table = """
+        <html>
+        <body>
+        <p><strong>Se han detectado las siguientes amenazas de alto riesgo:</strong></p>
+        <table border="1" cellpadding="4" cellspacing="0" style="border-collapse: collapse;">
+            <thead>
+                <tr style="background-color: #f2f2f2;">
+                    <th>Fecha</th>
+                    <th>Referencia</th>
+                    <th>Tipo</th>
+                    <th># Ataques</th>
+                    <th>IP</th>
+                    <th>Usuario</th>
+                    <th>Puerto</th>
+                    <th>País</th>
+                    <th>Ciudad</th>
+                    <th>Riesgo</th>
+                </tr>
+            </thead>
+            <tbody>
+        """
+
+        for row in rows:
+            fecha, referencia, tipo, ataques, ip, user, port, pais, ciudad, riesgo = \
+                row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10]
+            html_table += f"""
+                <tr>
+                    <td>{fecha.strftime('%Y-%m-%d %H:%M:%S')}</td>
+                    <td>{referencia}</td>
+                    <td>{tipo}</td>
+                    <td>{ataques}</td>
+                    <td>{ip}</td>
+                    <td>{user}</td>
+                    <td>{port}</td>
+                    <td>{pais}</td>
+                    <td>{ciudad}</td>
+                    <td><strong>{riesgo}</strong></td>
+                </tr>
+            """
+
+        html_table += """
+            </tbody>
+            </table>
+            </body>
+            </html>
+        """
+
+        # ------------------------------------------------------------------
+        # Enviar correo usando el contenedor smtp-relay que gestiona Postfix
+        # ------------------------------------------------------------------
+        subject = "🚨 Alerta: Ataques de alto riesgo"
+        send_email(subject, html_table)
+        log_info(f"[✅]: Alerta enviada correctamente por correo.")
 
     except Exception as e:
         log_info(f"[❌]: Error en la consulta o procesamiento del mail de alerta: {e}")
     finally:
         close_db(cursor, conn)
 
-# Ejecutar script
+# ----------------------------------------------------------------------
+# MAIN
+# ----------------------------------------------------------------------
 if __name__ == "__main__":
     process_alert()
