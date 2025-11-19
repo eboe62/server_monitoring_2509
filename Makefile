@@ -51,6 +51,11 @@ logs:  ## Muestra últimos registros y genera logs_summary.txt
 	@echo "=== Mostrando últimos 20 registros ==="
 	@sleep 40  # latencia para dar tiempo a que arranquen los contenedores
 	@tail -n 20 /var/log/*.log
+	@echo "=== Logs de todos los contenedores activos ==="
+	@for c in $$(docker ps --format '{{.Names}}'); do \
+		echo "\n===== 📦 $$c ====="; \
+		docker logs $$c --tail=20 2>/dev/null || echo "⚠️  No se pudo obtener logs de $$c"; \
+	done
 #	@tail -n 20 /var/log/*.log | tee logs_summary.txt
 #	@echo "Resumen generado en logs_summary.txt"
 #	git add logs_summary.txt

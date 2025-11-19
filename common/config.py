@@ -9,6 +9,8 @@ from email.utils import formataddr
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime
 import requests
+import re
+import socket
 
 # ==========================================
 # 🔧 CARGA DE VARIABLES DE ENTORNO (.env)
@@ -21,7 +23,7 @@ load_dotenv("/opt/monitoring/smtp_relay/.env")
 # Configuración SMTP
 # Excluimos las credenciales SMTP (SMTP_USER, SMTP_PASS) cuando usemos el servicio SMTP
 SMTP_SERVER = os.getenv("SMTP_SERVER", "127.0.0.1")     # smtp.postmarkapp.com (servicio host) ó localhost (servicio contenedor)
-SMTP_PORT = int(os.getenv("SMTP_PORT", "2526"))         # 2525 (servicio host) ó 2526 (servicio contenedor)
+SMTP_PORT   = int(os.getenv("SMTP_PORT", "2526"))         # 2525 (servicio host) ó 2526 (servicio contenedor)
 with open("/opt/monitoring/smtp_relay/secrets/smtp_user") as f:
     SMTP_USER = f.read().strip()
 with open("/opt/monitoring/smtp_relay/secrets/smtp_pass") as f:
@@ -29,9 +31,10 @@ with open("/opt/monitoring/smtp_relay/secrets/smtp_pass") as f:
 
 # Configuración de correo desde .env
 # cuando usemos el contenedor smtp-relay. Este contenedor actúa como relay local y no necesita login TLS.
-EMAIL_FROM = os.getenv("EMAIL_FROM")       # Ej: noreply@appvisibility.es
-EMAIL_TO = os.getenv("EMAIL_TO")           # Ej: contacto@appvisibility.es
-CC_LIST = os.getenv("CC_LIST", "").split(",") if os.getenv("CC_LIST") else []
+EMAIL_FROM  = os.getenv("EMAIL_FROM")       # Ej: noreply@appvisibility.es
+EMAIL_TO    = os.getenv("EMAIL_TO")           # Ej: contacto@appvisibility.es
+CC_LIST     = os.getenv("CC_LIST", "").split(",") if os.getenv("CC_LIST") else []
+SUBJECT     = os.getenv("SUBJECT", "📊 Informe del estado de droplet")
 
 # ==========================================
 # CONFIG BBDD
@@ -86,19 +89,37 @@ def close_db(cursor=None, conn=None):
 # ==========================================
 # ENVIAR CORREO con smtplib
 # ==========================================
-def send_email(subject: str, html_content: str, cc_list=None):
+def send_email(subject: str, html_content: str, cc_list: list = None):
     """
-    Envía un correo en formato HTML usando el servidor SMTP configurado.
-    Compatible con relays sin autenticación (como smtp-relay local).
+    Envía un correo en formato HTML usando el servidor SMTP configurado con fallback a texto plano.
+    Compatible con smtp-relay sin autenticación o con STARTTLS o autenticación TLS.
+    Si no se especifica subject/email_to/cc_list, usa los valores por defecto definidos en config.py.
+    Si detecta etiquetas HTML, envía multipart/alternative (HTML + texto plano);
+    en caso contrario, solo texto plano.
     """
     if cc_list is None:
         cc_list = []
-    msg = MIMEMultipart("alternative")
-    msg.attach(MIMEText(html_content, "html"))
 
-    msg = MIMEText(html_content, "html", "utf-8")
+    # Fallbacks a valores por defecto
+    subject  = subject  or SUBJECT
+    email_to = email_to or EMAIL_TO
+    cc_list  = cc_list  or CC_LIST
+
+    # Detectar si el contenido es HTML
+    is_html = bool(re.search(r"<[^>]+>", html_content))
+
+    if is_html:
+        # Si contiene etiquetas, construimos multipart con HTML y texto plano
+        plain_text = re.sub(r"<[^>]+>", "", html_content)
+        msg = MIMEMultipart("alternative")
+        msg.attach(MIMEText(plain_text, "plain", "utf-8"))
+        msg.attach(MIMEText(html_content, "html", "utf-8"))
+    else:
+        # Si no hay etiquetas, solo cuerpo texto
+        msg = MIMEText(html_content, "plain", "utf-8")
+
     msg["From"] = formataddr(("AppVisibility Monitoring", EMAIL_FROM))
-    msg["To"] = EMAIL_TO
+    msg["To"] = email_to
     msg["Cc"] = ", ".join(cc_list)
     msg["Subject"] = subject
 
@@ -125,7 +146,9 @@ def send_email(subject: str, html_content: str, cc_list=None):
                 log_info(f"[ℹ️ ]: Autenticación SMTP exitosa.")
 
             # Enviar mensaje
-            server.sendmail(EMAIL_FROM, [EMAIL_TO] + CC_LIST, msg.as_string())
+            recipients = [email_to] + cc_list
+            server.sendmail(EMAIL_FROM, recipients, msg.as_string())
+            log_info(f"[📧]: Enviado a {email_to} con CC a {', '.join(cc_list) or '(sin CC)'}")
 
         log_info(f"[📧]: Enviado a {EMAIL_TO} con CC a {', '.join(cc_list) or '(sin CC)'}")
         return True
