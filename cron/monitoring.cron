@@ -12,7 +12,7 @@
 */10 * * * * /opt/monitoring/scripts/log_honeypot_geolocation.sh
 
 # Alertas de riesgo a las 10h y 22h
-0 10,22 * * * /opt/monitoring/scripts/alert_risk.sh
+* 10,22 * * * /opt/monitoring/scripts/alert_risk.sh
 
 # Prueba de alertas (cada minuto, solo si se necesita debug)
 # * * * * * /opt/monitoring/scripts/alert_risk.sh

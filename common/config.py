@@ -7,10 +7,10 @@ import psycopg2
 from email.mime.text import MIMEText
 from email.utils import formataddr
 from email.mime.multipart import MIMEMultipart
-from datetime import datetime
-import requests
+from datetime import datetime, date
 import re
 import socket
+import html
 
 # ==========================================
 # 🔧 CARGA DE VARIABLES DE ENTORNO (.env)
@@ -26,6 +26,7 @@ SMTP_SERVER = os.getenv("SMTP_SERVER", "127.0.0.1")     # smtp.postmarkapp.com (
 SMTP_PORT   = int(os.getenv("SMTP_PORT", "2526"))         # 2525 (servicio host) ó 2526 (servicio contenedor)
 with open("/opt/monitoring/smtp_relay/secrets/smtp_user") as f:
     SMTP_USER = f.read().strip()
+
 with open("/opt/monitoring/smtp_relay/secrets/smtp_pass") as f:
     SMTP_PASS = f.read().strip()
 
@@ -89,7 +90,7 @@ def close_db(cursor=None, conn=None):
 # ==========================================
 # ENVIAR CORREO con smtplib
 # ==========================================
-def send_email(subject: str, html_content: str, cc_list: list = None):
+def send_email(subject: str, html_content: str = None, email_to: str = None, cc_list: list = None):
     """
     Envía un correo en formato HTML usando el servidor SMTP configurado con fallback a texto plano.
     Compatible con smtp-relay sin autenticación o con STARTTLS o autenticación TLS.
@@ -110,6 +111,7 @@ def send_email(subject: str, html_content: str, cc_list: list = None):
 
     if is_html:
         # Si contiene etiquetas, construimos multipart con HTML y texto plano
+
         plain_text = re.sub(r"<[^>]+>", "", html_content)
         msg = MIMEMultipart("alternative")
         msg.attach(MIMEText(plain_text, "plain", "utf-8"))
@@ -184,6 +186,69 @@ def log_info(msg: str):
     print(f"gda-info: {datetime.now().isoformat()} - {msg}")
 
 # ==========================================
+# HTML BUILDER
+# ==========================================
+
+def format_date(d):
+    if d is None:
+        return ""
+    # d puede ser date o datetime
+    try:
+        return d.strftime('%Y-%m-%d')
+    except Exception:
+        return str(d)
+
+def safe(value):
+    if value is None or value == "":
+        return "---"
+    return html.escape(str(value))
+
+def build_html_table(headers, rows, title, max_rows=None):
+    """
+    Construye un bloque HTML para una tabla.
+    headers: lista de cabeceras
+    rows: lista de tuplas/iterables con valores
+    """
+    shown_rows = rows if (max_rows is None) else rows[:max_rows]
+    html_block = []
+
+    html_block.append(f"<p>{html.escape(title.upper())}</p>")
+    html_block.append("<br>")
+    html_block.append('<table border="1" cellpadding="4" cellspacing="0" style="border-collapse: collapse; width:60%;">')
+
+    # generar colgroup proporcional
+    num_cols = len(headers)
+    html_block.append("<colgroup>")
+    for _ in range(num_cols):
+        html_block.append(f'<col style="width: {100/num_cols}%;">')
+    html_block.append("</colgroup>")
+
+    # header
+    html_block.append("<thead><tr style='background-color:#f2f2f2;'>")
+    for h in headers:
+        html_block.append(f"<th>{html.escape(h)}</th>")
+    html_block.append("</tr></thead>")
+
+    html_block.append("<tbody>")
+    for row in shown_rows:
+        html_block.append("<tr>")
+        for c in row:
+            # if it's a date object, format
+            if isinstance(c, (datetime, date)):
+                cell = format_date(c) or "---"
+            else:
+                cell = safe(c)
+            html_block.append(f"<td>{cell}</td>")
+        html_block.append("</tr>")
+    html_block.append("</tbody></table>")
+
+    # Note if truncated
+    if (max_rows is not None) and (len(rows) > max_rows):
+        html_block.append(f"<p><em>Se muestran las primeras {max_rows} filas de {len(rows)} encontradas.</em></p>")
+
+    return "\n".join(html_block)
+
+# ==========================================
 # GEOLOCALIZACIÓN IP
 # ==========================================
 
@@ -206,3 +271,4 @@ def get_ip_info(ip):
     except requests.exceptions.RequestException as e:
         log_info(f"[❌] Error obteniendo datos para {ip}: {e}")
         return None
+

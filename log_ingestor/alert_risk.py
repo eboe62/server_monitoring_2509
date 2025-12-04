@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
+#!/usr/bin/env python3
 # alert_risk.py
-from common.config import log_info, send_email, connect_db, close_db
+from common.config import log_info, send_email, connect_db, close_db, build_html_table
+import html
 
 with open("/opt/monitoring/smtp_relay/secrets/smtp_user") as f:
     SMTP_USER = f.read().strip()        # Clave API
@@ -8,22 +10,32 @@ with open("/opt/monitoring/smtp_relay/secrets/smtp_user") as f:
 with open("/opt/monitoring/smtp_relay/secrets/smtp_pass") as f:
     SMTP_PASS = f.read().strip()        # Clave API
 
+# ==========================================
+# ALERTA: Atacantes que han conseguido entrar en el servidor
+# ==========================================
+
+# Configuramos un máximo de filas a mostrar por tabla (None = sin límite)
+MAX_ROWS_PER_TABLE = None
+
 def process_alert():
-    # ------------------------------------------------------------------
+    # ==========================================
     # Conectar a la base de datos
-    # ------------------------------------------------------------------
+    # ==========================================
     conn, cursor = None, None
     html_table = ""  # Inicializamos para evitar NameError
+    html_parts = []
+    email_to = None
+
     try:
         conn = connect_db()
         if not conn:
-            log_info("[❌]: No se pudo establecer conexión a la base de datos.")
+            log_info(f"[❌]: No se pudo establecer conexión a la base de datos.")
             return
 
         cursor = conn.cursor()
-        # ------------------------------------------------------------------
+        # ==========================================
         # Consulta SQL para obtener amenazas de alto riesgo
-        # ------------------------------------------------------------------
+        # ==========================================
         query = f"""
             WITH attacks_last_period AS (
                 SELECT *
@@ -57,7 +69,7 @@ def process_alert():
             ),
             top_attacks AS (
                 SELECT DISTINCT ON (alp.attacking_octets)
-                    alp.id,
+--                    alp.id,
                     alp.timestamp,
                     alp.log_ref,
                     alp.log_type,
@@ -83,75 +95,73 @@ def process_alert():
         rows = cursor.fetchall()
 
         if not rows:
-            log_info("[ℹ️]: No se ha completado el reporte de amenazas con riesgo > 7")
+            log_info(f"[ℹ️]: No se ha completado el reporte de amenazas con riesgo > 6")
             return
 
         log_info(f"[✅]: Se detectaron {len(rows)} amenazas con riesgo > 6.")
 
-        # ------------------------------------------------------------------
-        # Generar informe HTML
-        # ------------------------------------------------------------------
-        html_table = """
-        <html>
-        <body>
-        <p><strong>Se han detectado las siguientes amenazas de alto riesgo:</strong></p>
-        <table border="1" cellpadding="4" cellspacing="0" style="border-collapse: collapse;">
-            <thead>
-                <tr style="background-color: #f2f2f2;">
-                    <th>Fecha</th>
-                    <th>Referencia</th>
-                    <th>Tipo</th>
-                    <th># Ataques</th>
-                    <th>IP</th>
-                    <th>Usuario</th>
-                    <th>Puerto</th>
-                    <th>País</th>
-                    <th>Ciudad</th>
-                    <th>Riesgo</th>
-                </tr>
-            </thead>
-            <tbody>
-        """
-
+        # ==========================================
+        # Construimos las filas omitiendo los id
+        # ==========================================
         for row in rows:
-            fecha, referencia, tipo, ataques, ip, user, port, pais, ciudad, riesgo = \
-                row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10]
-            html_table += f"""
-                <tr>
-                    <td>{fecha.strftime('%Y-%m-%d %H:%M:%S')}</td>
-                    <td>{referencia}</td>
-                    <td>{tipo}</td>
-                    <td>{ataques}</td>
-                    <td>{ip}</td>
-                    <td>{user}</td>
-                    <td>{port}</td>
-                    <td>{pais}</td>
-                    <td>{ciudad}</td>
-                    <td><strong>{riesgo}</strong></td>
-                </tr>
-            """
+            timestamp, log_ref, log_type, attacking_no, attacking_ip, attacking_user, attacking_port, attacking_country, attacking_town, risk_score = row
 
-        html_table += """
-            </tbody>
-            </table>
-            </body>
-            </html>
-        """
+        # ==========================================
+        # Construcción del HTML
+        # ==========================================
+        head_text = (
+            f"Se han detectado las siguientes amenazas de alto riesgo:"
+        )
+        intro_text = (
+            "La IP's indicadas a continuación han conseguido acceder al servidor vía SSH"
+        )
+        reasons_text = (
+            "Nota: Algunas de las IP's identificadas corresponden a las de los propios administradores del servidor"
+        )
 
-        # ------------------------------------------------------------------
-        # Enviar correo usando el contenedor smtp-relay que gestiona Postfix
-        # ------------------------------------------------------------------
+
+        html_parts.append("<html><body>")
+        html_parts.append("<br>")
+        html_parts.append(f"<h3>{html.escape(head_text)}</h3>")
+        html_parts.append("<br>")
+        html_parts.append(f"<p>{html.escape(intro_text)}</p>")
+
+        headers = ["Fecha","Referencia","Tipo","Ataques","IP","Usuario","Puerto","País","Ciudad","Riesgo"]
+
+        html_parts.append(build_html_table(headers, rows, "Tabla: IP's que han conseguido entrar en el servidor", MAX_ROWS_PER_TABLE))
+
+        html_parts.append("<br>")
+        html_parts.append(f"<p>{html.escape(reasons_text)}</p>")
+        html_parts.append("<br>")
+        html_parts.append("<p>Un saludo<br>AppVisibility<br>http://www.appvisibility.es/</p>")
+        html_parts.append("</body></html>")
+
+        html_body = "\n".join(html_parts)
+
+            # ==========================================
+            # Envio del resultado por correo usando el contenedor smtp-relay que gestiona Postfix
+            # ==========================================
         subject = "🚨 Alerta: Ataques de alto riesgo"
-        send_email(subject, html_table)
-        log_info(f"[✅]: Alerta enviada correctamente por correo.")
+        send_email(subject, html_body)
+        email_to=""
+        try:
+            send_email(
+                subject,
+                html_body,
+                email_to,
+                cc_list=[""]
+            )
+            log_info(f"[📧]: Enviado a ...{email_to} con CC a ...")
+        except Exception as e:
+            log_info(f"[❌]: El envío ha fallado: {e}")
 
     except Exception as e:
         log_info(f"[❌]: Error en la consulta o procesamiento del mail de alerta: {e}")
     finally:
         close_db(cursor, conn)
 
-# ----------------------------------------------------------------------
+# ==========================================
 # MAIN
-# ----------------------------------------------------------------------
+# ==========================================
 if __name__ == "__main__":
     process_alert()
