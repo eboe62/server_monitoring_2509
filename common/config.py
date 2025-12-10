@@ -7,7 +7,7 @@ import psycopg2
 from email.mime.text import MIMEText
 from email.utils import formataddr
 from email.mime.multipart import MIMEMultipart
-from datetime import datetime, date
+import datetime
 import re
 import socket
 import html
@@ -179,11 +179,41 @@ def normalize_date(value):
     return value
 
 # ==========================================
+# GESTION DEL TIEMPO
+# ==========================================
+
+def get_month_gap(month_gap):
+    """
+    Devuelve:
+      - hoy (date)
+      - primer_dia_mes_actual (date)
+      - primer_dia_mes_inicio (date)
+      - fecha_anterior_str (string normalizada)
+    """
+    hoy = datetime.date.today()
+
+    primer_dia_mes_actual = hoy.replace(day=1)
+
+    # primer día del mes de hace n meses
+    mes_objetivo = primer_dia_mes_actual.month - month_gap
+    anno_objetivo = primer_dia_mes_actual.year
+
+    if mes_objetivo <= 0:
+        mes_objetivo += 12
+        anno_objetivo -= 1
+
+    primer_dia_mes_inicio = datetime.date(anno_objetivo, mes_objetivo, 1)
+
+    fecha_anterior_str = normalize_date(primer_dia_mes_inicio.strftime("%Y-%m-%d"))
+
+    return hoy, primer_dia_mes_actual, primer_dia_mes_inicio, fecha_anterior_str
+
+# ==========================================
 # CONFIG LOGS
 # ==========================================
 def log_info(msg: str):
     """Logger simple con fecha ISO y prefijo GDA."""
-    print(f"gda-info: {datetime.now().isoformat()} - {msg}")
+    print(f"gda-info: {datetime.datetime.now().isoformat()} - {msg}")
 
 # ==========================================
 # HTML BUILDER
@@ -234,7 +264,7 @@ def build_html_table(headers, rows, title, max_rows=None):
         html_block.append("<tr>")
         for c in row:
             # if it's a date object, format
-            if isinstance(c, (datetime, date)):
+            if isinstance(c, (datetime.datetime, datetime.date)):
                 cell = format_date(c) or "---"
             else:
                 cell = safe(c)
