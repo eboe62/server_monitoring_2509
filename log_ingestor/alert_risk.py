@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
-#!/usr/bin/env python3
 # alert_risk.py
-from common.config import log_info, send_email, connect_db, close_db, build_html_table
+from common.config import log_info, send_email, connect_db, close_db, build_html_table, get_month_gap
 import html
 
 with open("/opt/monitoring/smtp_relay/secrets/smtp_user") as f:
@@ -16,8 +15,12 @@ with open("/opt/monitoring/smtp_relay/secrets/smtp_pass") as f:
 
 # Configuramos un máximo de filas a mostrar por tabla (None = sin límite)
 MAX_ROWS_PER_TABLE = None
+# Configuramos un periodo de tiempo (meses)
+MONTH_GAP = 4
 
 def process_alert():
+    log_info(f"[📌]: INICIO TEST: Atacantes que han conseguido entrar en el servidor")
+
     # ==========================================
     # Conectar a la base de datos
     # ==========================================
@@ -33,6 +36,13 @@ def process_alert():
             return
 
         cursor = conn.cursor()
+
+        # Fechas de referencia (como strings ISO)
+        hoy, primer_dia_mes_actual, primer_dia_mes_inicio, fecha_anterior_str = get_month_gap(MONTH_GAP)
+
+        log_info(f"[ℹ️ ]: Cálculo fechas: hoy={hoy}, desde={primer_dia_mes_inicio}")
+        log_info(f"[ℹ️ ]: Fecha límite usada en query: desde {fecha_anterior_str} hasta {hoy.strftime('%Y-%m-%d')}")
+
         # ==========================================
         # Consulta SQL para obtener amenazas de alto riesgo
         # ==========================================
@@ -86,12 +96,13 @@ def process_alert():
                 ORDER BY alp.attacking_octets, alp.attacking_no DESC
             )
             SELECT *
-            FROM top_attacks
-            WHERE risk_score > 6
-            ORDER BY risk_score DESC;
+            FROM top_attacks ta
+            WHERE ta.risk_score > 6
+                AND ta.timestamp > %s
+            ORDER BY ta.risk_score DESC;
         """
 
-        cursor.execute(query)
+        cursor.execute(query, (primer_dia_mes_inicio,))
         rows = cursor.fetchall()
 
         if not rows:
@@ -99,6 +110,12 @@ def process_alert():
             return
 
         log_info(f"[✅]: Se detectaron {len(rows)} amenazas con riesgo > 6.")
+
+        # Limitar líneas si procede
+        if MAX_ROWS_PER_TABLE is not None:
+            rows_shown = rows[:MAX_ROWS_PER_TABLE]
+        else:
+            rows_shown = rows
 
         # ==========================================
         # Construimos las filas omitiendo los id
@@ -128,7 +145,7 @@ def process_alert():
 
         headers = ["Fecha","Referencia","Tipo","Ataques","IP","Usuario","Puerto","País","Ciudad","Riesgo"]
 
-        html_parts.append(build_html_table(headers, rows, "Tabla: IP's que han conseguido entrar en el servidor", MAX_ROWS_PER_TABLE))
+        html_parts.append(build_html_table(headers, rows_shown, "Tabla: IP's que han conseguido entrar en el servidor", MAX_ROWS_PER_TABLE))
 
         html_parts.append("<br>")
         html_parts.append(f"<p>{html.escape(reasons_text)}</p>")
