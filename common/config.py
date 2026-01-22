@@ -9,6 +9,7 @@ from email.utils import formataddr
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime, date
 import re
+import requests
 import socket
 import html
 
