@@ -1,0 +1,51 @@
+---
+auth_enabled: false  # Autenticación deshabilitada
+
+server:
+  http_listen_port: 3100  # Puerto HTTP
+
+ingester:
+  lifecycler:
+    ring:
+      kvstore:
+        store: inmemory  # Almacenamiento en memoria
+      replication_factor: 1
+  chunk_idle_period: 1m  # Tiempo inactivo antes de cerrar un chunk
+  max_chunk_age: 30m  # Edad máxima de un chunk
+  chunk_target_size: 512000  # Tamaño objetivo de los chunks
+  chunk_retain_period: 30s  # Periodo de retención de chunks cerrados
+  wal:
+    enabled: true
+    dir: /var/lib/loki/wal  # Directorio para Write Ahead Log (WAL)
+
+schema_config:
+  configs:
+    - from: 2020-10-24
+      store: boltdb-shipper
+      object_store: filesystem
+      schema: v13
+      index:
+        prefix: index_
+        period: 24h
+
+storage_config:
+  boltdb_shipper:
+    active_index_directory: /var/lib/loki/boltdb-shipper-active
+    cache_location: /var/lib/loki/boltdb-shipper-cache
+  filesystem:
+    directory: /var/lib/loki/chunks
+
+limits_config:
+  allow_structured_metadata: false
+  reject_old_samples: true
+  reject_old_samples_max_age: 72h
+#  max_streams_per_user: 50
+#  max_samples_per_stream: 1000
+
+table_manager:
+  retention_deletes_enabled: true
+  retention_period: 72h  # Retención de 3 días
+
+compactor:
+  working_directory: /var/lib/loki/compactor
+

@@ -1,0 +1,28 @@
+version: "3.8"
+
+services:
+  monitoring-python:
+    build:
+      context: ../..
+      dockerfile: ops/docker/Dockerfile.python
+    image: monitoring-python:latest
+    container_name: monitoring-python
+    restart: unless-stopped
+    env_file:
+      - ../services/smtp_relay/.env
+    volumes:
+      # Monta el proyecto para ejecutar scripts Python
+      - /opt/monitoring:/opt/monitoring
+
+      # Logs del host para que los scripts puedan escribir ahí
+      - /var/log:/var/log
+
+      # Acceso al socket de Docker (para docker_resources.sh y .py)
+      - /var/run/docker.sock:/var/run/docker.sock
+
+    networks:
+      - monitoring-net  # Red compartida (Grafana, Loki, Postgres, SMTP relay...)
+
+networks:
+  monitoring-net:
+    external: true
