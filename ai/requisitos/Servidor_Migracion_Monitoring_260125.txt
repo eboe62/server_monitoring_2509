@@ -1,5 +1,5 @@
 Servidor_Migracion_Monitoring_251206
-Versión 251221
+Versión 260125
 
 ==========================================
 MIGRACIÓN DEL PROYECTO server_monitoring_2509
@@ -161,6 +161,216 @@ evitar rutas absolutas
 cargar .env desde ops/services/smtp_relay/.env
 mantener compatibilidad contenedor/host
 no realizar I/O fuera de la zona IaC
+
+2.6 Justificación del uso de wrappers mínimos (IaC)
+----------------------------------
+✔ 2.6.1 Contexto
+En este proyecto, el directorio `scripts/` se considera infraestructura operativa
+(IaC) y no parte del código fuente Python distribuible.
+
+La lógica ejecutable vive exclusivamente bajo `src/`, organizada como paquetes
+Python importables y ejecutables mediante `python3 -m`.
+
+Los scripts en `scripts/` actúan como wrappers mínimos.
+
+✔ 2.6.2 Objetivo de los wrappers
+El uso de wrappers mínimos persigue los siguientes objetivos:
+
+- Garantizar portabilidad total del sistema entre servidores
+- Evitar dependencias implícitas del sistema operativo
+- Eliminar acoplamientos a rutas absolutas del host
+- Permitir ejecución consistente en:
+  - Host Linux
+  - Contenedores Docker
+  - Entornos efímeros o de recuperación
+- Mantener la infraestructura 100% reproducible (IaC)
+
+✔ 2.6.3 Principio arquitectónico
+La infraestructura no ejecuta archivos Python directamente.
+La infraestructura ejecuta módulos Python.
+
+Esto implica:
+- Nunca invocar: /ruta/al/archivo.py
+- Ejecutar siempre: python3 -m paquete.modulo
+
+Los wrappers:
+- No contienen lógica de negocio
+- No importan código Python
+- No duplican configuración
+- Únicamente:
+  - Preparan el entorno mínimo
+  - Invocan el módulo correcto
+
+✔ 2.6.4 Esquema conceptual
+ANTES (modelo acoplado al host):
+
+cron / shell
+  |
+  v
+/usr/bin/python3 /opt/monitoring/log_ingestor/log_ingest_batch.py
+  |
+  +-- depende de rutas
+  +-- depende del host
+  +-- frágil ante refactors
+
+DESPUÉS (modelo IaC autónomo):
+
+cron / shell (wrapper)
+  |
+  v
+python3 -m log_ingestor.log_ingest_batch
+  |
+  v
+src/log_ingestor/log_ingest_batch.py
+  |
+  +-- ejecutable como módulo
+  +-- independiente de rutas físicas
+  +-- portable y reproducible
+
+✔ 2.6.5 Decisión consciente
+Esta arquitectura es intencionada.
+
+No se busca:
+- Convertir `scripts/` en paquete Python
+- Ejecutar lógica directamente desde cron
+- Acoplar la infraestructura al layout interno de src/
+
+Se busca:
+- Separación estricta entre infraestructura y lógica
+- Capacidad de refactorizar src/ sin romper cron ni scripts
+- Infraestructura desplegable en cualquier servidor sin ajustes manuales
+
+Esta decisión se alinea con:
+- Infraestructura como Código (IaC)
+- Principios de portabilidad y reproducibilidad
+- Ejecución determinista y auditable
+
+2.7 Ejecución de cronjobs en contenedores
+----------------------------------
+ANTES
+Los cronjobs ejecutaban scripts shell que, a su vez, invocaban
+archivos Python de forma directa mediante rutas absolutas
+(/opt/monitoring/…/*.py) o dependían implícitamente del layout
+del host.
+
+La relación entre cronjobs, scripts y lógica Python no estaba
+formalizada, y la activación de cron podía fallar silenciosamente
+si el entorno no cumplía ciertas condiciones (Docker, secrets,
+servicios externos, permisos de filesystem).
+
+No existía una enumeración explícita de precondiciones necesarias
+para ejecutar cronjobs dentro de contenedores.
+
+DESPUÉS
+Todos los cronjobs están modelados como wrappers mínimos bajo
+scripts/, cuya única responsabilidad es invocar módulos Python
+mediante `python3 -m <paquete>.<módulo>` definidos en src/.
+
+La relación cronjob → módulo Python queda explícita y es la siguiente:
+
+- alert_risk.sh
+  → python3 -m log_ingestor.alert_risk
+
+- log_ingest_batch.sh
+  → python3 -m log_ingestor.log_ingest_batch
+
+- log_kern_batch.sh
+  → python3 -m log_ingestor.log_kern_batch
+
+- log_fail2ban_batch.sh
+  → python3 -m log_ingestor.log_fail2ban_batch
+
+- log_ip_geolocation.sh
+  → python3 -m log_ingestor.log_ip_geolocation
+
+- log_honeypot_geolocation.sh
+  → python3 -m log_ingestor.log_honeypot_geolocation
+
+- docker_resources.sh
+  → python3 -m resource_monitor.docker_resources
+
+Los scripts de backup (backup_postgres.sh, backup_restore.sh)
+se consideran scripts operativos de infraestructura y dependen
+explícitamente de Docker y PostgreSQL; no se tratan como cronjobs
+Python puros.
+
+✔ 2.7.1 Precondiciones explícitas
+La activación de cronjobs en contenedores queda condicionada a que
+el entorno cumpla explícitamente las siguientes precondiciones:
+
+- Docker CLI disponible y permisos para ejecutar docker exec / cp
+- Existencia de un contenedor Python con el código bajo src/
+- Dependencias Python instaladas (psycopg2, requests, etc.)
+- PostgreSQL accesible y credenciales válidas
+- SMTP / relay accesible para notificaciones
+- Sistema de ficheros preparado:
+  - /var/log con permisos de escritura
+  - /opt/monitoring/backups existente
+  - /opt/monitoring/smtp_relay/.env presente
+  - /opt/monitoring/smtp_relay/secrets/* presentes y protegidos
+
+Si alguna de estas precondiciones no se cumple, los cronjobs pueden
+fallar por errores de import-time, lectura de secrets, permisos,
+conectividad o dependencias externas.
+
+Estos riesgos se consideran conocidos y aceptados en esta fase.
+No se aplican correcciones automáticas ni workarounds.
+
+2.8 Desacoplamiento de configuración y dependencias
+----------------------------------
+ANTES
+La configuración y ciertas dependencias críticas del sistema se resuelven en import-time dentro de los módulos Python bajo src/, lo que introduce acoplamientos fuertes al entorno de despliegue:
+- Lectura directa de secrets y archivos .env mediante rutas absolutas (/opt/monitoring/...) durante el import.
+- Importación inmediata de librerías externas (p. ej. psycopg2, requests) al cargar módulos comunes.
+- Construcción de configuraciones (BBDD, SMTP, tokens externos) en el momento de importación.
+- Uso de rutas hardcodeadas para logging y backups (/var/log, /opt/monitoring/backups).
+
+Este enfoque provoca que:
+- La ausencia de ficheros o dependencias cause fallos inmediatos de import (FileNotFoundError, ModuleNotFoundError).
+- Sea imposible importar o analizar módulos en entornos incompletos o de validación.
+- El sistema no degrade de forma controlada ante la falta de servicios externos.
+
+DESPUÉS (estrategia definida, no aplicada aún)
+Se define una estrategia de desacoplamiento progresivo, cuyo objetivo es eliminar fallos en import-time y mejorar la portabilidad y robustez operativa sin modificar aún el comportamiento actual.
+
+La estrategia acordada es:
+- Import-time
+    └─ solo definiciones, constantes y lógica segura
+- Runtime (entrypoints)
+    └─ inicialización explícita de configuración y dependencias
+
+✔ 2.8.1 - Medidas estratégicas previstas
+Retrasar la lectura de configuración sensible
+- Mover la carga de .env y la lectura de secrets a una función explícita de inicialización (init_config() o equivalente).
+- Validar presencia y permisos de los ficheros en runtime, con errores diagnósticos claros.
+- Evitar cualquier acceso a filesystem crítico durante el import.
+
+Convertir dependencias pesadas en lazy imports
+- Importar librerías externas (psycopg2, requests, etc.) únicamente dentro de las funciones que las utilizan.
+- Capturar errores de disponibilidad con mensajes claros y controlados.
+
+Clasificar la configuración
+- Obligatoria: secrets SMTP, credenciales BBDD para funcionalidades críticas.
+- Opcional: tokens externos, destinatarios de correo, integraciones no esenciales.
+- Dependiente de entorno: rutas de filesystem, Docker CLI, nombres de contenedores.
+
+Parametrizar rutas actualmente hardcodeadas
+- Exponer rutas de logs y backups como configurables, manteniendo valores por defecto conservadores.
+- Validar existencia y permisos en runtime.
+
+Permitir degradación controlada
+- Introducir flags o validaciones que permitan desactivar integraciones externas (IPInfo, Loki, SMTP) sin bloquear el sistema completo.
+- Diferenciar claramente entre errores críticos (detienen ejecución) y degradaciones aceptables (warning).
+
+✔ 2.8.2 Riesgos identificados y mitigación
+Detección tardía de errores al mover validaciones a runtime
+→ mitigación: inicialización explícita y validaciones al arranque de cada entrypoint.
+
+Comportamiento parcial del sistema si faltan servicios externos
+→ mitigación: logs claros y documentación de degradación funcional.
+
+Incremento de disciplina requerida en entrypoints
+→ mitigación: documentar obligación de inicialización previa.
 
 ==========================================
 3.a ESTRUCTURA INICIAL
@@ -361,7 +571,7 @@ server_monitoring_2512/
 - Dockerfiles autocontenidos
 - Validar que Dockerfile.base mantenga los COPY correctos
 - docker-compose por dominio del sistema
-- Scripts del host reducidos o eliminados (solo wrappers si es necesario)
+- Scripts del host reducidos o eliminados (solo wrappers mínimos)
 - Variables → .env + secrets versionados en repos seguro
 - Probar manualmente cron y contenedores tras migración
 - Comprobar permisos tras los movimientos

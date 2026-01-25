@@ -75,6 +75,12 @@ Reglas técnicas estrictas:
 7.- Diferenciar DEV / PRO explícitamente.
 
 ==========================================
+Entorno local:
+==========================================
+En entorno local, los servicios que dependen de secrets PRO (smtp_relay, postgres) fallarán intencionadamente al ejecutar make up-services.
+Esto se considera comportamiento esperado y no debe corregirse mediante valores por defecto
+
+==========================================
 Cierre de fases:
 ==========================================
 Cada fase debe incluir:

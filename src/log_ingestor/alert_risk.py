@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-#!/usr/bin/env python3
 # alert_risk.py
 from monitoring.common.config import log_info, send_email, connect_db, close_db, build_html_table
 import html
@@ -16,8 +15,12 @@ with open("/opt/monitoring/smtp_relay/secrets/smtp_pass") as f:
 
 # Configuramos un máximo de filas a mostrar por tabla (None = sin límite)
 MAX_ROWS_PER_TABLE = None
+# Configuramos un periodo de tiempo (meses)
+MONTH_GAP = 4
 
 def process_alert():
+    log_info(f"[📌]: INICIO TEST: Atacantes que han conseguido entrar en el servidor")
+
     # ==========================================
     # Conectar a la base de datos
     # ==========================================
@@ -33,6 +36,13 @@ def process_alert():
             return
 
         cursor = conn.cursor()
+
+        # Fechas de referencia (como strings ISO)
+        hoy, primer_dia_mes_actual, primer_dia_mes_inicio, fecha_anterior_str = get_month_gap(MONTH_GAP)
+
+        log_info(f"[ℹ️ ]: Cálculo fechas: hoy={hoy}, desde={primer_dia_mes_inicio}")
+        log_info(f"[ℹ️ ]: Fecha límite usada en query: desde {fecha_anterior_str} hasta {hoy.strftime('%Y-%m-%d')}")
+
         # ==========================================
         # Consulta SQL para obtener amenazas de alto riesgo
         # ==========================================

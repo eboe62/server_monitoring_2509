@@ -5,7 +5,7 @@
 .PHONY: help all symlinks audit check-cron clean-logs snapshot up-services status logs build-base build-python build-cron deploy-cron deploy rebuild rebuild-all
 
 # Ruta base
-BASE_DIR := /opt/monitoring
+BASE_DIR ?= ops/services
 
 ## 📌 Ayuda: lista de comandos disponibles
 help:

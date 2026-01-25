@@ -1,11 +1,11 @@
 # === Archivos sensibles de SMTP Relay ===
-smtp_relay/secrets/smtp_user
-smtp_relay/secrets/smtp_pass
-smtp_relay/config/sasl_passwd
-smtp_relay/config/sasl_passwd.db
+ops/services/smtp_relay/secrets/*
+!ops/services/smtp_relay/secrets/.gitkeep
+ops/services/smtp_relay/config/sasl_passwd
+ops/services/smtp_relay/config/sasl_passwd.db
 
 # === Entornos virtuales Python ===
-log_ingestor/venv/
+src/log_ingestor/venv/
 **/venv/
 *.pyc
 __pycache__/
@@ -13,8 +13,8 @@ __pycache__/
 # === Logs ===
 *.log
 /var/log/*
-log_ingestor/*.log
-resource_monitor/*.log
+resources/logs/*.log
+resources/logs/*.txt
 
 # === Archivos temporales / swap ===
 *.swp

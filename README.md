@@ -1,4 +1,5 @@
-# 🧩 Proyecto MONITORING STACK — DigitalOcean (v250928)
+# Proyecto Monitoring Stack 2511
+# DigitalOcean (v251120)
 
 ![Python](https://img.shields.io/badge/Python-3.12-blue.svg)
 ![Docker](https://img.shields.io/badge/Docker-enabled-0db7ed.svg)
@@ -9,58 +10,97 @@
 
 ## 📖 Descripción general
 
-**Monitoring Stack 2509** es una plataforma de **monitorización y observabilidad 100% contenerizada (IaC)** desplegada en un servidor **DigitalOcean**.  
-El sistema integra **ingesta y análisis de logs**, **alertas por correo**, **monitorización de recursos Docker** y un **honeypot Postgres** para detección temprana de ataques.  
+**Monitoring Stack 2511** es un plataforma modular de **monitorización y observabilidad 100% contenerizada (IaC)** para servidores Linux desplegada en un servidor **DigitalOcean**.
 
-Inicialmente, la BBDD se gestionaba mediante **CapRover**, pero tras un incidente de redirección no autorizada (“cashmachine.ie”), se migró a un contenedor propio.  
+
+Incluye componentes para análisis de seguridad, ingesta de eventos,
+monitorización de recursos y servicios auxiliares listos para
+producción.
+
+Inicialmente, la BBDD se gestionaba mediante **CapRover**, pero tras un incidente de redirección no autorizada (“cashmachine.ie”), se migró a un contenedor propio.
 La antigua BBDD se mantiene ahora como **honeypot**, permitiendo detectar intentos de acceso o manipulación externos.
 
 ---
 
+## 🧩 Características principales
+
+El sistema integra modularmente:
+-   **Ingesta y análisis de logs** del sistema (kernel, fail2ban, honeypot, etc.)
+-   Procesamiento por lotes y normalización de eventos
+-  **Monitorización de recursos Docker** (CPU, RAM, IO, contenedores, etc.)
+-   Servicios complementarios:
+    -   SMTP Relay independiente
+    -   Cronjobs integrados
+    -   Despliegue automatizado
+    -   Docker Compose modular
+    -   **Alertas por correo**
+    -   **Honeypot Postgres** para detección temprana de ataques
+-   Estructura profesional y escalable orientada a microservicios
+
+------------------------------------------------------------------------
+
 ## 🏗️ Infraestructura en servidor
+- Denominación:         `eob-250501a`
+- Proveedor:            DigitalOcean
+- Tipo de servidor:     Droplet virtualizado (KVM) – "DO-Regular"
+- Arquitectura:         x86_64
+- Sistema operativo:    Ubuntu 24.04.1 LTS (Noble Numbat)
+- CPU:                  1 vCPU (Intel • KVM • modelo DO-Regular)
+- RAM:                  2 GB
+- Almacenamiento:       48 GB SSD (ext4) → /dev/vda1
+- ip pública:           165.22.87.56
 
-Servidor actual:  
-`eob-250501a` (DigitalOcean)
-
-Ruta de instalación:  
+Ruta de instalación:
 `/opt/monitoring`
 
-Repositorio:  
-[https://github.com/eboe62/server_monitoring_2509.git](https://github.com/eboe62/server_monitoring_2509.git)  
+Repositorio:
+[https://github.com/eboe62/server_monitoring_2509.git](https://github.com/eboe62/server_monitoring_2509.git)
 Rama: `develop`
 
 ---
 
 ## ⚙️ Requisitos previos
 
-- Docker y Docker Compose instalados  
-- Python ≥ 3.12  
-- Acceso root al servidor  
-- Git configurado con credenciales válidas  
+- Docker y Docker Compose instalados
+- Python ≥ 3.12
+- Acceso root al servidor
+- Git configurado con credenciales válidas
 
 ---
 
 ## 📂 Estructura del proyecto
 
 ```
-/monitoring
-├── cron/                # Definiciones de cronjobs y tareas programadas
-├── log_ingestor/        # Scripts Python para ingesta y procesado de logs
-├── observability/       # Configuración de Loki, Promtail y Grafana
-├── postgres/            # Contenedor PostgreSQL (BBDD real)
-├── resource_monitor/    # Monitorización de recursos Docker
-├── scripts/             # Wrappers bash para tareas periódicas
-├── smtp_relay/          # Servicio Postfix SMTP relay para alertas
-├── Dockerfile.base      # Imagen base común
-├── Makefile             # Tareas de build/despliegue
-└── requirements.txt     # Dependencias Python
+    server_monitoring/
+    ├ Makefile                  # Tareas de build/despliegue
+    ├ requirements.txt          # Dependencias Python
+    ├ ai/                       # Prompts / requisitos generados con IA
+    ├ config/                   # Configuración (Loki, Promtail…)
+    ├ docs/                     # Documentación técnica y decisiones
+    ├ ops/                      # Infraestructura / DevOps
+    │ ├ cron/                   # Definicion de cronjob y tareas independiente del core
+    │ ├ deployment/             # setup_symlinks
+    │ ├ docker/                 # Gestión de contenedores
+    │ │ ├ Dockerfile.base       # Imagen base común
+    │ │ ├ cron                  # Servicio cron específico del stack
+    │ │ ├ observability         # Configuración de Loki, Promtail y Grafana
+    │ │ ├ postgres              # Servicio BBDD PostgreSQL específico del stack
+    │ │ └ python                # Servicio python específico del stack
+    │ └ services/smtp_relay/    # Servicio Postfix SMTP-relay para alertas
+    ├ resources/                # Material auxiliar (logs locales, etc.)
+    ├ scripts/                  # Wrappers bash para tareas periódicas
+    ├ src/                      # Código principal (Python)
+    │ ├ common/                 # Utilidades comunes
+    │ ├ log_ingestor/           # Scripts Python para ingesta y procesado de logs
+    │ └ resource_monitor/       # Monitorización de recursos Docker
+    └ tests/                    # Pruebas de funcionalidad
 ```
 
 ## ⚙️ Configuración técnica
 
-⏱️ **Cron / Supercronic Jobs** 
+⏱️ **Cron / Supercronic Jobs**
 
-Tareas programadas en `cron/monitoring.cron`:
+Tareas programadas en `ops/cron/monitoring.cron`:
 
 | Frecuencia | Script | Descripción |
 |-------------|---------|-------------|
@@ -70,7 +110,7 @@ Tareas programadas en `cron/monitoring.cron`:
 | 10:00 / 22:00 | `alert_risk.sh` | Envío de alertas de riesgo |
 | @reboot | `configure_docker_limits.sh` | Aplicación de límites de CPU/memoria |
 
-🐳 **Dockerfile base** 
+🐳 **Dockerfile base**
 
 ```dockerfile
 FROM python:3.12-slim AS monitoring-base
@@ -124,8 +164,8 @@ DB_PORT = 9999
 ## 🧠 Componentes principales
 
 ### 🧩 `log_ingestor`
-Procesa logs del sistema (auth.log, kern.log, Fail2Ban).  
-Detecta patrones sospechosos y guarda los eventos en PostgreSQL.  
+Procesa logs del sistema (auth.log, kern.log, Fail2Ban).
+Detecta patrones sospechosos y guarda los eventos en PostgreSQL.
 Scripts destacados:
 - `log_ingest_batch.py` — Ingesta principal
 - `log_ip_geolocation.py` — Añade localización geográfica
@@ -136,17 +176,17 @@ Controla recursos de contenedores Docker en tiempo real:
 - CPU, memoria, swap
 - Límites definidos en `docker-compose.yml`
 Scripts:
-- `docker_resources.py` / `.sh`  
+- `docker_resources.py` / `.sh`
 - `configure_docker_limits.sh` — Reajuste de límites
 
 ### 🧩 `observability`
-Stack **Promtail + Loki + Grafana** para centralizar logs.  
-- `promtail-config.yaml` define etiquetas y filtrado.  
-- `loki-config.yaml` gestiona almacenamiento local y retención (72h).  
-- `grafana` se integra con SMTP relay para alertas.  
+Stack **Promtail + Loki + Grafana** para centralizar logs.
+- `promtail-config.yaml` define etiquetas y filtrado.
+- `loki-config.yaml` gestiona almacenamiento local y retención (72h).
+- `grafana` se integra con SMTP relay para alertas.
 
 ### 🧩 `smtp_relay`
-Contenedor Postfix que actúa como **relay seguro** hacia `smtp.postmarkapp.com`.  
+Contenedor Postfix que actúa como **relay seguro** hacia `smtp.postmarkapp.com`.
 Permite envío de alertas desde cualquier componente del sistema.
 
 ---
@@ -161,16 +201,16 @@ git clone https://github.com/eboe62/server_monitoring_2509.git
 Configurar variables de entorno y credenciales según cada servicio (ejemplo para SMTP Relay):
 
 cd /opt/monitoring
-nano smtp_relay/.env
+nano ops/services/smtp_relay/.env
 
 cd /opt/monitoring
-nano smtp_relay/secrets/smtp_user
+nano ops/services/smtp_relay/secrets/smtp_user
 =====================
 99x9xx99-9x99-9x99-99x9-99xx9xxx9xxx (token https://postmarkapp.com)
 =====================
 
 cd /opt/monitoring
-nano smtp_relay/secrets/smtp_pass
+nano ops/services/smtp_relay/secrets/smtp_pass
 =====================
 99x9xx99-9x99-9x99-99x9-99xx9xxx9xxx (token https://postmarkapp.com)
 =====================
@@ -192,12 +232,12 @@ chmod +x ./scripts/*.sh
 ```
 ## 🚀 Uso
 
-El proyecto incorpora un **Makefile global** que permite construir, desplegar y gestionar los contenedores principales sin necesidad de recordar comandos largos de Docker.  
+El proyecto incorpora un **Makefile global** que permite construir, desplegar y gestionar los contenedores principales sin necesidad de recordar comandos largos de Docker.
 Basta con anteponer la palabra `make` al comando correspondiente.
 
 ```
 ▶️ Levantar el servicio de email para el envío de alertas
-cd /opt/monitoring/smtp_relay
+cd /opt/monitoring/ops/services/smtp_relay
 make up
 
 Inicia el contenedor SMTP Relay encargado del envío de alertas y notificaciones por correo.
@@ -215,7 +255,7 @@ docker ps
 ▶️ Verificar logs:
 make logs
 
-Muestra los logs más recientes del sistema. 
+Muestra los logs más recientes del sistema.
 ```
 ```
 ▶️ Arrancar contenedores Python y Cron
@@ -263,8 +303,8 @@ Reconstruye todas las imágenes (base, python y cron) sin usar cache.
 cd /opt/monitoring/
 
 Ejecución manual de auditorías y limpieza:
-./scripts/docker_resources.sh
-./scripts/cleanup_docker.sh 
+./ops/docker/docker_resources.sh
+./scripts/cleanup_docker.sh
 
 ⚠️ ATENCION: Antes de ejecutar limpieza, crea un snapshot previo — existe riesgo de pérdida no deseada de binarios.
 ```
@@ -274,9 +314,9 @@ Ejecución manual de auditorías y limpieza:
 ## 🧩 Honeypot PostgreSQL (CapRover)
 
 La antigua base de datos `srv-captain--security250226app` se mantiene activa como **honeypot controlado**:
-- Red aislada `captain-overlay-network`  
-- Sin credenciales válidas  
-- Permisos mínimos y sin volúmenes compartidos  
+- Red aislada `captain-overlay-network`
+- Sin credenciales válidas
+- Permisos mínimos y sin volúmenes compartidos
 - Monitorización de tráfico HTTP/HTTPS a través de `nginx + Promtail`
 
 Esto permite detectar intentos de reconexión, redirecciones fraudulentas o modificaciones no autorizadas.
@@ -285,26 +325,67 @@ Esto permite detectar intentos de reconexión, redirecciones fraudulentas o modi
 
 ## 🔒 Acciones preventivas clave
 
-1. **Endurecimiento honeypot**: permisos mínimos, red y volúmenes aislados.  
-2. **Supervisión temprana**: etiquetado `honeypot=true` en Promtail.  
-3. **Integridad/auditoría**: checksum de nginx y revisión binarios.  
-4. **Control de exposición**: filtrar IPs y fijar versión de nginx.  
-5. **Persistencia evidencias**: logs ≥7 días + exportación periódica.  
-6. **Seguridad general**: PostgreSQL fuera de CapRover + rate-limiting global.  
+1. **Endurecimiento honeypot**: permisos mínimos, red y volúmenes aislados.
+2. **Supervisión temprana**: etiquetado `honeypot=true` en Promtail.
+3. **Integridad/auditoría**: checksum de nginx y revisión binarios.
+4. **Control de exposición**: filtrar IPs y fijar versión de nginx.
+5. **Persistencia evidencias**: logs ≥7 días + exportación periódica.
+6. **Seguridad general**: PostgreSQL fuera de CapRover + rate-limiting global.
+
+---
+
+## 📜 Documentación adicional
+
+La documentación técnica completa se encuentra en:
+    docs/arquitectura/
+Incluye:
+-   Definición del proyecto\
+-   Implementación inicial\
+-   Documento de migración\
+-   Decisiones arquitectónicas (ADR)
+
+---
+
+## 🤖 Servicios destacados
+
+### SMTP Relay independiente
+
+Se encuentra en:
+    ops/services/smtp_relay/
+Este servicio está diseñado para ser **replicable** en otros proyectos
+sin dependencias del core.
 
 ---
 
 ## 💡 Recomendaciones
 
-- No usar `:latest` en imágenes críticas (nginx, grafana, postgres).  
-- Revisar `logs_summary.txt` y `logs_summary_aaaammdd.txt` tras cada snapshot.  
-- Hacer snapshot previo antes de ejecutar `cleanup_docker.sh`.  
+- No usar `:latest` en imágenes críticas (nginx, grafana, postgres).
+- Revisar `logs_summary.txt` y `logs_summary_aaaammdd.txt` tras cada snapshot.
+- Hacer snapshot previo antes de ejecutar `cleanup_docker.sh`.
 - Validar alertas enviadas desde `alert_risk.py` dos veces al día.
 
 ---
 
-## 🧾 Licencia y autoría
+## 🗺 Roadmap
 
-Proyecto interno de prácticas **DigitalOcean Monitoring Stack (IaC)**  
-Desarrollado por: **@eboe62**  
-📅 **Última actualización:** 2025-10-10  
+-   [ ] Integración con Prometheus nativa\
+-   [ ] Exportación de métricas personalizadas\
+-   [ ] Dashboard Grafana dedicado\
+-   [ ] Sistema de alertas extensible\
+-   [ ] Test unitarios completos del pipeline de ingesta
+
+---
+
+## 🤝 Contribuir
+
+1.  Haz un fork del repositorio\
+2.  Crea una rama (`feature/nueva-funcionalidad`)\
+3.  Envía un Product Rerlease claro y bien documentado
+
+------------------------------------------------------------------------
+
+## 🛡 Licencia
+
+Proyecto privado **DigitalOcean Monitoring Stack (IaC)**
+Desarrollado por: **@eboe62**
+📅 **Última actualización de este documento:** 2025-11-24

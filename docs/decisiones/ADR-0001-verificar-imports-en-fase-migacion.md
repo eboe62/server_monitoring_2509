@@ -1,4 +1,4 @@
-# ADR-0001 — Eliminación del prefijo "src." en imports Python
+# ADR-0001 — Verificación de imports durante la fase de migración
 
 Fecha: 2025-12-09
 Estado: Aprobado
@@ -10,7 +10,8 @@ Durante la migración de la base de código Python a una estructura bajo `src/`,
 se detectaron múltiples imports con el prefijo `src.` (por ejemplo `src.log_ingestor.alert_risk`).
 
 Este patrón impedía una ejecución limpia mediante `python3 -m <paquete>`
-y generaba una ambigüedad entre layout de proyecto y namespaces reales de Python.
+y generaba una ambigüedad entre el layout del proyecto y los namespaces reales
+de Python.
 
 Se identificaron 7 archivos afectados, principalmente bajo:
 - src/log_ingestor/
@@ -48,7 +49,7 @@ y ejecutar módulos mediante `python3 -m <paquete>.<modulo>`.
 
 **Inconvenientes:**
 - Requiere modificar aproximadamente 7 archivos
-- Necesita validación con `python3 -m compileall`
+- Necesita validación mediante compilación y ejecución controlada
 
 ## Decisión
 
@@ -60,7 +61,7 @@ para que funcionen como paquetes reales ejecutables mediante `python3 -m`.
 ## Consecuencias
 
 - Se realizará un refactor controlado de imports en los archivos afectados
-- No se creará `src/__init__.py`
+- No se crea `src/__init__.py`
 - Se validará la corrección mediante `python3 -m compileall src/`
 - Esta decisión reduce deuda técnica y alinea el proyecto con prácticas estándar
 
@@ -70,14 +71,36 @@ Aprobado.
 
 ## Validación
 
-La validación del refactor de imports se realizó ejecutando:
+La verificación del refactor de imports se realizó en dos niveles:
 
-python3 -m compileall src/
+1. Verificación estructural:
+   - Revisión manual de todos los imports afectados
+   - Refactor controlado y consistente en los 7 archivos identificados
 
-en un entorno Linux (WSL), equivalente al entorno objetivo de producción.
+2. Verificación por compilación:
+   - Ejecución de:
+     python3 -m compileall src/
+   - Realizada en entorno Linux (WSL), equivalente al entorno objetivo
+     de producción.
 
-El resultado fue satisfactorio, sin errores de compilación en los módulos
-bajo src/log_ingestor, src/monitoring y src/resource_monitor.
+El resultado fue satisfactorio, sin errores de compilación ni resolución
+de imports en:
+- src/log_ingestor
+- src/monitoring
+- src/resource_monitor
 
 La validación no pudo ejecutarse en entorno Windows PowerShell por ausencia
-de intérprete Python, lo cual se considera fuera de alcance del proyecto.
+de intérprete Python configurado, lo cual se considera fuera de alcance
+del proyecto y no afecta al entorno objetivo.
+
+No se realizaron ejecuciones completas de los scripts ni carga de variables
+de entorno (.env), ya que dichas comprobaciones dependen de configuración
+externa y pertenecen a una fase posterior del plan de migración.
+
+## Consecuencias
+
+- La fase de refactor de imports Python se considera cerrada
+- Se reduce deuda técnica futura
+- El proyecto queda alineado con prácticas estándar de empaquetado Python
+- La validación de ejecución queda explícitamente pospuesta a fases posteriores
+  (normalización de ejecución y despliegue)
