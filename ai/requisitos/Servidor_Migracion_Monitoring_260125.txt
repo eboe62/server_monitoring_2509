@@ -250,8 +250,9 @@ Esta decisión se alinea con:
 ANTES
 Los cronjobs ejecutaban scripts shell que, a su vez, invocaban
 archivos Python de forma directa mediante rutas absolutas
-(/opt/monitoring/…/*.py) o dependían implícitamente del layout
-del host.
+(por ejemplo /opt/monitoring/.../*.py). Este modelo
+acoplaba la ejecución al layout del filesystem del host, al PYTHONPATH y al
+entorno concreto donde se desplegaba el servidor.
 
 La relación entre cronjobs, scripts y lógica Python no estaba
 formalizada, y la activación de cron podía fallar silenciosamente
@@ -263,8 +264,23 @@ para ejecutar cronjobs dentro de contenedores.
 
 DESPUÉS
 Todos los cronjobs están modelados como wrappers mínimos bajo
-scripts/, cuya única responsabilidad es invocar módulos Python
-mediante `python3 -m <paquete>.<módulo>` definidos en src/.
+scripts/, por lo tanto toda ejecución Python se realiza exclusivamente invocando módulos Python
+mediante:
+
+    python3 -m <paquete>.<módulo>
+
+La invocación se realiza a través de wrappers mínimos en scripts/, cuya única
+responsabilidad es:
+- preparar el entorno de ejecución
+- ejecutar el módulo Python correspondiente
+- no contener lógica de negocio
+
+El código ejecutable reside únicamente en src/, tratado como paquete Python.
+Este enfoque garantiza:
+- coherencia de imports
+- portabilidad entre entornos
+- ejecución reproducible en contenedores
+- independencia del layout del filesystem del host
 
 La relación cronjob → módulo Python queda explícita y es la siguiente:
 
@@ -319,58 +335,32 @@ No se aplican correcciones automáticas ni workarounds.
 2.8 Desacoplamiento de configuración y dependencias
 ----------------------------------
 ANTES
-La configuración y ciertas dependencias críticas del sistema se resuelven en import-time dentro de los módulos Python bajo src/, lo que introduce acoplamientos fuertes al entorno de despliegue:
-- Lectura directa de secrets y archivos .env mediante rutas absolutas (/opt/monitoring/...) durante el import.
-- Importación inmediata de librerías externas (p. ej. psycopg2, requests) al cargar módulos comunes.
-- Construcción de configuraciones (BBDD, SMTP, tokens externos) en el momento de importación.
-- Uso de rutas hardcodeadas para logging y backups (/var/log, /opt/monitoring/backups).
+El módulo monitoring/common/config.py cargaba variables de entorno (.env) y
+leía secrets del filesystem en tiempo de importación. Esto introducía
+dependencias rígidas a rutas absolutas (/opt/monitoring/...) y provocaba
+fallos inmediatos al importar el módulo si dichos recursos no existían.
 
-Este enfoque provoca que:
-- La ausencia de ficheros o dependencias cause fallos inmediatos de import (FileNotFoundError, ModuleNotFoundError).
-- Sea imposible importar o analizar módulos en entornos incompletos o de validación.
-- El sistema no degrade de forma controlada ante la falta de servicios externos.
+Este comportamiento impedía importar el código en entornos limpios y hacía
+frágil cualquier validación previa al despliegue (tests, análisis estático,
+compileall, etc.).
 
-DESPUÉS (estrategia definida, no aplicada aún)
-Se define una estrategia de desacoplamiento progresivo, cuyo objetivo es eliminar fallos en import-time y mejorar la portabilidad y robustez operativa sin modificar aún el comportamiento actual.
+DESPUÉS
+La carga de configuración sensible (env, secrets, credenciales) se ha
+desacoplado del import-time y se realiza explícitamente en runtime mediante
+una función de inicialización (init_config()).
 
-La estrategia acordada es:
-- Import-time
-    └─ solo definiciones, constantes y lógica segura
-- Runtime (entrypoints)
-    └─ inicialización explícita de configuración y dependencias
+El módulo puede importarse siempre sin efectos secundarios. La inicialización
+del entorno se delega a los entrypoints (wrappers, cronjobs, contenedores),
+que son responsables de:
+- cargar .env si existe
+- leer secrets si están disponibles
+- validar precondiciones operativas
 
-✔ 2.8.1 - Medidas estratégicas previstas
-Retrasar la lectura de configuración sensible
-- Mover la carga de .env y la lectura de secrets a una función explícita de inicialización (init_config() o equivalente).
-- Validar presencia y permisos de los ficheros en runtime, con errores diagnósticos claros.
-- Evitar cualquier acceso a filesystem crítico durante el import.
-
-Convertir dependencias pesadas en lazy imports
-- Importar librerías externas (psycopg2, requests, etc.) únicamente dentro de las funciones que las utilizan.
-- Capturar errores de disponibilidad con mensajes claros y controlados.
-
-Clasificar la configuración
-- Obligatoria: secrets SMTP, credenciales BBDD para funcionalidades críticas.
-- Opcional: tokens externos, destinatarios de correo, integraciones no esenciales.
-- Dependiente de entorno: rutas de filesystem, Docker CLI, nombres de contenedores.
-
-Parametrizar rutas actualmente hardcodeadas
-- Exponer rutas de logs y backups como configurables, manteniendo valores por defecto conservadores.
-- Validar existencia y permisos en runtime.
-
-Permitir degradación controlada
-- Introducir flags o validaciones que permitan desactivar integraciones externas (IPInfo, Loki, SMTP) sin bloquear el sistema completo.
-- Diferenciar claramente entre errores críticos (detienen ejecución) y degradaciones aceptables (warning).
-
-✔ 2.8.2 Riesgos identificados y mitigación
-Detección tardía de errores al mover validaciones a runtime
-→ mitigación: inicialización explícita y validaciones al arranque de cada entrypoint.
-
-Comportamiento parcial del sistema si faltan servicios externos
-→ mitigación: logs claros y documentación de degradación funcional.
-
-Incremento de disciplina requerida en entrypoints
-→ mitigación: documentar obligación de inicialización previa.
+Este enfoque:
+- elimina fallos en import-time
+- permite degradación controlada si faltan dependencias
+- hace explícitas las dependencias del sistema
+- mejora la portabilidad y la observabilidad de errores
 
 ==========================================
 3.a ESTRUCTURA INICIAL
@@ -583,60 +573,83 @@ FASE 0 - Congelación de alcance
 - Crear docs/MIGRATION_RULES.md
 - Crear checklist de validación
 
-FASE 1 - Preparación lógica del entorno IaC (sin Docker)
-- Crear rama /migracion
-- Verificar dependencias en requirements.txt
-- Asegurar que no existen rutas hardcodeadas en Python ni Bash
-- Validar imports
+FASE 1 – Trabajo paralelo fuera de Git
+Se realiza trabajo de refactorización y análisis fuera del repositorio principal
+para evitar riesgos sobre el código estable. Se documentan decisiones,
+experimentos y cambios estructurales antes de integrarlos en Git.
 
-FASE 2 - HECHO - Reorganización de estructura
-- Crear carpetas: ops/docker, ops/cron, ops/services, src/monitoring, src/log_ingestor
-- Mover archivos según tabla de movimientos
-- Crear carpetas
-- Mover archivos
-- Nada tiene que funcionar aún
+Resultado:
+- Código refactorizado en entorno paralelo
+- Decisiones arquitectónicas documentadas (ADR-0000)
 
-FASE 3 - Refactor Python puro
-- python3 -m compileall src/
-- Imports relativos
-- Eliminación de scripts .sh equivalentes
+FASE 2 – Normalización de imports Python
+Se elimina el prefijo artificial "src." de los imports y se adopta una estructura
+de paquetes Python coherente, compatible con ejecución mediante python3 -m.
 
-FASE 4 - Normalizar la ejecución de scripts
-- Convertir todos los scripts en ejecución Python a: python3 -m módulo
-- Logs normalizados
-- Eliminar rutas absolutas como /opt/monitoring/…
-- Estandarizar logs en resources/logs/
-- Config desacoplada
+Resultado:
+- Imports limpios y coherentes
+- src/ tratado como paquete Python real
+- Validación con python3 -m compileall en entorno Linux (WSL)
 
-FASE 5 - Normalización Docker (cuando el código YA ES SANO)
-- Crear Dockerfile.base con Python 3.12
-- Crear Dockerfile.python basado en la base
-- Actualizar Dockerfile.cron
-- Actualizar ops/cron/monitoring.cron
-- Revisar entrypoints para no depender de rutas host
+FASE 3 – Consolidación de wrappers operativos
+Se establecen wrappers mínimos en scripts/ como única interfaz de ejecución
+operativa. Estos wrappers no contienen lógica de negocio y delegan la ejecución
+al código Python en src/.
 
-FASE 6 - Cronjobs en contenedores
-- Actualizar config.py para cargar .env del contenedor
-- Unificar formato de fechas, logs y manejo de errores
-- Asegurar que se usan contenedores: docker exec monitoring-python python3 -m log_ingestor.alert_risk
+Resultado:
+- Separación clara entre infraestructura (scripts/) y lógica (src/)
+- Base para ejecución homogénea en host y contenedores
 
-FASE 7 - Validación docker-compose
-- docker-compose -f ops/docker/docker-compose.python.yml up –build
-- Pruebas individuales: docker exec monitoring-python python3 -m log_ingestor.alert_risk
+FASE 4 – Normalización de la ejecución de scripts
+Toda ejecución de código Python se realiza exclusivamente mediante:
 
-FASE 8 - Depuración final
-- Comprobar que todos los imports funcionan
-- Validar ausencia de rutas absolutas - Verificar logs e integridad de módulos
+    python3 -m <paquete>.<módulo>
 
-FASE 9 - Documentación
-- Actualizar README.md
-- Actualizar docs/arquitectura con nueva estructura
-- Registrar decisiones técnicas (ADR = Architecture Decision Record)
+Se eliminan ejecuciones directas de ficheros .py y dependencias implícitas de
+PYTHONPATH o rutas absolutas.
 
-FASE 10 - Integración en producción
-- Merge a develop
-- Aplicar despliegue automatizado con pipeline CI/CD
-- Verificar funcionamiento general durante 48h
+Resultado:
+- Semántica de ejecución única
+- Ejecución reproducible en cualquier entorno
+
+FASE 5 – Auditoría pre-despliegue (sin cambios de código)
+Se identifican dependencias operativas, rutas absolutas, servicios externos y
+puntos de acoplamiento sin modificar aún el código.
+
+Resultado:
+- Lista explícita de precondiciones
+- Riesgos operativos documentados
+
+FASE 6 – Cronjobs en contenedores
+Los cronjobs pasan a ejecutarse dentro de contenedores, invocando únicamente
+wrappers que llaman a python3 -m <paquete>.<módulo>. El host deja de ejecutar
+código Python directamente.
+
+Resultado:
+- Cronjobs desacoplados del host
+- Ejecución controlada y portable
+
+FASE 7 – Desacoplamiento de configuración y dependencias (PARCIALMENTE APLICADA)
+Se elimina la carga de configuración sensible en import-time. La lectura de .env,
+secrets y dependencias críticas se traslada a runtime mediante una función de
+inicialización explícita (init_config()).
+
+Resultado:
+- El código puede importarse en entornos limpios
+- Se eliminan crashes en import-time
+- La inicialización del entorno pasa a ser responsabilidad del entrypoint
+
+FASE 8 – Endurecimiento y normalización final (PENDIENTE)
+Extensión del patrón de desacoplamiento al resto del código:
+- lazy imports
+- validación de precondiciones
+- parametrización de rutas
+- documentación operativa definitiva
+
+Resultado esperado:
+- Infraestructura robusta
+- Comportamiento degradable y observable
+- Despliegue seguro en entornos nuevos
 
 ==========================================
 5. MEJORAS A CONSIDERAR

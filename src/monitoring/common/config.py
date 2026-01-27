@@ -3,43 +3,47 @@
 import os
 import smtplib
 from dotenv import load_dotenv
-import psycopg2
 from email.mime.text import MIMEText
 from email.utils import formataddr
 from email.mime.multipart import MIMEMultipart
 import datetime
 import re
-import requests
 import socket
 import html
 
 # ==========================================
-# 🔧 CARGA DE VARIABLES DE ENTORNO (.env)
+# 🔧 RUTAS DE CONFIGURACIÓN (sobrescribibles por entorno)
 # ==========================================
-load_dotenv("/opt/monitoring/smtp_relay/.env")
+# Nota: la carga del .env y la lectura de secrets se realizan en tiempo de
+# ejecución mediante init_config(). De este modo se evitan errores en la fase de importación (import-time) si
+# /opt/monitoring/smtp_relay/.env o los secrets no existen. Esto permite que el módulo puede importarse de
+# forma segura en cualquier entorno (local, CI/CD, contenedor, producción).
+
+DEFAULT_ENV_PATH = os.getenv("SMTP_RELAY_ENV_PATH", "/opt/monitoring/smtp_relay/.env")
+
+DEFAULT_SECRETS_DIR = os.getenv("SMTP_RELAY_SECRETS_DIR", "/opt/monitoring/smtp_relay/secrets")
 
 # ==========================================
-# CONFIG SMTP / EMAIL
+# CONFIGURACIÓN SMTP / EMAIL (valores iniciales desde el entorno)
 # ==========================================
-# Configuración SMTP
-# Excluimos las credenciales SMTP (SMTP_USER, SMTP_PASS) cuando usemos el servicio SMTP
-SMTP_SERVER = os.getenv("SMTP_SERVER", "127.0.0.1")     # smtp.postmarkapp.com (servicio host) ó localhost (servicio contenedor)
-SMTP_PORT   = int(os.getenv("SMTP_PORT", "2526"))         # 2525 (servicio host) ó 2526 (servicio contenedor)
-with open("/opt/monitoring/smtp_relay/secrets/smtp_user") as f:
-    SMTP_USER = f.read().strip()
+# Configuración SMTP (valores leídos inicialmente desde el entorno; pueden
+# actualizarse llamando a init_config() que cargará el .env si existe y
+# leerá archivos de secrets en runtime)
 
-with open("/opt/monitoring/smtp_relay/secrets/smtp_pass") as f:
-    SMTP_PASS = f.read().strip()
+SMTP_SERVER = os.getenv("SMTP_SERVER", "localhost")   # Ej: smtp.postmarkapp.com (servicio host) o localhost (servicio contenedor)
+SMTP_PORT   = int(os.getenv("SMTP_PORT", "2526"))     # Ej: 2525 (servicio host) o 2526 (servicio contenedor)
 
-# Configuración de correo desde .env
-# cuando usemos el contenedor smtp-relay. Este contenedor actúa como relay local y no necesita login TLS.
+SMTP_USER = os.getenv("SMTP_USER")
+SMTP_PASS = os.getenv("SMTP_PASS")
+
+# Configuración de correo desde el entorno (se actualizará si init_config carga .env)
 EMAIL_FROM  = os.getenv("EMAIL_FROM")       # Ej: noreply@appvisibility.es
-EMAIL_TO    = os.getenv("EMAIL_TO")           # Ej: contacto@appvisibility.es
+EMAIL_TO    = os.getenv("EMAIL_TO")         # Ej: contacto@appvisibility.es
 CC_LIST     = os.getenv("CC_LIST", "").split(",") if os.getenv("CC_LIST") else []
-SUBJECT     = os.getenv("SUBJECT", "📊 Informe del estado de droplet")
+SUBJECT     = os.getenv("📊 Informe del estado de droplet")
 
 # ==========================================
-# CONFIG BBDD
+# CONFIG BBDD (valores iniciales desde entorno; init_config() puede hacer re-lectura)
 # ==========================================
 DB = {
     "host": os.getenv("DB_HOST"),
@@ -48,13 +52,88 @@ DB = {
     "user": os.getenv("DB_USER"),
     "password": os.getenv("DB_PASSWORD"),
 }
+# INIT CONFIG (runtime explícito)
+def init_config(env_path: str = None, secrets_dir: str = None):
+    """
+    Inicializa la configuración en tiempo de ejecución.
+
+    - Carga las variables desde .env si existen.
+    - Lee secrets SMTP desde filesystem si están disponibles.
+    - Re-lee variables dependientes del entorno.
+    - NO lanza excepción en ausencia de ficheros.
+
+    Esta función debe invocarse desde los entrypoints (wrappers/sh/containers)
+    antes de ejecutar operaciones que dependan de estas credenciales.
+
+    La función gestiona FileNotFoundError de forma controlada y registra
+    mensajes mediante log_info() para diagnóstico.
+    """
+    global SMTP_USER, SMTP_PASS, EMAIL_FROM, EMAIL_TO, CC_LIST, DB, IPINFO_TOKEN
+
+    env_path = env_path or DEFAULT_ENV_PATH
+    secrets_dir = secrets_dir or DEFAULT_SECRETS_DIR
+
+    # Cargar .env si existe
+    if os.path.exists(env_path):
+        try:
+            load_dotenv(env_path)
+            log_info(f"[ℹ️]: Se ha cargado .env desde {env_path}")
+        except Exception as e:
+            log_info(f"[⚠️]: Error cargando .env ({env_path}): {e}")
+    else:
+        log_info(f"[⚠️]: .env no encontrado en {env_path}; usando variables de entorno actuales")
+
+    # Re-lectura de variables que podrían haber cambiado al cargar .env
+    EMAIL_FROM = os.getenv("EMAIL_FROM")
+    EMAIL_TO   = os.getenv("EMAIL_TO")
+    CC_LIST    = os.getenv("CC_LIST", "").split(",") if os.getenv("CC_LIST") else []
+    SUBJECT    = os.getenv("📊 Informe del estado de droplet")
+
+    # Actualizar DB desde entorno (posible cambio tras cargar .env)
+    DB = {
+        "host": os.getenv("DB_HOST"),
+        "port": int(os.getenv("DB_PORT", 5432)),
+        "name": os.getenv("DB_NAME"),
+        "user": os.getenv("DB_USER"),
+        "password": os.getenv("DB_PASSWORD"),
+    }
+
+    # Leer secrets SMTP del filesystem si están disponibles; fallback a variables de entorno
+    user_path = os.path.join(secrets_dir, "smtp_user")
+    pass_path = os.path.join(secrets_dir, "smtp_pass")
+
+    if os.path.exists(user_path):
+        SMTP_USER = open(user_path).read().strip()
+        log_info("[✅]: SMTP_USER cargado desde secrets")
+    else:
+        SMTP_USER = os.getenv("SMTP_USER")
+        log_info("[⚠️]: SMTP_USER no encontrado en secrets")
+
+    if os.path.exists(pass_path):
+        SMTP_PASS = open(pass_path).read().strip()
+        log_info("[✅]: SMTP_PASS cargado desde secrets")
+    else:
+        SMTP_PASS = os.getenv("SMTP_PASS")
+        log_info("[⚠️]: SMTP_PASS no encontrado en secrets")
+
+    return {
+        "SMTP_SERVER": SMTP_SERVER,
+        "SMTP_PORT": SMTP_PORT,
+        "SMTP_USER": SMTP_USER,
+        "SMTP_PASS": SMTP_PASS,
+        "EMAIL_FROM": EMAIL_FROM,
+        "EMAIL_TO": EMAIL_TO,
+        "CC_LIST": CC_LIST,
+        "DB": DB,
+    }
 
 # ==========================================
-# CONEXION A PostgreSQL
+# CONEXION A PostgreSQL (lazy import)
 # ==========================================
 def connect_db():
-    """Establece conexión con PostgreSQL."""
+    """Establece conexión PostgreSQL. Requiere init_config previo."""
     try:
+        import psycopg2
         conn = psycopg2.connect(
             host=DB["host"],
             port=DB["port"],
@@ -64,7 +143,7 @@ def connect_db():
             connect_timeout=5,
             keepalives=1,
         )
-        log_info(f"[✅]: Conexión a la base de datos exitosa.")
+        log_info(f"[✅]: Conexión a la base de datos establecida.")
         return conn
     except Exception as e:
         log_info(f"[❌]: Error conectando a la base de datos: {e}")
@@ -107,13 +186,17 @@ def send_email(subject: str, html_content: str = None, email_to: str = None, cc_
     email_to = email_to or EMAIL_TO
     cc_list  = cc_list  or CC_LIST
 
+    if not email_to:
+        raise ValueError("No se ha definido destinatario de correo (email_to)")
+
     # Detectar si el contenido es HTML
+    html_content = html_content or ""
     is_html = bool(re.search(r"<[^>]+>", html_content))
 
     if is_html:
         # Si contiene etiquetas, construimos multipart con HTML y texto plano
 
-        plain_text = re.sub(r"<[^>]+>", "", html_content)
+        plain_text = html.unescape(re.sub(r"<[^>]+>", "", html_content))
         msg = MIMEMultipart("alternative")
         msg.attach(MIMEText(plain_text, "plain", "utf-8"))
         msg.attach(MIMEText(html_content, "html", "utf-8"))
@@ -137,10 +220,11 @@ def send_email(subject: str, html_content: str = None, email_to: str = None, cc_
             server.ehlo()
 
             # Solo usa TLS si el servidor lo soporta
-            if SMTP_SERVER not in ("localhost", "127.0.0.1"):
-                log_info(f"[ℹ️ ]: Usando servidor SMTP externo, iniciando TLS...")
+            if server.has_extn("STARTTLS"):
+                log_info(f"[ℹ️ ]: Usando servidor SMTP externo, activando conexión segura, iniciando TLS...")
                 server.starttls()
                 server.ehlo()
+
                 log_info(f"[ℹ️ ]: Conexión TLS iniciada: Autenticando...")
 
             # Autenticación opcional
@@ -151,9 +235,8 @@ def send_email(subject: str, html_content: str = None, email_to: str = None, cc_
             # Enviar mensaje
             recipients = [email_to] + cc_list
             server.sendmail(EMAIL_FROM, recipients, msg.as_string())
-            log_info(f"[📧]: Enviado a {email_to} con CC a {', '.join(cc_list) or '(sin CC)'}")
 
-        log_info(f"[📧]: Enviado a {EMAIL_TO} con CC a {', '.join(cc_list) or '(sin CC)'}")
+        log_info(f"[📧]: Enviado a {email_to} con CC a {', '.join(cc_list) or '(sin CC)'}")
         return True
 
     except Exception as e:
@@ -245,7 +328,7 @@ def build_html_table(headers, rows, title, max_rows=None):
 
     html_block.append(f"<p>{html.escape(title.upper())}</p>")
     html_block.append("<br>")
-    html_block.append('<table border="1" cellpadding="4" cellspacing="0" style="border-collapse: collapse; width:60%;">')
+    html_block.append('<table border="1" cellpadding="4" cellspacing="0" style="border-collapse: collapse; width:80%;">')
 
     # generar colgroup proporcional
     num_cols = len(headers)
@@ -286,10 +369,15 @@ def build_html_table(headers, rows, title, max_rows=None):
 IPINFO_TOKEN = os.getenv("IPINFO_TOKEN") # Token IP Geolocalización https://ipinfo.io/
 
 # Función para obtener datos de geolocalización
+# Consulta IPInfo.io y devuelve país, ciudad, latitud y longitud.
 def get_ip_info(ip):
-    """Consulta IPInfo.io y devuelve país, ciudad, latitud y longitud."""
-    url = f"https://ipinfo.io/{ip}/json?token={IPINFO_TOKEN}"
+    if not IPINFO_TOKEN:
+        log_info(f"[⚠️]: IPINFO_TOKEN no definido")
+        return None
+
     try:
+        import requests
+        url = f"https://ipinfo.io/{ip}/json?token={IPINFO_TOKEN}"
         response = requests.get(url, timeout=5)
         response.raise_for_status()  # Lanza error si la solicitud falla
         data = response.json()
@@ -299,7 +387,7 @@ def get_ip_info(ip):
             "lat": data.get("loc", "0,0").split(",")[0],
             "long": data.get("loc", "0,0").split(",")[1]
         }
-    except requests.exceptions.RequestException as e:
-        log_info(f"[❌] Error obteniendo datos para {ip}: {e}")
+    except Exception as e:
+        log_info(f"[❌]: Error obteniendo datos desde IPInfo para {ip}: {e}")
         return None
 
