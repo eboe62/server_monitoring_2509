@@ -4,7 +4,7 @@ import re
 import subprocess
 import os
 from datetime import datetime
-from monitoring.common.config import log_info, connect_db, close_db
+from monitoring.common.config import log_info, connect_db, close_db, init_config
 
 LOG_FILE = "/var/log/kern.log"
 
@@ -196,5 +196,7 @@ def process_logs():
         insert_into_db(batch_data)
 
 if __name__ == "__main__":
+    # Inicializar configuración sensible en tiempo de ejecución (carga .env y secrets)
+    init_config()
     process_logs()
 

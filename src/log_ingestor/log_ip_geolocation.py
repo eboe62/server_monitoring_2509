@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # log_ip_geolocation.py
 import time
-from monitoring.common.config import log_info, connect_db, close_db, get_ip_info
+from monitoring.common.config import log_info, connect_db, close_db, get_ip_info, init_config
 
 def extract_ips_from_bbdd():
     """Lee BBDD y extrae IPs sin datos de geolocalización."""
@@ -76,4 +76,6 @@ def update_database():
         log_info(f"[✅]: ... finalizada geolocalización")
 
 if __name__ == "__main__":
+    # Inicializar configuración sensible en tiempo de ejecución (carga .env y secrets)
+    init_config()
     update_database()

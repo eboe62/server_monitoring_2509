@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # alert_risk.py
-from monitoring.common.config import log_info, send_email, connect_db, close_db, build_html_table
+from monitoring.common.config import log_info, send_email, init_config, connect_db, close_db, build_html_table
 import html
 
 # Las credenciales SMTP se gestionan exclusivamente desde
@@ -172,4 +172,6 @@ def process_alert():
 # MAIN
 # ==========================================
 if __name__ == "__main__":
+    # Inicializar configuración sensible en tiempo de ejecución (carga .env y secrets)
+    init_config()
     process_alert()

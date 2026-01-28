@@ -620,22 +620,19 @@ Resultado:
 - Lista explícita de precondiciones
 - Riesgos operativos documentados
 
-FASE 6 – Cronjobs en contenedores (APLICACIÓN PROGRESIVA)
-Se define y adopta el patrón de ejecución de cronjobs dentro de contenedores,
-invocando exclusivamente wrappers que llaman a python3 -m <paquete>.<módulo>.
-La migración completa se realiza de forma progresiva para minimizar riesgos,
-evitando que el host ejecute código Python directamente.
+FASE 6 – Cronjobs en contenedores
+Los cronjobs pasan a ejecutarse dentro de contenedores, invocando únicamente
+wrappers que llaman a python3 -m <paquete>.<módulo>. El host deja de ejecutar
+código Python directamente.
 
 Resultado:
 - Cronjobs desacoplados del host
 - Ejecución controlada y portable
 
-FASE 7 – Desacoplamiento de configuración y dependencias (APLICADA - BASE)
+FASE 7 – Desacoplamiento de configuración y dependencias (PARCIALMENTE APLICADA)
 Se elimina la carga de configuración sensible en import-time. La lectura de .env,
 secrets y dependencias críticas se traslada a runtime mediante una función de
 inicialización explícita (init_config()).
-Esta fase establece la base obligatoria de inicialización en runtime, aplicada
-a todos los entrypoints Python del sistema.
 
 Resultado:
 - El código puede importarse en entornos limpios

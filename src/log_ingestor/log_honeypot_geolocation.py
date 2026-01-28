@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # log_honeypot_geolocation.py
 import time
-from monitoring.common.config import log_info, connect_db, close_db, get_ip_info
+from monitoring.common.config import log_info, connect_db, close_db, get_ip_info, init_config
 import re
 import requests
 from datetime import datetime, timezone, timedelta
@@ -110,4 +110,6 @@ def update_database():
         log_info(f"[✅]: ... finalizada geolocalización")
 
 if __name__ == "__main__":
+    # Inicializar configuración sensible en tiempo de ejecución (carga .env y secrets)
+    init_config()
     update_database()

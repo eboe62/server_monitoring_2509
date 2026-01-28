@@ -4,7 +4,7 @@ import json
 import os
 import pickle
 from datetime import datetime
-from monitoring.common.config import log_info, send_email
+from monitoring.common.config import log_info, send_email, init_config
 
 # Configuración
 THRESHOLD_MEM = 80.0  # %
@@ -167,4 +167,6 @@ def main():
     log_info("===== Fin de ejecución =====")
 
 if __name__ == "__main__":
+    # Inicializar configuración sensible en tiempo de ejecución (carga .env y secrets)
+    init_config()
     main()
