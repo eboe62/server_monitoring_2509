@@ -3,11 +3,9 @@
 from monitoring.common.config import log_info, send_email, connect_db, close_db, build_html_table
 import html
 
-with open("/opt/monitoring/smtp_relay/secrets/smtp_user") as f:
-    SMTP_USER = f.read().strip()        # Clave API
-
-with open("/opt/monitoring/smtp_relay/secrets/smtp_pass") as f:
-    SMTP_PASS = f.read().strip()        # Clave API
+# Las credenciales SMTP se gestionan exclusivamente desde
+# monitoring.common.config.init_config() en tiempo de ejecución.
+# Este módulo no debe definir ni leer credenciales en import-time.
 
 # ==========================================
 # ALERTA: Atacantes que han conseguido entrar en el servidor

@@ -73,6 +73,9 @@ Reglas técnicas estrictas:
 5.- Cada fase debe cerrarse con criterios de validación explícitos.
 6.- Si el entorno local no permite validar, se documenta y se detiene.
 7.- Diferenciar DEV / PRO explícitamente.
+8.- Todo comentario, documentación y logging funcional del proyecto
+debe escribirse en español, salvo identificadores técnicos estándar
+(librerías, nombres de variables, APIs externas).
 
 ==========================================
 Entorno local:

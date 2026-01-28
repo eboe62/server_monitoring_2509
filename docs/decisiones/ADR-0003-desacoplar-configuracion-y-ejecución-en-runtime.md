@@ -31,9 +31,15 @@ Se adopta un modelo explícito de inicialización en runtime:
 1. El código Python debe poder importarse siempre sin efectos secundarios.
 2. Toda configuración sensible se carga explícitamente en runtime mediante
    una función de inicialización (init_config()).
-3. Los entrypoints (wrappers, cronjobs, contenedores) son responsables de
-   invocar init_config() antes de ejecutar funcionalidades dependientes del
-   entorno.
+3. Todos los entrypoints Python del sistema (scripts ejecutados con
+   `python3 -m <paquete>.<módulo>` o equivalentes) deben invocar
+   obligatoriamente `init_config()` como la PRIMERA instrucción dentro del
+   bloque `if __name__ == "__main__":`.
+
+   Esta invocación debe realizarse antes de cualquier acceso a:
+   - base de datos (`connect_db`)
+   - envío de correo (`send_email`)
+   - servicios o tokens externos (IPINFO, Loki, etc.)
 4. Toda ejecución Python se realiza mediante python3 -m <paquete>.<módulo>.
 5. Los wrappers en scripts/ son mínimos y no contienen lógica de negocio.
 

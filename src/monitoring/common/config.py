@@ -20,7 +20,6 @@ import html
 # forma segura en cualquier entorno (local, CI/CD, contenedor, producción).
 
 DEFAULT_ENV_PATH = os.getenv("SMTP_RELAY_ENV_PATH", "/opt/monitoring/smtp_relay/.env")
-
 DEFAULT_SECRETS_DIR = os.getenv("SMTP_RELAY_SECRETS_DIR", "/opt/monitoring/smtp_relay/secrets")
 
 # ==========================================
@@ -33,14 +32,14 @@ DEFAULT_SECRETS_DIR = os.getenv("SMTP_RELAY_SECRETS_DIR", "/opt/monitoring/smtp_
 SMTP_SERVER = os.getenv("SMTP_SERVER", "localhost")   # Ej: smtp.postmarkapp.com (servicio host) o localhost (servicio contenedor)
 SMTP_PORT   = int(os.getenv("SMTP_PORT", "2526"))     # Ej: 2525 (servicio host) o 2526 (servicio contenedor)
 
-SMTP_USER = os.getenv("SMTP_USER")
-SMTP_PASS = os.getenv("SMTP_PASS")
+SMTP_USER   = os.getenv("SMTP_USER")
+SMTP_PASS   = os.getenv("SMTP_PASS")
 
 # Configuración de correo desde el entorno (se actualizará si init_config carga .env)
 EMAIL_FROM  = os.getenv("EMAIL_FROM")       # Ej: noreply@appvisibility.es
 EMAIL_TO    = os.getenv("EMAIL_TO")         # Ej: contacto@appvisibility.es
 CC_LIST     = os.getenv("CC_LIST", "").split(",") if os.getenv("CC_LIST") else []
-SUBJECT     = os.getenv("📊 Informe del estado de droplet")
+SUBJECT     = os.getenv("SUBJECT", "📊 Informe")
 
 # ==========================================
 # CONFIG BBDD (valores iniciales desde entorno; init_config() puede hacer re-lectura)
@@ -68,7 +67,7 @@ def init_config(env_path: str = None, secrets_dir: str = None):
     La función gestiona FileNotFoundError de forma controlada y registra
     mensajes mediante log_info() para diagnóstico.
     """
-    global SMTP_USER, SMTP_PASS, EMAIL_FROM, EMAIL_TO, CC_LIST, DB, IPINFO_TOKEN
+    global SMTP_USER, SMTP_PASS, EMAIL_FROM, EMAIL_TO, CC_LIST, SUBJECT, DB, IPINFO_TOKEN
 
     env_path = env_path or DEFAULT_ENV_PATH
     secrets_dir = secrets_dir or DEFAULT_SECRETS_DIR
@@ -87,7 +86,7 @@ def init_config(env_path: str = None, secrets_dir: str = None):
     EMAIL_FROM = os.getenv("EMAIL_FROM")
     EMAIL_TO   = os.getenv("EMAIL_TO")
     CC_LIST    = os.getenv("CC_LIST", "").split(",") if os.getenv("CC_LIST") else []
-    SUBJECT    = os.getenv("📊 Informe del estado de droplet")
+    SUBJECT    = os.getenv("📊 Informe")
 
     # Actualizar DB desde entorno (posible cambio tras cargar .env)
     DB = {
@@ -170,7 +169,7 @@ def close_db(cursor=None, conn=None):
 # ==========================================
 # ENVIAR CORREO con smtplib
 # ==========================================
-def send_email(subject: str, html_content: str = None, email_to: str = None, cc_list: list = None):
+def send_email(html_content: str = None, subject: str = None, email_to: str = None, cc_list: list = None):
     """
     Envía un correo en formato HTML usando el servidor SMTP configurado con fallback a texto plano.
     Compatible con smtp-relay sin autenticación o con STARTTLS o autenticación TLS.
@@ -190,13 +189,12 @@ def send_email(subject: str, html_content: str = None, email_to: str = None, cc_
         raise ValueError("No se ha definido destinatario de correo (email_to)")
 
     # Detectar si el contenido es HTML
-    html_content = html_content or ""
     is_html = bool(re.search(r"<[^>]+>", html_content))
 
     if is_html:
         # Si contiene etiquetas, construimos multipart con HTML y texto plano
 
-        plain_text = html.unescape(re.sub(r"<[^>]+>", "", html_content))
+        plain_text = re.sub(r"<[^>]+>", "", html_content)
         msg = MIMEMultipart("alternative")
         msg.attach(MIMEText(plain_text, "plain", "utf-8"))
         msg.attach(MIMEText(html_content, "html", "utf-8"))
