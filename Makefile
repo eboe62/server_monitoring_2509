@@ -2,7 +2,7 @@
 # Uso: make <target>
 # P.e.: make deploy
 
-.PHONY: help all symlinks audit check-cron clean-logs snapshot up-services status logs build-base build-python build-cron deploy-cron deploy rebuild rebuild-all
+.PHONY: help all symlinks audit check-cron clean-logs snapshot up-services status logs build-base build-python build-cron deploy-cron deploy rebuild rebuild-all monitoring-net phase4-init
 
 # Ruta base
 BASE_DIR ?= ops/services
@@ -63,15 +63,35 @@ logs:  ## Muestra últimos registros y genera logs_summary.txt
 #	git push origin develop
 
 # --- Builds (siempre con no-cache) ---
-# --- Base ---
-build-base:  ## Construye imagen base sin cache (incluye requirements) y se usa como caché para las demás imágenes (cron, python, ...)
-	docker build --no-cache -f Dockerfile.base -t monitoring-base .
+# --- FASE 4: Builds base y artefactos (no despliega contenedores) ---
+# build-base: Construye la imagen base usando los Dockerfile ubicados en ops/docker
 
-build-python:  ## Construye imagen Python sin cache
-	docker build --no-cache -t monitoring-python $(BASE_DIR)/python
+build-base:  ## FASE 4 - Construye imagen base sin cache (incluye requirements)
+	# Usa Dockerfile en ops/docker pero contexto raíz porque Dockerfile.base
+	# realiza "COPY requirements.txt" y "COPY . ." que requieren el repo root
+	docker build --no-cache -f ops/docker/Dockerfile.base -t monitoring-base .
 
-build-cron:  ## Construye imagen Cron sin cache
-	docker build --no-cache -t monitoring-cron $(BASE_DIR)/cron
+# build-python: usa el Dockerfile.python en ops/docker y el contexto del servicio python
+
+build-python:  ## FASE 4 - Construye imagen Python sin cache (no despliega)
+	# Usa Dockerfile en ops/docker; contexto raíz para evitar romper COPY que
+	# puedan depender de rutas fuera de ops/docker (ver reporte de inconsistencias)
+	docker build --no-cache -f ops/docker/Dockerfile.python -t monitoring-python .
+
+# build-cron: usa el Dockerfile.cron en ops/docker y el contexto del servicio cron
+
+build-cron:  ## FASE 4 - Construye imagen Cron sin cache (no despliega)
+	# Usa Dockerfile en ops/docker; contexto raíz por las mismas razones que arriba
+	docker build --no-cache -f ops/docker/Dockerfile.cron -t monitoring-cron .
+
+# --- Red Docker idempotente requerida para la FASE 4 ---
+monitoring-net:  ## FASE 4 - Crea la red Docker del proyecto de forma idempotente
+	@docker network inspect monitoring-net >/dev/null 2>&1 || docker network create --driver bridge monitoring-net
+	@echo "[OK] network monitoring-net ready"
+
+# --- Target de inicialización de entorno base (FASE 4) ---
+phase4-init: monitoring-net build-base build-python build-cron  ## FASE 4 - Prepara entorno base (no despliega contenedores)
+	@echo "[OK] FASE 4 completa: red creada y builds realizados (sin despliegue)"
 
 # --- Atajos de rebuild ---
 rebuild: build-base build-python build-cron  ## Reconstruye todas las imágenes sin cache

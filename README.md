@@ -96,6 +96,23 @@ Rama: `develop`
     └ tests/                    # Pruebas de funcionalidad
 ```
 
+---
+
+## 📂 Política de persistencia
+
+El entorno utiliza exclusivamente volúmenes Docker locales para la persistencia de datos (BBDD, logs y artefactos operativos).
+
+No se emplea Block Storage externo ni servicios gestionados de persistencia.
+
+La estrategia de recuperación ante desastre se basa en:
+- snapshots del droplet a nivel de proveedor
+- recreación declarativa de contenedores
+- restauración lógica de datos cuando aplique
+
+Este modelo es intencional y aceptado como parte del alcance PRO.
+
+---
+
 ## ⚙️ Configuración técnica
 
 ⏱️ **Cron / Supercronic Jobs**

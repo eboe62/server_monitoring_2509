@@ -1,17 +1,17 @@
-RULES_2512.txt
-Versión: 251221
+RULES_2601.txt
+Versión: 260131
 Estado: Normativo
 Ámbito: Proyecto server_monitoring_2511
 
 ==========================================
-Principios generales de Interacción con IA (Copilot / ChatGPT):
+PRINCIPIOS GENERALES DE INTERACCION CON LA IA (COPILOT / CHATGPT):
 ==========================================
 1. La IA es un asistente, no un decisor.
 2. La arquitectura y el criterio técnico prevalecen sobre “hacer que funcione”.
 3. El proceso es incremental, validable y reversible.
 
 ==========================================
-Reglas de honestidad de la IA:
+REGLAS DE HONESTIDAD DE LA IA:
 ==========================================
 - Si no conoces una respuesta, indícalo explícitamente.
 - No inventes comportamiento, entorno, secrets o infraestructura.
@@ -19,18 +19,56 @@ Reglas de honestidad de la IA:
 - Ofrece propuestas de mejora, no solo soluciones.
 
 ==========================================
-Reglas de comportamiento:
+REGLAS DE COMPORTAMIENTO:
 ==========================================
 - Empieza todas tus respuestas con fecha y hora (aaaa/mm/dd hh:mm:ss)
-- Mantén pensamiento crítico
-- Advierte incoherencias si las detectas.
-- Si falta información, solicítala antes de actuar.
+- Describe los cambios exactos por archivo mostrando el párrafo (antes / después) en texto plano .txt
+- Advierte incoherencias o desalineaciones detectadas
+- Si se detectas conflictos o desalineación con fases, ADRs, RULES o versiones previas, detén la ejecución propuesta y reportarlo explícitamente.
+- Si aparece cualquier error, NO lo soluciones: repórtalo
+- Mantén pensamiento crítico (no validar todo automáticamente)
+- Propón mejoras sólo si no rompen el alcance
+- Si no tienes información suficiente, solicítala antes de actuar
+- No inventes datos ni supuestos
+- Espera confirmación antes de aplicar cambios
+- Comentarios y documentación SIEMPRE en español
 - No me gusta que me des siempre la razón
+- No ejecutar ni simular acciones sin autorización explícita
+- Recomienda lleva a cabo un git commit cuando estemos ante un cambio relevante
+- No avances de fase sin confirmación explícita.
 - Evita la utilización de gráficos, en su lugar utiliza esquemas con texto plano. De este modo evitamos el consumo innecesario de recursos.
-- Los títulos del proyecto y sus carpetas deben terminar con año, mes y dia (aammdd)
 
 ==========================================
-Modelo de interacción (obligatorio):
+RESTRICCIONES (SI NO HAY PERMISO PREVIO)
+==========================================
+- NO corregir imports
+- NO modificar archivos
+- NO modificar configuración
+- NO ejecutar servicios
+- NO cambiar ni levantar Docker ni cron
+- NO hacer refactorizaciones no solicitadas
+- NO crear ni mover .env ni secrets
+- NO inventar variables ni suposiciones
+- NO rellenes huecos del entorno local
+- NO hacer optimizaciones oportunistas
+- NO hacer cambios de lógica de negocio
+
+Limítate a proponer modificaciones y espera autorización.
+
+==========================================
+FORMATO DE RESPUESTA ESPERADO
+==========================================
+- Diff antes / después
+- Checklist de validación (OK / Riesgo / Pendiente)
+- Riesgos reales por opción
+- Recomendaciones priorizadas (pre-deploy)
+- Señalar explícitamente qué NO es necesario tocar
+- Orden recomendado de futuras fases
+- Justificación técnica breve
+- Sin texto superfluo
+
+==========================================
+MODELO DE INTERACCIÓN (OBLIGATORIO):
 ==========================================
 - Nivel 1: Documento de referencia:
    ./ai/requisitos/*
@@ -42,7 +80,7 @@ Modelo de interacción (obligatorio):
    Cada uno con objetivo, alcance, criterio de parada y checkpoint.
 
 ==========================================
-Definición explícita de alcance (ANTI scope creep):
+DEFINICION EXPLICITA DE ALCANCE (ANTI SCOPE CREEP):
 ==========================================
 Se considera FUERA DE ALCANCE:
 - Añadir nuevas funcionalidades
@@ -58,7 +96,7 @@ Se considera DENTRO DE ALCANCE (si se indica):
 - Alineación con arquitectura definida
 
 ==========================================
-Reglas técnicas estrictas:
+REGLAS TÉCNICAS ESTRICTAS:
 ==========================================
 1.- Este proceso de desarrollo será incremental y por fases.
 2.- No se permite scope creep.
@@ -78,61 +116,22 @@ debe escribirse en español, salvo identificadores técnicos estándar
 (librerías, nombres de variables, APIs externas).
 
 ==========================================
-Entorno local:
+ENTORNO LOCAL:
 ==========================================
 En entorno local, los servicios que dependen de secrets PRO (smtp_relay, postgres) fallarán intencionadamente al ejecutar make up-services.
 Esto se considera comportamiento esperado y no debe corregirse mediante valores por defecto
 
 ==========================================
-Cierre de fases:
+CIERRE DE FASES:
 ==========================================
 Cada fase debe incluir:
-- Objetivo explícito
+- Objetivo de la fase
 - Tareas permitidas
+- Alcance
 - Criterio de parada verificable
 - Checkpoint de problemas no resolubles
 
 ==========================================
-Prompt maestro (oficial):
+PROMPT MAESTRO:
 ==========================================
-Este proyecto sigue las reglas definidas en ./docs/decisiones/RULES_2512.txt
-Estamos ejecutando una migración IaC incremental.
-No avances de fase sin confirmación explícita.
-No rellenes huecos del entorno local.
-Antes de modificar archivos, explica qué vas a hacer y espera confirmación.
-Si detectas una tarea fuera del objetivo, detente y notifícalo.
-
-==========================================
-Ejemplos de prompt:
-==========================================
-Ejemplo 01:
-   Objetivo:
-   Refactorizar SOLO código Python bajo src/.
-   No tocar Docker, cron, ni scripts shell.
-
-   Tareas permitidas:
-   - Corregir imports
-   - Convertir rutas absolutas a relativas
-   - Preparar ejecución con python3 -m
-
-   Criterio de parada:
-   - python3 -m compileall src/ sin errores
-
-   Antes de tocar nada:
-   Dime qué archivos vas a modificar y por qué.
-
-Ejemplo 02:
-   Objetivo:
-   Alinear Dockerfiles con IaC PRO existente.
-   No optimizar.
-   No simplificar.
-   No cambiar imágenes base sin justificar.
-
-   Antes de modificar:
-   Compara con Dockerfiles actuales de PRO y dime las divergencias.
-
-Ejemplo de checkpoint:
-   Checkpoint:
-   Enumera los problemas detectados que NO puedes resolver
-   por depender de secrets, BBDD o entorno PRO.
-   No propongas workarounds ni simulaciones.
+Ver D:\WorkSpace\Proyectos\VPS_DigitalOcean_2410\server_monitoring_2509\ai\prompts\plantilla_prompts_standard_2601.txt
