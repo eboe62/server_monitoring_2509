@@ -12,13 +12,19 @@ Proporcionar un documento operativo que liste:
 - Las correcciones mínimas obligatorias en scripts y configuraciones
 - Basado en estructura_detallada_monitoring.txt
 
-Definir un plan de migración coherente, reproducible e íntegramente IaC que reorganice el proyecto server_monitoring_2509 bajo la arquitectura PRO del generador de proyectos.
+Definir un plan de migración coherente, reproducible e íntegramente IaC que reorganice el proyecto bajo arquitectura PRO, adoptando el modelo de micro-stacks autónomos, incluyendo la separación explícita de PostgreSQL como servicio independiente con su propio ciclo de vida.
 
 Este documento recoge:
 - Movimientos y reorganización de archivos (origen → destino)
 - Correcciones obligatorias en scripts y configuracione
 - Nueva estructura final
-- Normalización Docker/IaC
+- Eliminación de docker-compose monolíticos.
+- Separación de cada servicio en micro-stack autónomo.
+- PostgreSQL deja de formar parte de un stack compartido y pasa a:
+    Tener su propio docker-compose.yaml
+    Declarar su propio volumen
+    Ser desplegable y transferible de forma independiente
+    No depender del orden de despliegue global
 - Eliminación de incoherencias y rutas absolutas
 - Estándares de operación y despliegue 100% IaC
 

@@ -10,8 +10,7 @@
 
 ## 📖 Descripción general
 
-**Monitoring Stack 2511** es un plataforma modular de **monitorización y observabilidad 100% contenerizada (IaC)** para servidores Linux desplegada en un servidor **DigitalOcean**.
-
+**Monitoring Stack 2511** es un plataforma modular de **monitorización y observabilidad 100% contenerizada (IaC = Infrastructure as Code)** para servidores Linux desplegada en un servidor **DigitalOcean**.
 
 Incluye componentes para análisis de seguridad, ingesta de eventos,
 monitorización de recursos y servicios auxiliares listos para
@@ -19,6 +18,38 @@ producción.
 
 Inicialmente, la BBDD se gestionaba mediante **CapRover**, pero tras un incidente de redirección no autorizada (“cashmachine.ie”), se migró a un contenedor propio.
 La antigua BBDD se mantiene ahora como **honeypot**, permitiendo detectar intentos de acceso o manipulación externos.
+
+---
+
+## 📖 Modelo de ejecución
+
+PRINCIPIO FUNDAMENTAL:
+
+El entorno PRO sigue estrictamente Infraestructura como Código (IaC):
+
+1. El host no ejecuta lógica de aplicación.
+2. El host SOLO gestiona contenedores Docker.
+3. El estado del sistema se define únicamente por:
+   - el repositorio
+   - las imágenes Docker
+   - los volúmenes declarados
+4. Toda ejecución de código ocurre dentro de:
+    - monitoring-python
+    - monitoring-cron
+5. No existen dependencias implícitas del sistema operativo.
+6. No se permiten ejecuciones manuales fuera del modelo declarativo.
+
+REGLA ARQUITECTONICA:
+
+- Ningún archivo Python se ejecuta por ruta absoluta.
+- Siempre se ejecuta mediante: python3 -m paquete.modulo
+
+Comando válido:
+docker exec -it monitoring-python python3 -m log_ingestor.alert_risk
+
+Comando prohibido:
+python3 src/log_ingestor/alert_risk.py
+/usr/bin/python3 ...
 
 ---
 
@@ -76,8 +107,8 @@ Rama: `develop`
     ├ requirements.txt          # Dependencias Python
     ├ ai/                       # Prompts / requisitos generados con IA
     ├ config/                   # Configuración (Loki, Promtail…)
-    ├ docs/                     # Documentación técnica y decisiones
-    ├ ops/                      # Infraestructura / DevOps
+    ├ docs/                     # Documentación técnica y ADRs
+    ├ ops/                      # Infraestructura como código / DevOps
     │ ├ cron/                   # Definicion de cronjob y tareas independiente del core
     │ ├ deployment/             # setup_symlinks
     │ ├ docker/                 # Gestión de contenedores
@@ -86,21 +117,35 @@ Rama: `develop`
     │ │ ├ observability         # Configuración de Loki, Promtail y Grafana
     │ │ ├ postgres              # Servicio BBDD PostgreSQL específico del stack
     │ │ └ python                # Servicio python específico del stack
-    │ └ services/smtp_relay/    # Servicio Postfix SMTP-relay para alertas
-    ├ resources/                # Material auxiliar (logs locales, etc.)
+    │ └ services/
+    │   ├ smtp_relay/           # Servicio Postfix SMTP-relay para alertas
+    │   └ postgres/             # Micro-stack autónomo PostgreSQL
+    │     ├ docker-compose.yaml
+    │     ├ .env.template
+    │     ├ init/
+    │     └ volumes/ (no versionado)
+    ├ resources/                # Artefactos generados (logs_summary, etc.)
     ├ scripts/                  # Wrappers bash para tareas periódicas
-    ├ src/                      # Código principal (Python)
+    ├ src/                      # Código fuente Python ejecutable como módulos (-m)
     │ ├ common/                 # Utilidades comunes
     │ ├ log_ingestor/           # Scripts Python para ingesta y procesado de logs
     │ └ resource_monitor/       # Monitorización de recursos Docker
     └ tests/                    # Pruebas de funcionalidad
 ```
-
 ---
 
 ## 📂 Política de persistencia
 
-El entorno utiliza exclusivamente volúmenes Docker locales para la persistencia de datos (BBDD, logs y artefactos operativos).
+El entorno utiliza exclusivamente volúmenes Docker locales para la persistencia de datos.
+PostgreSQL se define como micro-stack autónomo, con sus propios volúmenes declarados en ops/services/postgres/docker-compose.yaml.
+
+La persistencia de la base de datos queda desacoplada del resto de servicios y puede ser transferida de forma independiente mediante:
+
+dump lógico (pg_dump)
+
+restauración en nuevo servidor
+
+recreación declarativa del micro-stack
 
 No se emplea Block Storage externo ni servicios gestionados de persistencia.
 
@@ -126,6 +171,13 @@ Tareas programadas en `ops/cron/monitoring.cron`:
 | Cada 10 min | `log_ingest_batch.sh` | Ingesta de logs del sistema |
 | 10:00 / 22:00 | `alert_risk.sh` | Envío de alertas de riesgo |
 | @reboot | `configure_docker_limits.sh` | Aplicación de límites de CPU/memoria |
+
+
+Modelo de programación de tareas
+- No se utiliza cron del host.
+- Todas las tareas programadas se ejecutan dentro del contenedor monitoring-cron.
+- Supercronic es el scheduler oficial del proyecto.
+- El host no contiene entradas crontab relacionadas con la aplicación.
 
 🐳 **Dockerfile base**
 
@@ -278,7 +330,7 @@ Muestra los logs más recientes del sistema.
 ▶️ Arrancar contenedores Python y Cron
 make deploy-python
 
-Levanta el contenedor Python (backup_resotre, etc.)
+Levanta el contenedor Python (backup_restore, etc.)
 ```
 ```
 ▶️ Desplegar solo Cron
@@ -325,6 +377,15 @@ Ejecución manual de auditorías y limpieza:
 
 ⚠️ ATENCION: Antes de ejecutar limpieza, crea un snapshot previo — existe riesgo de pérdida no deseada de binarios.
 ```
+---
+
+## 🔒 Modelo de Seguridad
+
+- PostgreSQL no se expone públicamente.
+- Comunicación interna exclusivamente por red Docker.
+- Exposición mínima de puertos.
+- Secrets nunca versionados.
+- Firewall UFW activo con política deny por defecto.
 
 ---
 

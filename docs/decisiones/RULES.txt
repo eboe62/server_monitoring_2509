@@ -1,4 +1,4 @@
-RULES_2601.txt
+RULES.txt
 Versión: 260131
 Estado: Normativo
 Ámbito: Proyecto server_monitoring_2511
@@ -130,6 +130,18 @@ Cada fase debe incluir:
 - Alcance
 - Criterio de parada verificable
 - Checkpoint de problemas no resolubles
+
+==========================================
+AUDITORIA DE ARCHIVOS:
+==========================================
+Cuando se solicite al agente mostrar el contenido literal de un archivo:
+1. El contenido debe mostrarse dentro de un bloque de código triple (```).
+2. No debe aplicarse formateo Markdown.
+3. No debe interpretarse ningún carácter especial (*, **, _, etc.).
+4. No debe reescribirse ningún patrón.
+5. No debe optimizarse ni normalizarse rutas.
+6. Si el agente no puede garantizar representación literal byte-a-byte,    deberá indicarlo explícitamente.
+7. La validación final siempre se realizará mediante herramienta determinista (cat, git show, sha256sum).
 
 ==========================================
 PROMPT MAESTRO:
