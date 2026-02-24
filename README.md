@@ -225,7 +225,6 @@ DB_HOST = postgres
 DB_NAME = monitoring_db
 DB_USER = user
 DB_PASSWORD = 999999999
-DB_PORT = 9999
 ```
 
 ---

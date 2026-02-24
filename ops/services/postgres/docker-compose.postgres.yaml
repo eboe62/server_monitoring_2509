@@ -9,11 +9,10 @@ services:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
-    ports:
-      - "${DB_PORT}:5432"
     volumes:
-      - postgres-data:/var/lib/postgresql/data # Persistencia de la BBDD de monitorización
-      - /opt/monitoring/backups:/backups # Ubicación de backups de la BBDD
+      - postgres-data:/var/lib/postgresql/data
+      - ./backups:/backups            # backup host-bind relativo al micro-stack
+      - ./init:/docker-entrypoint-initdb.d:ro
     networks:
       - monitoring-net # Red compartida (Grafana, Loki, Postgres, SMTP relay...)
     # Añadido healthcheck para detectar cuando la BBDD no está operativa

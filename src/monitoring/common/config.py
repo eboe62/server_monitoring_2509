@@ -19,8 +19,8 @@ import html
 # /opt/monitoring/smtp_relay/.env o los secrets no existen. Esto permite que el módulo puede importarse de
 # forma segura en cualquier entorno (local, CI/CD, contenedor, producción).
 
-DEFAULT_ENV_PATH = os.getenv("SMTP_RELAY_ENV_PATH", "/opt/monitoring/smtp_relay/.env")
-DEFAULT_SECRETS_DIR = os.getenv("SMTP_RELAY_SECRETS_DIR", "/opt/monitoring/smtp_relay/secrets")
+DEFAULT_ENV_PATH = os.getenv("SMTP_RELAY_ENV_PATH", "ops/services/smtp_relay/.env")
+DEFAULT_SECRETS_DIR = os.getenv("SMTP_RELAY_SECRETS_DIR", "ops/services/smtp_relay/secrets")
 
 # ==========================================
 # CONFIGURACIÓN SMTP / EMAIL (valores iniciales desde el entorno)

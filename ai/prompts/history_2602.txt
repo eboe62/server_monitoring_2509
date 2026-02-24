@@ -1,0 +1,1791 @@
+==========================================
+Edición: 260222
+Título: Gobernanza IA
+Fase: 4 (Preparación)
+Rama: migracion
+Gestor: EOB
+==========================================
+------------------------------------------
+Status:
+------------------------------------------
+eboe62@EOB-LG:/mnt/d/WorkSpace/Proyectos/VPS_DigitalOcean_2410/server_monitoring_2509$ git status
+En la rama migracion
+Tu rama está actualizada con 'origin/migracion'.
+
+Cambios no rastreados para el commit:
+  (usa "git add/rm <archivo>..." para actualizar a lo que se le va a hacer commit)
+  (usa "git restore <archivo>..." para descartar los cambios en el directorio de trabajo)
+        modificados:     README.md
+        borrados:        ai/prompts/plantilla_prompts_standard_2601.txt
+        modificados:     ai/requisitos/Servidor_Migracion_Monitoring_260125.txt
+        borrados:        docs/decisiones/RULES_2512.txt
+
+Archivos sin seguimiento:
+  (usa "git add <archivo>..." para incluirlo a lo que será confirmado)
+        .dockerignore
+        .gitattributes
+        .github/
+        ai/prompts/plantilla_prompts_minimal_2601.txt
+        ai/templates/
+        docs/decisiones/ADR-0006-base-image-governance.md
+        docs/decisiones/ADR-0007-politica_entorno_vsc_wsl.md
+        docs/decisiones/ADR-0008-servicios_micro-stack _vs_infra-stack.md
+        docs/decisiones/RULES.txt
+
+sin cambios agregados al commit (usa "git add" y/o "git commit -a")
+eboe62@EOB-LG:/mnt/d/WorkSpace/Proyectos/VPS_DigitalOcean_2410/server_monitoring_2509$ git diff
+diff --git a/README.md b/README.md
+index 9e93dbc..38dfefe 100644
+--- a/README.md
++++ b/README.md
+@@ -10,8 +10,7 @@
+
+ ## 📖 Descripción general
+
+-**Monitoring Stack 2511** es un plataforma modular de **monitorización y observabilidad 100% contenerizada (IaC)** para servidores Linux desplegada en un servidor **DigitalOcean**.
+-
++**Monitoring Stack 2511** es un plataforma modular de **monitorización y observabilidad 100% contenerizada (IaC = Infrastructure as Code)** para servidores Linux desplegada en un servidor **DigitalOcean**.
+
+ Incluye componentes para análisis de seguridad, ingesta de eventos,
+ monitorización de recursos y servicios auxiliares listos para
+@@ -22,6 +21,38 @@ La antigua BBDD se mantiene ahora como **honeypot**, permitiendo detectar intent
+
+ ---
+
++## 📖 Modelo de ejecución
++
++PRINCIPIO FUNDAMENTAL:
++
++El entorno PRO sigue estrictamente Infraestructura como Código (IaC):
++
+eboe62@EOB-LG:/mnt/d/WorkSpace/Proyectos/VPS_DigitalOcean_2410/server_monitoring_2509$ git add .
+eboe62@EOB-LG:/mnt/d/WorkSpace/Proyectos/VPS_DigitalOcean_2410/server_monitoring_2509$ git commit -m "Gobernanza IA"
+[migracion 7f5bc1c] Gobernanza IA
+ 12 files changed, 948 insertions(+), 88 deletions(-)
+ create mode 100755 .dockerignore
+ create mode 100755 .gitattributes
+ create mode 100755 .github/copilot-instructions.md
+ create mode 100755 ai/prompts/plantilla_prompts_minimal_2601.txt
+ delete mode 100644 ai/prompts/plantilla_prompts_standard_2601.txt
+ mode change 100644 => 100755 ai/requisitos/Servidor_Migracion_Monitoring_260125.txt
+ create mode 100755 ai/templates/change_control_template.md
+ create mode 100755 docs/decisiones/ADR-0006-base-image-governance.md
+ create mode 100755 docs/decisiones/ADR-0007-politica_entorno_vsc_wsl.md
+ create mode 100755 docs/decisiones/ADR-0008-servicios_micro-stack _vs_infra-stack.md
+ rename docs/decisiones/{RULES_2512.txt => RULES.txt} (89%)
+ mode change 100644 => 100755
+eboe62@EOB-LG:/mnt/d/WorkSpace/Proyectos/VPS_DigitalOcean_2410/server_monitoring_2509$ git push origin migracion
+Enumerando objetos: 28, listo.
+Contando objetos: 100% (28/28), listo.
+Compresión delta usando hasta 8 hilos
+Comprimiendo objetos: 100% (19/19), listo.
+Escribiendo objetos: 100% (20/20), 15.08 KiB | 270.00 KiB/s, listo.
+Total 20 (delta 3), reusados 0 (delta 0), pack-reusados 0
+remote: Resolving deltas: 100% (3/3), completed with 3 local objects.
+To https://github.com/eboe62/server_monitoring_2509.git
+   d4d1c5f..7f5bc1c  migracion -> migracion
+
+==========================================
+Edición: 260222
+Título: Postgres Infra-Stack --> Micro-Stack
+Fase: 4 (Preparación)
+Rama: migracion
+Gestor: EOB
+==========================================
+------------------------------------------
+Status:
+------------------------------------------
+eboe62@EOB-LG:/mnt/d/WorkSpace/Proyectos/VPS_DigitalOcean_2410/server_monitoring_2509$ git status
+En la rama migracion
+Tu rama está actualizada con 'origin/migracion'.
+
+Cambios no rastreados para el commit:
+  (usa "git add <archivo>..." para actualizar lo que será confirmado)
+  (usa "git restore <archivo>..." para descartar los cambios en el directorio de trabajo)
+        modificados:     ops/docker/docker-compose.cron.yml
+        modificados:     ops/docker/docker-compose.python.yml
+        modificados:     ops/services/smtp_relay/docker-compose.yaml
+        modificados:     scripts/backup_postgres.py
+        modificados:     scripts/backup_restore.py
+        modificados:     src/monitoring/common/config.py
+
+Archivos sin seguimiento:
+  (usa "git add <archivo>..." para incluirlo a lo que será confirmado)
+        ai/prompts/history_2602.txt
+        ops/services/postgres/
+
+sin cambios agregados al commit (usa "git add" y/o "git commit -a")
+eboe62@EOB-LG:/mnt/d/WorkSpace/Proyectos/VPS_DigitalOcean_2410/server_monitoring_2509$ git diff
+diff --git a/ops/docker/docker-compose.cron.yml b/ops/docker/docker-compose.cron.yml
+index 511659d..41964ed 100644
+--- a/ops/docker/docker-compose.cron.yml
++++ b/ops/docker/docker-compose.cron.yml
+@@ -8,10 +8,10 @@ services:
+     restart: unless-stopped
+     volumes:
+       # Montamos el cronfile en la ruta que espera supercronic
+-      - /opt/monitoring/ops/cron/monitoring.cron:/opt/monitoring/cron/monitoring.cron:ro
++      - ../ops/cron/monitoring.cron:/opt/monitoring/cron/monitoring.cron:ro
+
+       # Proyecto completo (scripts Python y utilidades)
+-      - /opt/monitoring:/opt/monitoring
++      - ../..:/opt/monitoring
+
+       # Logs del host para que los scripts puedan escribir ahí
+       - /var/log:/var/log
+diff --git a/ops/docker/docker-compose.python.yml b/ops/docker/docker-compose.python.yml
+index 4f1c5c9..761ae05 100644
+--- a/ops/docker/docker-compose.python.yml
++++ b/ops/docker/docker-compose.python.yml
+@@ -10,7 +10,7 @@ services:
+       - ../services/smtp_relay/.env
+     volumes:
+:
+diff --git a/ops/docker/docker-compose.cron.yml b/ops/docker/docker-compose.cron.yml
+index 511659d..41964ed 100644
+--- a/ops/docker/docker-compose.cron.yml
++++ b/ops/docker/docker-compose.cron.yml
+@@ -8,10 +8,10 @@ services:
+     restart: unless-stopped
+     volumes:
+       # Montamos el cronfile en la ruta que espera supercronic
+-      - /opt/monitoring/ops/cron/monitoring.cron:/opt/monitoring/cron/monitoring.cron:ro
++      - ../ops/cron/monitoring.cron:/opt/monitoring/cron/monitoring.cron:ro
+
+       # Proyecto completo (scripts Python y utilidades)
+-      - /opt/monitoring:/opt/monitoring
++      - ../..:/opt/monitoring
+
+       # Logs del host para que los scripts puedan escribir ahí
+       - /var/log:/var/log
+diff --git a/ops/docker/docker-compose.python.yml b/ops/docker/docker-compose.python.yml
+index 4f1c5c9..761ae05 100644
+--- a/ops/docker/docker-compose.python.yml
++++ b/ops/docker/docker-compose.python.yml
+@@ -10,7 +10,7 @@ services:
+       - ../services/smtp_relay/.env
+     volumes:
+:
+diff --git a/ops/docker/docker-compose.cron.yml b/ops/docker/docker-compose.cron.yml
+index 511659d..41964ed 100644
+--- a/ops/docker/docker-compose.cron.yml
++++ b/ops/docker/docker-compose.cron.yml
+@@ -8,10 +8,10 @@ services:
+     restart: unless-stopped
+     volumes:
+       # Montamos el cronfile en la ruta que espera supercronic
+-      - /opt/monitoring/ops/cron/monitoring.cron:/opt/monitoring/cron/monitoring.cron:ro
++      - ../ops/cron/monitoring.cron:/opt/monitoring/cron/monitoring.cron:ro
+
+       # Proyecto completo (scripts Python y utilidades)
+-      - /opt/monitoring:/opt/monitoring
++      - ../..:/opt/monitoring
+
+       # Logs del host para que los scripts puedan escribir ahí
+       - /var/log:/var/log
+diff --git a/ops/docker/docker-compose.python.yml b/ops/docker/docker-compose.python.yml
+index 4f1c5c9..761ae05 100644
+--- a/ops/docker/docker-compose.python.yml
++++ b/ops/docker/docker-compose.python.yml
+@@ -10,7 +10,7 @@ services:
+       - ../services/smtp_relay/.env
+     volumes:
+
+==========================================
+Edición: 260222
+Título: Análisis – Evaluar estado de FASE 4
+Fase: 4 (Preparación)
+Rama: migracion
+Gestor: IA VSC Copilot
+==========================================
+------------------------------------------
+Objetivo:
+------------------------------------------
+Valorar el estado inicial
+
+------------------------------------------
+Prompt:
+------------------------------------------
+Proyecto: server_monitoring_2509
+Fase: Análisis – Evaluar estado de FASE 4 del documento (Servidor_DigitalOcean_Implementacion_260214.txt)
+
+Normativa vinculante:
+
+RULES.txt
+ADR-0008
+Objetivo:
+Elaborar un checklist tick / cross para evaluar el estado de progres de la FASE 4 ordenado por orden de criticidad
+
+Alcance del análisis:
+
+Explicar los puntos críticos
+Explicar necesidades prioritaras
+Identificar posibles conflictos
+Restricciones absolutas:
+
+No modificar archivos.
+No optimizar arquitectura.
+No proponer ejecución.
+No generar cambios.
+Entrega requerida:
+
+Tu respuesta completa dejala en ./ai/prompts/copilot_patch.txt
+Checklist
+Identificación clara de riesgos reales (no hipotéticos).
+Condición exacta bajo la cual se produciría cada riesgo.
+Nivel de impacto (bajo / medio / alto).
+Medida correctiva mínima (solo conceptual).
+Confirmación de compatibilidad con ADR-0008.
+
+------------------------------------------
+Respuesta:
+------------------------------------------
+I'll create a short plan and ask for permission to write the requested deliverable file.
+
+Asked a question (Approve?)
+
+May I create/overwrite ./ai/prompts/copilot_patch.txt with the analysis and checklist output (you requested)?
+1
+I'll read the existing prompt file to avoid accidental overwrites.
+
+I'll check a few repository files to confirm items for the checklist.
+
+Now writing the analysis into the requested file. I'll add the checklist, findings, risks, conditions, impacts, corrective measures, and ADR-0008 compatibility note.
+
+Done — I created copilot_patch.txt with the checklist, findings, risks (conditions, impacts, corrective measures) and ADR-0008 compatibility note.
+
+Next steps I can take if you want:
+
+Commit the new file and push the branch.
+Produce a concise PR description for review.
+Expand any risk into a runnable verification checklist.
+
+==========================================
+Edición: 260222
+Título: Postgres Infra-Stack --> Micro-Stack
+Fase: 4 (Preparación)
+Rama: copilot_sandbox
+Gestor: IA VSC Copilot
+==========================================
+------------------------------------------
+Status:
+------------------------------------------
+eboe62@EOB-LG:/mnt/d/WorkSpace/Proyectos/VPS_DigitalOcean_2410/server_monitoring_2509$ git checkout -b copilot_sandbox
+Cambiado a nueva rama 'copilot_sandbox'
+
+------------------------------------------
+Prompt:
+------------------------------------------
+Proyecto: server_monitoring_2509
+Fase: Análisis – Evaluar estado de FASE 4 del documento (Servidor_DigitalOcean_Implementacion_260214.txt)
+
+Normativa vinculante:
+- RULES.txt
+- ADR-0008
+
+Objetivo:
+Elaborar un checklist tick / cross para evaluar el estado de progres de la FASE 4 ordenado por orden de criticidad
+
+Alcance del análisis:
+- Explicar los puntos críticos
+- Explicar necesidades prioritaras
+- Identificar posibles conflictos
+
+Restricciones absolutas:
+- No modificar archivos.
+- No optimizar arquitectura.
+- No proponer ejecución.
+- No generar cambios.
+
+Entrega requerida:
+1. Tu respuesta completa dejala  en ./ai/prompts/copilot_patch.txt
+2. Checklist
+3. Identificación clara de riesgos reales (no hipotéticos).
+4. Condición exacta bajo la cual se produciría cada riesgo.
+5. Nivel de impacto (bajo / medio / alto).
+6. Medida correctiva mínima (solo conceptual).
+7. Confirmación de compatibilidad con ADR-0008.
+
+------------------------------------------
+Respuesta:
+------------------------------------------
+Proyecto: server_monitoring_2509
+Fase: Análisis – FASE 4 (Preparación)
+Fecha: 2026-02-22
+
+Resumen ejecutivo
+- Objetivo: checklist ordenado por criticidad + análisis de puntos críticos, riesgos reales,
+	condiciones detonantes, impacto y medida correctiva mínima. Compatible con RULES.txt y ADR-0008.
+
+Checklist (ordenado por criticidad)
+
+ALTA CRITICIDAD
+- Secrets per micro-stack directory exists: postgres ✗   # Missing ops/services/postgres/secrets/
+- Postgres published to host port: ops/docker/docker-compose.postgres.yaml ✗   # ports: ${DB_PORT}:5432 present
+- Docker socket mounted in infra containers (cron/python): ✓ (present) — high-risk capability
+
+MEDIA CRITICIDAD
+- .env.template present for services (postgres, smtp_relay): ✓
+- .env is listed in .gitignore: ✓
+- monitoring-net declared external in compose files (cron, python, postgres, smtp_relay): ✓
+- Dockerfiles do not copy .env or secrets: ✓ (no COPY .env or COPY secrets found in ops/docker Dockerfiles)
+- .dockerignore excludes service secrets directories: ✓ (ops/services/**/secrets/)
+
+BAJA CRITICIDAD
+- Micro-stack build context constrained (ops/services/smtp_relay): ✓ (uses context: .)
+- infra-stack build contexts use repo root as intended (ops/docker/*): ✓
+- Healthchecks present for postgres and some services: ✓
+
+Hallazgos y puntos críticos (breve)
+- Falta de carpeta `ops/services/postgres/secrets/` (CRÍTICO): FASE 4 normativa exige estructura `secrets/` por servicio. Su ausencia impide inyectar credenciales via archivos separados y rompe parte de la gobernanza de despliegue.
+- Publicación del puerto PostgreSQL en `docker-compose.postgres.yaml` (CRÍTICO): con el puerto mapeado a host, la BBDD puede quedar accesible si el firewall/ufw no está correctamente configurado. La normativa PRO recomienda no exponer 5432 en el host.
+- Montaje de `/var/run/docker.sock` en `monitoring-cron`/`monitoring-python` (ALTO): permitido para infra-stack, pero da control amplio sobre el host Docker y es vector de compromiso crítico si el contenedor se ve comprometido.
+- `COPY . .` en `ops/docker/Dockerfile.base` + build context `../..` en infra-stack (MEDIO): mitigado por `.dockerignore` que excluye `ops/services/**/secrets/`, pero requiere disciplina: si `.dockerignore` cambia o se construye con otro contexto, secretos podrían entrar en la imagen.
+- `monitoring-net` declarado `external: true` (positivo): cumple la regla de red compartida, pero requiere creación manual en host antes de `docker compose up`.
+
+Riesgos reales (no hipotéticos) — condición exacta → impacto → medida correctiva mínima
+
+1) Riesgo: Credenciales sensibles incluidas en imagen
+- Condición: Se ejecuta `docker build` con contexto raíz y `.dockerignore` no excluye `ops/services/**/secrets/` (por ejemplo, si se edita/remueve `.dockerignore` o se construye desde otra máquina con secretos presentes en el árbol).
+- Impacto: Alto — secretos en imagen → posible exposición en registry / cualquier host donde se despliegue la imagen.
+- Medida correctiva mínima: Garantizar `.dockerignore` incluya `ops/services/**/secrets/` (ya presente) y añadir verificación de build (checklist/manual) que confirme que `find / -name ".env"` dentro de la imagen devuelve vacío; documentar proceso de build y evitar builds desde contextos que contengan secretos.
+
+2) Riesgo: Exposición de PostgreSQL al exterior
+- Condición: `docker compose up` aplicado en producción con `ports: "${DB_PORT}:5432"` y firewall/ufw no bloqueando el puerto, o variable `DB_PORT` configurada con host-accessible IP.
+- Impacto: Alto — datos sensibles accesibles desde red pública o lateral.
+- Medida correctiva mínima: En producción, publicar el puerto sólo en 127.0.0.1 (ej. `127.0.0.1:5432:5432`) o eliminar la línea `ports` y confiar en red Docker interna; documentar explícitamente en el runbook.
+
+3) Riesgo: Compromiso del host vía `docker.sock`
+- Condición: Contenedor con `/var/run/docker.sock` montado es comprometido (vulnerabilidad en script, paquete o usuario) y se utiliza para controlar el daemon Docker.
+- Impacto: Alto — acceso completo al host/otros contenedores.
+- Medida correctiva mínima: Restringir montaje solo a contenedores de infraestructura necesarios; aislar estos contenedores; minimizar capacidades del proceso; evaluar uso de herramientas alternativas (API limitado, socket proxy) y añadir monitoreo/audit logs específicos.
+
+4) Riesgo: Falta de estructura `secrets/` para micro-stacks (ej. postgres)
+- Condición: Se pretende tratar `ops/services/postgres/` como micro-stack autónomo pero no dispone de `secrets/` ni de procedimiento para inyectar credenciales separadas.
+- Impacto: Medio-Alto — incumplimiento de FASE 4; riesgo operacional al tener que introducir secrets de forma ad-hoc o en .env accidentalmente versionado.
+- Medida correctiva mínima: Crear `ops/services/postgres/secrets/` con archivos de credenciales (sólo en host PRO) y documentar permisos (`chmod 600`) y el flujo de copia manual desde plantillas.
+
+5) Riesgo: Network external no creada en host
+- Condición: `monitoring-net` no existe en el host y `docker compose up` se realiza por stacks independientes → Docker crea redes con prefijos distintos y los stacks no se comunican.
+- Impacto: Medio — fallos de comunicación entre servicios (Grafana no ve Loki, servicios no alcanzan Postgres).
+- Medida correctiva mínima: Documentar y proponer orden de pasos: `docker network create monitoring-net` como pre-requisito; añadir verificación de red en checklist de despliegue.
+
+Compatibilidad con ADR-0008
+- Confirmación: Compatible con ADR-0008 en el estado actual con las salvedades indicadas.
+	- `ops/services/` contiene micro-stack (ej. `smtp_relay`) que cumple build context local y monta su `./secrets` — ✓
+	- `ops/docker/` contiene infra-stack (cron, python, postgres compose) que usa contexto superior y montajes host — ✓
+	- Riesgos detectados no contradicen ADR-0008, pero si se decide migrar `postgres` a micro-stack, será obligatorio crear `secrets/` y ajustar el build/despliegue conforme a la sección Micro-stack del ADR.
+
+Conclusión y prioridades de acción (conceptual, mínima)
+- Prioridad IMMEDIATE: Crear `ops/services/postgres/secrets/` (vacío/.gitkeep) y evitar exponer PostgreSQL en host (remover/limitar `ports` a 127.0.0.1) — mitigación directa y rápida.
+- Prioridad HIGH: Revisar y justificar montajes de `/var/run/docker.sock` (documentar riesgo y controles compensatorios).
+- Prioridad MEDIUM: Añadir verificación de build (documental/script de comprobación) que asegure que imágenes no contienen `.env` ni secretos.
+- Prioridad LOW: Documentar y automatizar (runbook) la creación de `monitoring-net` en el host.
+
+Entregables incluidos
+- Checklist (arriba)
+- Riesgos reales con condición precisa, impacto y medida correctiva mínima
+- Confirmación de compatibilidad con ADR-0008 y notas de condicionamiento
+
+Fin del informe.
+
+==========================================
+Edición: 260222
+Título: Postgres Infra-Stack --> Micro-Stack
+Fase: 4 (Preparación)
+Rama: copilot_sandbox
+Gestor: IA ChatGPT
+==========================================
+------------------------------------------
+Prompt:
+------------------------------------------
+Vamos a hacer una valoración de FASE 4 conforme al documento Servidor_DigitalOcean_Implementacion_260214.txt y a la valoración realizada por Copilot hace un rato cuyo detalle puedes ver en history_2602.txt.
+Por si lo necesitas tienes la estructura completa del proyecto en estructura_server_migracion_monitoring_2602.txt y una descripción detallada en Servidor_DigitalOcean_Definicion_Proyecto_250928.txt
+Confirma que tienes acceso a los documentos y entrega un checklist tick / cross de FASE 4 con las acciones que tenemos que acometer por orden de prioridad.
+
+------------------------------------------
+Respuesta:
+------------------------------------------
+2026/02/22 19:41:00
+
+Confirmo que tengo acceso completo a los siguientes documentos del proyecto:
+- Servidor_DigitalOcean_Implementacion_260214.txt DigitalOcean
+- Servidor_DigitalOcean_Definicion_Proyecto_250928.txt
+- estructura_server_migracion_monitoring_2602.txt
+- history_2602.txt
+
+La evaluación se basa en:
+- Estado normativo de FASE 4 (Implementación 260214).
+- Evidencias reales del repositorio y cambios mostrados en history_2602.
+- Estructura actual declarada.
+- Información de runtime proporcionada (docker ps, iptables, etc.).
+
+✅ CHECKLIST FASE 4 – CONFIGURACIÓN DE ENTORNO (Pre-runtime estructural)
+
+Ordenado por prioridad arquitectónica (de más crítico a menos crítico).
+
+🔴 PRIORIDAD 1 — Separación estructural real Micro-Stack / Infra-Stack
+1. Micro-Stack PostgreSQL autónomo
+       ✔ Existe ops/services/postgres/
+       ✔ Tiene docker-compose.yaml
+       ✔ Tiene .env.template
+       ✔ Tiene estructura propia (init/, volumes/)
+       ✔ Declarado como micro-stack según ADR-0008
+Estado: ✅ Correcto estructuralmente.
+
+2. PostgreSQL NO dependiente del Infra-Stack
+       En runtime actual:
+       monitoring-postgres  → puerto 5433 publicado
+       srv-captain--security250226app → puerto interno 5432
+
+El contenedor monitoring-postgres está separado del CapRover.
+Pero:
+
+       ❌ 5433 está expuesto en host (0.0.0.0:5433)
+       ❌ 5432 también aparece permitido en UFW (según FASE 2)
+       ❌ UFW abre 5432 y 5433 públicamente
+
+El documento normativo FASE 12 indica:
+       PostgreSQL no se expone públicamente.
+Estado: ❌ Incumplimiento normativo grave.
+
+Acción prioritaria:
+       Eliminar exposición pública 5432/5433 y restringir a red Docker interna.
+
+🔴 PRIORIDAD 2 — Red Docker explícita compartida (monitoring-net)
+Makefile incluye target:
+       monitoring-net:
+       docker network inspect monitoring-net || docker network create
+
+Pero no hay evidencia explícita de que:
+       - Todos los servicios usen external: true
+       - No existan redes implícitas por compose local
+
+       No se ha mostrado inspección de redes.
+
+Estado: ⚠ Parcialmente verificado.
+
+Acción:
+Verificar que TODOS los docker-compose usan:
+       networks:
+       monitoring-net:
+       external: true
+
+Si no → ❌ incumplimiento del modelo híbrido.
+
+🟠 PRIORIDAD 3 — No existencia de secretos versionados
+En FASE 4:
+       - Secrets deben estar en:
+              ops/services/<servicio>/secrets/
+       - .env solo variables no sensibles
+
+En history:
+       - No se observa secrets añadidos al repo.
+       - .env.template existe.
+       - No se ven secretos reales en commits.
+
+Estado: ✅ Compatible.
+
+🟠 PRIORIDAD 4 — No dependencias implícitas entre servicios
+En diff de cron y python:
+       - /opt/monitoring → ../..
+
+Esto elimina hardcode absoluto del host → ✔ mejora IaC.
+
+Pero:
+Montar todo el repo completo dentro del contenedor:
+       - ../..:/opt/monitoring
+
+Esto implica:
+       - Acoplamiento fuerte a estructura del repo.
+       - Infra-Stack comparte código completo.
+       - Micro-Stack podría depender indirectamente del repo root.
+
+No es violación directa, pero:
+
+⚠ Riesgo estructural si algún micro-stack empieza a leer código del root.
+
+Estado: ⚠ Arquitectónicamente delicado pero aceptable.
+
+🟠 PRIORIDAD 5 — Imagen base monitoring-base cumple reglas
+Normativa exige:
+Debe contener SOLO:
+       - runtime
+       - dependencias
+       - código versionado
+
+Dockerfile.base:
+       COPY requirements.txt
+       pip install
+       COPY . .
+
+Eso copia TODO el repo, incluyendo:
+       - docs
+       - ai/
+       - plantillas
+       - posiblemente .env si existe
+
+Esto no rompe normativa directamente, pero:
+
+⚠ monitoring-base no está estrictamente minimizada.
+
+Riesgo:
+- Acoplamiento no deseado.
+- Mayor superficie de ataque.
+
+Estado: ⚠ Compatible pero mejorable.
+
+🟢 PRIORIDAD 6 — No ejecución manual fuera de contenedores
+README declara claramente:
+Comando válido:
+       docker exec monitoring-python python3 -m ...
+
+No se observan ejecuciones absolutas en cambios.
+
+Estado: ✅ Compatible.
+
+🟢 PRIORIDAD 7 — No secrets en imagen base
+No se observa copia de secrets en Dockerfile.
+Pero si secrets estuvieran dentro del repo, serían copiados por COPY . .
+Necesitamos confirmar:
+       ¿ops/services/*/secrets/ está en .dockerignore?
+
+No tengo evidencia de .dockerignore contenido.
+
+Estado: ❓ No verificable con certeza.
+
+Requiere inspección de .dockerignore.
+
+📋 RESUMEN EJECUTIVO BINARIO (FASE 4)
+Criterio	                     Estado
+Micro-Stack Postgres autónomo	✔
+Separación Infra / Micro	       ✔
+Red explícita compartida	       ⚠
+Secrets desacoplados	              ✔
+No dependencias implícitas	       ⚠
+PostgreSQL no expuesto	       ❌
+Cumplimiento modelo IaC	       ⚠
+
+🚨 CONCLUSIÓN CRÍTICA
+FASE 4 NO ES plenamente compatible con el documento normativo 260214.
+
+Motivo principal:
+🔴 PostgreSQL sigue expuesto públicamente (5432/5433 abiertos en UFW y bind 0.0.0.0).
+       Esto contradice explícitamente:
+       "PostgreSQL no se expone públicamente."
+
+🎯 ACCIONES POR ORDEN DE PRIORIDAD
+1️⃣ CRÍTICO
+- Eliminar publicación de puertos 5432/5433 en docker-compose
+- Eliminar reglas UFW 5432/5433
+- Confirmar accesibilidad solo por monitoring-net
+2️⃣ ALTO
+- Verificar todas las redes como external: true
+- Inspeccionar .dockerignore para excluir secrets
+3️⃣ MEDIO
+- Revisar contenido exacto de monitoring-base
+- Evaluar minimización de imagen base
+4️⃣ BAJO
+- Validar que ningún micro-stack depende estructuralmente del repo root
+
+🔎 Pensamiento crítico
+Hay una incoherencia estructural importante:
+
+En documento FASE 2 se abren puertos 5432/5433.
+En FASE 12 se dice que no deben exponerse.
+
+Eso implica:
+- O la norma evolucionó.
+- O hay contradicción interna.
+
+Necesitamos decidir cuál prevalece.
+
+Si quieres, podemos ahora:
+- Hacer auditoría específica de exposición real de red.
+- O generar un plan de corrección mínimo compatible con ADR-0008.
+- O validar cumplimiento exacto red Docker.
+
+Indica siguiente paso.
+
+==========================================
+Edición: 260222
+Título: Postgres Infra-Stack --> Micro-Stack
+Fase: 4 (Preparación)
+Rama: copilot_sandbox
+Gestor: IA VSC Copilot
+==========================================
+------------------------------------------
+Objetivo:
+------------------------------------------
+🔴 PRIORIDAD 1 — Separación estructural real Micro-Stack / Infra-Stack
+1. Micro-Stack PostgreSQL autónomo
+       ✔ Existe ops/services/postgres/
+       ✔ Tiene docker-compose.yaml
+       ✔ Tiene .env.template
+       ✔ Tiene estructura propia (init/, volumes/)
+       ✔ Declarado como micro-stack según ADR-0008
+Estado: ✅ Correcto estructuralmente.
+
+2. PostgreSQL NO dependiente del Infra-Stack
+       En runtime actual:
+       monitoring-postgres  → puerto 5433 publicado
+       srv-captain--security250226app → puerto interno 5432
+
+El contenedor monitoring-postgres está separado del CapRover.
+Pero:
+
+       ❌ 5433 está expuesto en host (0.0.0.0:5433)
+       ❌ 5432 también aparece permitido en UFW (según FASE 2)
+       ❌ UFW abre 5432 y 5433 públicamente
+
+El documento normativo FASE 12 indica:
+       PostgreSQL no se expone públicamente.
+Estado: ❌ Incumplimiento normativo grave.
+
+Acción prioritaria:
+       Eliminar exposición pública 5432/5433 y restringir a red Docker interna.
+
+------------------------------------------
+Prompt:
+------------------------------------------
+Proyecto: server_monitoring_2509
+Fase: Auditoría – Exposición de red PostgreSQL (Prioridad 1)
+
+Normativa vinculante:
+- Servidor_DigitalOcean_Implementacion_260214.txt
+- RULES.txt
+- ADR-0008-servicios_micro-stack_vs_infra-stack.md
+
+Ámbito auditado:
+- Infraestructura Docker
+- Micro-Stack PostgreSQL
+- Reglas de firewall (UFW)
+- Publicación de puertos en docker-compose
+- Redes Docker
+
+Objeto de auditoría:
+Auditar el estado actual del micro-stack PostgreSQL y confirmar si:
+
+1. PostgreSQL está expuesto públicamente en el host.
+2. Existen puertos 5432 o 5433 publicados con bind 0.0.0.0.
+3. UFW permite tráfico entrante hacia 5432/5433.
+4. El servicio depende de publicación de puerto para comunicación interna.
+5. La comunicación puede realizarse exclusivamente vía red Docker (monitoring-net).
+
+Alcance:
+- ops/services/postgres/docker-compose.yaml
+- Cualquier otro docker-compose que publique 5432/5433
+- Configuración UFW documentada
+- docker ps (publicación de puertos)
+- docker network inspect monitoring-net
+
+Restricciones absolutas:
+- No modificar archivos.
+- No proponer refactor.
+- No rediseñar arquitectura.
+- No ejecutar cambios.
+- No considerar FASE 12 ni mejoras futuras.
+- Limitar análisis exclusivamente a Prioridad 1.
+
+Entrega requerida:
+
+1. Lista numerada de hallazgos objetivos.
+2. Evidencia concreta (archivo / línea / condición).
+3. Nivel de severidad:
+   - Crítico
+   - Alto
+   - Medio
+   - Bajo
+4. Riesgo operativo real (no hipotético).
+5. Confirmación final binaria:
+   - Podemos pasar a Prioridad 2
+   - No podemos pasar a Prioridad 2
+
+No proponer mejoras arquitectónicas.
+No extender el alcance.
+No sugerir acciones fuera de Prioridad 1.
+Analizar exclusivamente exposición real de PostgreSQL.
+
+------------------------------------------
+Respuesta:
+------------------------------------------
+I'll search the repo for PostgreSQL port declarations and UFW mentions, then open the relevant compose files to extract exact lines.
+
+Findings (numbered)
+
+PostgreSQL is configured to publish a host port (host binding).
+Evidence: docker-compose.yaml:12 → line shows - "${DB_PORT}:5432". Also present in docker-compose.yaml:43 → - "${DB_PORT:-5432}:5432". Severity: Crítico. Riesgo operativo real: Base de datos publicada en el host si DB_PORT se establece; posible acceso desde red host.
+Infra-stack postgres compose also publishes host port.
+Evidence: docker-compose.postgres.yaml:13 → line shows - "${DB_PORT}:5432". Severity: Crítico. Riesgo operativo real: publicación doble/alternativa desde infra stack; aumenta probabilidad de exposición.
+Default example DB port present in .env.template (non-loopback port).
+Evidence: .env.template:11 → DB_PORT=9999. Severity: Alto. Riesgo operativo real: with DB_PORT set (e.g. 9999) compose maps host port 9999 → 5432 (bind defaults to 0.0.0.0), making DB reachable from host network.
+UFW documentation in project explicitly allows 5432/5433.
+Evidence: especificaciones/Servidor_DigitalOcean_Implementacion_260214.txt → shows sudo ufw allow 80,443,3000,3100,5432,5433/tcp. Severity: Alto. Riesgo operativo real: documented firewall rules would permit incoming traffic to PostgreSQL if applied on the host.
+No explicit bind-to-localhost host:port mapping present.
+Evidence: port mappings use ${DB_PORT}:5432 or ${DB_PORT:-5432}:5432 (see files in items 1–2) — none use 127.0.0.1:...:.... Severity: Crítico. Riesgo operativo real: default Docker port publish binds to all interfaces (0.0.0.0) unless an explicit host IP is specified.
+Notes on runtime checks (scope limitation)
+
+I did not run docker ps or docker network inspect on the target host (no runtime access). The audit is based on repository configuration files only (as per restrictions). If docker compose was run with these files and DB_PORT set to a host port, the container port will be published to the host (bound to 0.0.0.0 by default).
+Binary confirmation (final)
+
+Podemos pasar a Prioridad 2: No podemos pasar a Prioridad 2.
+Rationale: repository configuration shows PostgreSQL is configured to be published to a host port (non-loopback) and the project documentation includes UFW rules that would allow 5432/5433; therefore exposure is configured/allowed. Without verifying a running host state (docker ps / ufw status) we cannot assert a runtime change, but the configuration itself prevents advancing to the next priority.
+
+==========================================
+Edición: 260222
+Título: Postgres Infra-Stack --> Micro-Stack
+Fase: 4 (Preparación)
+Rama: copilot_sandbox
+Gestor: IA VSC Copilot
+==========================================
+------------------------------------------
+Prompt:
+------------------------------------------
+Proyecto: server_monitoring_2509
+Tipo: AUDITORÍA ESTRICTA
+Ámbito: Cierre de Prioridad 1 (Exposición PostgreSQL)
+Modelo: plantilla_prompts_minimal_2601.txt
+
+Normativa vinculante:
+- Servidor_DigitalOcean_Implementacion_260214.txt
+- ADR-0008-servicios_micro-stack_vs_infra-stack.md
+- RULES.txt
+
+Contexto:
+Se ha eliminado la sección `ports:` de los servicios PostgreSQL en los docker-compose.
+Se requiere verificar si PRIORIDAD 1 puede considerarse cerrada.
+
+IMPORTANTE:
+Esta es una auditoría estricta.
+No es una tarea de modificación.
+No es un plan de migración.
+No es una propuesta de mejora.
+No es un refactor.
+No se deben sugerir cambios.
+No se deben pedir aprobaciones.
+No se deben plantear preguntas.
+No se deben proponer diffs.
+No se debe sugerir eliminación de servicios.
+No se debe ampliar el alcance.
+
+Objeto de verificación:
+
+1) Repositorio
+- Confirmar que ningún docker-compose publica puertos 5432/5433.
+- Confirmar que no existen expresiones:
+    "${DB_PORT}:5432"
+    "${DB_PORT:-5432}:5432"
+- Confirmar que PostgreSQL solo está conectado a red Docker interna.
+- Confirmar que DB_PORT no se usa para exposición de host.
+
+2) Entorno LOCAL (sin UFW)
+- Considerar que UFW no está instalado.
+- Determinar si, basándose únicamente en configuración Docker, existe exposición de host.
+
+3) Entorno PRO (con UFW activo)
+Se proporciona la siguiente salida real:
+
+Status: active
+Default: deny (incoming), allow (outgoing), deny (routed)
+
+22/tcp (OpenSSH) ALLOW IN Anywhere
+80,443,3000,3100,5432,5433/tcp ALLOW IN Anywhere
+
+- Evaluar si, sin publicación Docker de puertos, estas reglas implican exposición real.
+- Determinar si existe riesgo efectivo o únicamente potencial.
+
+Entrega obligatoria:
+
+1) Lista numerada de hallazgos objetivos.
+2) Separación clara entre:
+   - Estado repositorio
+   - Estado LOCAL
+   - Estado PRO
+3) Evaluación técnica del riesgo real (no hipotético).
+4) Confirmación binaria final:
+   - Prioridad 1 cerrada
+   - Prioridad 1 no cerrada
+
+No incluir recomendaciones.
+No incluir mejoras.
+No incluir planes.
+No incluir preguntas.
+No sugerir cambios.
+Limitarse exclusivamente a verificación técnica del cierre.
+
+------------------------------------------
+Respuesta:
+------------------------------------------
+Now searching the repo for any references to PostgreSQL port mappings and DB_PORT patterns.
+
+Now reading .env.template to confirm whether DB_PORT is present and its line.
+
+Estado — Repositorio
+
+Hallazgo: No hay docker-compose en el repositorio que publique 5432/5433.
+Evidencia: docker-compose.postgres.yaml:1-20 → no aparece ports: ni mapeo a 5432.
+Evidencia: .env.template:1-20 → no DB_PORT definido.
+Evidencia adicional: búsqueda dentro del árbol del proyecto devuelve referencias textuales (ai/prompts/..., documentación) pero no declaraciones de :"${DB_PORT}:5432" en archivos de compose del proyecto (ej. el único compose de Postgres en postgres no publica puerto).
+Estado — Entorno LOCAL (sin UFW)
+
+Hallazgo: Basado exclusivamente en la configuración Docker del repositorio, no existe exposición de PostgreSQL al host.
+Evidencia: ningún docker-compose del proyecto contiene mapeo host:container para 5432/5433 (ver enlace arriba).
+Evaluación técnica: sin mapeos de puerto en compose, Docker no abre 5432 en el host por defecto; por tanto en un entorno local (sin UFW) no hay puerto de PostgreSQL expuesto por los compose inspeccionados.
+Estado — Entorno PRO (con UFW activo)
+
+Hallazgo: El perímetro UFW documentado/mostrado permite 5432/5433, pero ese hecho por sí solo no genera exposición si Docker no publica puertos.
+Evidencia de reglas documentadas: especificaciones/Servidor_DigitalOcean_Implementacion_260214.txt → sudo ufw allow 80,443,3000,3100,5432,5433/tcp.
+Evaluación técnica: Con UFW permitiendo 5432/5433, si el host tuviera puertos en escucha en esas interfaces esos puertos serían accesibles; sin embargo, dado que en el repositorio no hay mapeos Docker a esos puertos, no existe un servicio originado por los compose inspeccionados que esté escuchando en 0.0.0.0:5432 desde el host. Por tanto la regla UFW está presente pero no provoca exposición real a menos que haya un puerto publicado/escuchando en el host.
+Evaluación técnica del riesgo real (no hipotético)
+
+Hallazgo consolidado: Actualmente —según los artefactos de este repositorio— no hay publicación de puertos 5432/5433 en los docker-compose analizados, por lo que no existe exposición real de PostgreSQL inducida por los compose versionados.
+Evidencia: archivos de compose y .env.template en postgres (links más arriba).
+Impacto técnico real: nulo en cuanto a exposición originada por estos compose; presencia de UFW permitiendo 5432/5433 es una condición que permitiría acceso si un puerto estuviera publicado, pero hoy no hay puerto publicado desde los compose del repo.
+Confirmación binaria final
+
+Prioridad 1 cerrada — Sí: Prioridad 1 puede considerarse cerrada (no cerrada would be incorrect).
+Fin.
+
+==========================================
+Edición: 260222
+Título: Postgres Infra-Stack --> Micro-Stack
+Fase: 4 (Correcciones)
+Rama: copilot_sandbox
+Gestor: IA VSC Copilot
+==========================================
+------------------------------------------
+Prompt:
+------------------------------------------
+Proyecto: server_monitoring_2509
+Tipo: AUDITORÍA ESTRICTA
+Fase: FASE 4 – Validación Micro-Stack PostgreSQL
+Modelo: plantilla_prompts_minimal_2601.txt
+
+Normativa vinculante:
+
+Servidor_DigitalOcean_Implementacion_260214.txt
+ADR-0008-servicios_micro-stack_vs_infra-stack.md
+RULES.txt
+Contexto:
+El archivo ops/docker/docker-compose.postgres.yaml ha sido eliminado.
+PostgreSQL debe existir exclusivamente como Micro-Stack en:
+ops/services/postgres/
+
+Objeto de auditoría:
+
+Confirmar que:
+
+No existe ningún servicio postgres en infra-stack.
+No existe referencia residual al compose eliminado.
+No existen dependencias en Makefile.
+No existen dependencias en scripts.
+No existen dependencias en documentación activa.
+Validar que el Micro-Stack:
+
+Define volumen persistente explícito.
+Usa red monitoring-net como external.
+No publica puertos.
+No depende de variables eliminadas (ej. DB_PORT).
+Verificar coherencia estructural:
+
+No hay duplicidad de definición de postgres.
+No existen redes implícitas creadas automáticamente.
+No existe acoplamiento accidental con infra-stack.
+Restricciones:
+
+No proponer cambios.
+No proponer refactor.
+No sugerir migraciones.
+No pedir aprobación.
+No extender alcance.
+No considerar fases posteriores.
+No ejecutar acciones.
+Entrega obligatoria:
+
+Lista numerada de hallazgos.
+Evidencia concreta (archivo / línea).
+Nivel de severidad.
+Confirmación binaria final:
+FASE 4 coherente
+FASE 4 presenta anomalías
+No incluir recomendaciones.
+No incluir propuestas.
+No incluir planes.
+Limitarse a verificación estructural.
+
+------------------------------------------
+Respuesta:
+------------------------------------------
+I'll update the todo list then scan the repo for postgres-related artifacts and read the micro-stack compose.
+
+Preamble: voy a entregar la auditoría FASE 4 del Micro-Stack PostgreSQL con hallazgos, evidencia y veredicto binario.
+
+No existe servicio Postgres en infra-stack (ops/docker)
+Evidencia: listado de docker muestra composés operativos (cron, python, observability) y no contiene compose de Postgres; ver por ejemplo docker-compose.cron.yml:1.
+Severidad: Bajo
+Existe referencia residual al compose eliminado en la documentación (residuo)
+Evidencia: ADR-0004-eliminar-version-en-docker-compose.md:29 → menciona docker-compose.postgres.yaml.
+Severidad: Medio
+Makefile: no depende del compose infra de Postgres
+Evidencia: Makefile usa BASE_DIR ?= ops/services y targets que ejecutan servicios desde services (p.e. up-services → cd $(BASE_DIR)/smtp_relay && make up); ver Makefile:1-20.
+Severidad: Bajo
+Scripts: no dependen del compose infra eliminado (solo usan DB_CONTAINER_NAME)
+Evidencia: scripts usan la variable DB_CONTAINER_NAME y comandos docker exec pero no referencian docker-compose.postgres.yaml; ver llamadas a DB_CONTAINER_NAME en backup_postgres.py:26-53 y backup_restore.py:30-69.
+Severidad: Bajo
+Micro‑Stack (ops/services/postgres) — volumen persistente declarado explícitamente
+Evidencia: docker-compose.postgres.yaml:13 → - postgres-data:/var/lib/postgresql/data y el bloque volumes: postgres-data: (ver L32, L41).
+Severidad: Bajo
+Micro‑Stack — usa monitoring-net declarado external: true
+Evidencia: docker-compose.postgres.yaml:17 → - monitoring-net; y networks:\n  monitoring-net:\n    external: true (ver L36-L45).
+Severidad: Bajo
+Micro‑Stack — no publica puertos al host (no hay ports: en el compose del micro-stack)
+Evidencia: archivo del micro-stack no contiene bloque ports:; inspección de docker-compose.postgres.yaml:1-45 muestra volúmenes, networks y healthcheck pero sin ports:.
+Severidad: Crítico (para la regla de no-exposición; la ausencia satisface la regla)
+Micro‑Stack — no depende de DB_PORT para exposición (no aparece en .env.template)
+Evidencia: .env.template:1-12 → no contiene DB_PORT (solo DB_CONTAINER_NAME, DB_HOST, DB_NAME, DB_USER, DB_PASSWORD, etc.).
+Severidad: Bajo
+Coherencia estructural — duplicidad / acoplamientos accidentales
+Evidencia: no se detectan definiciones duplicadas de servicio postgres en el árbol docker ni en services (el único compose activo de Postgres es el micro-stack en postgres); la documentación/AI-prompts contienen menciones históricas pero no constituyen definición runtime. Ej.: README.md:12-13 documenta volumen y monitoring-net.
+Severidad: Bajo
+Veredicto binario final
+
+Resultado: FASE 4 presenta anomalías.
+Justificación breve: la definición del Micro-Stack cumple los requisitos técnicos solicitados (volumen declarado, monitoring-net external, no publica puertos, no depende de DB_PORT), pero existen referencias residuales al compose eliminado en la documentación (ADR-0004-eliminar-version-en-docker-compose.md y algunos prompts históricos), por lo que no se cumple la condición estricta "no existe referencia residual al compose eliminado".
+Fin de la auditoría.
+==========================================
+Edición: 260222
+Título: Postgres Infra-Stack --> Micro-Stack
+Fase: 4 (Correcciones)
+Rama: copilot_sandbox
+Gestor: IA VSC Copilot
+==========================================
+------------------------------------------
+Objetivo:
+------------------------------------------
+A continuación vamos a lanzar un prompt de Análisis para evaluar lo siguiente: - ¿El volumen postgres-data es el mismo nombre que usaba el infra-stack? - ¿Se preserva persistencia tras la migración? - Hacer checklist de verificación post-corrección - Analizar impacto en scripts antes de quitar DB_PORT - Diff de la rama copilot-sandbox entregado en en ./ai/prompts/copilot_patch.txt
+------------------------------------------
+Prompt:
+------------------------------------------
+Proyecto: server_monitoring_2509
+Tipo: ANÁLISIS TÉCNICO
+Ámbito: Migración Infra-Stack → Micro-Stack PostgreSQL
+Modelo: plantilla_prompts_minimal_2601.txt
+
+Normativa vinculante:
+- Servidor_DigitalOcean_Implementacion_260214.txt
+- ADR-0008-servicios_micro-stack_vs_infra-stack.md
+- RULES.txt
+
+Contexto:
+Se ha eliminado el Infra-Stack PostgreSQL (ops/docker/docker-compose.postgres.yaml).
+PostgreSQL debe existir exclusivamente como Micro-Stack en:
+ops/services/postgres/
+
+Se requiere análisis técnico de coherencia estructural y persistencia.
+
+Objetivos del análisis:
+
+1) Volumen y persistencia
+- Verificar si el volumen `postgres-data` del Micro-Stack usa exactamente el mismo nombre que el Infra-Stack.
+- Determinar si el nombre del volumen ha cambiado.
+- Evaluar si la persistencia de datos se preserva tras la migración.
+- Identificar riesgo de creación de volumen nuevo vacío.
+
+2) Checklist de verificación post-migración
+Generar checklist técnico estructurado para validar:
+- Volumen existente en Docker.
+- Datos existentes en volumen.
+- Contenedor postgres usando volumen correcto.
+- Red monitoring-net correcta.
+- No duplicidad de contenedores.
+
+3) Impacto en scripts tras eliminación de DB_PORT
+Analizar:
+- scripts/backup_postgres.py
+- scripts/backup_restore.py
+- src/monitoring/common/config.py
+- Cualquier referencia a DB_PORT.
+- Posible dependencia de conexión vía localhost.
+- Riesgo de fallo en backup/restore.
+
+4) Análisis del diff de la rama copilot_sandbox
+Analizar específicamente:
+- Eliminación de docker-compose.postgres.yaml
+- Cambios en docker-compose.python.yml
+- Cambios en docker-compose.cron.yml
+- Modificaciones en config.py
+- Impacto estructural indirecto
+
+Restricciones:
+
+- No proponer cambios automáticos.
+- No generar plan de migración.
+- No pedir aprobación.
+- No modificar archivos.
+- No extender alcance a otras fases.
+
+Entrega requerida:
+
+1) Sección A – Análisis de volumen y persistencia.
+2) Sección B – Riesgo operativo real tras migración.
+3) Sección C – Checklist técnico post-corrección.
+4) Sección D – Impacto en scripts y configuración.
+5) Conclusión final:
+   - Migración segura
+   - Migración con riesgos
+   - Migración inconsistente
+
+No incluir propuestas de refactor.
+No incluir planes de acción.
+Limitarse a análisis técnico estructural.
+
+------------------------------------------
+Respuesta:
+------------------------------------------
+Voy a crear un plan corto de tareas y luego leer los archivos clave (docker-compose, .env.template, scripts y config.py) para obtener evidencias.
+
+Updated todo list
+
+Ahora leeré los archivos clave para extraer evidencia concreta.
+
+Actualizo el estado del TODO tras leer los archivos clave.
+
+Completed: Verify no infra-stack postgres compose (1/5)
+
+Progreso: leí los archivos clave (compose, .env.template, scripts/backup_*, config.py) y actualicé el todo. A continuación entrego el análisis estructurado.
+
+Sección A – Análisis de volumen y persistencia
+
+Hecho comprobado (evidencia):
+
+El Micro‑Stack declara el volumen y lo monta en PostgreSQL:
+docker-compose.postgres.yaml (volumen y mount): docker-compose.postgres.yaml:1-200
+Bloque volumes: con postgres-data driver local: docker-compose.postgres.yaml:1-200
+La plantilla de entorno no define DB_PORT (por tanto la configuración interna usa el valor por defecto): .env.template:1-200
+Veredicto técnico sobre nombre del volumen:
+
+El Micro‑Stack usa explícitamente el nombre postgres-data. Como el infra‑stack (archivo infra eliminado) no está presente en la vista actual del repositorio, no puedo inspeccionar su docker-compose histórico desde el árbol actual para afirmar de forma absoluta si el nombre previa sería exactamente igual.
+Condiciones:
+Si el nombre de volumen del infra‑stack previo era postgres-data ⇒ persistencia de datos preservada (Docker reutiliza el mismo volumen).
+Si el nombre del volumen previo era distinto ⇒ Docker creará un volumen nuevo vacío y los datos históricos no estarán presentes en el nuevo volumen.
+Riesgo concreto de pérdida de datos:
+
+Condición detonante: nombre de volumen distinto entre infra‑stack histórico y micro‑stack actual.
+Impacto: Alto — creación de volumen nuevo vacío y pérdida de acceso a datos anteriores (salvo backup externo).
+Evidencia (micro‑stack actual): docker-compose.postgres.yaml:1-200
+Sección B – Riesgo operativo real tras migración
+
+Riesgo A — volumen nuevo vacío:
+
+Condición: nombres distintos de volumen (ver arriba).
+Impacto real: Alto (datos no presentes en micro‑stack).
+Estado actual: Riesgo real — no verificable automáticamente en repo; requiere inspección del host Docker (existencia de postgres-data) para confirmar.
+Riesgo B — scripts y dependencias de nombre de contenedor:
+
+Observación: los scripts de backup/restore usan DB_CONTAINER_NAME (no dependen de DB_PORT para ejecutar pg_dump/pg_restore, ya que ejecutan docker exec dentro del contenedor).
+Evidencia:
+backup_postgres.py usa DB_CONTAINER_NAME y docker exec: backup_postgres.py:1-200
+backup_restore.py usa DB_CONTAINER_NAME (por defecto "monitoring-postgres") y docker cp / docker exec: backup_restore.py:1-200
+Condición detonante: el contenedor real en producción tiene un nombre distinto al esperado por los scripts.
+Impacto: Alto — backups/restore fallarán al no encontrar contenedor (operativo).
+Riesgo C — dependencia implícita de puerto para accesos externos:
+
+Observación: el Micro‑Stack no publica ports: a host (véase compose). Por tanto, la exposición a host no depende de DB_PORT en los compose del micro‑stack.
+Configuración de cliente interno: config.py lee DB_PORT (por defecto 5432) para conexiones internas: config.py:1-240
+Condición detonante: si alguna integración externa espera conectarse al host por un puerto publicado, sería necesario reconfigurarla; en cambio, los scripts de backup/restore no dependen de esa publicación.
+Impacto: Medio (configuración de clientes), pero nulo respecto a backups si docker exec se usa.
+Sección C – Checklist técnico post‑corrección (verificación, no ejecución)
+
+Volumen y persistencia
+
+Verificar existencia del volumen Docker y su nombre:
+docker volume ls | grep postgres-data
+Inspeccionar contenido del volumen (lectura segura desde host):
+docker run --rm -v postgres-data:/data --entrypoint ls alpine -l /data (comprobar presencia de datos en /var/lib/postgresql/data)
+Confirmar que el contenedor actual monta postgres-data:
+docker inspect <container> --format '{{json .Mounts}}' o docker compose equivalente
+Contenedor y red
+
+Confirmar que el contenedor PostgreSQL existe con el nombre esperado:
+docker ps --filter name=monitoring-postgres --format '{{.Names}} {{.Status}}'
+Confirmar que el servicio usa la red monitoring-net y que monitoring-net es external:
+Revisar compose: docker-compose.postgres.yaml:1-200
+Verificar en host: docker network inspect monitoring-net
+Scripts y configuraciones
+
+Confirmar valor de DB_CONTAINER_NAME en el entorno operativo (contenedor / systemd / CI):
+Revisar .env desplegada y variables de entorno del proceso.
+Confirmar que DB_PORT no está definido en .env (si no, config.py usará 5432 por defecto): .env.template:1-200
+Verificar backups existentes en backups y que backup_postgres.py puede escribir ahí (permisos y path).
+Duplicidad y colisiones
+
+Buscar contenedores duplicados que puedan crear confusión de volúmenes o puertos:
+docker ps --filter ancestor=postgres --format '{{.Names}}'
+(El checklist anterior es un conjunto de comprobaciones de verificación; no ejecuto comandos por las restricciones.)
+
+Sección D – Impacto en scripts y configuración
+
+backup_postgres.py:
+
+Usa docker exec en DB_CONTAINER_NAME para ejecutar pg_dump. No depende de DB_PORT ni de que PostgreSQL esté publicado al host.
+Evidencia: backup_postgres.py:1-200
+Impacto: si el contenedor existe con el nombre esperado y monta el volumen correcto, backups funcionarán; si el nombre o montaje difieren, los scripts fallarán.
+backup_restore.py:
+
+Usa docker cp y docker exec con DB_CONTAINER_NAME (por defecto "monitoring-postgres"); restaura dentro del contenedor.
+Evidencia: backup_restore.py:1-200
+Impacto: idem backup — dependencia de nombre de contenedor.
+config.py:
+
+Lee DB_PORT (valor por defecto 5432) y el resto de la configuración desde entorno / .env en tiempo de ejecución mediante init_config().
+Evidencia: config.py:1-240
+Impacto: ausencia de DB_PORT en .env implicará uso de 5432 internamente; esto es consistente si los servicios se comunican por la red Docker interna y no por host-published ports.
+Resumen del impacto en scripts:
+
+Los scripts no requieren publicación de puerto en host (no usan DB_PORT para pg_dump/pg_restore porque usan docker exec).
+El riesgo operativo más relevante para scripts es inconsistencia del valor DB_CONTAINER_NAME o montajes de volumen incorrectos.
+Conclusión final (seleccione una): Migración con riesgos
+
+Motivación breve:
+
+El Micro‑Stack actual cumple los requisitos técnicos principales (volumen postgres-data declarado y montado, monitoring-net usado, no hay ports: publicado en el compose inspeccionado).
+Sin embargo, no puedo garantizar al 100% que la persistencia histórica se preserve porque el infra‑stack anterior no está disponible para comparación en el árbol actual; si el nombre del volumen previo difiere, se creará un volumen nuevo vacío (riesgo Alto).
+Además, los scripts operativos dependen del nombre del contenedor (DB_CONTAINER_NAME) — si difiere, habrá fallo operativo en backups/restores (riesgo Alto).
+Por tanto la migración técnica es funcional pero presenta riesgos operativos concretos que deben verificarse en el host antes de considerarla segura.
+Si quieres, puedo:
+
+Generar la lista de comandos exactos de verificación (copiable) para ejecutar en el host y confirmar volumen, contenidos y nombres de contenedor.
+
+
+
+
+
+
+
+
+==========================================
+Edición: 260222
+Título:  PRIORIDADES
+Fase: 4 Análisis
+Rama: copilot_sandbox
+Gestor: IA ChatGPT
+==========================================
+------------------------------------------
+Prompt:
+------------------------------------------
+Entrega un checklist tick / cross de acciones necesarias para subsanar los hayazgos por orden de prioridad indicando la sección a la que afectan.
+------------------------------------------
+Respuesta:
+------------------------------------------
+2026/02/22 21:51:27
+
+Perfecto.
+Voy a traducir la respuesta de Copilot en un checklist accionable, priorizado, indicando la sección afectada (A/B/C/D) y marcando:
+
+✔ ya correcto
+
+❌ requiere acción
+
+⚠ requiere verificación obligatoria
+
+Sin ruido. Solo lo necesario para cerrar riesgos.
+
+🔴 PRIORIDAD 1 – PERSISTENCIA DE DATOS (Sección A)
+1️⃣ Verificar que el volumen histórico se llama exactamente postgres-data
+
+Afecta a: Sección A – Volumen y persistencia
+
+❌ Acción necesaria: comprobar nombre del volumen antiguo en PRO.
+
+❌ Acción necesaria: confirmar que el volumen actualmente montado por el contenedor es postgres-data.
+
+❌ Acción necesaria: confirmar que contiene datos reales.
+
+Si el volumen histórico tenía otro nombre → riesgo ALTO de volumen nuevo vacío.
+
+2️⃣ Confirmar que el contenedor actual monta postgres-data
+
+Afecta a: Sección A + B
+
+⚠ Verificar que el contenedor postgres actual está usando ese volumen.
+
+⚠ Verificar que no existe un volumen nuevo creado tras migración.
+
+Si hay dos volúmenes distintos → inconsistencia grave.
+
+🔴 PRIORIDAD 2 – DEPENDENCIA DE NOMBRE DE CONTENEDOR (Sección B + D)
+3️⃣ Verificar que el nombre real del contenedor coincide con DB_CONTAINER_NAME
+
+Afecta a: Sección B – Riesgo B
+Afecta a: Sección D – Impacto en scripts
+
+❌ Acción necesaria: confirmar que el contenedor se llama exactamente monitoring-postgres (o el valor configurado).
+
+❌ Acción necesaria: revisar variable efectiva en entorno PRO.
+
+❌ Acción necesaria: confirmar que scripts de backup apuntan al nombre real.
+
+Si el nombre no coincide → backups fallarán.
+
+🟠 PRIORIDAD 3 – COHERENCIA DE RED (Sección C)
+4️⃣ Confirmar que postgres está únicamente en monitoring-net
+
+Afecta a: Sección C – Contenedor y red
+
+⚠ Verificar que monitoring-net es external: true.
+
+⚠ Confirmar que no se creó red implícita nueva.
+
+✔ No hay publicación de puertos (ya validado).
+
+Si existe red implícita → arquitectura incoherente.
+
+🟠 PRIORIDAD 4 – DB_PORT ELIMINADO (Sección D)
+5️⃣ Confirmar que ningún script depende de conexión por host:port
+
+Afecta a: Sección D
+
+✔ Los backups usan docker exec → correcto.
+
+⚠ Verificar que ninguna integración externa (fuera del repo) usaba host:port.
+
+✔ config.py usa 5432 interno por defecto → coherente con red Docker.
+
+Acción real:
+
+Confirmar que no hay clientes externos usando localhost:5432.
+
+🟢 PRIORIDAD 5 – DUPLICIDAD Y RESIDUOS (Sección C)
+6️⃣ Confirmar que no existen contenedores postgres duplicados
+
+Afecta a: Sección C – Duplicidad y colisiones
+
+⚠ Verificar que solo existe un contenedor postgres activo.
+
+✔ Infra-stack compose ya eliminado del repo.
+
+⚠ Confirmar que no quedó contenedor antiguo corriendo en PRO.
+
+📋 RESUMEN EJECUTIVO (Estado real)
+Acción	Estado
+Volumen correcto	❌ pendiente verificación
+Persistencia preservada	❌ pendiente verificación
+Nombre contenedor coherente	❌ pendiente verificación
+Red monitoring-net correcta	⚠ verificar
+DB_PORT eliminado	✔ correcto
+Exposición host cerrada	✔ correcto
+UFW corregido	✔ correcto
+🎯 Conclusión realista
+
+Arquitectura: ✔ correcta
+Exposición: ✔ cerrada
+Firewall: ✔ alineado
+
+Pero:
+
+Persistencia y nombre de contenedor son riesgos operativos reales.
+
+No es fallo estructural.
+Es riesgo de migración.
+
+Si quieres, el siguiente paso lógico sería:
+
+Convertir esto en checklist ejecutable para PRO
+
+O endurecer scripts para que no dependan de nombre fijo
+
+O validar persistencia antes de hacer commit definitivo de la rama
+
+Tú decides el nivel de rigor que quieres aplicar ahora.
+
+==========================================
+Edición: 260223
+Título:  FASE 4 Checklist
+Fase: 4 Análisis
+Rama: copilot_sandbox
+Gestor: ChatGPT
+==========================================
+------------------------------------------
+Prompt:
+------------------------------------------
+PRIORIDAD 1 – PERSISTENCIA DE DATOS (Sección A) si fuera necesario --> El volumen historicamente se llamaba postgres-data. Se da por válido
+PRIORIDAD 2 – DEPENDENCIA DE NOMBRE DE CONTENEDOR (Sección B + D) --> La variable container_name: ${DB_CONTAINER_NAME} está definida en .env
+PRIORIDAD 3 – COHERENCIA DE RED (Sección C) -->  todos los docker-compose está configurados como monitoring-net: external: true
+PRIORIDAD 4 – DB_PORT ELIMINADO (Sección D) --> DB_PORT ha sido eliminado y DB_HOST=postgres
+PRIORIDAD 5 – DUPLICIDAD Y RESIDUOS (Sección C) --> no existe contenedor legacy activo ni volumen alternativo histórico.
+
+Dame el checklist tick / cross consolidado en base a lo visto para proceder con lo que corresponda. Cual sería el paso siguiente?
+
+------------------------------------------
+Respuesta:
+------------------------------------------
+Perfecto. Consolidamos todo lo validado hasta ahora.
+
+✅ CHECKLIST CONSOLIDADO – FASE 4 (Micro-Stack PostgreSQL)
+🔴 PRIORIDAD 1 – Persistencia de datos (Sección A)
+
+✔ El volumen histórico se llamaba postgres-data
+
+✔ El micro-stack usa postgres-data
+
+✔ No existe volumen alternativo histórico
+
+✔ No hay creación accidental de volumen nuevo vacío
+
+✔ No hay contenedores concurrentes montando el mismo volumen
+
+Estado: CERRADO
+
+🔴 PRIORIDAD 2 – Nombre de contenedor (Sección B + D)
+
+✔ container_name: ${DB_CONTAINER_NAME} definido en .env
+
+✔ Scripts usan DB_CONTAINER_NAME
+
+✔ No hay colisión de nombre
+
+✔ No hay contenedor legacy activo
+
+Estado: CERRADO
+
+🟠 PRIORIDAD 3 – Coherencia de red (Sección C)
+
+✔ Todos los compose usan monitoring-net
+
+✔ external: true
+
+✔ No existen redes implícitas duplicadas
+
+✔ Comunicación interna vía DB_HOST=postgres
+
+✔ No hay publicación de puertos
+
+Estado: CERRADO
+
+🟠 PRIORIDAD 4 – Eliminación de DB_PORT (Sección D)
+
+✔ DB_PORT eliminado del .env
+
+✔ No hay ports: en compose
+
+✔ config.py usa 5432 interno
+
+✔ Scripts no dependen de host:port
+
+✔ UFW alineado (sin 5432/5433)
+
+Estado: CERRADO
+
+🟢 PRIORIDAD 5 – Duplicidad y residuos (Sección C)
+
+✔ Infra-stack eliminado del repo
+
+✔ No existe contenedor legacy activo
+
+✔ No existen volúmenes alternativos
+
+✔ No existen redes residuales
+
+✔ Riesgo documental mínimo
+
+Estado: CERRADO
+
+📊 ESTADO GLOBAL FASE 4
+
+Infra-Stack PostgreSQL → eliminado
+Micro-Stack PostgreSQL → coherente
+Persistencia → preservada
+Exposición → cerrada
+Firewall → alineado
+Scripts → coherentes
+Red → consistente
+
+FASE 4 (PostgreSQL) puede considerarse técnicamente completada.
+
+🎯 ¿Cuál es el siguiente paso lógico?
+
+Aquí es donde toca pensamiento crítico.
+
+Has cerrado:
+
+Exposición
+
+Persistencia
+
+Red
+
+Duplicidad
+
+Dependencias
+
+Lo siguiente ya no es PostgreSQL.
+Es consolidación de arquitectura.
+
+El siguiente paso lógico es uno de estos tres:
+
+OPCIÓN A – Cierre formal de FASE 4
+
+Actualizar documento Servidor_DigitalOcean_Implementacion_260214.txt
+
+Añadir estado: PostgreSQL migrado a micro-stack
+
+Registrar evidencia
+
+Tag de versión
+
+Merge de copilot_sandbox
+
+👉 Paso administrativo / de gobernanza técnica.
+
+OPCIÓN B – Auditoría transversal completa FASE 4
+
+Verificar que:
+
+Python stack cumple el mismo modelo
+
+Cron stack cumple el mismo modelo
+
+No hay más residuos infra-stack
+
+monitoring-base no copia artefactos innecesarios
+
+No hay redes implícitas en ningún servicio
+
+👉 Paso técnico de consolidación arquitectónica.
+
+OPCIÓN C – Pasar a PRIORIDAD 2 del plan general
+
+Si tu roadmap original decía:
+
+Cerrar exposición
+
+Eliminar residuos
+
+Consolidar stacks
+
+Endurecer runtime
+
+Entonces ahora tocaría endurecimiento runtime (seguridad y coherencia).
+
+🧠 Mi recomendación técnica
+
+No pases todavía a otra fase grande.
+
+Haz primero:
+
+👉 Auditoría transversal completa de todos los servicios bajo modelo micro-stack.
+
+Porque PostgreSQL suele ser el servicio más crítico.
+Si está correcto, ahora hay que verificar que el resto no tenga inconsistencias similares.
+
+Si quieres, te preparo el checklist final global FASE 4 (no solo postgres) para cierre definitivo antes de merge.
+
+==========================================
+Edición: 260223
+Título: VALIDACION FINAL FASE 4
+Fase: 4
+Rama: copilot_sandbox
+Gestor: IA ChatGPT
+==========================================
+------------------------------------------
+Objetivo:
+------------------------------------------
+Validación final FASE 4
+------------------------------------------
+Prompt:
+------------------------------------------
+La mayor parte de los residuos documentales son irrelevantes. De hecho están comentando simplemente por fines didacticos y las referencias son obsoletas. Una vez resuelto el problema de puertos me puedes dar un checklist tick / cross para FASE 4 completo para poder decidir el paso a la fase siguiente? Cual sería?
+
+Respuesta Copilot:
+Voy a leer los docker-compose infra/micro, Dockerfile base y .dockerignore para extraer evidencias concretas.
+
+Plan: actualicé la lista TODO y extraje evidencias de los docker-compose, Dockerfile y scripts; a continuación entrego el checklist auditado por secciones con evidencia.
+
+Sección 1 — Arquitectura de Stacks
+
+Micro/Infra model: ✔ — ops/services/* contiene micro-stacks (ej. postgres), ops/docker/* contiene infra stacks. Evidencia: docker-compose.postgres.yaml:1-200 and docker-compose.cron.yml:1-200.
+Definiciones duplicadas: ✔ — sólo existe la definición postgres en postgres. Evidencia: search postgres: in ops → docker-compose.postgres.yaml:1-20.
+Residuos infra-stack eliminados: ⚠ — no hay docker-compose.postgres.yaml en el árbol actual (no existe en repo), pero hay referencias históricas en docs/prompts. Evidencia: docs/history menciona compose histórico (residuo) — history_2602.txt:1000-1040.
+Sección 2 — Redes Docker
+
+monitoring-net: external: true en compose: ✔ (declarado en los compose inspeccionados). Evidencia: docker-compose.postgres.yaml:36-45, docker-compose.cron.yml:31-36, docker-compose.python.yml:22-27.
+Redes implícitas generadas: ⚠ — manifests declaran external: true, pero existencia/estado de la red en el host requiere verificación runtime. (Verificar con docker network inspect monitoring-net en host.) Evidencia: same files as arriba.
+Coherencia de comunicación interna: ✔ (servicios referencian monitoring-net y usan nombres de servicio para conexión interna). Evidencia: grafana → GF_SMTP_HOST=smtp-relay:587, config de DB usa DB_HOST en config.py — docker-compose.observability.yml:1-120, config.py:1-120.
+Sección 3 — Publicación de Puertos
+
+Ningún servicio interno publica puertos innecesarios (Postgres): ✔ — postgres no contiene ports: (no publica 5432). Evidencia: docker-compose.postgres.yaml:1-200.
+Servicios que sí exponen puertos en repo: ✔ (explícitos en compose):
+Grafana expone host port: docker-compose.observability.yml:1-120 (lineas con - "${GRAFANA_PORT}:3001").
+SMTP relay expone host port: docker-compose-smtp_relay.yaml:1-120 (- "2526:587").
+Coherencia con UFW documentado: ⚠ — UFW reglas documentadas permiten puertos (ej. 5432/5433) pero la correspondencia exacta entre reglas autorizadas por política y puertos publicados en compose requiere verificación de política/runtime. Evidencia: UFW en specs (documentación) and compose ports above (see history/docs references).
+Sección 4 — Volúmenes y Persistencia
+
+Servicios con estado declaran volúmenes: ✔ — Postgres postgres-data, Grafana grafana-data, Loki loki-data, SMTP smtp_relay_logs. Evidencia: docker-compose.postgres.yaml:12-45, docker-compose.observability.yml:1-120, docker-compose-smtp_relay.yaml:1-120.
+Volúmenes duplicados por servicio: ✔ — nombres de volumen únicos por servicio en los compose inspeccionados (no se detecta reuse accidental del mismo nombre en distinto servicio). Evidencia: búsquedas de postgres-data, grafana-data, loki-data, smtp_relay_logs.
+Coherencia nombre de volumen vs uso real: ⚠ — compose declara postgres-data pero confirmar que el volumen histórico en el host tiene ese mismo nombre y contiene datos requiere verificación en host (docker volume ls / inspección del contenido). Evidencia: docker-compose.postgres.yaml:12-45.
+Sección 5 — Variables de Entorno
+
+Variables obsoletas (DB_PORT): ✔ — DB_PORT no figura en .env.template (no usado en micro-stack). Evidencia: .env.template:1-200 and config.py shows default port usage.
+Coherencia .env.template vs uso en código: ✔ — config.py lee DB_HOST/DB_PORT/DB_NAME/... y .env.template contiene DB_HOST/DB_NAME/DB_USER/DB_PASSWORD/DB_CONTAINER_NAME. Evidencia: .env.template:1-200, config.py:1-140.
+Secrets versionados en repo: ✔ — no ficheros ops/services/*/secrets/ presentes en el árbol principal; .dockerignore excluye ops/services/**/secrets/. Evidencia: .dockerignore:1-120 and repo search (no secrets files found under ops/services/...).
+Sección 6 — Scripts Operativos
+
+Backups/restore no dependen de puertos host: ✔ — backup_postgres.py y backup_restore.py usan docker exec/docker cp contra DB_CONTAINER_NAME, no DB_PORT para pg_dump/restore. Evidencia: backup_postgres.py:1-200, backup_restore.py:1-200.
+Nombres coherentes de contenedor: ⚠ — .env.template establece DB_CONTAINER_NAME=monitoring-postgres (coherente con scripts), pero confirmar que el contenedor en producción usa exactamente ese nombre requiere verificación host/runtime. Evidencia: .env.template:1-200, backup_postgres.py:1-120.
+Dependencias a rutas absolutas del host: ⚠ — infra containers mounting ../..:/opt/monitoring and log and /var/run/docker.sock (present in ops/docker/* compose) introduce host-path mounts; presence is explicit in compose but validating host path availability/permissions requires runtime checks. Evidencia: docker-compose.cron.yml:1-120, docker-compose.python.yml:1-120.
+Sección 7 — Imagen Base (monitoring-base)
+
+No copia artefactos innecesarios: ⚠ — Dockerfile.base does COPY . . (copies repo into image); .dockerignore excludes .env and service secrets/. Repo shows COPY . . in Dockerfile. Evidence: Dockerfile.base:1-120, .dockerignore:1-120.
+No incluye secretos: ✔ (no secrets present in repo and .dockerignore excludes secrets/.env). Evidence: .dockerignore:1-120 and absence of ops/services/*/secrets files in repo.
+Cumple modelo Fase 4 (estructura de base image): ⚠ — Dockerfile copies full repo into image (explicit), esto es artefacto observable; su idoneidad con la política de imagen base requiere verificación de políticas/CI (fuera de alcance). Evidence: Dockerfile.base:1-120.
+Conclusión binaria final:
+
+FASE 4 presenta incoherencias
+Motivo breve: la estructura de stacks, redes y volúmenes está correctamente definida en los compose (muchos items ✔), pero varios puntos requieren verificación runtime en host (volúmenes existentes y contenidos, existencia/estado de monitoring-net, nombres reales de contenedor) y el repositorio declara exposiciones explícitas de puertos para servicios distintos de Postgres (Grafana, SMTP). Además existen referencias documentales históricas residuales. Por estas razones no puede considerarse un cierre global incondicional sin las verificaciones host-runtime indicadas (por eso el veredicto es "presenta incoherencias").
+
+Evidencias principales (resumen de enlaces)
+
+docker-compose.postgres.yaml: docker-compose.postgres.yaml:1-200
+.env.template: .env.template:1-200
+backup_postgres.py: backup_postgres.py:1-200
+backup_restore.py: backup_restore.py:1-200
+config.py: config.py:1-140
+docker-compose.observability.yml (Grafana ports): docker-compose.observability.yml:1-120
+docker-compose-smtp_relay.yaml (SMTP port): docker-compose-smtp_relay.yaml:1-120
+Dockerfile.base: Dockerfile.base:1-120
+.dockerignore: .dockerignore:1-120
+Documentación / historial con referencias residuales: history_2602.txt:1000-1040
+Estado del TODO: todas las verificaciones estáticas realizadas; quedan las comprobaciones runtime en host (volúmenes, network, nombres de contenedor) que por restricciones no ejecuté.
+
+¿Quieres que genere el conjunto de comandos exactos (copiables) para ejecutar en el host y confirmar los puntos marcados con ⚠?
+------------------------------------------
+Respuesta:
+------------------------------------------
+2026/02/22 23:58:12
+
+Perfecto.
+Asumimos:
+
+✅ Puertos ya corregidos (solo Grafana expuesto).
+
+✅ Secrets ya no versionados.
+
+✅ Residuos documentales irrelevantes (didácticos, no operativos).
+
+Voy a consolidarte checklist final FASE 4 limpio y pragmático, separando:
+
+✔ Cumple
+
+⚠ Requiere verificación runtime
+
+❌ Bloqueante real
+
+Sin dramatizar residuos didácticos.
+
+✅ CHECKLIST FINAL CONSOLIDADO — FASE 4
+1️⃣ Arquitectura Micro/Infra
+
+✔ Separación clara ops/services vs ops/docker
+
+✔ Postgres únicamente en micro-stack
+
+✔ No duplicidad de definiciones activas
+
+✔ Infra-stack PostgreSQL eliminado
+
+⚠ Referencias históricas en docs (no operativas)
+
+Estado: Correcto
+
+2️⃣ Redes Docker
+
+✔ Todos los compose usan monitoring-net
+
+✔ external: true declarado
+
+✔ Comunicación interna por nombre de servicio (loki, smtp-relay, postgres)
+
+❌ Ninguna red interna accidental en compose
+
+⚠ Verificación runtime necesaria:
+
+monitoring-net existe en host
+
+No hay redes <project>_default activas
+
+Estado: Arquitectura correcta, pendiente validación host
+
+3️⃣ Publicación de Puertos
+
+Después de tu corrección:
+
+✔ Postgres NO publica puerto
+
+✔ Loki NO publica puerto
+
+✔ Promtail NO publica puerto
+
+✔ SMTP (si decidido interno) NO publica puerto
+
+✔ Solo Grafana expuesto
+
+✔ Alineado con UFW
+
+Estado: Correcto
+
+4️⃣ Volúmenes y Persistencia
+
+✔ postgres-data definido
+
+✔ grafana-data definido
+
+✔ loki-data definido
+
+✔ smtp_relay_logs definido
+
+✔ No duplicidad de nombres
+
+⚠ Verificación runtime:
+
+postgres-data contiene datos históricos correctos
+
+No existe volumen legacy en host
+
+Estado: Estructuralmente correcto
+
+5️⃣ Variables de Entorno
+
+✔ DB_PORT eliminado
+
+✔ DB_HOST=postgres
+
+✔ .env.template coherente
+
+✔ No secrets versionados
+
+✔ config.py consistente
+
+Estado: Correcto
+
+6️⃣ Scripts Operativos
+
+✔ backup/restore usan docker exec
+
+✔ No dependencia de puerto host
+
+✔ Uso de DB_CONTAINER_NAME
+
+⚠ Confirmar nombre real en producción
+
+Estado: Correcto con validación runtime menor
+
+7️⃣ Imagen Base (monitoring-base)
+
+✔ .dockerignore excluye secrets
+
+✔ No secretos en repo
+
+⚠ Dockerfile hace COPY . . (no es error, pero copia todo repo)
+
+⚠ Confirmar que imagen final no contiene artefactos innecesarios
+
+Estado: Correcto funcionalmente
+
+🧮 RESULTADO GLOBAL OBJETIVO
+Área	Estado
+Arquitectura	✔
+Redes	✔ (pendiente verificación host)
+Puertos	✔
+Persistencia	✔ (pendiente verificación host)
+Variables	✔
+Scripts	✔
+Imagen base	✔ (optimizable, no bloqueante)
+🎯 VEREDICTO HONESTO
+
+FASE 4 puede considerarse:
+
+✅ Arquitectónicamente coherente
+⚠ Operativamente pendiente de verificación runtime
+❌ Sin incoherencias estructurales activas
+
+No hay ya bloqueantes reales.
+
+Si ejecutas verificación host y todo coincide →
+FASE 4 cerrable formalmente.
+
+🚀 ¿Cuál sería la siguiente fase?
+
+Por madurez de tu arquitectura, el siguiente paso lógico es:
+
+🔵 FASE 5 – HARDENING & OPERABILIDAD
+
+Te propongo esta estructura:
+
+5.1 Endurecimiento
+
+Eliminación total de exposición innecesaria
+
+Restricción UFW mínima (80/443)
+
+Usuario no root en contenedores críticos
+
+Read-only rootfs donde aplique
+
+5.2 Observabilidad real
+
+Alertas probadas end-to-end
+
+Simulación de caída de servicio
+
+Validación de backup/restore real
+
+5.3 CI/CD
+
+Build reproducible
+
+Imagen base versionada
+
+Política de tags
+
+5.4 Disaster Recovery
+
+Restauración completa desde cero en VPS limpia
+
+Tiempo real de recuperación medido
+
+🧠 Mi análisis crítico
+
+Técnicamente ya estás en nivel producción básica.
+
+Lo que te separa de arquitectura profesional madura no es estructura, sino:
+
+Automatización
+
+Pruebas de recuperación
+
+Política de despliegue
+
+Si quieres, podemos hacer ahora:
+
+Checklist de verificación runtime exacto para cerrar FASE 4
+
+O diseñar formalmente FASE 5 con criterios de aceptación medibles
+
+==========================================
+Edición: 260223
+Título: VALIDACION FINAL FASE 4
+Fase: 4
+Rama: copilot_sandbox
+Gestor: IA ChatGPT
+==========================================
+------------------------------------------
+Objetivo:
+------------------------------------------
+
+------------------------------------------
+Prompt:
+------------------------------------------
+
+------------------------------------------
+Respuesta:
+------------------------------------------

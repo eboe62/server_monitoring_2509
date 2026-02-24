@@ -4,14 +4,15 @@
 Restaura una base de datos PostgreSQL desde el último backup disponible.
 El script se ejecuta desde monitoring-python, pero los comandos SQL
 y la restauración se realizan dentro de monitoring-postgres.
-Usa en el host el comando: bash /opt/monitoring/scripts/backup_restore.sh
+Usa en el host el comando: bash scripts/backup_restore.sh
 Comprueba con el comando: cat /var/log/backup_restore.log
 o el comando de Makefile:
 make restore-backup
 """
 
 import sys, os, subprocess
-sys.path.append("/opt/monitoring")
+MONITORING_ROOT = os.getenv("MONITORING_ROOT", os.getcwd())
+sys.path.append(MONITORING_ROOT)
 
 from datetime import datetime
 from src.monitoring.common.config import log_info, send_email
@@ -20,7 +21,7 @@ from dotenv import load_dotenv
 # ------------------------------------------------------------
 # Configuración BBDD
 # ------------------------------------------------------------
-load_dotenv("/opt/monitoring/smtp_relay/.env")
+load_dotenv(os.getenv("SMTP_RELAY_ENV_PATH", "ops/services/smtp_relay/.env"))
 
 DB_USER = os.getenv("DB_USER", "postgres")
 DB_PASSWORD = os.getenv("DB_PASSWORD", "")
@@ -28,7 +29,7 @@ DB_NAME = os.getenv("DB_NAME", "monitoring_db")
 DB_DEST = f"{DB_NAME}_restored"
 DB_CONTAINER_NAME = os.getenv("DB_CONTAINER_NAME", "monitoring-postgres")
 
-BACKUP_DIR_HOST = "/opt/monitoring/backups"
+BACKUP_DIR_HOST = os.getenv("DB_USER", "/ops/backups")
 BACKUP_CONTAINER_PATH = "/tmp/restore.backup"
 BACKUP_SQL = "/tmp/restore.sql"
 

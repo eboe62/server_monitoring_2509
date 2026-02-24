@@ -13,8 +13,9 @@ services:
         limits:
           memory: 250M
           cpus: "0.25"
-    ports:
-      - "${PROMTAIL_PORT}:9080"  # Exposición opcional de métricas Promtail
+#    ports:
+#      Sin exposición de puertos (solo red interna monitoring-net)
+#      - "${PROMTAIL_PORT}:9080"  # Exposición opcional de métricas Promtail
     networks:
       - monitoring-net  # Red compartida (Grafana, Loki, Postgres, SMTP relay...)
 
@@ -25,8 +26,9 @@ services:
       - ./config/loki-config.yaml:/etc/loki/loki-config.yaml:ro  # Configuración de Loki
 #      - ./data/loki:/var/lib/loki  # Persistencia de datos para Loki
       - loki-data:/var/lib/loki  # Persistencia de datos para Loki con logs indexados
-    ports:
-      - "${LOKI_PORT}:3100"  # API de Loki accesible desde el host
+#    ports:
+#      Sin exposición de puertos (solo red interna monitoring-net)
+#      - "${LOKI_PORT}:3100"  # API de Loki accesible desde el host
     restart: unless-stopped
     deploy:
       resources:
@@ -50,7 +52,10 @@ services:
       - GF_SECURITY_ADMIN_USER=admin  # Cambia este usuario y contraseña según tus políticas
       - GF_SECURITY_ADMIN_PASSWORD=admin
       - GF_SERVER_HTTP_PORT=3001
-      - GF_SERVER_ROOT_URL=http://localhost:${GRAFANA_PORT} # Indica a Grafana cuál es la URL pública
+#      - GF_SERVER_ROOT_URL=http://localhost:${GRAFANA_PORT} # Indica a Grafana cuál es la URL pública
+
+      - GF_SERVER_ROOT_URL=https://grafana.tudominio.com
+
       - GF_SERVER_SERVE_FROM_SUB_PATH=true  # Permite servir desde un subpath
 
       # Configuración SMTP → envía alertas a través de smtp-relay

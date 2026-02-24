@@ -8,10 +8,10 @@ services:
     restart: unless-stopped
     volumes:
       # Montamos el cronfile en la ruta que espera supercronic
-      - /opt/monitoring/ops/cron/monitoring.cron:/opt/monitoring/cron/monitoring.cron:ro
+      - ../ops/cron/monitoring.cron:/opt/monitoring/cron/monitoring.cron:ro
 
       # Proyecto completo (scripts Python y utilidades)
-      - /opt/monitoring:/opt/monitoring
+      - ../..:/opt/monitoring
 
       # Logs del host para que los scripts puedan escribir ahí
       - /var/log:/var/log

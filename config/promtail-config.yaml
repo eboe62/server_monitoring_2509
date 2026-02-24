@@ -3,7 +3,10 @@ server:
   grpc_listen_port: 0     # GRPC deshabilitado para simplificar la configuración
 
 clients:
-  - url: http://165.22.87.56:3100/loki/api/v1/push  # URL del endpoint de Loki donde se enviarán los logs
+#  No se debe usar IP pública dentro del cluster Docker.
+#  - url: http://165.22.87.56:3100/loki/api/v1/push  # URL del endpoint de Loki donde se enviarán los logs
+#  Endpoint Loki interno vía Docker: http://loki:3100/loki/api/v1/push
+  - url: http://loki:3100/loki/api/v1/push
 
 positions:
   filename: /var/log/promtail-positions.yaml  # Archivo para rastrear las posiciones de lectura de logs
