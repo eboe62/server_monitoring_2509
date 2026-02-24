@@ -3,6 +3,7 @@ ops/services/smtp_relay/secrets/*
 !ops/services/smtp_relay/secrets/.gitkeep
 ops/services/smtp_relay/config/sasl_passwd
 ops/services/smtp_relay/config/sasl_passwd.db
+ops/services/**/secrets/*
 
 # === Entornos virtuales Python ===
 src/log_ingestor/venv/

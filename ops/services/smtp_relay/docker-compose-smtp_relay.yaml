@@ -8,9 +8,6 @@ services:
     restart: always
     env_file:
       - .env
-    secrets:
-      - smtp_user
-      - smtp_pass
     ports:
 #      - "127.0.0.1:2526:587"   # SMTP local, no exponer a internet
       - "2526:587"              # Puerto expuesto en host (para debug/test manuales SMTP). Se podría eliminar la línea
@@ -33,7 +30,9 @@ services:
 
     volumes:
       # Persistencia de logs y debugging
-      - /var/log/smtp-relay:/var/log
+      - smtp_relay_logs:/var/log
+      # Credenciales en tiempo de ejecución desde el árbol del micro-stack
+      - ./secrets:/run/secrets:ro
 
       # Redirección de logs a stdout y arranque de Postfix, esto asegura que los logs del contenedor también vayan a stdout (útil para make logs)
     command: >
@@ -48,12 +47,10 @@ services:
     networks:
       - monitoring-net  # Red compartida (Grafana, Loki, Postgres, SMTP relay...)
 
-secrets:
-  smtp_user:
-    file: ./secrets/smtp_user
-  smtp_pass:
-    file: ./secrets/smtp_pass
-
 networks:
   monitoring-net:
     external: true
+
+volumes:
+  smtp_relay_logs:
+    driver: local

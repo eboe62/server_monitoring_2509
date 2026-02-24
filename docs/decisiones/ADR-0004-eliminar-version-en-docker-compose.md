@@ -26,7 +26,6 @@ Los ficheros afectados identificados actualmente son:
 
 - ops/docker/docker-compose.cron.yml
 - ops/docker/docker-compose.observability.yml
-- ops/docker/docker-compose.postgres.yaml
 - ops/docker/docker-compose.python.yml
 - ops/services/smtp_relay/docker-compose.yaml
 

@@ -10,7 +10,7 @@ services:
       - ../services/smtp_relay/.env
     volumes:
       # Monta el proyecto para ejecutar scripts Python
-      - /opt/monitoring:/opt/monitoring
+      - ../..:/opt/monitoring
 
       # Logs del host para que los scripts puedan escribir ahí
       - /var/log:/var/log

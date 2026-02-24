@@ -7,7 +7,8 @@ y envía notificación por correo usando smtp_relay.
 """
 
 import sys, os, subprocess
-sys.path.append("/opt/monitoring")
+MONITORING_ROOT = os.getenv("MONITORING_ROOT", os.getcwd())
+sys.path.append(MONITORING_ROOT)
 
 from datetime import datetime
 from src.monitoring.common.config import log_info, send_email
@@ -16,7 +17,7 @@ from dotenv import load_dotenv
 # ------------------------------------------------------------
 # Configuración BBDD
 # ------------------------------------------------------------
-load_dotenv("/opt/monitoring/smtp_relay/.env")
+load_dotenv(os.getenv("SMTP_RELAY_ENV_PATH", "ops/services/smtp_relay/.env"))
 
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
@@ -25,7 +26,7 @@ DB_NAME = os.getenv("DB_NAME")
 DB_CONTAINER_NAME = os.getenv("DB_CONTAINER_NAME")
 
 # Ruta en host y contenedor
-BACKUP_DIR_HOST = "/opt/monitoring/backups"
+BACKUP_DIR_HOST = os.getenv("BACKUP_DIR_HOST", "ops/backups")
 BACKUP_DIR_CONTAINER = "/backups"
 
 timestamp = datetime.now().strftime("%Y%m%d%H%M")
@@ -64,7 +65,7 @@ try:
     send_email(
         subject=f"Backup exitoso de {DB_NAME}",
         html_content=f"Backup completado correctamente.<br>Ubicación: {BACKUP_FILE_HOST}"
-             f" Para restaurar utilice: /opt/monitoring/scripts/backup_restore.py"
+             f" Para restaurar utilice: scripts/backup_restore.py"
     )
 except subprocess.CalledProcessError as e:
     log_info(f"[❌]: Error durante el backup de {DB_NAME}: {e}")

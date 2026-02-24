@@ -6,7 +6,7 @@ Contexto: Migración IaC server_monitoring_2509
 
 ## Contexto
 
-Durante FASE 7 se identificó acoplamiento crítico en import-time:
+Durante FASE 3 se identificó acoplamiento crítico en import-time:
 - Lectura de .env y secrets al importar módulos.
 - Imports pesados (psycopg2, requests) que provocaban fallos tempranos.
 FASE 8 inicia implementación incremental limitada a config.py.
