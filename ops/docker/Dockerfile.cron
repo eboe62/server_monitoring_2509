@@ -13,7 +13,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Copiar cronfile y entrypoint específico
 # COPY monitoring.cron /opt/monitoring/cron/monitoring.cron
-COPY docker-entrypoint.cron.sh /usr/local/bin/docker-entrypoint.sh
+COPY ops/docker/docker-entrypoint.cron.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 ENTRYPOINT ["docker-entrypoint.sh"]

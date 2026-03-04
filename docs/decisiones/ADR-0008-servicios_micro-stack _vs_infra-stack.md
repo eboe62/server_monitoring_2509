@@ -1,4 +1,4 @@
-ADR-0008 – Clasificación de servicios: Micro-stack vs Infraestructura Operativa
+# ADR-0008 – Clasificación de servicios: Micro-stack vs Infraestructura Operativa
 
 Fecha: 2026-02-17
 Estado: Propuesto
@@ -27,7 +27,7 @@ Debe cumplir obligatoriamente:
 - Dockerfile propio
 - docker-compose.yaml propio
 - build independiente (contexto acotado al servicio)
-- no depender de archivos fuera del directorio del servicio
+- no depender de archivos fuera del directorio del servicio, salvo la imagen base común definida en ADR-0006, siempre que se respete el principio de reemplazabilidad.
 - no montar rutas absolutas del host como dependencia estructural
 - no versionar secrets
 - no incluir secrets ni .env en la imagen
@@ -85,4 +85,4 @@ Objetivo:
 - No se introduce nuevo orquestador.
 
 ## Estado
-Propuesto.
+Aprobado.

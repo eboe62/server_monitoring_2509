@@ -1,0 +1,8 @@
+# Configurar permisos y ejecutar configure_docker_limits.sh al reiniciar
+@reboot chmod +x /usr/local/bin/configure_docker_limits.sh && sleep 60 && /bin/bash /usr/local/bin/configure_docker_limits.sh > /var/log/configure_docker_limits.log 2>&1
+
+# Ejecutar configure_docker_limits.sh cada 10 minutos
+*/10 * * * * /usr/local/bin/configure_docker_limits.sh > /var/log/configure_docker_limits.log 2>&1
+
+# Configuramos la prevención de saturación por ataques masivos
+@reboot /opt/monitoring/scripts/apply_ssh_ratelimit.sh > /var/log/apply_ssh_ratelimit.log 2>&1
