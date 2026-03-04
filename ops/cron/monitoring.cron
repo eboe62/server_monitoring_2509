@@ -1,23 +1,23 @@
 # Auditoria de Binarios (con log propio)
-0 11 * * * python3 -m log_ingestor.log_ingest_batch.auditoria_binarios.sh
+0 11 * * * python3 -m log_ingestor.auditoria_binarios
 
 # Recursos Docker cada hora (usa docker_resources.sh con logging incluido)
-*/10 * * * * /opt/monitoring/ops/docker/docker_resources.sh
+*/10 * * * * opt/monitoring/scripts/docker_resources.sh
 
 # Jobs de log_ingestor (cada 10 min, con wrappers que redirigen logs)
-*/10 * * * * python3 -m log_ingestor.log_ingest_batch.log_ingest_batch.sh
-*/10 * * * * python3 -m log_ingestor.log_ingest_batch.log_fail2ban_batch.sh
-*/10 * * * * python3 -m log_ingestor.log_ingest_batch.log_kern_batch.sh
-*/10 * * * * python3 -m log_ingestor.log_ingest_batch.log_ip_geolocation.sh
-*/10 * * * * python3 -m log_ingestor.log_ingest_batch.log_honeypot_geolocation.sh
+*/10 * * * * python3 -m log_ingestor.log_ingest_batch
+*/10 * * * * python3 -m log_ingestor.log_fail2ban_batch
+*/10 * * * * python3 -m log_ingestor.log_kern_batch
+*/10 * * * * python3 -m log_ingestor.log_ip_geolocation
+*/10 * * * * python3 -m log_ingestor.log_honeypot_geolocation
 
 # Alertas de riesgo a las 10h y 22h
-* 10,22 * * * python3 -m log_ingestor.log_ingest_batch.alert_risk.sh
+0 10,22 * * * python3 -m log_ingestor.alert_risk
 
 # Prueba de alertas (cada minuto, solo si se necesita debug)
-# * * * * * python3 -m log_ingestor.log_ingest_batch.alert_risk.sh
-# * * * * * /opt/monitoring/ops/docker/docker_resources.sh
-# * * * * * python3 -m log_ingestor.log_ingest_batch.log_ingest_batch.sh
+# * * * * * python3 -m log_ingestor.alert_risk
+# * * * * * opt/monitoring/scripts/docker_resources.sh
+# * * * * * python3 -m log_ingestor.log_ingest_batch
 
 # Backup de BBDD monitoring-postgres
 5 22 * * * bash /opt/monitoring/scripts/backup_postgres.sh
