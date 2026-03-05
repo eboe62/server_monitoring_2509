@@ -6,6 +6,7 @@
 
 # Ruta base
 BASE_DIR ?= ops/services
+COMPOSE=docker compose
 
 ## 📌 Ayuda: lista de comandos disponibles
 help:
@@ -103,23 +104,23 @@ deploy: up-services rebuild-all logs  ## Despliegue completo con rebuild y logs 
 # --- Cron ---
 deploy-cron: build-base build-cron ## Despliega contenedor de cron jobs
 	cd $(BASE_DIR)/cron && \
-	docker-compose down -v && \
-	docker-compose build --no-cache && \
-	docker-compose up -d
+	$(COMPOSE) down -v && \
+	$(COMPOSE) build --no-cache && \
+	$(COMPOSE) up -d
 
 # --- Python ---
 deploy-python: build-base build-python ## Despliega contenedor python
 	cd $(BASE_DIR)/python && \
-	docker-compose down -v && \
-#	docker-compose build --no-cache && \
-	docker-compose up -d
+	$(COMPOSE) down -v && \
+#	$(COMPOSE) build --no-cache && \
+	$(COMPOSE) up -d
 
 # --- Observability Stack ---
 deploy-observability:  ## Despliega el stack centralizado de Observability (Grafana, Loki, Promtail)
 	@echo "=== [🚀] Desplegando Observability Stack ==="
-	docker-compose -f $(BASE_DIR)/observability/docker-compose.yaml down -v
-	docker-compose -f $(BASE_DIR)/observability/docker-compose.yaml build --no-cache
-	docker-compose -f $(BASE_DIR)/observability/docker-compose.yaml up -d
+	$(COMPOSE) -f $(BASE_DIR)/observability/docker-compose.yaml down -v
+	$(COMPOSE) -f $(BASE_DIR)/observability/docker-compose.yaml build --no-cache
+	$(COMPOSE) -f $(BASE_DIR)/observability/docker-compose.yaml up -d
 	@echo "=== [✅] Observability Stack desplegado correctamente ==="
 
 # --- Restauración de Backups ---

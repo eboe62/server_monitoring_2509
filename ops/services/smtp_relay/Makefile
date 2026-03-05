@@ -1,4 +1,4 @@
-COMPOSE=docker-compose
+COMPOSE=docker compose
 SERVICE=smtp-relay
 
 up:
@@ -29,4 +29,3 @@ update-credentials:
 	chmod 600 ops/services/smtp_relay/secrets/smtp_*; \
 	echo "[INFO] Credenciales actualizadas."; \
 	$(COMPOSE) restart $(SERVICE)
-
