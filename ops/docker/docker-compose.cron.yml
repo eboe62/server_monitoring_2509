@@ -8,6 +8,9 @@ services:
     restart: unless-stopped
     volumes:
       # Montamos el cronfile en la ruta que espera supercronic
+      # Acceso en solo lectura a los logs crudos de Docker (JSON por contenedor)
+      # ⚠️ Necesario para que log_honeypot_geolocation.py pueda leer los accesos del honeypot nginx.
+      # Se monta en modo "ro" (read-only) por motivos de seguridad.
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
 
       # Proyecto completo (scripts Python y utilidades)
@@ -18,11 +21,6 @@ services:
 
       # Acceso al socket de Docker para los scripts de docker_resources.sh y .py)
       - /var/run/docker.sock:/var/run/docker.sock
-
-      # Acceso en solo lectura a los logs crudos de Docker (JSON por contenedor)
-      # ⚠️ Necesario para que log_honeypot_geolocation.py pueda leer los accesos del honeypot nginx.
-      # Se monta en modo "ro" (read-only) por motivos de seguridad.
-      - /var/lib/docker/containers:/var/lib/docker/containers:ro
 
     networks:
       - monitoring-net  # Red compartida (Grafana, Loki, Postgres, SMTP relay...)

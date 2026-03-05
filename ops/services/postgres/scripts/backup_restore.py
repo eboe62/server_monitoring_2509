@@ -29,7 +29,7 @@ DB_NAME = os.getenv("DB_NAME", "monitoring_db")
 DB_DEST = f"{DB_NAME}_restored"
 DB_CONTAINER_NAME = os.getenv("DB_CONTAINER_NAME", "monitoring-postgres")
 
-BACKUP_DIR_HOST = os.getenv("DB_USER", "/ops/backups")
+BACKUP_DIR_HOST = os.getenv("BACKUP_DIR_HOST", "/opt/monitoring/ops/backups")
 BACKUP_CONTAINER_PATH = "/tmp/restore.backup"
 BACKUP_SQL = "/tmp/restore.sql"
 
