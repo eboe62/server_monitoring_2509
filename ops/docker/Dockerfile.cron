@@ -1,24 +1,15 @@
-# ---- Stage 1: descargar supercronic ----
-FROM debian:stable-slim AS supercronic-downloader
-
-RUN apt-get update \
- && apt-get install -y --no-install-recommends curl \
- && curl -L https://github.com/aptible/supercronic/releases/download/v0.2.29/supercronic-linux-amd64 \
-    -o /supercronic \
- && chmod +x /supercronic \
- && rm -rf /var/lib/apt/lists/*
-
-# ---- Stage 2: imagen final ----
+# Imagen para cronjobs basada en la base
 FROM monitoring-base
 
-# Instalar utilidades necesarias
+# Instalar utilidades necesarias y supercronic
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
+    curl \
     bc \
+ && curl -L https://github.com/aptible/supercronic/releases/download/v0.2.29/supercronic-linux-amd64 \
+    -o /usr/local/bin/supercronic \
+ && chmod +x /usr/local/bin/supercronic \
  && rm -rf /var/lib/apt/lists/*
-
-# Copiar supercronic desde stage anterior
-COPY --from=supercronic-downloader /supercronic /usr/local/bin/supercronic
 
 # Copiar entrypoint
 COPY ops/docker/docker-entrypoint.cron.sh /usr/local/bin/docker-entrypoint.sh
