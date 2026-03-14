@@ -46,7 +46,7 @@ services:
       - grafana-data:/var/lib/grafana  # Persistencia de dashboards y configuración interna
       - ./config/datasource.yaml:/etc/grafana/provisioning/datasources/datasource.yaml:ro # Provisionamiento automático de datasources
     ports:
-      - "${GRAFANA_PORT}:3001"  # Grafana expuesto en 3001 para evitar conflictos con CapRover  (3000)
+      - "127.0.0.1:${GRAFANA_PORT}:3001" # Grafana expuesto en 3001 para evitar conflictos con CapRover  (3000)
     environment:
 
       - GF_SECURITY_ADMIN_USER=admin  # Cambia este usuario y contraseña según tus políticas

@@ -9,7 +9,8 @@ services:
     env_file:
       - .env
     ports:
-#      - "127.0.0.1:2526:587"   # SMTP local, no exponer a internet
+
+#   - "127.0.0.1:2526:587"      # SMTP relay no necesita exposición acceso solo por red docker
       - "2526:587"              # Puerto expuesto en host (para debug/test manuales SMTP). Se podría eliminar la línea
     healthcheck:
       test: ["CMD", "sh", "-c", "postfix status"]
@@ -31,8 +32,6 @@ services:
     volumes:
       # Persistencia de logs y debugging
       - smtp_relay_logs:/var/log
-      # Credenciales en tiempo de ejecución desde el árbol del micro-stack
-      - ./secrets:/run/secrets:ro
 
       # Redirección de logs a stdout y arranque de Postfix, esto asegura que los logs del contenedor también vayan a stdout (útil para make logs)
     command: >

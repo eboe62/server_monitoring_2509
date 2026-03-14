@@ -61,6 +61,22 @@ Debe:
 Objetivo:
   Proveer capacidades operativas del entorno, no servicios exportables.
 
+2️⃣ Uso de docker.sock
+Los infra-stacks pueden montar:
+  /var/run/docker.sock:/var/run/docker.sock
+
+Únicamente cuando sea necesario para operaciones de infraestructura (inspección de contenedores, control del runtime o automatización).
+
+RIESGO:
+El acceso a docker.sock concede privilegios equivalentes a root sobre el host Docker.
+
+MITIGACIONES:
+- Solo infra-stacks pueden usarlo.
+- Nunca en micro-stacks de aplicación.
+- Las imágenes deben ser minimalistas y auditadas.
+- El contenedor debe ejecutarse sin privilegios adicionales.
+- Debe documentarse el motivo del acceso.
+
 ## Justificación
 - No todos los contenedores tienen naturaleza exportable.
 - Forzar infraestructura operativa a modelo micro-stack incrementa complejidad sin beneficio claro.

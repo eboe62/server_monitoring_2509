@@ -19,7 +19,9 @@ El proyecto utiliza **Docker Compose v2 en un único host** y no emplea Docker S
 
 En este contexto, el uso de directorios `secrets/` aporta escaso valor operativo y complica la arquitectura.
 
-Por este motivo se decide simplificar el modelo.
+Por este motivo se decide simplificar el modelo. La carpeta secrets se crea únicamente cuando un servicio requiere credenciales externas o material sensible.
+Si un servicio no requiere credenciales, la carpeta secrets no es necesaria.
+Las credenciales nunca deben almacenarse en el repositorio.
 
 ## Decisión
 El proyecto adopta la siguiente política oficial de gestión de credenciales:
@@ -45,6 +47,23 @@ Ejemplo:
 El archivo `.env.template` contiene únicamente nombres de variables y valores de ejemplo.
 
 El archivo `.env` contiene las credenciales reales y **no forma parte del repositorio**.
+
+## Gestión de credenciales
+
+El proyecto utiliza actualmente variables de entorno (.env) para la inyección de credenciales en tiempo de ejecución.
+
+Estas credenciales:
+- no deben versionarse en el repositorio
+- deben mantenerse únicamente en el servidor
+- deben cargarse mediante la directiva env_file de Docker Compose
+
+No se utilizan actualmente:
+- Docker Secrets
+- gestores externos de secretos (Vault, SSM, etc.)
+
+Por tanto no se mantienen carpetas secrets dentro del repositorio ni estructuras asociadas a Docker secrets.
+
+Si en el futuro se adopta un gestor de secretos se introducirá mediante un ADR específico.
 
 ### Restricciones obligatorias
 No se permite:

@@ -20,27 +20,34 @@ Esta funcionalidad puede provocar:
 Por tanto se requiere una política explícita para controlar la exposición de puertos Docker.
 
 ## Decisión
-
 Se adopta una política restrictiva de exposición de puertos.
 
 Regla general:
 Los contenedores no deben publicar puertos hacia el host por defecto.
+
+Excepción controlada:
+Algunos servicios pueden publicar puertos cuando exista justificación operativa explícita y se cumplan las siguientes restricciones:
+  - el puerto debe enlazarse a la interfaz loopback del host
+  - el acceso externo debe controlarse mediante firewall o proxy
+  - el servicio debe requerir autenticación
 
 La comunicación entre servicios debe realizarse mediante:
   - redes Docker internas
   - resolución DNS interna de Docker
 
 Cuando sea necesario exponer un servicio al host debe utilizarse restricción de interfaz:
-
     127.0.0.1:<host_port>:<container_port>
 
-Ejemplo permitido:
-    ports:
-      "127.0.0.1:3001:3001"
-
-Ejemplo prohibido:
+Tipos de exposición de puertos:
+- Exposición pública:
     ports:
       "3001:3001"
+  Esta forma queda prohibida ya que publica el servicio en todas las interfaces del host.
+
+Exposición restringida a loopback:
+    ports:
+      "127.0.0.1:3001:3000"
+  Esta forma es la única permitida cuando se requiere acceso administrativo desde el host.
 
 ## Servicios que no deben exponerse
 Los siguientes servicios son considerados internos:
@@ -50,15 +57,32 @@ Los siguientes servicios son considerados internos:
   - contenedores runtime internos
   - contenedores de automatización o cron
 Estos servicios deben ser accesibles únicamente desde la red Docker interna.
+
 ## Servicios que pueden exponerse bajo justificación
+Algunos servicios pueden requerir exposición controlada hacia el host (por ejemplo para acceso administrativo o debugging local).
+
+Ejemplos típicos:
   - Grafana
-  - SMTP relay (si se usa como gateway interno)
+  - SMTP relay utilizado como gateway interno
   - interfaces administrativas explícitas
 
-Incluso en estos casos se recomienda:
-  - bind a localhost
-  - protección mediante reverse proxy
-  - autenticación obligatoria
+En estos casos la exposición DEBE restringirse a localhost:
+    127.0.0.1:<host_port>:<container_port>
+
+Ejemplo permitido:
+    ports:
+      - "127.0.0.1:3001:3001"
+
+Queda prohibida la publicación global de puertos:
+    ports:
+      - "3001:3001"
+
+Incluso en servicios autorizados.
+
+Si se requiere acceso externo deberá realizarse mediante:
+  - reverse proxy
+  - túnel SSH
+  - VPN
 
 El firewall del host (UFW) continúa siendo el mecanismo principal de control perimetral.
 

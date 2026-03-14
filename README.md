@@ -274,16 +274,31 @@ nano ops/services/smtp_relay/.env
 Dar permisos a los scripts:
 chmod +x ./scripts/*.sh
 
-# Añadir el siguiente código al crontab del servidor
-[root]$ crontab -e
-# Configurar permisos y ejecutar configure_docker_limits.sh al reiniciar
-@reboot chmod +x /usr/local/bin/configure_docker_limits.sh && sleep 60 && /bin/bash /usr/local/bin/configure_docker_limits.sh > /var/log/configure_docker_limits.log 2>&1
+Configuración del host
+El proyecto sigue el principio de Infraestructura como Código y no utiliza cron del host para ejecutar lógica de aplicación.
 
-# Ejecutar configure_docker_limits.sh cada 10 minutos
-*/10 * * * * /usr/local/bin/configure_docker_limits.sh > /var/log/configure_docker_limits.log 2>&1
+Todas las tareas programadas relacionadas con la aplicación se ejecutan dentro del contenedor monitoring-cron mediante Supercronic.
 
-# Configuramos la prevención de saturación por ataques masivos
-@reboot /opt/monitoring/scripts/apply_ssh_ratelimit.sh > /var/log/apply_ssh_ratelimit.log 2>&1
+Sin embargo, algunas tareas de configuración del sistema se aplican directamente en el host durante el arranque o mediante automatización del sistema.
+
+Ejemplos:
+- configuración de límites Docker
+- aplicación de rate-limiting SSH
+- endurecimiento del sistema
+
+Estas tareas pueden ejecutarse manualmente o integrarse en el sistema de inicialización del servidor.
+
+Ejemplo de ejecución manual:
+    # Añadir el siguiente código al crontab del servidor
+    [root]$ crontab -e
+    # Configurar permisos y ejecutar configure_docker_limits.sh al reiniciar
+    @reboot chmod +x /usr/local/bin/configure_docker_limits.sh && sleep 60 && /bin/bash /usr/local/bin/configure_docker_limits.sh > /var/log/configure_docker_limits.log 2>&1
+
+    # Ejecutar configure_docker_limits.sh cada 10 minutos
+    */10 * * * * /usr/local/bin/configure_docker_limits.sh > /var/log/configure_docker_limits.log 2>&1
+
+    # Configuramos la prevención de saturación por ataques masivos
+    @reboot /opt/monitoring/scripts/apply_ssh_ratelimit.sh > /var/log/apply_ssh_ratelimit.log 2>&1
 
 ```
 ## 🚀 Uso
