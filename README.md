@@ -271,18 +271,6 @@ Configurar variables de entorno y credenciales según cada servicio (ejemplo par
 cd /opt/monitoring
 nano ops/services/smtp_relay/.env
 
-cd /opt/monitoring
-nano ops/services/smtp_relay/secrets/smtp_user
-=====================
-99x9xx99-9x99-9x99-99x9-99xx9xxx9xxx (token https://postmarkapp.com)
-=====================
-
-cd /opt/monitoring
-nano ops/services/smtp_relay/secrets/smtp_pass
-=====================
-99x9xx99-9x99-9x99-99x9-99xx9xxx9xxx (token https://postmarkapp.com)
-=====================
-
 Dar permisos a los scripts:
 chmod +x ./scripts/*.sh
 

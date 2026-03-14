@@ -3,6 +3,7 @@
 # Compatible con Docker Compose V2
 # Ubicación: /opt/monitoring/Makefile
 # ==========================================
+
 # ------------------------------------------
 # Configuración base
 # ------------------------------------------
@@ -27,11 +28,12 @@ if ! echo "$(STACKS)" | grep -w "$(STACK)" >/dev/null; then \
 fi
 endef
 
-.PHONY: help all build build-base build-python build-cron \
+.PHONY: help clean clean-docker build build-base build-python build-cron \
         monitoring-net phase4-init \
         stack-up stack-down stack-restart stack-status stack-logs \
         deploy rebuild rebuild-all \
-        logs clean-logs check-cron doctor
+        logs clean-logs check-cron doctor \
+        shell-python shell-cron
 
 # ------------------------------------------
 # 📌 Ayuda
@@ -58,6 +60,10 @@ help:
 	@echo "Stacks disponibles:"
 	@echo "  $(STACKS)"
 	@echo ""
+	@echo "Debug:"
+	@echo "  make shell-python"
+	@echo "  make shell-cron"
+	@echo ""
 	@echo "Operaciones globales:"
 	@echo "  make deploy"
 	@echo "  make logs"
@@ -72,6 +78,20 @@ monitoring-net:  ## Crea la red Docker si no existe
 	@docker network inspect monitoring-net >/dev/null 2>&1 || \
 	docker network create --driver bridge monitoring-net
 	@echo "[OK] network monitoring-net ready"
+
+# ------------------------------------------
+# Limpieza
+# ------------------------------------------
+
+clean:
+	@echo "[INFO] limpiando imágenes dangling"
+	docker image prune -f
+
+clean-docker:
+	@echo "[INFO] limpieza completa Docker"
+	docker image prune -f
+	docker container prune -f
+	docker builder prune -f
 
 # ------------------------------------------
 # Builds
@@ -133,10 +153,11 @@ deploy: build
 	done
 	@echo "[OK] despliegue finalizado"
 
-rebuild: build
+rebuild: clean build
 	@echo "[OK] rebuild realizado"
 
 rebuild-all:
+	make clean-docker
 	make build
 	make deploy
 
@@ -158,12 +179,23 @@ logs:  ## Muestra logs recientes del sistema y contenedores
 # Utilidades
 # ------------------------------------------
 
-clean-logs:  ## Limpia logs del host
-	rm -f /var/log/*.log
+clean-logs:  ## Limpia logs del proyecto
+	@echo "[INFO] limpieza logs proyecto"
+	rm -f logs/*.log 2>/dev/null || true
 	@echo "[OK] logs eliminados"
 
 check-cron:  ## Lista tareas cron del sistema
-	crontab -l
+	crontab -l || echo "sin cron en usuario actual"
+
+# ------------------------------------------
+# Debug containers
+# ------------------------------------------
+
+shell-python:
+	docker run --rm -it --entrypoint /bin/bash monitoring-python
+
+shell-cron:
+	docker run --rm -it --entrypoint /bin/bash monitoring-cron
 
 # ------------------------------------------
 # Diagnóstico del sistema
