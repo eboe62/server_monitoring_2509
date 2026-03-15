@@ -2,12 +2,12 @@ services:
   monitoring-python:
     build:
       context: ../..
-      dockerfile: ops/docker/Dockerfile.python
+      dockerfile: ops/stacks/Dockerfile
     image: monitoring-python:latest
     container_name: monitoring-python
     restart: unless-stopped
     env_file:
-      - ../services/smtp_relay/.env
+      - ../../services/smtp_relay/.env
     volumes:
       # Monta el proyecto para ejecutar scripts Python
       - ../..:/opt/monitoring

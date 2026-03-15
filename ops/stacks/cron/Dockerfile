@@ -12,7 +12,7 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/*
 
 # Copiar entrypoint
-COPY ops/docker/docker-entrypoint.cron.sh /usr/local/bin/docker-entrypoint.sh
+COPY stacks/cron/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 

@@ -232,25 +232,25 @@ doctor:  ## Verifica estado del entorno
 	@echo "[5] Espacio en disco:"
 	@df -h /
 
-@echo ""
-@echo "[6] Uso Docker:"
-@docker system df
+	@echo ""
+	@echo "[6] Uso Docker:"
+	@docker system df
 
-@echo ""
-@echo "[7] Volúmenes Docker:"
-@docker volume ls
+	@echo ""
+	@echo "[7] Volúmenes Docker:"
+	@docker volume ls
 
-@echo ""
-@echo "[8] Redes Docker:"
-@docker network ls | grep monitoring || true
+	@echo ""
+	@echo "[8] Redes Docker:"
+	@docker network ls | grep monitoring || true
 
-@echo ""
-@echo "[9] Contenedores de la plataforma:"
-@docker ps --format "{{.Names}}" | grep monitoring || echo "Ninguno activo"
+	@echo ""
+	@echo "[9] Contenedores de la plataforma:"
+	@docker ps --format "{{.Names}}" | grep monitoring || echo "Ninguno activo"
 
-@echo ""
-@echo "[10] Stacks disponibles:"
-@echo "$(STACKS)"
+	@echo ""
+	@echo "[10] Stacks disponibles:"
+	@echo "$(STACKS)"
 
-@echo ""
-@echo "=== Fin diagnóstico ==="
+	@echo ""
+	@echo "=== Fin diagnóstico ==="
