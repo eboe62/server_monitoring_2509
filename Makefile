@@ -1,21 +1,24 @@
 # ==========================================
 # Makefile Global - Monitoring Platform
-# Compatible con Docker Compose V2
-# Ubicación: /opt/monitoring/Makefile
 # ==========================================
 
-# ------------------------------------------
-# Configuración base
-# ------------------------------------------
-
-BASE_DIR ?= ops/services
-COMPOSE = docker compose
 PROJECT = monitoring
+COMPOSE = docker compose
 
-# Micro-stacks disponibles
-STACKS = smtp_relay cron postgres python observability
+SERVICE_DIR = ops/services
+STACK_DIR   = ops/stacks
 
-# Validación de STACK si se usa en targets stack-*
+SERVICE_STACKS = postgres smtp_relay
+INFRA_STACKS   = python cron observability
+STACKS = $(SERVICE_STACKS) $(INFRA_STACKS)
+
+AUDIT_SCRIPT = ops/audit/audit_repo_host.sh
+DEV_COMPOSE = compose.dev.yml
+
+# ------------------------------------------
+# Validación STACK
+# ------------------------------------------
+
 define validate_stack
 @if [ -z "$(STACK)" ]; then \
 	echo "[ERROR] Debe especificar STACK=<nombre>"; \
@@ -28,55 +31,62 @@ if ! echo "$(STACKS)" | grep -w "$(STACK)" >/dev/null; then \
 fi
 endef
 
-.PHONY: help clean clean-docker build build-base build-python build-cron \
-        monitoring-net phase4-init \
-        stack-up stack-down stack-restart stack-status stack-logs \
-        deploy rebuild rebuild-all \
-        logs clean-logs check-cron doctor \
-        shell-python shell-cron
+define stack_path
+if [ -d "$(SERVICE_DIR)/$(STACK)" ]; then \
+	printf "%s" "$(SERVICE_DIR)/$(STACK)"; \
+else \
+	printf "%s" "$(STACK_DIR)/$(STACK)"; \
+fi
+endef
+
+.PHONY: help build build-base build-python build-cron \
+clean clean-docker monitoring-net phase4-init \
+stack-up stack-down stack-restart stack-status stack-logs \
+deploy rebuild rebuild-all doctor audit git-log \
+dev-up dev-down
 
 # ------------------------------------------
-# 📌 Ayuda
+# Help
 # ------------------------------------------
 
 help:
 	@echo ""
 	@echo "=== Monitoring Platform ==="
 	@echo ""
-	@echo "Inicialización:"
-	@echo "  make phase4-init        → prepara entorno base (red + builds)"
-	@echo ""
-	@echo "Builds:"
-	@echo "  make build              → construye todas las imágenes"
-	@echo "  make rebuild            → rebuild completo"
-	@echo ""
-	@echo "Gestión de stacks:"
-	@echo "  make stack-up STACK=x"
-	@echo "  make stack-down STACK=x"
-	@echo "  make stack-restart STACK=x"
-	@echo "  make stack-status STACK=x"
-	@echo "  make stack-logs STACK=x"
-	@echo ""
 	@echo "Stacks disponibles:"
 	@echo "  $(STACKS)"
 	@echo ""
-	@echo "Debug:"
-	@echo "  make shell-python"
-	@echo "  make shell-cron"
-	@echo ""
-	@echo "Operaciones globales:"
-	@echo "  make deploy"
-	@echo "  make logs"
-	@echo "  make doctor"
+	@echo "Ejemplos:"
+	@echo "  make stack-up STACK=postgres"
+	@echo "  make stack-up STACK=observability"
 	@echo ""
 
 # ------------------------------------------
-# Infraestructura base (FASE 4)
+# Git utilities
+# ------------------------------------------
+
+git-log: ## Historial git resumido
+	@echo ""
+	@echo "=== Git history (últimos 25 commits) ==="
+	sudo git log --oneline --decorate --graph --all -n 25
+
+# ------------------------------------------
+# Auditoría
+# ------------------------------------------
+
+audit: ## Ejecuta auditoría repositorio + host
+	@echo ""
+	@echo "=== Ejecutando auditoría ==="
+	chmod +x $(AUDIT_SCRIPT)
+	./$(AUDIT_SCRIPT)
+
+# ------------------------------------------
+# Infraestructura base
 # ------------------------------------------
 
 monitoring-net:  ## Crea la red Docker si no existe
 	@docker network inspect monitoring-net >/dev/null 2>&1 || \
-	docker network create --driver bridge monitoring-net
+	docker network create monitoring-net
 	@echo "[OK] network monitoring-net ready"
 
 # ------------------------------------------
@@ -89,28 +99,28 @@ clean:
 
 clean-docker:
 	@echo "[INFO] limpieza completa Docker"
-	docker image prune -f
 	docker container prune -f
+	docker image prune -f
 	docker builder prune -f
 
 # ------------------------------------------
 # Builds
 # ------------------------------------------
 
-build-base:  ## Construye imagen base
-	docker build --no-cache -f ops/docker/Dockerfile.base -t monitoring-base .
+build-base:
+	docker build --no-cache -f ops/images/base/Dockerfile -t monitoring-base .
 
-build-python:  ## Construye imagen python runtime
-	docker build --no-cache -f ops/docker/Dockerfile.python -t monitoring-python .
+build-python:
+	docker build --no-cache -f ops/stacks/python/Dockerfile -t monitoring-python .
 
-build-cron:  ## Construye imagen cron runtime
-	docker build --no-cache -f ops/docker/Dockerfile.cron -t monitoring-cron .
+build-cron:
+	docker build --no-cache -f ops/stacks/cron/Dockerfile -t monitoring-cron .
 
 build: build-base build-python build-cron  ## Construye todas las imágenes
 	@echo "[OK] imágenes construidas"
 
-phase4-init: monitoring-net build  ## Inicialización completa FASE 4
-	@echo "[OK] FASE 4 inicializada"
+phase4-init: monitoring-net build  ## Inicialización completa
+	@echo "[OK] entorno inicializado"
 
 # ------------------------------------------
 # Gestión genérica de micro-stacks
@@ -118,40 +128,59 @@ phase4-init: monitoring-net build  ## Inicialización completa FASE 4
 
 stack-up:  ## Levanta un stack (STACK=nombre)
 	$(call validate_stack)
-	@echo "=== 🚀 Levantando stack $(STACK) ==="
-	cd $(BASE_DIR)/$(STACK) && $(COMPOSE) up -d --build
+	@DIR=$$( $(call stack_path) ); \
+	echo "=== 🚀 Levantando stack $(STACK) ==="; \
+	cd $$DIR && $(COMPOSE) up -d --build
 
 stack-down:  ## Detiene un stack
 	$(call validate_stack)
-	@echo "=== ⛔ Parando stack $(STACK) ==="
-	cd $(BASE_DIR)/$(STACK) && $(COMPOSE) down -v
+	@DIR=$$( $(call stack_path) ); \
+	echo "=== ⛔ Parando stack $(STACK) ==="; \
+	cd $$DIR && $(COMPOSE) down
 
 stack-restart:  ## Reinicia un stack
 	$(call validate_stack)
-	@echo "=== 🔁 Reiniciando stack $(STACK) ==="
-	cd $(BASE_DIR)/$(STACK) && $(COMPOSE) restart
+	@DIR=$$( $(call stack_path) ); \
+	echo "=== 🔁 Reiniciando stack $(STACK) ==="; \
+	cd $$DIR && $(COMPOSE) restart
 
 stack-status:  ## Estado de un stack
 	$(call validate_stack)
-	cd $(BASE_DIR)/$(STACK) && $(COMPOSE) ps
+	@DIR=$$( $(call stack_path) ); \
+	echo "=== Estado stack $(STACK) ==="; \
+	cd $$DIR && $(COMPOSE) ps
 
-stack-logs:  ## Logs de un stack
+stack-logs:
 	$(call validate_stack)
-	cd $(BASE_DIR)/$(STACK) && $(COMPOSE) logs -f
+	@DIR=$$( $(call stack_path) ); \
+	cd $$DIR && $(COMPOSE) logs -f
 
 # ------------------------------------------
 # Despliegue completo
 # ------------------------------------------
 
 deploy: build
-	@echo "=== 🚀 Despliegue completo ==="
-	@for s in $(STACKS); do \
-		if [ -d "$(BASE_DIR)/$$s" ]; then \
-			echo "→ desplegando $$s"; \
-			cd $(BASE_DIR)/$$s && $(COMPOSE) up -d --build; \
-		fi; \
-	done
-	@echo "[OK] despliegue finalizado"
+	@set -e; \
+	echo "=== 🚀 Despliegue completo ==="; \
+	for s in $(SERVICE_STACKS); do \
+		echo "→ desplegando $$s"; \
+		cd $(SERVICE_DIR)/$$s && $(COMPOSE) up -d --build; \
+	done; \
+	for s in $(INFRA_STACKS); do \
+		echo "→ desplegando $$s"; \
+		cd $(STACK_DIR)/$$s && $(COMPOSE) up -d --build; \
+	done; \
+	echo "[OK] despliegue finalizado"
+
+dev-up:
+	$(COMPOSE) -f $(DEV_COMPOSE) up -d
+
+dev-down:
+	$(COMPOSE) -f $(DEV_COMPOSE) down
+
+# ------------------------------------------
+# Rebuild
+# ------------------------------------------
 
 rebuild: clean build
 	@echo "[OK] rebuild realizado"
@@ -167,38 +196,15 @@ rebuild-all:
 
 logs:  ## Muestra logs recientes del sistema y contenedores
 	@echo "=== Logs del sistema ==="
-	@tail -n 20 /var/log/*.log 2>/dev/null || true
 	@echo ""
 	@echo "=== Logs contenedores ==="
 	@for c in $$(docker ps --format '{{.Names}}'); do \
-		echo "\n===== $$c ====="; \
-		docker logs $$c --tail=20 2>/dev/null || true; \
+		echo "===== $$c ====="; \
+		docker logs $$c --tail=20; \
 	done
 
 # ------------------------------------------
-# Utilidades
-# ------------------------------------------
-
-clean-logs:  ## Limpia logs del proyecto
-	@echo "[INFO] limpieza logs proyecto"
-	rm -f logs/*.log 2>/dev/null || true
-	@echo "[OK] logs eliminados"
-
-check-cron:  ## Lista tareas cron del sistema
-	crontab -l || echo "sin cron en usuario actual"
-
-# ------------------------------------------
-# Debug containers
-# ------------------------------------------
-
-shell-python:
-	docker run --rm -it --entrypoint /bin/bash monitoring-python
-
-shell-cron:
-	docker run --rm -it --entrypoint /bin/bash monitoring-cron
-
-# ------------------------------------------
-# Diagnóstico del sistema
+# Diagnóstico
 # ------------------------------------------
 
 doctor:  ## Verifica estado del entorno
@@ -226,9 +232,25 @@ doctor:  ## Verifica estado del entorno
 	@echo "[5] Espacio en disco:"
 	@df -h /
 
-	@echo ""
-	@echo "[6] Uso Docker:"
-	@docker system df
+@echo ""
+@echo "[6] Uso Docker:"
+@docker system df
 
-	@echo ""
-	@echo "=== Fin diagnóstico ==="
+@echo ""
+@echo "[7] Volúmenes Docker:"
+@docker volume ls
+
+@echo ""
+@echo "[8] Redes Docker:"
+@docker network ls | grep monitoring || true
+
+@echo ""
+@echo "[9] Contenedores de la plataforma:"
+@docker ps --format "{{.Names}}" | grep monitoring || echo "Ninguno activo"
+
+@echo ""
+@echo "[10] Stacks disponibles:"
+@echo "$(STACKS)"
+
+@echo ""
+@echo "=== Fin diagnóstico ==="

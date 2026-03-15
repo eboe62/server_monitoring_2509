@@ -61,7 +61,7 @@ Debe:
 Objetivo:
   Proveer capacidades operativas del entorno, no servicios exportables.
 
-2️⃣ Uso de docker.sock
+3️⃣ Uso de docker.sock
 Los infra-stacks pueden montar:
   /var/run/docker.sock:/var/run/docker.sock
 
