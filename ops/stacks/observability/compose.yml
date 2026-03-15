@@ -4,7 +4,7 @@ services:
     container_name: ${PROMTAIL_CONTAINER_NAME}
     volumes:
       - /var/log:/var/log:rw  # Permitir escritura para actualizar promtail-positions.yml
-      - ./config/promtail-config.yml:/etc/promtail/promtail-config.yml:ro  # Configuración de Promtail
+      - ../../../config/promtail-config.yml:/etc/promtail/promtail-config.yml:ro  # Configuración de Promtail
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
     command: -config.file=/etc/promtail/promtail-config.yml
     restart: unless-stopped
@@ -23,7 +23,7 @@ services:
     image: grafana/loki:latest
     container_name: ${LOKI_CONTAINER_NAME}
     volumes:
-      - ./config/loki-config.yml:/etc/loki/loki-config.yml:ro  # Configuración de Loki
+      - ../../../loki-config.yml:/etc/loki/loki-config.yml:ro  # Configuración de Loki
 #      - ./data/loki:/var/lib/loki  # Persistencia de datos para Loki
       - loki-data:/var/lib/loki  # Persistencia de datos para Loki con logs indexados
 #    ports:
@@ -44,7 +44,7 @@ services:
 #    network_mode: host  # importante para acceso a localhost:2526 y 127.0.0.1 pero innecesario si accedemos por red Docker
     volumes:
       - grafana-data:/var/lib/grafana  # Persistencia de dashboards y configuración interna
-      - ./config/datasource.yml:/etc/grafana/provisioning/datasources/datasource.yml:ro # Provisionamiento automático de datasources
+      - ../../../datasource.yml:/etc/grafana/provisioning/datasources/datasource.yml:ro # Provisionamiento automático de datasources
     ports:
       - "127.0.0.1:${GRAFANA_PORT}:3001" # Grafana expuesto en 3001 para evitar conflictos con CapRover  (3000)
     environment:
