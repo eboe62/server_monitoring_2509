@@ -120,7 +120,7 @@ Rama: `develop`
     │ └ services/
     │   ├ smtp_relay/           # Servicio Postfix SMTP-relay para alertas
     │   └ postgres/             # Micro-stack autónomo PostgreSQL
-    │     ├ docker-compose.yaml
+    │     ├ compose.yml
     │     ├ .env.template
     │     ├ init/
     │     └ volumes/ (no versionado)
@@ -137,7 +137,7 @@ Rama: `develop`
 ## 📂 Política de persistencia
 
 El entorno utiliza exclusivamente volúmenes Docker locales para la persistencia de datos.
-PostgreSQL se define como micro-stack autónomo, con sus propios volúmenes declarados en ops/services/postgres/docker-compose.yaml.
+PostgreSQL se define como micro-stack autónomo, con sus propios volúmenes declarados en ops/services/postgres/compose.yml.
 
 La persistencia de la base de datos queda desacoplada del resto de servicios y puede ser transferida de forma independiente mediante:
 
@@ -249,8 +249,8 @@ Scripts:
 
 ### 🧩 `observability`
 Stack **Promtail + Loki + Grafana** para centralizar logs.
-- `promtail-config.yaml` define etiquetas y filtrado.
-- `loki-config.yaml` gestiona almacenamiento local y retención (72h).
+- `promtail-config.yml` define etiquetas y filtrado.
+- `loki-config.yml` gestiona almacenamiento local y retención (72h).
 - `grafana` se integra con SMTP relay para alertas.
 
 ### 🧩 `smtp_relay`

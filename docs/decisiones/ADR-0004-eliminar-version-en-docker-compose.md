@@ -24,10 +24,11 @@ automatizadas.
 
 Los ficheros afectados identificados actualmente son:
 
-- ops/docker/docker-compose.cron.yml
-- ops/docker/docker-compose.observability.yml
-- ops/docker/docker-compose.python.yml
-- ops/services/smtp_relay/docker-compose.yaml
+- ops/stacks/cron/compose.yml
+- ops/stacks/observability/compose.yml
+- ops/stacks/python/compose.yml
+- ops/services/smtp_relay/compose.yml
+- ops/services/postgres/compose.yml
 
 ## Decisión
 
@@ -68,8 +69,7 @@ Tras aplicar esta decisión, se ha validado que comandos como:
 
 funcionan correctamente sin warnings ni errores.
 
-Esta decisión afecta a múltiples docker-compose y debe aplicarse de forma
-consistente en todo el repositorio.
+Esta decisión afecta a múltiples docker-compose y debe aplicarse de forma consistente en todo el repositorio.
 
 ## Estado
 

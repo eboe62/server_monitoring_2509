@@ -102,9 +102,9 @@ Tu rama está actualizada con 'origin/migracion'.
 Cambios no rastreados para el commit:
   (usa "git add <archivo>..." para actualizar lo que será confirmado)
   (usa "git restore <archivo>..." para descartar los cambios en el directorio de trabajo)
-        modificados:     ops/docker/docker-compose.cron.yml
-        modificados:     ops/docker/docker-compose.python.yml
-        modificados:     ops/services/smtp_relay/docker-compose.yaml
+        modificados:     ops/stacks/cron/compose.yml
+        modificados:     ops/stacks/python/compose.yml
+        modificados:     ops/services/smtp_relay/compose.yml
         modificados:     scripts/backup_postgres.py
         modificados:     scripts/backup_restore.py
         modificados:     src/monitoring/common/config.py
@@ -116,10 +116,10 @@ Archivos sin seguimiento:
 
 sin cambios agregados al commit (usa "git add" y/o "git commit -a")
 eboe62@EOB-LG:/mnt/d/WorkSpace/Proyectos/VPS_DigitalOcean_2410/server_monitoring_2509$ git diff
-diff --git a/ops/docker/docker-compose.cron.yml b/ops/docker/docker-compose.cron.yml
+diff --git a/ops/stacks/cron/compose.yml b/ops/stacks/cron/compose.yml
 index 511659d..41964ed 100644
---- a/ops/docker/docker-compose.cron.yml
-+++ b/ops/docker/docker-compose.cron.yml
+--- a/ops/stacks/cron/compose.yml
++++ b/ops/stacks/cron/compose.yml
 @@ -8,10 +8,10 @@ services:
      restart: unless-stopped
      volumes:
@@ -133,18 +133,18 @@ index 511659d..41964ed 100644
 
        # Logs del host para que los scripts puedan escribir ahí
        - /var/log:/var/log
-diff --git a/ops/docker/docker-compose.python.yml b/ops/docker/docker-compose.python.yml
+diff --git a/ops/stacks/python/compose.yml b/ops/stacks/python/compose.yml
 index 4f1c5c9..761ae05 100644
---- a/ops/docker/docker-compose.python.yml
-+++ b/ops/docker/docker-compose.python.yml
+--- a/ops/stacks/python/compose.yml
++++ b/ops/stacks/python/compose.yml
 @@ -10,7 +10,7 @@ services:
        - ../services/smtp_relay/.env
      volumes:
 :
-diff --git a/ops/docker/docker-compose.cron.yml b/ops/docker/docker-compose.cron.yml
+diff --git a/ops/stacks/cron/compose.yml b/ops/stacks/cron/compose.yml
 index 511659d..41964ed 100644
---- a/ops/docker/docker-compose.cron.yml
-+++ b/ops/docker/docker-compose.cron.yml
+--- a/ops/stacks/cron/compose.yml
++++ b/ops/stacks/cron/compose.yml
 @@ -8,10 +8,10 @@ services:
      restart: unless-stopped
      volumes:
@@ -158,18 +158,18 @@ index 511659d..41964ed 100644
 
        # Logs del host para que los scripts puedan escribir ahí
        - /var/log:/var/log
-diff --git a/ops/docker/docker-compose.python.yml b/ops/docker/docker-compose.python.yml
+diff --git a/ops/stacks/python/compose.yml b/ops/stacks/python/compose.yml
 index 4f1c5c9..761ae05 100644
---- a/ops/docker/docker-compose.python.yml
-+++ b/ops/docker/docker-compose.python.yml
+--- a/ops/stacks/python/compose.yml
++++ b/ops/stacks/python/compose.yml
 @@ -10,7 +10,7 @@ services:
        - ../services/smtp_relay/.env
      volumes:
 :
-diff --git a/ops/docker/docker-compose.cron.yml b/ops/docker/docker-compose.cron.yml
+diff --git a/ops/stacks/cron/compose.yml b/ops/stacks/cron/compose.yml
 index 511659d..41964ed 100644
---- a/ops/docker/docker-compose.cron.yml
-+++ b/ops/docker/docker-compose.cron.yml
+--- a/ops/stacks/cron/compose.yml
++++ b/ops/stacks/cron/compose.yml
 @@ -8,10 +8,10 @@ services:
      restart: unless-stopped
      volumes:
@@ -183,10 +183,10 @@ index 511659d..41964ed 100644
 
        # Logs del host para que los scripts puedan escribir ahí
        - /var/log:/var/log
-diff --git a/ops/docker/docker-compose.python.yml b/ops/docker/docker-compose.python.yml
+diff --git a/ops/stacks/python/compose.yml b/ops/stacks/python/compose.yml
 index 4f1c5c9..761ae05 100644
---- a/ops/docker/docker-compose.python.yml
-+++ b/ops/docker/docker-compose.python.yml
+--- a/ops/stacks/python/compose.yml
++++ b/ops/stacks/python/compose.yml
 @@ -10,7 +10,7 @@ services:
        - ../services/smtp_relay/.env
      volumes:
@@ -321,7 +321,7 @@ Checklist (ordenado por criticidad)
 
 ALTA CRITICIDAD
 - Secrets per micro-stack directory exists: postgres ✗   # Missing ops/services/postgres/secrets/
-- Postgres published to host port: ops/docker/docker-compose.postgres.yaml ✗   # ports: ${DB_PORT}:5432 present
+- Postgres published to host port: ops/services/postgres/compose.yml ✗   # ports: ${DB_PORT}:5432 present
 - Docker socket mounted in infra containers (cron/python): ✓ (present) — high-risk capability
 
 MEDIA CRITICIDAD
@@ -338,7 +338,7 @@ BAJA CRITICIDAD
 
 Hallazgos y puntos críticos (breve)
 - Falta de carpeta `ops/services/postgres/secrets/` (CRÍTICO): FASE 4 normativa exige estructura `secrets/` por servicio. Su ausencia impide inyectar credenciales via archivos separados y rompe parte de la gobernanza de despliegue.
-- Publicación del puerto PostgreSQL en `docker-compose.postgres.yaml` (CRÍTICO): con el puerto mapeado a host, la BBDD puede quedar accesible si el firewall/ufw no está correctamente configurado. La normativa PRO recomienda no exponer 5432 en el host.
+- Publicación del puerto PostgreSQL en `/postgres/compose.yml` (CRÍTICO): con el puerto mapeado a host, la BBDD puede quedar accesible si el firewall/ufw no está correctamente configurado. La normativa PRO recomienda no exponer 5432 en el host.
 - Montaje de `/var/run/docker.sock` en `monitoring-cron`/`monitoring-python` (ALTO): permitido para infra-stack, pero da control amplio sobre el host Docker y es vector de compromiso crítico si el contenedor se ve comprometido.
 - `COPY . .` en `ops/docker/Dockerfile.base` + build context `../..` en infra-stack (MEDIO): mitigado por `.dockerignore` que excluye `ops/services/**/secrets/`, pero requiere disciplina: si `.dockerignore` cambia o se construye con otro contexto, secretos podrían entrar en la imagen.
 - `monitoring-net` declarado `external: true` (positivo): cumple la regla de red compartida, pero requiere creación manual en host antes de `docker compose up`.
@@ -427,7 +427,7 @@ Ordenado por prioridad arquitectónica (de más crítico a menos crítico).
 🔴 PRIORIDAD 1 — Separación estructural real Micro-Stack / Infra-Stack
 1. Micro-Stack PostgreSQL autónomo
        ✔ Existe ops/services/postgres/
-       ✔ Tiene docker-compose.yaml
+       ✔ Tiene docker-compose.yml
        ✔ Tiene .env.template
        ✔ Tiene estructura propia (init/, volumes/)
        ✔ Declarado como micro-stack según ADR-0008
@@ -620,7 +620,7 @@ Objetivo:
 🔴 PRIORIDAD 1 — Separación estructural real Micro-Stack / Infra-Stack
 1. Micro-Stack PostgreSQL autónomo
        ✔ Existe ops/services/postgres/
-       ✔ Tiene docker-compose.yaml
+       ✔ Tiene docker-compose.yml
        ✔ Tiene .env.template
        ✔ Tiene estructura propia (init/, volumes/)
        ✔ Declarado como micro-stack según ADR-0008
@@ -673,7 +673,7 @@ Auditar el estado actual del micro-stack PostgreSQL y confirmar si:
 5. La comunicación puede realizarse exclusivamente vía red Docker (monitoring-net).
 
 Alcance:
-- ops/services/postgres/docker-compose.yaml
+- ops/services/postgres/compose.yml
 - Cualquier otro docker-compose que publique 5432/5433
 - Configuración UFW documentada
 - docker ps (publicación de puertos)
@@ -714,9 +714,9 @@ I'll search the repo for PostgreSQL port declarations and UFW mentions, then ope
 Findings (numbered)
 
 PostgreSQL is configured to publish a host port (host binding).
-Evidence: docker-compose.yaml:12 → line shows - "${DB_PORT}:5432". Also present in docker-compose.yaml:43 → - "${DB_PORT:-5432}:5432". Severity: Crítico. Riesgo operativo real: Base de datos publicada en el host si DB_PORT se establece; posible acceso desde red host.
+Evidence: compose.yml:12 → line shows - "${DB_PORT}:5432". Also present in compose.yml:43 → - "${DB_PORT:-5432}:5432". Severity: Crítico. Riesgo operativo real: Base de datos publicada en el host si DB_PORT se establece; posible acceso desde red host.
 Infra-stack postgres compose also publishes host port.
-Evidence: docker-compose.postgres.yaml:13 → line shows - "${DB_PORT}:5432". Severity: Crítico. Riesgo operativo real: publicación doble/alternativa desde infra stack; aumenta probabilidad de exposición.
+Evidence: /postgres/compose.yml:13 → line shows - "${DB_PORT}:5432". Severity: Crítico. Riesgo operativo real: publicación doble/alternativa desde infra stack; aumenta probabilidad de exposición.
 Default example DB port present in .env.template (non-loopback port).
 Evidence: .env.template:11 → DB_PORT=9999. Severity: Alto. Riesgo operativo real: with DB_PORT set (e.g. 9999) compose maps host port 9999 → 5432 (bind defaults to 0.0.0.0), making DB reachable from host network.
 UFW documentation in project explicitly allows 5432/5433.
@@ -823,7 +823,7 @@ Now reading .env.template to confirm whether DB_PORT is present and its line.
 Estado — Repositorio
 
 Hallazgo: No hay docker-compose en el repositorio que publique 5432/5433.
-Evidencia: docker-compose.postgres.yaml:1-20 → no aparece ports: ni mapeo a 5432.
+Evidencia: /postgres/compose.yml:1-20 → no aparece ports: ni mapeo a 5432.
 Evidencia: .env.template:1-20 → no DB_PORT definido.
 Evidencia adicional: búsqueda dentro del árbol del proyecto devuelve referencias textuales (ai/prompts/..., documentación) pero no declaraciones de :"${DB_PORT}:5432" en archivos de compose del proyecto (ej. el único compose de Postgres en postgres no publica puerto).
 Estado — Entorno LOCAL (sin UFW)
@@ -867,7 +867,7 @@ Servidor_DigitalOcean_Implementacion_260214.txt
 ADR-0008-servicios_micro-stack_vs_infra-stack.md
 RULES.txt
 Contexto:
-El archivo ops/docker/docker-compose.postgres.yaml ha sido eliminado.
+El archivo ops/services/postgres/compose.yml ha sido eliminado.
 PostgreSQL debe existir exclusivamente como Micro-Stack en:
 ops/services/postgres/
 
@@ -921,25 +921,25 @@ I'll update the todo list then scan the repo for postgres-related artifacts and 
 Preamble: voy a entregar la auditoría FASE 4 del Micro-Stack PostgreSQL con hallazgos, evidencia y veredicto binario.
 
 No existe servicio Postgres en infra-stack (ops/docker)
-Evidencia: listado de docker muestra composés operativos (cron, python, observability) y no contiene compose de Postgres; ver por ejemplo docker-compose.cron.yml:1.
+Evidencia: listado de docker muestra composés operativos (cron, python, observability) y no contiene compose de Postgres; ver por ejemplo cron/compose.yml:1.
 Severidad: Bajo
 Existe referencia residual al compose eliminado en la documentación (residuo)
-Evidencia: ADR-0004-eliminar-version-en-docker-compose.md:29 → menciona docker-compose.postgres.yaml.
+Evidencia: ADR-0004-eliminar-version-en-docker-compose.md:29 → menciona /postgres/compose.yml.
 Severidad: Medio
 Makefile: no depende del compose infra de Postgres
 Evidencia: Makefile usa BASE_DIR ?= ops/services y targets que ejecutan servicios desde services (p.e. up-services → cd $(BASE_DIR)/smtp_relay && make up); ver Makefile:1-20.
 Severidad: Bajo
 Scripts: no dependen del compose infra eliminado (solo usan DB_CONTAINER_NAME)
-Evidencia: scripts usan la variable DB_CONTAINER_NAME y comandos docker exec pero no referencian docker-compose.postgres.yaml; ver llamadas a DB_CONTAINER_NAME en backup_postgres.py:26-53 y backup_restore.py:30-69.
+Evidencia: scripts usan la variable DB_CONTAINER_NAME y comandos docker exec pero no referencian /postgres/compose.yml; ver llamadas a DB_CONTAINER_NAME en backup_postgres.py:26-53 y backup_restore.py:30-69.
 Severidad: Bajo
 Micro‑Stack (ops/services/postgres) — volumen persistente declarado explícitamente
-Evidencia: docker-compose.postgres.yaml:13 → - postgres-data:/var/lib/postgresql/data y el bloque volumes: postgres-data: (ver L32, L41).
+Evidencia: /postgres/compose.yml:13 → - postgres-data:/var/lib/postgresql/data y el bloque volumes: postgres-data: (ver L32, L41).
 Severidad: Bajo
 Micro‑Stack — usa monitoring-net declarado external: true
-Evidencia: docker-compose.postgres.yaml:17 → - monitoring-net; y networks:\n  monitoring-net:\n    external: true (ver L36-L45).
+Evidencia: /postgres/compose.yml:17 → - monitoring-net; y networks:\n  monitoring-net:\n    external: true (ver L36-L45).
 Severidad: Bajo
 Micro‑Stack — no publica puertos al host (no hay ports: en el compose del micro-stack)
-Evidencia: archivo del micro-stack no contiene bloque ports:; inspección de docker-compose.postgres.yaml:1-45 muestra volúmenes, networks y healthcheck pero sin ports:.
+Evidencia: archivo del micro-stack no contiene bloque ports:; inspección de /postgres/compose.yml:1-45 muestra volúmenes, networks y healthcheck pero sin ports:.
 Severidad: Crítico (para la regla de no-exposición; la ausencia satisface la regla)
 Micro‑Stack — no depende de DB_PORT para exposición (no aparece en .env.template)
 Evidencia: .env.template:1-12 → no contiene DB_PORT (solo DB_CONTAINER_NAME, DB_HOST, DB_NAME, DB_USER, DB_PASSWORD, etc.).
@@ -977,7 +977,7 @@ Normativa vinculante:
 - RULES.txt
 
 Contexto:
-Se ha eliminado el Infra-Stack PostgreSQL (ops/docker/docker-compose.postgres.yaml).
+Se ha eliminado el Infra-Stack PostgreSQL (ops/services/postgres/compose.yml).
 PostgreSQL debe existir exclusivamente como Micro-Stack en:
 ops/services/postgres/
 
@@ -1010,9 +1010,9 @@ Analizar:
 
 4) Análisis del diff de la rama copilot_sandbox
 Analizar específicamente:
-- Eliminación de docker-compose.postgres.yaml
-- Cambios en docker-compose.python.yml
-- Cambios en docker-compose.cron.yml
+- Eliminación de /postgres/compose.yml
+- Cambios en python/compose.yml
+- Cambios en cron/compose.yml
 - Modificaciones en config.py
 - Impacto estructural indirecto
 
@@ -1059,8 +1059,8 @@ Sección A – Análisis de volumen y persistencia
 Hecho comprobado (evidencia):
 
 El Micro‑Stack declara el volumen y lo monta en PostgreSQL:
-docker-compose.postgres.yaml (volumen y mount): docker-compose.postgres.yaml:1-200
-Bloque volumes: con postgres-data driver local: docker-compose.postgres.yaml:1-200
+/postgres/compose.yml (volumen y mount): /postgres/compose.yml:1-200
+Bloque volumes: con postgres-data driver local: /postgres/compose.yml:1-200
 La plantilla de entorno no define DB_PORT (por tanto la configuración interna usa el valor por defecto): .env.template:1-200
 Veredicto técnico sobre nombre del volumen:
 
@@ -1072,7 +1072,7 @@ Riesgo concreto de pérdida de datos:
 
 Condición detonante: nombre de volumen distinto entre infra‑stack histórico y micro‑stack actual.
 Impacto: Alto — creación de volumen nuevo vacío y pérdida de acceso a datos anteriores (salvo backup externo).
-Evidencia (micro‑stack actual): docker-compose.postgres.yaml:1-200
+Evidencia (micro‑stack actual): /postgres/compose.yml:1-200
 Sección B – Riesgo operativo real tras migración
 
 Riesgo A — volumen nuevo vacío:
@@ -1109,7 +1109,7 @@ Contenedor y red
 Confirmar que el contenedor PostgreSQL existe con el nombre esperado:
 docker ps --filter name=monitoring-postgres --format '{{.Names}} {{.Status}}'
 Confirmar que el servicio usa la red monitoring-net y que monitoring-net es external:
-Revisar compose: docker-compose.postgres.yaml:1-200
+Revisar compose: /postgres/compose.yml:1-200
 Verificar en host: docker network inspect monitoring-net
 Scripts y configuraciones
 
@@ -1503,26 +1503,26 @@ Plan: actualicé la lista TODO y extraje evidencias de los docker-compose, Docke
 
 Sección 1 — Arquitectura de Stacks
 
-Micro/Infra model: ✔ — ops/services/* contiene micro-stacks (ej. postgres), ops/docker/* contiene infra stacks. Evidencia: docker-compose.postgres.yaml:1-200 and docker-compose.cron.yml:1-200.
-Definiciones duplicadas: ✔ — sólo existe la definición postgres en postgres. Evidencia: search postgres: in ops → docker-compose.postgres.yaml:1-20.
-Residuos infra-stack eliminados: ⚠ — no hay docker-compose.postgres.yaml en el árbol actual (no existe en repo), pero hay referencias históricas en docs/prompts. Evidencia: docs/history menciona compose histórico (residuo) — history_2602.txt:1000-1040.
+Micro/Infra model: ✔ — ops/services/* contiene micro-stacks (ej. postgres), ops/docker/* contiene infra stacks. Evidencia: /postgres/compose.yml:1-200 and cron/compose.yml:1-200.
+Definiciones duplicadas: ✔ — sólo existe la definición postgres en postgres. Evidencia: search postgres: in ops → /postgres/compose.yml:1-20.
+Residuos infra-stack eliminados: ⚠ — no hay /postgres/compose.yml en el árbol actual (no existe en repo), pero hay referencias históricas en docs/prompts. Evidencia: docs/history menciona compose histórico (residuo) — history_2602.txt:1000-1040.
 Sección 2 — Redes Docker
 
-monitoring-net: external: true en compose: ✔ (declarado en los compose inspeccionados). Evidencia: docker-compose.postgres.yaml:36-45, docker-compose.cron.yml:31-36, docker-compose.python.yml:22-27.
+monitoring-net: external: true en compose: ✔ (declarado en los compose inspeccionados). Evidencia: /postgres/compose.yml:36-45, cron/compose.yml:31-36, python/compose.yml:22-27.
 Redes implícitas generadas: ⚠ — manifests declaran external: true, pero existencia/estado de la red en el host requiere verificación runtime. (Verificar con docker network inspect monitoring-net en host.) Evidencia: same files as arriba.
-Coherencia de comunicación interna: ✔ (servicios referencian monitoring-net y usan nombres de servicio para conexión interna). Evidencia: grafana → GF_SMTP_HOST=smtp-relay:587, config de DB usa DB_HOST en config.py — docker-compose.observability.yml:1-120, config.py:1-120.
+Coherencia de comunicación interna: ✔ (servicios referencian monitoring-net y usan nombres de servicio para conexión interna). Evidencia: grafana → GF_SMTP_HOST=smtp-relay:587, config de DB usa DB_HOST en config.py — observability/compose.yml:1-120, config.py:1-120.
 Sección 3 — Publicación de Puertos
 
-Ningún servicio interno publica puertos innecesarios (Postgres): ✔ — postgres no contiene ports: (no publica 5432). Evidencia: docker-compose.postgres.yaml:1-200.
+Ningún servicio interno publica puertos innecesarios (Postgres): ✔ — postgres no contiene ports: (no publica 5432). Evidencia: /postgres/compose.yml:1-200.
 Servicios que sí exponen puertos en repo: ✔ (explícitos en compose):
-Grafana expone host port: docker-compose.observability.yml:1-120 (lineas con - "${GRAFANA_PORT}:3001").
-SMTP relay expone host port: docker-compose-smtp_relay.yaml:1-120 (- "2526:587").
+Grafana expone host port: observability/compose.yml:1-120 (lineas con - "${GRAFANA_PORT}:3001").
+SMTP relay expone host port: smtp_relay/compose.yml:1-120 (- "2526:587").
 Coherencia con UFW documentado: ⚠ — UFW reglas documentadas permiten puertos (ej. 5432/5433) pero la correspondencia exacta entre reglas autorizadas por política y puertos publicados en compose requiere verificación de política/runtime. Evidencia: UFW en specs (documentación) and compose ports above (see history/docs references).
 Sección 4 — Volúmenes y Persistencia
 
-Servicios con estado declaran volúmenes: ✔ — Postgres postgres-data, Grafana grafana-data, Loki loki-data, SMTP smtp_relay_logs. Evidencia: docker-compose.postgres.yaml:12-45, docker-compose.observability.yml:1-120, docker-compose-smtp_relay.yaml:1-120.
+Servicios con estado declaran volúmenes: ✔ — Postgres postgres-data, Grafana grafana-data, Loki loki-data, SMTP smtp_relay_logs. Evidencia: /postgres/compose.yml:12-45, observability/compose.yml:1-120, smtp_relay/compose.yml:1-120.
 Volúmenes duplicados por servicio: ✔ — nombres de volumen únicos por servicio en los compose inspeccionados (no se detecta reuse accidental del mismo nombre en distinto servicio). Evidencia: búsquedas de postgres-data, grafana-data, loki-data, smtp_relay_logs.
-Coherencia nombre de volumen vs uso real: ⚠ — compose declara postgres-data pero confirmar que el volumen histórico en el host tiene ese mismo nombre y contiene datos requiere verificación en host (docker volume ls / inspección del contenido). Evidencia: docker-compose.postgres.yaml:12-45.
+Coherencia nombre de volumen vs uso real: ⚠ — compose declara postgres-data pero confirmar que el volumen histórico en el host tiene ese mismo nombre y contiene datos requiere verificación en host (docker volume ls / inspección del contenido). Evidencia: /postgres/compose.yml:12-45.
 Sección 5 — Variables de Entorno
 
 Variables obsoletas (DB_PORT): ✔ — DB_PORT no figura en .env.template (no usado en micro-stack). Evidencia: .env.template:1-200 and config.py shows default port usage.
@@ -1532,7 +1532,7 @@ Sección 6 — Scripts Operativos
 
 Backups/restore no dependen de puertos host: ✔ — backup_postgres.py y backup_restore.py usan docker exec/docker cp contra DB_CONTAINER_NAME, no DB_PORT para pg_dump/restore. Evidencia: backup_postgres.py:1-200, backup_restore.py:1-200.
 Nombres coherentes de contenedor: ⚠ — .env.template establece DB_CONTAINER_NAME=monitoring-postgres (coherente con scripts), pero confirmar que el contenedor en producción usa exactamente ese nombre requiere verificación host/runtime. Evidencia: .env.template:1-200, backup_postgres.py:1-120.
-Dependencias a rutas absolutas del host: ⚠ — infra containers mounting ../..:/opt/monitoring and log and /var/run/docker.sock (present in ops/docker/* compose) introduce host-path mounts; presence is explicit in compose but validating host path availability/permissions requires runtime checks. Evidencia: docker-compose.cron.yml:1-120, docker-compose.python.yml:1-120.
+Dependencias a rutas absolutas del host: ⚠ — infra containers mounting ../..:/opt/monitoring and log and /var/run/docker.sock (present in ops/docker/* compose) introduce host-path mounts; presence is explicit in compose but validating host path availability/permissions requires runtime checks. Evidencia: cron/compose.yml:1-120, python/compose.yml:1-120.
 Sección 7 — Imagen Base (monitoring-base)
 
 No copia artefactos innecesarios: ⚠ — Dockerfile.base does COPY . . (copies repo into image); .dockerignore excludes .env and service secrets/. Repo shows COPY . . in Dockerfile. Evidence: Dockerfile.base:1-120, .dockerignore:1-120.
@@ -1545,13 +1545,13 @@ Motivo breve: la estructura de stacks, redes y volúmenes está correctamente de
 
 Evidencias principales (resumen de enlaces)
 
-docker-compose.postgres.yaml: docker-compose.postgres.yaml:1-200
+/postgres/compose.yml: /postgres/compose.yml:1-200
 .env.template: .env.template:1-200
 backup_postgres.py: backup_postgres.py:1-200
 backup_restore.py: backup_restore.py:1-200
 config.py: config.py:1-140
-docker-compose.observability.yml (Grafana ports): docker-compose.observability.yml:1-120
-docker-compose-smtp_relay.yaml (SMTP port): docker-compose-smtp_relay.yaml:1-120
+observability/compose.yml (Grafana ports): observability/compose.yml:1-120
+smtp_relay/compose.yml (SMTP port): smtp_relay/compose.yml:1-120
 Dockerfile.base: Dockerfile.base:1-120
 .dockerignore: .dockerignore:1-120
 Documentación / historial con referencias residuales: history_2602.txt:1000-1040

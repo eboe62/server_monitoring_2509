@@ -37,7 +37,7 @@ Por cada micro-stack:
 Ejemplo:
 ```
   ops/services/postgres/
-  ├ docker-compose.yaml
+  ├ compose.yml
   ├ Dockerfile
   ├ .env.template
   ├ config/

@@ -81,7 +81,7 @@ done
 
 info "Buscando docker-compose"
 
-COMPOSE_FILES=$(find ops -name "docker-compose*.yml" -o -name "docker-compose*.yaml")
+COMPOSE_FILES=$(find ops -name "compose*.yml" -o -name "compose*.yml")
 
 if [ -z "$COMPOSE_FILES" ]; then
     warn "No se encontraron docker-compose"
@@ -123,7 +123,7 @@ else
     warn "Cronfile no encontrado"
 fi
 
-if [ -f "ops/docker/docker-compose.cron.yml" ]; then
+if [ -f "ops/stacks/cron/compose.yml" ]; then
     ok "Stack cron declarado"
 else
     warn "docker-compose cron no encontrado"

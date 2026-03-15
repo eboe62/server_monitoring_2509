@@ -157,13 +157,13 @@ No es fase de análisis. Es fase de ejecución.
 
 Archivos a crear exclusivamente:
 
-1- ops/services/postgres/docker-compose.yaml
+1- ops/services/postgres/compose.yml
 2- ops/services/postgres/.env.template
 3- ops/services/postgres/README.md
 
 Requisitos técnicos obligatorios:
 
-docker-compose.yaml:
+docker-compose.yml:
 - Imagen: mantener exactamente la versión actual detectada (postgres:14.3).
 - No cambiar versión.
 - Declarar volumen propio postgres-data (sin external).
@@ -195,7 +195,7 @@ Restricciones absolutas:
 - No refactorizar.
 - No tocar smtp_relay.
 - No modificar README raíz.
-- No modificar docker-compose.postgres.yaml existente.
+- No modificar /postgres/compose.yml existente.
 
 Entrega requerida:
 - Diff unificado completo de los tres archivos nuevos.

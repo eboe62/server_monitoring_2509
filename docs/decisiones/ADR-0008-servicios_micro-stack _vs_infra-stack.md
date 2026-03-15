@@ -25,7 +25,7 @@ Ubicación:
 
 Debe cumplir obligatoriamente:
 - Dockerfile propio
-- docker-compose.yaml propio
+- docker-compose.yml propio
 - build independiente (contexto acotado al servicio)
 - no depender de archivos fuera del directorio del servicio, salvo la imagen base común definida en ADR-0006, siempre que se respete el principio de reemplazabilidad.
 - no montar rutas absolutas del host como dependencia estructural
