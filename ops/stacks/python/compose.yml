@@ -2,7 +2,7 @@ services:
   monitoring-python:
     build:
       context: ../..
-      dockerfile: ops/stacks/Dockerfile
+      dockerfile: stacks/python/Dockerfile
     image: monitoring-python:latest
     container_name: monitoring-python
     restart: unless-stopped

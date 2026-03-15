@@ -2,7 +2,7 @@ services:
   monitoring-cron:
     build:
       context: ../..
-      dockerfile: ops/docker/Dockerfile.cron
+      dockerfile: stacks/cron/Dockerfile
     image: monitoring-cron:latest
     container_name: monitoring-cron
     restart: unless-stopped
