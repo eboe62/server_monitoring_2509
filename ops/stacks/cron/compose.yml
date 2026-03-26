@@ -3,7 +3,7 @@ services:
     build:
       context: ../../..
       dockerfile: ops/stacks/cron/Dockerfile
-    image: monitoring-cron:latest
+    image: monitoring-cron:v1.0.0
     container_name: monitoring-cron
     restart: unless-stopped
     volumes:
@@ -20,7 +20,7 @@ services:
       - /var/log:/var/log
 
       # Acceso al socket de Docker para los scripts de docker_resources.sh y .py)
-      - /var/run/docker.sock:/var/run/docker.sock
+      # - /var/run/docker.sock:/var/run/docker.sock
 
     healthcheck:
       test: ["CMD-SHELL", "ps aux | grep supercronic | grep -v grep || exit 1"]

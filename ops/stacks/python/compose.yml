@@ -3,7 +3,7 @@ services:
     build:
       context: ../../..
       dockerfile: ops/stacks/python/Dockerfile
-    image: monitoring-python:latest
+    image: monitoring-python:v1.0.0
     container_name: monitoring-python
     restart: unless-stopped
     env_file:
@@ -16,7 +16,7 @@ services:
       - /var/log:/var/log
 
       # Acceso al socket de Docker (para docker_resources.sh y .py)
-      - /var/run/docker.sock:/var/run/docker.sock
+      # - /var/run/docker.sock:/var/run/docker.sock
 
     networks:
       - monitoring-net  # Red compartida (Grafana, Loki, Postgres, SMTP relay...)
