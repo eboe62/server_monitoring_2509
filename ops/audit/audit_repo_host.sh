@@ -61,7 +61,7 @@ info "Verificando estructura del proyecto"
 
 dirs=(
     "src"
-    "ops/docker"
+    "ops/stacks"
     "ops/services"
     "scripts"
     "docs/decisiones"
@@ -365,7 +365,7 @@ fi
 
 info "Verificando uso de red monitoring-net"
 
-NO_NET=$(grep -R "services:" -n ops/docker 2>/dev/null || true)
+NO_NET=$(grep -R "services:" -n ops/stacks 2>/dev/null || true)
 
 if docker network inspect monitoring-net >/dev/null 2>&1; then
     ok "Red monitoring-net disponible"
@@ -412,7 +412,7 @@ fi
 info "Verificando scripts de hardening del host"
 
 HARDEN_SCRIPTS=(
-"/usr/local/bin/configure_docker_limits.sh"
+"/ops/deployment/configure_docker_limits.sh"
 "/opt/monitoring/scripts/apply_ssh_ratelimit.sh"
 )
 

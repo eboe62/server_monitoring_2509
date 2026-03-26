@@ -8,8 +8,12 @@ services:
     restart: always
     env_file:
       - .env
+    volumes:
+      - ./config:/config
+    secrets:
+      - smtp_user
+      - smtp_pass
     ports:
-
 #   - "127.0.0.1:2526:587"      # SMTP relay no necesita exposición acceso solo por red docker
       - "2526:587"              # Puerto expuesto en host (para debug/test manuales SMTP). Se podría eliminar la línea
     healthcheck:
@@ -45,6 +49,13 @@ services:
 
     networks:
       - monitoring-net  # Red compartida (Grafana, Loki, Postgres, SMTP relay...)
+    restart: unless-stopped
+
+secrets:
+  smtp_user:
+    file: ./secrets/smtp_user
+  smtp_pass:
+    file: ./secrets/smtp_pass
 
 networks:
   monitoring-net:

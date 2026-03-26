@@ -254,3 +254,13 @@ doctor:  ## Verifica estado del entorno
 
 	@echo ""
 	@echo "=== Fin diagnóstico ==="
+
+health:
+	@echo "=== HEALTH CHECK ==="
+	@docker ps --format "table {{.Names}}\t{{.Status}}"
+	@echo ""
+	@echo "[CHECK] Containers unhealthy:"
+	@docker ps --filter "health=unhealthy"
+	@echo ""
+	@echo "[CHECK] Restarting containers:"
+	@docker ps --filter "status=restarting"
