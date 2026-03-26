@@ -10,10 +10,10 @@ services:
     secrets:
       - smtp_user
       - smtp_pass
-    ports:
-#   - "127.0.0.1:2526:587"      # SMTP relay no necesita exposición acceso solo por red docker
-#   - "2526:587"              # Puerto expuesto en host (para debug/test manuales SMTP). Se podría eliminar la línea
 
+#    ports:
+#   - "127.0.0.1:2526:587"      # SMTP relay no necesita exposición acceso solo por red docker
+#      - "2526:587"              # Puerto expuesto en host (para debug/test manuales SMTP). Se podría eliminar la línea
 
     environment:
       SMTP_SERVER: ${SMTP_SERVER}
