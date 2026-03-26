@@ -412,7 +412,7 @@ fi
 info "Verificando scripts de hardening del host"
 
 HARDEN_SCRIPTS=(
-"/ops/deployment/configure_docker_limits.sh"
+"/opt/monitoring/ops/deployment/configure_docker_limits.sh"
 "/opt/monitoring/scripts/apply_ssh_ratelimit.sh"
 )
 

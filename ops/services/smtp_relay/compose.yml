@@ -5,35 +5,28 @@ services:
       dockerfile: Dockerfile
     container_name: ${SMTP_RELAY_CONTAINER_NAME}
     hostname: smtp-relay.local
-    restart: always
     env_file:
       - .env
-    volumes:
-      - ./config:/config
     secrets:
       - smtp_user
       - smtp_pass
     ports:
 #   - "127.0.0.1:2526:587"      # SMTP relay no necesita exposición acceso solo por red docker
-      - "2526:587"              # Puerto expuesto en host (para debug/test manuales SMTP). Se podría eliminar la línea
-    healthcheck:
-      test: ["CMD", "sh", "-c", "postfix status"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 10s
+#   - "2526:587"              # Puerto expuesto en host (para debug/test manuales SMTP). Se podría eliminar la línea
+
 
     environment:
-      - SMTP_SERVER=${SMTP_SERVER}
-      - SMTP_PORT=${SMTP_PORT}
-      - RELAYHOST=[${SMTP_SERVER}]:${SMTP_PORT}
-      - FROM_ADDRESS=${EMAIL_FROM}
-      - MYNETWORKS=127.0.0.0/8 172.16.0.0/12 [::1]/128
-      - LOG_LEVEL=debug
-      - ALLOWED_SENDER_DOMAINS=${EMAIL_DOMAIN}
-      - ALLOW_EMPTY_SENDER_DOMAINS=true
+      SMTP_SERVER: ${SMTP_SERVER}
+      SMTP_PORT: ${SMTP_PORT}
+      RELAYHOST: "[${SMTP_SERVER}]:${SMTP_PORT}"
+      FROM_ADDRESS: ${EMAIL_FROM}
+      MYNETWORKS: "127.0.0.0/8 172.16.0.0/12 [::1]/128"
+      LOG_LEVEL: debug
+      ALLOWED_SENDER_DOMAINS: ${EMAIL_DOMAIN}
+      ALLOW_EMPTY_SENDER_DOMAINS: "true"
 
     volumes:
+      - ./config:/config:ro
       # Persistencia de logs y debugging
       - smtp_relay_logs:/var/log
 
@@ -43,9 +36,14 @@ services:
       mkdir -p /var/log &&
       touch /var/log/mail.log &&
       ln -sf /proc/1/fd/1 /var/log/mail.log &&
-      rsyslogd &&
-      postfix start-fg
+      exec /scripts/run.sh
       "
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep master || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
 
     networks:
       - monitoring-net  # Red compartida (Grafana, Loki, Postgres, SMTP relay...)
