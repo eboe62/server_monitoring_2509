@@ -23,7 +23,7 @@ services:
       # - /var/run/docker.sock:/var/run/docker.sock
 
     healthcheck:
-      test: ["CMD-SHELL", "ps aux | grep supercronic | grep -v grep || exit 1"]
+      test: ["CMD-SHELL", "pidof supercronic || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
