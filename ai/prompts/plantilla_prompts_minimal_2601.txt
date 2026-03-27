@@ -79,7 +79,7 @@ Alcance del análisis:
 - Conflicto de volúmenes
 - Conflicto de nombres de contenedor
 - Conflicto de redes
-- Impacto en scripts dependientes de DB_CONTAINER_NAME
+- Impacto en scripts dependientes de POSTGRES_CONTAINER_NAME
 
 Restricciones absolutas:
 - No modificar archivos.
@@ -176,11 +176,11 @@ docker-compose.yml:
 - No modificar container_name salvo que ya exista dependencia explícita.
 
 .env.template:
-- DB_USER
-- DB_PASSWORD
-- DB_NAME
-- DB_PORT
-- DB_CONTAINER_NAME (opcional)
+- POSTGRES_USER
+- POSTGRES_PASSWORD
+- POSTGRES_NAME
+- POSTGRES_PORT
+- POSTGRES_CONTAINER_NAME (opcional)
 
 README.md:
 - Instrucciones mínimas de:

@@ -6,17 +6,35 @@ services:
     image: monitoring-python:v1.0.0
     container_name: monitoring-python
     restart: unless-stopped
+
     env_file:
-      - ../../services/smtp_relay/.env
+      - ../../services/postgres/.env
+
+    environment:
+      POSTGRES_HOST: monitoring-postgres
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_NAME}
+
     volumes:
       # Monta el proyecto para ejecutar scripts Python
-      - ../..:/opt/monitoring
+      - ../../../:/opt/monitoring
 
       # Logs del host para que los scripts puedan escribir ahí
       - /var/log:/var/log
 
       # Acceso al socket de Docker (para docker_resources.sh y .py)
       # - /var/run/docker.sock:/var/run/docker.sock
+
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c 'import psycopg2; psycopg2.connect(host=\"monitoring-postgres\", user=\"$POSTGRES_USER\", password=\"$POSTGRES_PASSWORD\", dbname=\"$POSTGRES_DB\")' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+    depends_on:
+      monitoring-postgres:
+        condition: service_started
 
     networks:
       - monitoring-net  # Red compartida (Grafana, Loki, Postgres, SMTP relay...)

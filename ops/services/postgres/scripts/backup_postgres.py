@@ -19,11 +19,11 @@ from dotenv import load_dotenv
 # ------------------------------------------------------------
 load_dotenv(os.getenv("SMTP_RELAY_ENV_PATH", "ops/services/smtp_relay/.env"))
 
-DB_USER = os.getenv("DB_USER")
-DB_PASSWORD = os.getenv("DB_PASSWORD")
+POSTGRES_USER = os.getenv("POSTGRES_USER")
+POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD")
 
-DB_NAME = os.getenv("DB_NAME")
-DB_CONTAINER_NAME = os.getenv("DB_CONTAINER_NAME")
+POSTGRES_NAME = os.getenv("POSTGRES_NAME")
+POSTGRES_CONTAINER_NAME = os.getenv("POSTGRES_CONTAINER_NAME")
 
 # Ruta en host y contenedor
 BACKUP_DIR_HOST = os.getenv("BACKUP_DIR_HOST", "ops/backups")
@@ -31,18 +31,18 @@ BACKUP_DIR_CONTAINER = "/backups"
 
 timestamp = datetime.now().strftime("%Y%m%d%H%M")
 # Nombre del archivo
-BACKUP_FILE_NAME = f"{DB_NAME}-{timestamp}.backup"
+BACKUP_FILE_NAME = f"{POSTGRES_NAME}-{timestamp}.backup"
 
 # Archivos finales
 BACKUP_FILE_HOST = f"{BACKUP_DIR_HOST}/{BACKUP_FILE_NAME}"
 BACKUP_FILE_CONTAINER = f"{BACKUP_DIR_CONTAINER}/{BACKUP_FILE_NAME}"
 
 os.makedirs(BACKUP_DIR_HOST, exist_ok=True)
-log_info(f"[🚀]: Iniciando backup de {DB_NAME}...")
+log_info(f"[🚀]: Iniciando backup de {POSTGRES_NAME}...")
 
 env = os.environ.copy()
-env["DB_USER"] = DB_USER
-env["DB_PASSWORD"] = DB_PASSWORD
+env["POSTGRES_USER"] = POSTGRES_USER
+env["POSTGRES_PASSWORD"] = POSTGRES_PASSWORD
 
 # ------------------------------------------------------------
 # Proceso principal
@@ -50,9 +50,9 @@ env["DB_PASSWORD"] = DB_PASSWORD
 try:
     subprocess.run(
         [
-            "docker", "exec", "-i", DB_CONTAINER_NAME,
-            "pg_dump", "-U", DB_USER, "-F", "c", "-b",
-            "-v", "-f", BACKUP_FILE_CONTAINER, DB_NAME
+            "docker", "exec", "-i", POSTGRES_CONTAINER_NAME,
+            "pg_dump", "-U", POSTGRES_USER, "-F", "c", "-b",
+            "-v", "-f", BACKUP_FILE_CONTAINER, POSTGRES_NAME
         ],
         check=True,
         env=env
@@ -63,14 +63,14 @@ try:
 # Notificar por mail
 # ------------------------------------------------------------
     send_email(
-        subject=f"Backup exitoso de {DB_NAME}",
+        subject=f"Backup exitoso de {POSTGRES_NAME}",
         html_content=f"Backup completado correctamente.<br>Ubicación: {BACKUP_FILE_HOST}"
              f" Para restaurar utilice: scripts/backup_restore.py"
     )
 except subprocess.CalledProcessError as e:
-    log_info(f"[❌]: Error durante el backup de {DB_NAME}: {e}")
+    log_info(f"[❌]: Error durante el backup de {POSTGRES_NAME}: {e}")
     send_email(
-        subject=f"Error en backup de {DB_NAME}",
+        subject=f"Error en backup de {POSTGRES_NAME}",
         html_content=f"Fallo en la creación del backup.<br>Detalles: {e}"
     )
     raise SystemExit(1)

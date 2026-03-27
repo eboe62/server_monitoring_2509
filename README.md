@@ -221,10 +221,10 @@ EMAIL_TO = contacto@tudominio.com
 MYNETWORKS = 127.0.0.0/8 172.16.0.0/12 [::1]/128
 
 # Configuración de la base de datos
-DB_HOST = postgres
-DB_NAME = monitoring_db
-DB_USER = user
-DB_PASSWORD = 999999999
+POSTGRES_HOST = postgres
+POSTGRES_NAME = monitoring_db
+POSTGRES_USER = user
+POSTGRES_PASSWORD = 999999999
 ```
 
 ---

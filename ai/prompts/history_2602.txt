@@ -321,7 +321,7 @@ Checklist (ordenado por criticidad)
 
 ALTA CRITICIDAD
 - Secrets per micro-stack directory exists: postgres ✗   # Missing ops/services/postgres/secrets/
-- Postgres published to host port: ops/services/postgres/compose.yml ✗   # ports: ${DB_PORT}:5432 present
+- Postgres published to host port: ops/services/postgres/compose.yml ✗   # ports: ${POSTGRES_PORT}:5432 present
 - Docker socket mounted in infra containers (cron/python): ✓ (present) — high-risk capability
 
 MEDIA CRITICIDAD
@@ -351,7 +351,7 @@ Riesgos reales (no hipotéticos) — condición exacta → impacto → medida co
 - Medida correctiva mínima: Garantizar `.dockerignore` incluya `ops/services/**/secrets/` (ya presente) y añadir verificación de build (checklist/manual) que confirme que `find / -name ".env"` dentro de la imagen devuelve vacío; documentar proceso de build y evitar builds desde contextos que contengan secretos.
 
 2) Riesgo: Exposición de PostgreSQL al exterior
-- Condición: `docker compose up` aplicado en producción con `ports: "${DB_PORT}:5432"` y firewall/ufw no bloqueando el puerto, o variable `DB_PORT` configurada con host-accessible IP.
+- Condición: `docker compose up` aplicado en producción con `ports: "${POSTGRES_PORT}:5432"` y firewall/ufw no bloqueando el puerto, o variable `POSTGRES_PORT` configurada con host-accessible IP.
 - Impacto: Alto — datos sensibles accesibles desde red pública o lateral.
 - Medida correctiva mínima: En producción, publicar el puerto sólo en 127.0.0.1 (ej. `127.0.0.1:5432:5432`) o eliminar la línea `ports` y confiar en red Docker interna; documentar explícitamente en el runbook.
 
@@ -714,18 +714,18 @@ I'll search the repo for PostgreSQL port declarations and UFW mentions, then ope
 Findings (numbered)
 
 PostgreSQL is configured to publish a host port (host binding).
-Evidence: compose.yml:12 → line shows - "${DB_PORT}:5432". Also present in compose.yml:43 → - "${DB_PORT:-5432}:5432". Severity: Crítico. Riesgo operativo real: Base de datos publicada en el host si DB_PORT se establece; posible acceso desde red host.
+Evidence: compose.yml:12 → line shows - "${POSTGRES_PORT}:5432". Also present in compose.yml:43 → - "${POSTGRES_PORT:-5432}:5432". Severity: Crítico. Riesgo operativo real: Base de datos publicada en el host si POSTGRES_PORT se establece; posible acceso desde red host.
 Infra-stack postgres compose also publishes host port.
-Evidence: /postgres/compose.yml:13 → line shows - "${DB_PORT}:5432". Severity: Crítico. Riesgo operativo real: publicación doble/alternativa desde infra stack; aumenta probabilidad de exposición.
+Evidence: /postgres/compose.yml:13 → line shows - "${POSTGRES_PORT}:5432". Severity: Crítico. Riesgo operativo real: publicación doble/alternativa desde infra stack; aumenta probabilidad de exposición.
 Default example DB port present in .env.template (non-loopback port).
-Evidence: .env.template:11 → DB_PORT=9999. Severity: Alto. Riesgo operativo real: with DB_PORT set (e.g. 9999) compose maps host port 9999 → 5432 (bind defaults to 0.0.0.0), making DB reachable from host network.
+Evidence: .env.template:11 → POSTGRES_PORT=9999. Severity: Alto. Riesgo operativo real: with POSTGRES_PORT set (e.g. 9999) compose maps host port 9999 → 5432 (bind defaults to 0.0.0.0), making DB reachable from host network.
 UFW documentation in project explicitly allows 5432/5433.
 Evidence: especificaciones/Servidor_DigitalOcean_Implementacion_260214.txt → shows sudo ufw allow 80,443,3000,3100,5432,5433/tcp. Severity: Alto. Riesgo operativo real: documented firewall rules would permit incoming traffic to PostgreSQL if applied on the host.
 No explicit bind-to-localhost host:port mapping present.
-Evidence: port mappings use ${DB_PORT}:5432 or ${DB_PORT:-5432}:5432 (see files in items 1–2) — none use 127.0.0.1:...:.... Severity: Crítico. Riesgo operativo real: default Docker port publish binds to all interfaces (0.0.0.0) unless an explicit host IP is specified.
+Evidence: port mappings use ${POSTGRES_PORT}:5432 or ${POSTGRES_PORT:-5432}:5432 (see files in items 1–2) — none use 127.0.0.1:...:.... Severity: Crítico. Riesgo operativo real: default Docker port publish binds to all interfaces (0.0.0.0) unless an explicit host IP is specified.
 Notes on runtime checks (scope limitation)
 
-I did not run docker ps or docker network inspect on the target host (no runtime access). The audit is based on repository configuration files only (as per restrictions). If docker compose was run with these files and DB_PORT set to a host port, the container port will be published to the host (bound to 0.0.0.0 by default).
+I did not run docker ps or docker network inspect on the target host (no runtime access). The audit is based on repository configuration files only (as per restrictions). If docker compose was run with these files and POSTGRES_PORT set to a host port, the container port will be published to the host (bound to 0.0.0.0 by default).
 Binary confirmation (final)
 
 Podemos pasar a Prioridad 2: No podemos pasar a Prioridad 2.
@@ -773,10 +773,10 @@ Objeto de verificación:
 1) Repositorio
 - Confirmar que ningún docker-compose publica puertos 5432/5433.
 - Confirmar que no existen expresiones:
-    "${DB_PORT}:5432"
-    "${DB_PORT:-5432}:5432"
+    "${POSTGRES_PORT}:5432"
+    "${POSTGRES_PORT:-5432}:5432"
 - Confirmar que PostgreSQL solo está conectado a red Docker interna.
-- Confirmar que DB_PORT no se usa para exposición de host.
+- Confirmar que POSTGRES_PORT no se usa para exposición de host.
 
 2) Entorno LOCAL (sin UFW)
 - Considerar que UFW no está instalado.
@@ -816,16 +816,16 @@ Limitarse exclusivamente a verificación técnica del cierre.
 ------------------------------------------
 Respuesta:
 ------------------------------------------
-Now searching the repo for any references to PostgreSQL port mappings and DB_PORT patterns.
+Now searching the repo for any references to PostgreSQL port mappings and POSTGRES_PORT patterns.
 
-Now reading .env.template to confirm whether DB_PORT is present and its line.
+Now reading .env.template to confirm whether POSTGRES_PORT is present and its line.
 
 Estado — Repositorio
 
 Hallazgo: No hay docker-compose en el repositorio que publique 5432/5433.
 Evidencia: /postgres/compose.yml:1-20 → no aparece ports: ni mapeo a 5432.
-Evidencia: .env.template:1-20 → no DB_PORT definido.
-Evidencia adicional: búsqueda dentro del árbol del proyecto devuelve referencias textuales (ai/prompts/..., documentación) pero no declaraciones de :"${DB_PORT}:5432" en archivos de compose del proyecto (ej. el único compose de Postgres en postgres no publica puerto).
+Evidencia: .env.template:1-20 → no POSTGRES_PORT definido.
+Evidencia adicional: búsqueda dentro del árbol del proyecto devuelve referencias textuales (ai/prompts/..., documentación) pero no declaraciones de :"${POSTGRES_PORT}:5432" en archivos de compose del proyecto (ej. el único compose de Postgres en postgres no publica puerto).
 Estado — Entorno LOCAL (sin UFW)
 
 Hallazgo: Basado exclusivamente en la configuración Docker del repositorio, no existe exposición de PostgreSQL al host.
@@ -885,7 +885,7 @@ Validar que el Micro-Stack:
 Define volumen persistente explícito.
 Usa red monitoring-net como external.
 No publica puertos.
-No depende de variables eliminadas (ej. DB_PORT).
+No depende de variables eliminadas (ej. POSTGRES_PORT).
 Verificar coherencia estructural:
 
 No hay duplicidad de definición de postgres.
@@ -929,8 +929,8 @@ Severidad: Medio
 Makefile: no depende del compose infra de Postgres
 Evidencia: Makefile usa BASE_DIR ?= ops/services y targets que ejecutan servicios desde services (p.e. up-services → cd $(BASE_DIR)/smtp_relay && make up); ver Makefile:1-20.
 Severidad: Bajo
-Scripts: no dependen del compose infra eliminado (solo usan DB_CONTAINER_NAME)
-Evidencia: scripts usan la variable DB_CONTAINER_NAME y comandos docker exec pero no referencian /postgres/compose.yml; ver llamadas a DB_CONTAINER_NAME en backup_postgres.py:26-53 y backup_restore.py:30-69.
+Scripts: no dependen del compose infra eliminado (solo usan POSTGRES_CONTAINER_NAME)
+Evidencia: scripts usan la variable POSTGRES_CONTAINER_NAME y comandos docker exec pero no referencian /postgres/compose.yml; ver llamadas a POSTGRES_CONTAINER_NAME en backup_postgres.py:26-53 y backup_restore.py:30-69.
 Severidad: Bajo
 Micro‑Stack (ops/services/postgres) — volumen persistente declarado explícitamente
 Evidencia: /postgres/compose.yml:13 → - postgres-data:/var/lib/postgresql/data y el bloque volumes: postgres-data: (ver L32, L41).
@@ -941,8 +941,8 @@ Severidad: Bajo
 Micro‑Stack — no publica puertos al host (no hay ports: en el compose del micro-stack)
 Evidencia: archivo del micro-stack no contiene bloque ports:; inspección de /postgres/compose.yml:1-45 muestra volúmenes, networks y healthcheck pero sin ports:.
 Severidad: Crítico (para la regla de no-exposición; la ausencia satisface la regla)
-Micro‑Stack — no depende de DB_PORT para exposición (no aparece en .env.template)
-Evidencia: .env.template:1-12 → no contiene DB_PORT (solo DB_CONTAINER_NAME, DB_HOST, DB_NAME, DB_USER, DB_PASSWORD, etc.).
+Micro‑Stack — no depende de POSTGRES_PORT para exposición (no aparece en .env.template)
+Evidencia: .env.template:1-12 → no contiene POSTGRES_PORT (solo POSTGRES_CONTAINER_NAME, POSTGRES_HOST, POSTGRES_NAME, POSTGRES_USER, POSTGRES_PASSWORD, etc.).
 Severidad: Bajo
 Coherencia estructural — duplicidad / acoplamientos accidentales
 Evidencia: no se detectan definiciones duplicadas de servicio postgres en el árbol docker ni en services (el único compose activo de Postgres es el micro-stack en postgres); la documentación/AI-prompts contienen menciones históricas pero no constituyen definición runtime. Ej.: README.md:12-13 documenta volumen y monitoring-net.
@@ -950,7 +950,7 @@ Severidad: Bajo
 Veredicto binario final
 
 Resultado: FASE 4 presenta anomalías.
-Justificación breve: la definición del Micro-Stack cumple los requisitos técnicos solicitados (volumen declarado, monitoring-net external, no publica puertos, no depende de DB_PORT), pero existen referencias residuales al compose eliminado en la documentación (ADR-0004-eliminar-version-en-docker-compose.md y algunos prompts históricos), por lo que no se cumple la condición estricta "no existe referencia residual al compose eliminado".
+Justificación breve: la definición del Micro-Stack cumple los requisitos técnicos solicitados (volumen declarado, monitoring-net external, no publica puertos, no depende de POSTGRES_PORT), pero existen referencias residuales al compose eliminado en la documentación (ADR-0004-eliminar-version-en-docker-compose.md y algunos prompts históricos), por lo que no se cumple la condición estricta "no existe referencia residual al compose eliminado".
 Fin de la auditoría.
 ==========================================
 Edición: 260222
@@ -962,7 +962,7 @@ Gestor: IA VSC Copilot
 ------------------------------------------
 Objetivo:
 ------------------------------------------
-A continuación vamos a lanzar un prompt de Análisis para evaluar lo siguiente: - ¿El volumen postgres-data es el mismo nombre que usaba el infra-stack? - ¿Se preserva persistencia tras la migración? - Hacer checklist de verificación post-corrección - Analizar impacto en scripts antes de quitar DB_PORT - Diff de la rama copilot-sandbox entregado en en ./ai/prompts/copilot_patch.txt
+A continuación vamos a lanzar un prompt de Análisis para evaluar lo siguiente: - ¿El volumen postgres-data es el mismo nombre que usaba el infra-stack? - ¿Se preserva persistencia tras la migración? - Hacer checklist de verificación post-corrección - Analizar impacto en scripts antes de quitar POSTGRES_PORT - Diff de la rama copilot-sandbox entregado en en ./ai/prompts/copilot_patch.txt
 ------------------------------------------
 Prompt:
 ------------------------------------------
@@ -999,12 +999,12 @@ Generar checklist técnico estructurado para validar:
 - Red monitoring-net correcta.
 - No duplicidad de contenedores.
 
-3) Impacto en scripts tras eliminación de DB_PORT
+3) Impacto en scripts tras eliminación de POSTGRES_PORT
 Analizar:
 - scripts/backup_postgres.py
 - scripts/backup_restore.py
 - src/monitoring/common/config.py
-- Cualquier referencia a DB_PORT.
+- Cualquier referencia a POSTGRES_PORT.
 - Posible dependencia de conexión vía localhost.
 - Riesgo de fallo en backup/restore.
 
@@ -1061,7 +1061,7 @@ Hecho comprobado (evidencia):
 El Micro‑Stack declara el volumen y lo monta en PostgreSQL:
 /postgres/compose.yml (volumen y mount): /postgres/compose.yml:1-200
 Bloque volumes: con postgres-data driver local: /postgres/compose.yml:1-200
-La plantilla de entorno no define DB_PORT (por tanto la configuración interna usa el valor por defecto): .env.template:1-200
+La plantilla de entorno no define POSTGRES_PORT (por tanto la configuración interna usa el valor por defecto): .env.template:1-200
 Veredicto técnico sobre nombre del volumen:
 
 El Micro‑Stack usa explícitamente el nombre postgres-data. Como el infra‑stack (archivo infra eliminado) no está presente en la vista actual del repositorio, no puedo inspeccionar su docker-compose histórico desde el árbol actual para afirmar de forma absoluta si el nombre previa sería exactamente igual.
@@ -1082,16 +1082,16 @@ Impacto real: Alto (datos no presentes en micro‑stack).
 Estado actual: Riesgo real — no verificable automáticamente en repo; requiere inspección del host Docker (existencia de postgres-data) para confirmar.
 Riesgo B — scripts y dependencias de nombre de contenedor:
 
-Observación: los scripts de backup/restore usan DB_CONTAINER_NAME (no dependen de DB_PORT para ejecutar pg_dump/pg_restore, ya que ejecutan docker exec dentro del contenedor).
+Observación: los scripts de backup/restore usan POSTGRES_CONTAINER_NAME (no dependen de POSTGRES_PORT para ejecutar pg_dump/pg_restore, ya que ejecutan docker exec dentro del contenedor).
 Evidencia:
-backup_postgres.py usa DB_CONTAINER_NAME y docker exec: backup_postgres.py:1-200
-backup_restore.py usa DB_CONTAINER_NAME (por defecto "monitoring-postgres") y docker cp / docker exec: backup_restore.py:1-200
+backup_postgres.py usa POSTGRES_CONTAINER_NAME y docker exec: backup_postgres.py:1-200
+backup_restore.py usa POSTGRES_CONTAINER_NAME (por defecto "monitoring-postgres") y docker cp / docker exec: backup_restore.py:1-200
 Condición detonante: el contenedor real en producción tiene un nombre distinto al esperado por los scripts.
 Impacto: Alto — backups/restore fallarán al no encontrar contenedor (operativo).
 Riesgo C — dependencia implícita de puerto para accesos externos:
 
-Observación: el Micro‑Stack no publica ports: a host (véase compose). Por tanto, la exposición a host no depende de DB_PORT en los compose del micro‑stack.
-Configuración de cliente interno: config.py lee DB_PORT (por defecto 5432) para conexiones internas: config.py:1-240
+Observación: el Micro‑Stack no publica ports: a host (véase compose). Por tanto, la exposición a host no depende de POSTGRES_PORT en los compose del micro‑stack.
+Configuración de cliente interno: config.py lee POSTGRES_PORT (por defecto 5432) para conexiones internas: config.py:1-240
 Condición detonante: si alguna integración externa espera conectarse al host por un puerto publicado, sería necesario reconfigurarla; en cambio, los scripts de backup/restore no dependen de esa publicación.
 Impacto: Medio (configuración de clientes), pero nulo respecto a backups si docker exec se usa.
 Sección C – Checklist técnico post‑corrección (verificación, no ejecución)
@@ -1113,9 +1113,9 @@ Revisar compose: /postgres/compose.yml:1-200
 Verificar en host: docker network inspect monitoring-net
 Scripts y configuraciones
 
-Confirmar valor de DB_CONTAINER_NAME en el entorno operativo (contenedor / systemd / CI):
+Confirmar valor de POSTGRES_CONTAINER_NAME en el entorno operativo (contenedor / systemd / CI):
 Revisar .env desplegada y variables de entorno del proceso.
-Confirmar que DB_PORT no está definido en .env (si no, config.py usará 5432 por defecto): .env.template:1-200
+Confirmar que POSTGRES_PORT no está definido en .env (si no, config.py usará 5432 por defecto): .env.template:1-200
 Verificar backups existentes en backups y que backup_postgres.py puede escribir ahí (permisos y path).
 Duplicidad y colisiones
 
@@ -1127,30 +1127,30 @@ Sección D – Impacto en scripts y configuración
 
 backup_postgres.py:
 
-Usa docker exec en DB_CONTAINER_NAME para ejecutar pg_dump. No depende de DB_PORT ni de que PostgreSQL esté publicado al host.
+Usa docker exec en POSTGRES_CONTAINER_NAME para ejecutar pg_dump. No depende de POSTGRES_PORT ni de que PostgreSQL esté publicado al host.
 Evidencia: backup_postgres.py:1-200
 Impacto: si el contenedor existe con el nombre esperado y monta el volumen correcto, backups funcionarán; si el nombre o montaje difieren, los scripts fallarán.
 backup_restore.py:
 
-Usa docker cp y docker exec con DB_CONTAINER_NAME (por defecto "monitoring-postgres"); restaura dentro del contenedor.
+Usa docker cp y docker exec con POSTGRES_CONTAINER_NAME (por defecto "monitoring-postgres"); restaura dentro del contenedor.
 Evidencia: backup_restore.py:1-200
 Impacto: idem backup — dependencia de nombre de contenedor.
 config.py:
 
-Lee DB_PORT (valor por defecto 5432) y el resto de la configuración desde entorno / .env en tiempo de ejecución mediante init_config().
+Lee POSTGRES_PORT (valor por defecto 5432) y el resto de la configuración desde entorno / .env en tiempo de ejecución mediante init_config().
 Evidencia: config.py:1-240
-Impacto: ausencia de DB_PORT en .env implicará uso de 5432 internamente; esto es consistente si los servicios se comunican por la red Docker interna y no por host-published ports.
+Impacto: ausencia de POSTGRES_PORT en .env implicará uso de 5432 internamente; esto es consistente si los servicios se comunican por la red Docker interna y no por host-published ports.
 Resumen del impacto en scripts:
 
-Los scripts no requieren publicación de puerto en host (no usan DB_PORT para pg_dump/pg_restore porque usan docker exec).
-El riesgo operativo más relevante para scripts es inconsistencia del valor DB_CONTAINER_NAME o montajes de volumen incorrectos.
+Los scripts no requieren publicación de puerto en host (no usan POSTGRES_PORT para pg_dump/pg_restore porque usan docker exec).
+El riesgo operativo más relevante para scripts es inconsistencia del valor POSTGRES_CONTAINER_NAME o montajes de volumen incorrectos.
 Conclusión final (seleccione una): Migración con riesgos
 
 Motivación breve:
 
 El Micro‑Stack actual cumple los requisitos técnicos principales (volumen postgres-data declarado y montado, monitoring-net usado, no hay ports: publicado en el compose inspeccionado).
 Sin embargo, no puedo garantizar al 100% que la persistencia histórica se preserve porque el infra‑stack anterior no está disponible para comparación en el árbol actual; si el nombre del volumen previo difiere, se creará un volumen nuevo vacío (riesgo Alto).
-Además, los scripts operativos dependen del nombre del contenedor (DB_CONTAINER_NAME) — si difiere, habrá fallo operativo en backups/restores (riesgo Alto).
+Además, los scripts operativos dependen del nombre del contenedor (POSTGRES_CONTAINER_NAME) — si difiere, habrá fallo operativo en backups/restores (riesgo Alto).
 Por tanto la migración técnica es funcional pero presenta riesgos operativos concretos que deben verificarse en el host antes de considerarla segura.
 Si quieres, puedo:
 
@@ -1214,7 +1214,7 @@ Afecta a: Sección A + B
 Si hay dos volúmenes distintos → inconsistencia grave.
 
 🔴 PRIORIDAD 2 – DEPENDENCIA DE NOMBRE DE CONTENEDOR (Sección B + D)
-3️⃣ Verificar que el nombre real del contenedor coincide con DB_CONTAINER_NAME
+3️⃣ Verificar que el nombre real del contenedor coincide con POSTGRES_CONTAINER_NAME
 
 Afecta a: Sección B – Riesgo B
 Afecta a: Sección D – Impacto en scripts
@@ -1240,7 +1240,7 @@ Afecta a: Sección C – Contenedor y red
 
 Si existe red implícita → arquitectura incoherente.
 
-🟠 PRIORIDAD 4 – DB_PORT ELIMINADO (Sección D)
+🟠 PRIORIDAD 4 – POSTGRES_PORT ELIMINADO (Sección D)
 5️⃣ Confirmar que ningún script depende de conexión por host:port
 
 Afecta a: Sección D
@@ -1272,7 +1272,7 @@ Volumen correcto	❌ pendiente verificación
 Persistencia preservada	❌ pendiente verificación
 Nombre contenedor coherente	❌ pendiente verificación
 Red monitoring-net correcta	⚠ verificar
-DB_PORT eliminado	✔ correcto
+POSTGRES_PORT eliminado	✔ correcto
 Exposición host cerrada	✔ correcto
 UFW corregido	✔ correcto
 🎯 Conclusión realista
@@ -1309,9 +1309,9 @@ Gestor: ChatGPT
 Prompt:
 ------------------------------------------
 PRIORIDAD 1 – PERSISTENCIA DE DATOS (Sección A) si fuera necesario --> El volumen historicamente se llamaba postgres-data. Se da por válido
-PRIORIDAD 2 – DEPENDENCIA DE NOMBRE DE CONTENEDOR (Sección B + D) --> La variable container_name: ${DB_CONTAINER_NAME} está definida en .env
+PRIORIDAD 2 – DEPENDENCIA DE NOMBRE DE CONTENEDOR (Sección B + D) --> La variable container_name: ${POSTGRES_CONTAINER_NAME} está definida en .env
 PRIORIDAD 3 – COHERENCIA DE RED (Sección C) -->  todos los docker-compose está configurados como monitoring-net: external: true
-PRIORIDAD 4 – DB_PORT ELIMINADO (Sección D) --> DB_PORT ha sido eliminado y DB_HOST=postgres
+PRIORIDAD 4 – POSTGRES_PORT ELIMINADO (Sección D) --> POSTGRES_PORT ha sido eliminado y POSTGRES_HOST=postgres
 PRIORIDAD 5 – DUPLICIDAD Y RESIDUOS (Sección C) --> no existe contenedor legacy activo ni volumen alternativo histórico.
 
 Dame el checklist tick / cross consolidado en base a lo visto para proceder con lo que corresponda. Cual sería el paso siguiente?
@@ -1338,9 +1338,9 @@ Estado: CERRADO
 
 🔴 PRIORIDAD 2 – Nombre de contenedor (Sección B + D)
 
-✔ container_name: ${DB_CONTAINER_NAME} definido en .env
+✔ container_name: ${POSTGRES_CONTAINER_NAME} definido en .env
 
-✔ Scripts usan DB_CONTAINER_NAME
+✔ Scripts usan POSTGRES_CONTAINER_NAME
 
 ✔ No hay colisión de nombre
 
@@ -1356,15 +1356,15 @@ Estado: CERRADO
 
 ✔ No existen redes implícitas duplicadas
 
-✔ Comunicación interna vía DB_HOST=postgres
+✔ Comunicación interna vía POSTGRES_HOST=postgres
 
 ✔ No hay publicación de puertos
 
 Estado: CERRADO
 
-🟠 PRIORIDAD 4 – Eliminación de DB_PORT (Sección D)
+🟠 PRIORIDAD 4 – Eliminación de POSTGRES_PORT (Sección D)
 
-✔ DB_PORT eliminado del .env
+✔ POSTGRES_PORT eliminado del .env
 
 ✔ No hay ports: en compose
 
@@ -1510,7 +1510,7 @@ Sección 2 — Redes Docker
 
 monitoring-net: external: true en compose: ✔ (declarado en los compose inspeccionados). Evidencia: /postgres/compose.yml:36-45, cron/compose.yml:31-36, python/compose.yml:22-27.
 Redes implícitas generadas: ⚠ — manifests declaran external: true, pero existencia/estado de la red en el host requiere verificación runtime. (Verificar con docker network inspect monitoring-net en host.) Evidencia: same files as arriba.
-Coherencia de comunicación interna: ✔ (servicios referencian monitoring-net y usan nombres de servicio para conexión interna). Evidencia: grafana → GF_SMTP_HOST=smtp-relay:587, config de DB usa DB_HOST en config.py — observability/compose.yml:1-120, config.py:1-120.
+Coherencia de comunicación interna: ✔ (servicios referencian monitoring-net y usan nombres de servicio para conexión interna). Evidencia: grafana → GF_SMTP_HOST=smtp-relay:587, config de DB usa POSTGRES_HOST en config.py — observability/compose.yml:1-120, config.py:1-120.
 Sección 3 — Publicación de Puertos
 
 Ningún servicio interno publica puertos innecesarios (Postgres): ✔ — postgres no contiene ports: (no publica 5432). Evidencia: /postgres/compose.yml:1-200.
@@ -1525,13 +1525,13 @@ Volúmenes duplicados por servicio: ✔ — nombres de volumen únicos por servi
 Coherencia nombre de volumen vs uso real: ⚠ — compose declara postgres-data pero confirmar que el volumen histórico en el host tiene ese mismo nombre y contiene datos requiere verificación en host (docker volume ls / inspección del contenido). Evidencia: /postgres/compose.yml:12-45.
 Sección 5 — Variables de Entorno
 
-Variables obsoletas (DB_PORT): ✔ — DB_PORT no figura en .env.template (no usado en micro-stack). Evidencia: .env.template:1-200 and config.py shows default port usage.
-Coherencia .env.template vs uso en código: ✔ — config.py lee DB_HOST/DB_PORT/DB_NAME/... y .env.template contiene DB_HOST/DB_NAME/DB_USER/DB_PASSWORD/DB_CONTAINER_NAME. Evidencia: .env.template:1-200, config.py:1-140.
+Variables obsoletas (POSTGRES_PORT): ✔ — POSTGRES_PORT no figura en .env.template (no usado en micro-stack). Evidencia: .env.template:1-200 and config.py shows default port usage.
+Coherencia .env.template vs uso en código: ✔ — config.py lee POSTGRES_HOST/POSTGRES_PORT/POSTGRES_NAME/... y .env.template contiene POSTGRES_HOST/POSTGRES_NAME/POSTGRES_USER/POSTGRES_PASSWORD/POSTGRES_CONTAINER_NAME. Evidencia: .env.template:1-200, config.py:1-140.
 Secrets versionados en repo: ✔ — no ficheros ops/services/*/secrets/ presentes en el árbol principal; .dockerignore excluye ops/services/**/secrets/. Evidencia: .dockerignore:1-120 and repo search (no secrets files found under ops/services/...).
 Sección 6 — Scripts Operativos
 
-Backups/restore no dependen de puertos host: ✔ — backup_postgres.py y backup_restore.py usan docker exec/docker cp contra DB_CONTAINER_NAME, no DB_PORT para pg_dump/restore. Evidencia: backup_postgres.py:1-200, backup_restore.py:1-200.
-Nombres coherentes de contenedor: ⚠ — .env.template establece DB_CONTAINER_NAME=monitoring-postgres (coherente con scripts), pero confirmar que el contenedor en producción usa exactamente ese nombre requiere verificación host/runtime. Evidencia: .env.template:1-200, backup_postgres.py:1-120.
+Backups/restore no dependen de puertos host: ✔ — backup_postgres.py y backup_restore.py usan docker exec/docker cp contra POSTGRES_CONTAINER_NAME, no POSTGRES_PORT para pg_dump/restore. Evidencia: backup_postgres.py:1-200, backup_restore.py:1-200.
+Nombres coherentes de contenedor: ⚠ — .env.template establece POSTGRES_CONTAINER_NAME=monitoring-postgres (coherente con scripts), pero confirmar que el contenedor en producción usa exactamente ese nombre requiere verificación host/runtime. Evidencia: .env.template:1-200, backup_postgres.py:1-120.
 Dependencias a rutas absolutas del host: ⚠ — infra containers mounting ../..:/opt/monitoring and log and /var/run/docker.sock (present in ops/docker/* compose) introduce host-path mounts; presence is explicit in compose but validating host path availability/permissions requires runtime checks. Evidencia: cron/compose.yml:1-120, python/compose.yml:1-120.
 Sección 7 — Imagen Base (monitoring-base)
 
@@ -1655,9 +1655,9 @@ Estado: Estructuralmente correcto
 
 5️⃣ Variables de Entorno
 
-✔ DB_PORT eliminado
+✔ POSTGRES_PORT eliminado
 
-✔ DB_HOST=postgres
+✔ POSTGRES_HOST=postgres
 
 ✔ .env.template coherente
 
@@ -1673,7 +1673,7 @@ Estado: Correcto
 
 ✔ No dependencia de puerto host
 
-✔ Uso de DB_CONTAINER_NAME
+✔ Uso de POSTGRES_CONTAINER_NAME
 
 ⚠ Confirmar nombre real en producción
 

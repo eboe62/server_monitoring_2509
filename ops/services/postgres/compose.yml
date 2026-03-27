@@ -1,14 +1,14 @@
 services:
   postgres:
     image: postgres:14.3
-    container_name: ${DB_CONTAINER_NAME}
+    container_name: ${POSTGRES_CONTAINER_NAME}
     restart: unless-stopped
     env_file:
       - .env
     environment:
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_NAME}
     volumes:
       - postgres-data:/var/lib/postgresql/data
       - ./backups:/backups            # backup host-bind relativo al micro-stack
@@ -17,7 +17,7 @@ services:
       - monitoring-net # Red compartida (Grafana, Loki, Postgres, SMTP relay...)
     # Añadido healthcheck para detectar cuando la BBDD no está operativa
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_NAME}"]
       interval: 30s               # cada cuánto se prueba
       timeout: 10s                # cuánto espera la prueba
       retries: 5                  # cuántos fallos consecutivos para marcar unhealthy
