@@ -10,12 +10,6 @@ services:
     env_file:
       - ../../services/postgres/.env
 
-    environment:
-      POSTGRES_HOST: monitoring-postgres
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_NAME}
-
     volumes:
       # Monta el proyecto para ejecutar scripts Python
       - ../../../:/opt/monitoring
@@ -31,10 +25,6 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-
-    depends_on:
-      monitoring-postgres:
-        condition: service_started
 
     networks:
       - monitoring-net  # Red compartida (Grafana, Loki, Postgres, SMTP relay...)
