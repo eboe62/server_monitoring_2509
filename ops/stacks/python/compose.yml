@@ -7,9 +7,6 @@ services:
     container_name: monitoring-python
     restart: unless-stopped
 
-    env_file:
-      - ../../services/postgres/.env
-
     volumes:
       # Monta el proyecto para ejecutar scripts Python
       - ../../../:/opt/monitoring

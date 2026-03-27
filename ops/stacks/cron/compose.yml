@@ -29,10 +29,6 @@ services:
       timeout: 10s
       retries: 3
 
-    depends_on:
-      loki:
-        condition: service_started
-
     networks:
       - monitoring-net  # Red compartida (Grafana, Loki, Postgres, SMTP relay...)
 
