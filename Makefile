@@ -265,39 +265,3 @@ health:
 	@echo "[CHECK] Restarting containers:"
 	@docker ps --filter "status=restarting"
 
-cd /opt/monitoring/
-nano ops/services/postgres/.env
-make phase4-init
-make monitoring-net
-make deploy
-make help
-make stack-up STACK=postgres
-make stack-up STACK=smtp_relay
-make stack-up STACK=python
-make stack-up STACK=cron
-make stack-up STACK=observability
-docker ps
-docker ps --format "table {{.Names}}\t{{.Ports}}"
-make doctor
-make audit
-ss -tulpn
-sudo ufw status verbose
-docker volume ls
-sudo fail2ban-client status
-make health
-ls -l /opt/monitoring/scripts
-docker network inspect monitoring-net
-docker exec monitoring-python getent hosts monitoring-postgres
-docker inspect monitoring-cron | grep docker.sock
-docker inspect monitoring-python | grep docker.sock
-docker exec -it monitoring-python ping monitoring-postgres
-cat ops/stacks/observability/compose.yml | grep "image:"
-cat ops/stacks/cron/compose.yml | grep "test"
-docker exec -it monitoring-cron sh
-python3 -m log_ingestor.log_honeypot_geolocation
-exit
-docker inspect monitoring-cron | grep -i cron
-docker exec monitoring-cron ps aux
-docker logs monitoring-cron | tail -n 20
-find . -not -path '*/.git*' | sed -e 's;[^/]*/;|____;g;s;____|; |;g'
-sudo git log --oneline --decorate --graph --all -n 25
