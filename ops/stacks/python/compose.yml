@@ -7,6 +7,12 @@ services:
     container_name: monitoring-python
     restart: unless-stopped
 
+    env_file:
+      - ../../services/postgres/.env
+
+    environment:
+      POSTGRES_HOST: monitoring-postgres
+
     volumes:
       # Monta el proyecto para ejecutar scripts Python
       - ../../../:/opt/monitoring
@@ -18,7 +24,7 @@ services:
       # - /var/run/docker.sock:/var/run/docker.sock
 
     healthcheck:
-      test: ["CMD-SHELL", "python3 -c 'import psycopg2; psycopg2.connect(host=\"monitoring-postgres\", user=\"$POSTGRES_USER\", password=\"$POSTGRES_PASSWORD\", dbname=\"$POSTGRES_DB\")' || exit 1"]
+      test: ["CMD-SHELL", "python3 -c 'import os, psycopg2; psycopg2.connect(host=os.getenv(\"POSTGRES_HOST\"), user=os.getenv(\"POSTGRES_USER\"), password=os.getenv(\"POSTGRES_PASSWORD\"), dbname=os.getenv(\"POSTGRES_NAME\"))' || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
