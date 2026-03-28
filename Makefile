@@ -265,3 +265,38 @@ health:
 	@echo "[CHECK] Restarting containers:"
 	@docker ps --filter "status=restarting"
 
+# ------------------------------------------
+# Debug / Operabilidad
+# ------------------------------------------
+
+debug-shell: ## Acceso shell a contenedor (STACK obligatorio)
+	$(call validate_stack)
+	@echo "=== Debug shell en $(STACK) ==="; \
+	docker exec -it monitoring-$(STACK) sh || echo "[ERROR] contenedor no disponible"
+
+debug-net: ## Verifica resolución DNS entre contenedores
+	@echo "=== Test DNS interno ==="
+	@docker exec monitoring-python getent hosts monitoring-postgres || echo "[ERROR] DNS fallo"
+
+debug-ports: ## Ver puertos expuestos en host
+	@echo "=== Puertos escuchando en host ==="
+	ss -tulpn
+
+debug-docker: ## Estado detallado Docker
+	@echo "=== Docker inspect resumido ==="
+	@docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+
+debug-logs: ## Logs rápidos de todos los contenedores
+	@for c in $$(docker ps --format '{{.Names}}'); do \
+		echo "===== $$c ====="; \
+		docker logs $$c --tail=50; \
+	done
+
+debug-exec: ## Ejecutar comando en contenedor (STACK + CMD)
+	$(call validate_stack)
+	@if [ -z "$(CMD)" ]; then \
+		echo "[ERROR] Debe especificar CMD='comando'"; \
+		exit 1; \
+	fi; \
+	docker exec -it monitoring-$(STACK) sh -c "$(CMD)"
+
