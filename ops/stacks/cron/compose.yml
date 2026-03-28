@@ -3,9 +3,13 @@ services:
     build:
       context: ../../..
       dockerfile: ops/stacks/cron/Dockerfile
+
     image: monitoring-cron:v1.0.0
     container_name: monitoring-cron
     restart: unless-stopped
+
+    env_file:
+      - ../../services/postgres/.env
 
     volumes:
       # Montamos el cronfile en la ruta que espera supercronic
