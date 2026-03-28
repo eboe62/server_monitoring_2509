@@ -269,10 +269,16 @@ health:
 # Debug / Operabilidad
 # ------------------------------------------
 
-debug-shell: ## Acceso shell a contenedor (STACK obligatorio)
-	$(call validate_stack)
-	@echo "=== Debug shell en $(STACK) ==="; \
-	docker exec -it monitoring-$(STACK) sh || echo "[ERROR] contenedor no disponible"
+debug-shell: ## Acceso shell a contenedor (STACK opcional)
+	@STACK_NAME=$${STACK:-python}; \
+	if ! echo "$(STACKS)" | grep -w "$$STACK_NAME" >/dev/null; then \
+		echo "[ERROR] STACK inválido: $$STACK_NAME"; \
+		echo "Stacks disponibles: $(STACKS)"; \
+		exit 1; \
+	fi; \
+	echo "=== Debug shell en $$STACK_NAME ==="; \
+	docker exec -it monitoring-$$STACK_NAME sh || \
+	echo "[ERROR] contenedor no disponible"
 
 debug-net: ## Verifica resolución DNS entre contenedores
 	@echo "=== Test DNS interno ==="
@@ -292,11 +298,37 @@ debug-logs: ## Logs rápidos de todos los contenedores
 		docker logs $$c --tail=50; \
 	done
 
-debug-exec: ## Ejecutar comando en contenedor (STACK + CMD)
-	$(call validate_stack)
-	@if [ -z "$(CMD)" ]; then \
+debug-exec: ## Ejecutar comando en contenedor (STACK opcional)
+	@STACK_NAME=$${STACK:-python}; \
+	if ! echo "$(STACKS)" | grep -w "$$STACK_NAME" >/dev/null; then \
+		echo "[ERROR] STACK inválido: $$STACK_NAME"; \
+		exit 1; \
+	fi; \
+	if [ -z "$(CMD)" ]; then \
 		echo "[ERROR] Debe especificar CMD='comando'"; \
 		exit 1; \
 	fi; \
-	docker exec -it monitoring-$(STACK) sh -c "$(CMD)"
+	echo "=== Ejecutando en $$STACK_NAME ==="; \
+	docker exec -it monitoring-$$STACK_NAME sh -c "$(CMD)"
 
+# ------------------------------------------
+# Debug container (toolbox)
+# ------------------------------------------
+
+DEBUG_IMAGE = nicolaka/netshoot
+DEBUG_CONTAINER = monitoring-debug
+
+debug-toolbox-up: ## Levanta contenedor de debugging en monitoring-net
+	@echo "=== Iniciando contenedor debug ==="
+	@docker rm -f $(DEBUG_CONTAINER) >/dev/null 2>&1 || true
+	@docker run -d --name $(DEBUG_CONTAINER) \
+		--network monitoring-net \
+		$(DEBUG_IMAGE) sleep infinity
+	@echo "[OK] contenedor debug activo"
+
+debug-toolbox-shell: ## Shell en contenedor debug
+	@docker exec -it $(DEBUG_CONTAINER) sh
+
+debug-toolbox-down: ## Elimina contenedor debug
+	@docker rm -f $(DEBUG_CONTAINER) || true
+	@echo "[OK] contenedor debug eliminado"

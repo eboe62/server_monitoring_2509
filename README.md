@@ -10,67 +10,62 @@
 
 ## 📖 Descripción general
 
-**Monitoring Stack 2511** es un plataforma modular de **monitorización y observabilidad 100% contenerizada (IaC = Infrastructure as Code)** para servidores Linux desplegada en un servidor **DigitalOcean**.
+**Monitoring Stack 2511** es una plataforma modular de **monitorización y observabilidad 100% contenerizada (IaC = Infrastructure as Code)** para servidores Linux desplegada en un servidor **DigitalOcean**.
 
-Incluye componentes para análisis de seguridad, ingesta de eventos,
-monitorización de recursos y servicios auxiliares listos para
-producción.
-
-Inicialmente, la BBDD se gestionaba mediante **CapRover**, pero tras un incidente de redirección no autorizada (“cashmachine.ie”), se migró a un contenedor propio.
-La antigua BBDD se mantiene ahora como **honeypot**, permitiendo detectar intentos de acceso o manipulación externos.
+Incluye:
+- Observabilidad (Grafana + Loki + Promtail)
+- Ingesta y análisis de logs
+- Monitorización de recursos
+- Alertas por correo
+- Honeypot PostgreSQL para detección de ataques
 
 ---
 
 ## 📖 Modelo de ejecución
 
-PRINCIPIO FUNDAMENTAL:
+### Principio fundamental (IaC)
 
-El entorno PRO sigue estrictamente Infraestructura como Código (IaC):
-
-1. El host no ejecuta lógica de aplicación.
-2. El host SOLO gestiona contenedores Docker.
-3. El estado del sistema se define únicamente por:
-   - el repositorio
-   - las imágenes Docker
-   - los volúmenes declarados
+1. El host **no ejecuta lógica de aplicación**
+2. El host **solo gestiona Docker**
+3. El estado se define por:
+   - repositorio
+   - imágenes Docker
+   - volúmenes declarados
 4. Toda ejecución de código ocurre dentro de:
     - monitoring-python
     - monitoring-cron
 5. No existen dependencias implícitas del sistema operativo.
 6. No se permiten ejecuciones manuales fuera del modelo declarativo.
 
-REGLA ARQUITECTONICA:
+### Regla arquitectónica
 
+✔ Correcto:
 - Ningún archivo Python se ejecuta por ruta absoluta.
 - Siempre se ejecuta mediante: python3 -m paquete.modulo
 
 Comando válido:
 docker exec -it monitoring-python python3 -m log_ingestor.alert_risk
 
-Comando prohibido:
+❌ Prohibido:
 python3 src/log_ingestor/alert_risk.py
 /usr/bin/python3 ...
 
 ---
 
-## 🧩 Características principales
+## 🧩 Componentes principales
 
-El sistema integra modularmente:
--   **Ingesta y análisis de logs** del sistema (kernel, fail2ban, honeypot, etc.)
--   Procesamiento por lotes y normalización de eventos
--  **Monitorización de recursos Docker** (CPU, RAM, IO, contenedores, etc.)
--   Servicios complementarios:
-    -   SMTP Relay independiente
-    -   Cronjobs integrados
-    -   Despliegue automatizado
-    -   Docker Compose modular
-    -   **Alertas por correo**
-    -   **Honeypot Postgres** para detección temprana de ataques
--   Estructura profesional y escalable orientada a microservicios
+Aplicación (Micro-Stacks Autónomos)
+- postgres → base de datos
+- smtp-relay → envío de alertas
+
+Runtime Interno (Infra-Stacks)
+- monitoring-python → ejecución lógica
+- monitoring-cron → scheduling (Supercronic)
+- observability → Grafana + Loki + Promtail
 
 ------------------------------------------------------------------------
 
-## 🏗️ Infraestructura en servidor
+## 🏗️ Infraestructura
 - Denominación:         `eob-250501a`
 - Proveedor:            DigitalOcean
 - Tipo de servidor:     Droplet virtualizado (KVM) – "DO-Regular"
@@ -80,9 +75,8 @@ El sistema integra modularmente:
 - RAM:                  2 GB
 - Almacenamiento:       48 GB SSD (ext4) → /dev/vda1
 - ip pública:           165.22.87.56
-
-Ruta de instalación:
-`/opt/monitoring`
+- Disk: 48GB SSD
+- Ruta: /opt/monitoring
 
 Repositorio:
 [https://github.com/eboe62/server_monitoring_2509.git](https://github.com/eboe62/server_monitoring_2509.git)
@@ -92,10 +86,11 @@ Rama: `develop`
 
 ## ⚙️ Requisitos previos
 
-- Docker y Docker Compose instalados
+- Docker
+- Docker Compose v2
+- Git
 - Python ≥ 3.12
 - Acceso root al servidor
-- Git configurado con credenciales válidas
 
 ---
 
@@ -109,26 +104,28 @@ Rama: `develop`
     ├ config/                   # Configuración (Loki, Promtail…)
     ├ docs/                     # Documentación técnica y ADRs
     ├ ops/                      # Infraestructura como código / DevOps
-    │ ├ cron/                   # Definicion de cronjob y tareas independiente del core
     │ ├ deployment/             # setup_symlinks
-    │ ├ docker/                 # Gestión de contenedores
-    │ │ ├ Dockerfile.base       # Imagen base común
-    │ │ ├ cron                  # Servicio cron específico del stack
-    │ │ ├ observability         # Configuración de Loki, Promtail y Grafana
-    │ │ ├ postgres              # Servicio BBDD PostgreSQL específico del stack
-    │ │ └ python                # Servicio python específico del stack
+    │ ├ images/
+    │ │ └ base                  # Imagen base común
+    │ ├ stacks/                 # Gestión de contenedores
+    │ │ ├ python                # Servicio python específico del stack
+    │ │ │ └ compose.yml
+    │ │ ├ cron                  # Definicion de cronjob y tareas independiente del core
+    │ │ │ └ compose.yml
+    │ │ └ observability         # Configuración de Loki, Promtail y Grafana
+    │ │   └ compose.yml
     │ └ services/
-    │   ├ smtp_relay/           # Servicio Postfix SMTP-relay para alertas
-    │   └ postgres/             # Micro-stack autónomo PostgreSQL
-    │     ├ compose.yml
+    │   ├ postgres/             # Micro-stack autónomo Servicio BBDD PostgreSQL
+    │   │ ├ .env.template
+    │   │ └ compose.yml
+    │   └ smtp_relay/           # Micro-stack autónomo Servicio Postfix SMTP-relay para alertas
     │     ├ .env.template
-    │     ├ init/
-    │     └ volumes/ (no versionado)
+    │     └ compose.yml
     ├ resources/                # Artefactos generados (logs_summary, etc.)
     ├ scripts/                  # Wrappers bash para tareas periódicas
     ├ src/                      # Código fuente Python ejecutable como módulos (-m)
-    │ ├ common/                 # Utilidades comunes
     │ ├ log_ingestor/           # Scripts Python para ingesta y procesado de logs
+    │ ├ common/                 # Utilidades comunes
     │ └ resource_monitor/       # Monitorización de recursos Docker
     └ tests/                    # Pruebas de funcionalidad
 ```
@@ -140,12 +137,9 @@ El entorno utiliza exclusivamente volúmenes Docker locales para la persistencia
 PostgreSQL se define como micro-stack autónomo, con sus propios volúmenes declarados en ops/services/postgres/compose.yml.
 
 La persistencia de la base de datos queda desacoplada del resto de servicios y puede ser transferida de forma independiente mediante:
-
-dump lógico (pg_dump)
-
-restauración en nuevo servidor
-
-recreación declarativa del micro-stack
+- dump lógico (pg_dump)
+- restauración en nuevo servidor
+- recreación declarativa del micro-stack
 
 No se emplea Block Storage externo ni servicios gestionados de persistencia.
 
@@ -259,22 +253,7 @@ Permite envío de alertas desde cualquier componente del sistema.
 
 ---
 
-## 🚀 Instalación
-
-```bash
-Clonar el repositorio:
-
-cd /opt/monitoring
-git clone https://github.com/eboe62/server_monitoring_2509.git
-Configurar variables de entorno y credenciales según cada servicio (ejemplo para SMTP Relay):
-
-cd /opt/monitoring
-nano ops/services/smtp_relay/.env
-
-Dar permisos a los scripts:
-chmod +x ./scripts/*.sh
-
-Configuración del host
+## ▶️ Configuración del host
 El proyecto sigue el principio de Infraestructura como Código y no utiliza cron del host para ejecutar lógica de aplicación.
 
 Todas las tareas programadas relacionadas con la aplicación se ejecutan dentro del contenedor monitoring-cron mediante Supercronic.
@@ -300,49 +279,96 @@ Ejemplo de ejecución manual:
     # Configuramos la prevención de saturación por ataques masivos
     @reboot /opt/monitoring/scripts/apply_ssh_ratelimit.sh > /var/log/apply_ssh_ratelimit.log 2>&1
 
-```
+---
+
+## ▶️ Clonar el repositorio:
+
+```bash
+cd /opt/monitoring
+git clone https://github.com/eboe62/server_monitoring_2509.git
+Configurar variables de entorno y credenciales según cada servicio (ejemplos .env.template):
+
+cd /opt/monitoring
+nano ops/services/smtp_relay/.env
+
+Dar permisos a los scripts:
+chmod +x ./scripts/*.sh
+
+
+## 🚀 Despliegue completo por stacks
+
+```bash
+cd /opt/monitoring/
+make phase4-init
+make stack-up STACK=postgres
+make stack-up STACK=smtp_relay
+make stack-up STACK=python
+make stack-up STACK=cron
+make stack-up STACK=observability
+
+Ejecuta la reconstrucción completa, levanta los servicios SMTP, Python, Cron.
+Tras el despliegue, verificar los contenedores activos:
+docker ps
+
+---
+
+## ▶️ Parar un stack
+
+make stack-down STACK=xxx
+
+---
+## ▶️ Reiniciar
+
+make stack-restart STACK=xxx
+
+---
+
+# 📊 VALORACIÓN DE ESTADO
+
+## ▶️ Estado global
+
+make doctor
+
+Incluye:
+- Docker instalado
+- contenedores activos
+- red
+- disco
+- volúmenes
+
+---
+
+## ▶️ Salud de contenedores
+
+make health
+
+Verifica:
+- containers unhealthy
+- restarting
+
+---
+
+## ▶️ Estado de un stack
+
+make stack-status STACK=xxx
+
+---
+
 ## 🚀 Uso
 
 El proyecto incorpora un **Makefile global** que permite construir, desplegar y gestionar los contenedores principales sin necesidad de recordar comandos largos de Docker.
 Basta con anteponer la palabra `make` al comando correspondiente.
 
 ```
-▶️ Levantar el servicio de email para el envío de alertas
-cd /opt/monitoring/ops/services/smtp_relay
-make up
 
-Inicia el contenedor SMTP Relay encargado del envío de alertas y notificaciones por correo.
-```
-```
-▶️ Despliegue completo de todo el stack (SMTP, Python, Cron)
-cd /opt/monitoring
-make deploy
+## ▶️ Logs globales
 
-Ejecuta la reconstrucción completa, levanta los servicios SMTP, Python y Cron, y muestra los últimos logs al finalizar.
-Tras el despliegue, verificar los contenedores activos:
-docker ps
-```
-```
-▶️ Verificar logs:
 make logs
 
+---
+
 Muestra los logs más recientes del sistema.
-```
-```
-▶️ Arrancar contenedores Python y Cron
-make deploy-python
 
-Levanta el contenedor Python (backup_restore, etc.)
-```
-```
-▶️ Desplegar solo Cron
-cd /opt/monitoring
-make deploy-cron
-
-Levanta el contenedor Cron (supercronic con jobs definidos)
-
-Ambos comandos reconstruyen automáticamente la imagen base si es necesario y arrancan los servicios correspondientes dentro de sus rutas (/opt/monitoring/python o /opt/monitoring/cron).
-```
 ```
 ▶️ Restauración de Backups de PostgreSQL
 make restore-backup
@@ -353,33 +379,36 @@ bash /opt/monitoring/scripts/backup_restore.sh
 Los resultados y el estado del proceso se registran en:
 cat /var/log/backup_restore.log | tail -n 30
 
-💡 Este proceso realiza la restauración dentro del contenedor monitoring-python, comunicándose con el contenedor monitoring-postgres para reconstruir la base de datos a partir del último backup disponible en /opt/monitoring/backups/.
+💡 Este proceso realiza la restauración dentro del contenedor monitoring-python, comunicándose con el contenedor monitoring-postgres para reconstruir la base de datos a partir del último backup disponible en /ops/backups/.
 ```
 ```
-▶️ Despliegue centralizado de Observability (Grafana, Loki, Promtail)
-cd /opt/monitoring
-make deploy-observability
+# 🔍 AUDITORÍA
 
+## ▶️ Auditoría completa
 
-Reinicia completamente el stack de observabilidad
-Este comando permite reconstruir desde cero y relanzar Grafana, Loki y Promtail, asegurando un entorno limpio de logs y métricas.
-```
-```
-▶️ Reconstruir imágenes desde cero (sin cache)
-make rebuild
-Reconstruye todas las imágenes (base, python y cron) sin usar cache.
-```
-```
-▶️ Otras funcionalidades no definidas en Makefile
-cd /opt/monitoring/
+make audit
 
-Ejecución manual de auditorías y limpieza:
-./ops/docker/docker_resources.sh
+Valida:
+- estructura del repo
+- docker-compose
+- exposición de puertos
+- uso de docker.sock
+- cumplimiento ADR
 ./scripts/cleanup_docker.sh
 
-⚠️ ATENCION: Antes de ejecutar limpieza, crea un snapshot previo — existe riesgo de pérdida no deseada de binarios.
-```
 ---
+
+# 🧪 DEBUGGING / OPERABILIDAD
+
+## ▶️ Shell en contenedor
+
+make debug-shell STACK=xxx
+
+⚠️ Nota:
+- Las imágenes son minimalistas → puede no haber bash, ps, ping
+
+---
+
 
 ## 🔒 Modelo de Seguridad
 
@@ -401,39 +430,18 @@ La antigua base de datos `srv-captain--security250226app` se mantiene activa com
 
 Esto permite detectar intentos de reconexión, redirecciones fraudulentas o modificaciones no autorizadas.
 
----
-
-## 🔒 Acciones preventivas clave
-
-1. **Endurecimiento honeypot**: permisos mínimos, red y volúmenes aislados.
-2. **Supervisión temprana**: etiquetado `honeypot=true` en Promtail.
-3. **Integridad/auditoría**: checksum de nginx y revisión binarios.
-4. **Control de exposición**: filtrar IPs y fijar versión de nginx.
-5. **Persistencia evidencias**: logs ≥7 días + exportación periódica.
-6. **Seguridad general**: PostgreSQL fuera de CapRover + rate-limiting global.
 
 ---
 
 ## 📜 Documentación adicional
 
 La documentación técnica completa se encuentra en:
-    docs/arquitectura/
+    docs/decisiones/
 Incluye:
 -   Definición del proyecto\
 -   Implementación inicial\
 -   Documento de migración\
 -   Decisiones arquitectónicas (ADR)
-
----
-
-## 🤖 Servicios destacados
-
-### SMTP Relay independiente
-
-Se encuentra en:
-    ops/services/smtp_relay/
-Este servicio está diseñado para ser **replicable** en otros proyectos
-sin dependencias del core.
 
 ---
 
@@ -460,7 +468,7 @@ sin dependencias del core.
 
 1.  Haz un fork del repositorio\
 2.  Crea una rama (`feature/nueva-funcionalidad`)\
-3.  Envía un Product Rerlease claro y bien documentado
+3.  Envía un Product Release claro y bien documentado
 
 ------------------------------------------------------------------------
 
@@ -468,4 +476,4 @@ sin dependencias del core.
 
 Proyecto privado **DigitalOcean Monitoring Stack (IaC)**
 Desarrollado por: **@eboe62**
-📅 **Última actualización de este documento:** 2025-11-24
+📅 **Última actualización de este documento:** 2026-03-28
