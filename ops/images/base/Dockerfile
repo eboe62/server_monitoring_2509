@@ -29,4 +29,3 @@ COPY __init__.py .
 COPY src/ src/
 COPY scripts/ scripts/
 COPY ops/ ops/
-COPY config/ config/
