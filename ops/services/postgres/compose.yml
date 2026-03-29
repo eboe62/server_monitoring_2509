@@ -2,7 +2,7 @@ services:
   postgres:
     image: postgres:14.3
     container_name: ${POSTGRES_CONTAINER_NAME}
-    restart: unless-stopped
+    restart: always
     env_file:
       - .env
     environment:

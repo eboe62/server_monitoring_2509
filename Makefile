@@ -332,3 +332,65 @@ debug-toolbox-shell: ## Shell en contenedor debug
 debug-toolbox-down: ## Elimina contenedor debug
 	@docker rm -f $(DEBUG_CONTAINER) || true
 	@echo "[OK] contenedor debug eliminado"
+
+# ------------------------------------------
+# Diagnóstico
+# ------------------------------------------
+
+test-resilience:
+	@echo "=== TEST RESILIENCIA ==="
+
+	@echo ""
+	@echo "[1] Test kill monitoring-python (auto-restart esperado)"
+	@if ! docker ps --format '{{.Names}}' | grep -q monitoring-python; then \
+		echo "[WARN] monitoring-python no está corriendo, levantando..."; \
+		$(MAKE) stack-up STACK=python; \
+		sleep 5; \
+	fi
+	@docker kill monitoring-python >/dev/null 2>&1 || true
+	@sleep 5
+	@docker ps --format '{{.Names}} {{.Status}}' | grep monitoring-python && \
+		echo "[OK] monitoring-python reiniciado" || \
+		echo "[ERROR] monitoring-python NO se ha reiniciado"
+
+	@echo ""
+	@echo "[2] Verificando RestartPolicy"
+	@docker inspect monitoring-python | grep -A 3 RestartPolicy
+
+	@echo ""
+	@echo "[3] Verificando RestartCount"
+	@docker inspect monitoring-python | grep RestartCount
+
+	@echo ""
+	@echo "[4] Test kill monitoring-postgres (auto-restart esperado)"
+	@if ! docker ps --format '{{.Names}}' | grep -q monitoring-postgres; then \
+		echo "[WARN] monitoring-postgres no está corriendo, levantando..."; \
+		$(MAKE) stack-up STACK=postgres; \
+		sleep 5; \
+	fi
+	@docker kill monitoring-postgres >/dev/null 2>&1 || true
+	@sleep 5
+	@docker ps --format '{{.Names}} {{.Status}}' | grep monitoring-postgres && \
+		echo "[OK] monitoring-postgres reiniciado" || \
+		echo "[ERROR] monitoring-postgres NO se ha reiniciado"
+
+	@echo ""
+	@echo "[5] Verificando RestartCount (postgres)"
+	@docker inspect monitoring-postgres | grep RestartCount
+
+	@echo ""
+	@echo "[6] Test restart stack observability"
+	@cd ops/stacks/observability && docker compose restart
+
+	@echo ""
+	@echo "[7] Health check global"
+	@$(MAKE) health
+
+	@echo ""
+	@echo "=== FIN TEST RESILIENCIA ==="
+
+test-observability:
+	@echo "=== TEST OBSERVABILITY ==="
+	@docker exec monitoring-cron sh -c "echo TEST_LOG >> /var/log/test.log"
+	@sleep 2
+	@docker exec monitoring-python sh -c "curl -s http://loki:3100/loki/api/v1/labels || echo ERROR"
