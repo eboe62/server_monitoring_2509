@@ -18,7 +18,7 @@ services:
       # Logs del host para que los scripts puedan escribir ahí
       - /var/log:/var/log
 
-      # Acceso al socket de Docker (para docker_resources.sh y .py)
+      # Acceso al socket de Docker para los scripts de docker_resources.sh y .py - SE INHABILITA POR SEGURIDAD EN LOS MICRO-STACKS
       # - /var/run/docker.sock:/var/run/docker.sock
 
     healthcheck:

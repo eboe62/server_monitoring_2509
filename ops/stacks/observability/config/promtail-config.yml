@@ -5,7 +5,7 @@ server:
 clients:
 #  No se debe usar IP pública dentro del cluster Docker.
 #  - url: http://165.22.87.56:3100/loki/api/v1/push  # URL del endpoint de Loki donde se enviarán los logs
-#  Endpoint Loki interno vía Docker: http://loki:3100/loki/api/v1/push
+#  En su lugar utilizar endpoint Loki interno vía Docker: http://loki:3100/loki/api/v1/push
   - url: http://loki:3100/loki/api/v1/push
 
 positions:

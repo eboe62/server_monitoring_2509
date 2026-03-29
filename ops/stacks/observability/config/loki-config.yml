@@ -8,12 +8,12 @@ ingester:
   lifecycler:
     ring:
       kvstore:
-        store: inmemory  # Almacenamiento en memoria
+        store: inmemory         # Almacenamiento en memoria
       replication_factor: 1
-  chunk_idle_period: 1m  # Tiempo inactivo antes de cerrar un chunk
-  max_chunk_age: 30m  # Edad máxima de un chunk
-  chunk_target_size: 512000  # Tamaño objetivo de los chunks
-  chunk_retain_period: 30s  # Periodo de retención de chunks cerrados
+  chunk_idle_period: 1m         # Tiempo inactivo antes de cerrar un chunk
+  max_chunk_age: 30m            # Edad máxima de un chunk
+  chunk_target_size: 512000     # Tamaño objetivo de los chunks
+  chunk_retain_period: 30s      # Periodo de retención de chunks cerrados
   wal:
     enabled: true
     dir: /var/lib/loki/wal  # Directorio para Write Ahead Log (WAL)
@@ -44,7 +44,7 @@ limits_config:
 
 table_manager:
   retention_deletes_enabled: true
-  retention_period: 72h  # Retención de 3 días
+  retention_period: 72h       # Retención de 3 días
 
 compactor:
   working_directory: /var/lib/loki/compactor

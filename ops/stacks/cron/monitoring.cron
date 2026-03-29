@@ -1,10 +1,10 @@
 # Auditoria de Binarios (con log propio)
 0 11 * * * python3 -m log_ingestor.auditoria_binarios
 
-# Recursos Docker cada hora (usa docker_resources.sh con logging incluido)
+# Recursos Docker cada hora
 */10 * * * * python3 -m resource_monitor.docker_resources
 
-# Jobs de log_ingestor (cada 10 min, con wrappers que redirigen logs)
+# Jobs de log_ingestor (cada 10 min)
 */10 * * * * python3 -m log_ingestor.log_ingest_batch
 */10 * * * * python3 -m log_ingestor.log_fail2ban_batch
 */10 * * * * python3 -m log_ingestor.log_kern_batch

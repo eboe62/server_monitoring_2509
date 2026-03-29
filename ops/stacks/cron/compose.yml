@@ -12,7 +12,6 @@ services:
       - ../../services/postgres/.env
 
     volumes:
-      # Montamos el cronfile en la ruta que espera supercronic
       # Acceso en solo lectura a los logs crudos de Docker (JSON por contenedor)
       # ⚠️ Necesario para que log_honeypot_geolocation.py pueda leer los accesos del honeypot nginx.
       # Se monta en modo "ro" (read-only) por motivos de seguridad.
@@ -24,7 +23,7 @@ services:
       # Logs del host para que los scripts puedan escribir ahí
       - /var/log:/var/log
 
-      # Acceso al socket de Docker para los scripts de docker_resources.sh y .py)
+      # Acceso al socket de Docker para los scripts de docker_resources.sh y .py - SE INHABILITA POR SEGURIDAD EN LOS MICRO-STACKS
       # - /var/run/docker.sock:/var/run/docker.sock
 
     healthcheck:
