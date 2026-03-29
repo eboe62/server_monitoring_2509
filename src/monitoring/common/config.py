@@ -45,11 +45,11 @@ SUBJECT     = os.getenv("SUBJECT", "📊 Informe")
 # CONFIG BBDD (valores iniciales desde entorno; init_config() puede hacer re-lectura)
 # ==========================================
 DB = {
-    "host": os.getenv("DB_HOST"),
-    "port": int(os.getenv("DB_PORT", 5432)),
-    "name": os.getenv("DB_NAME"),
-    "user": os.getenv("DB_USER"),
-    "password": os.getenv("DB_PASSWORD"),
+    "host": os.getenv("POSTGRES_HOST"),
+    "port": int(os.getenv("POSTGRES_PORT", 5432)),
+    "name": os.getenv("POSTGRES_NAME"),
+    "user": os.getenv("POSTGRES_USER"),
+    "password": os.getenv("POSTGRES_PASSWORD"),
 }
 # INIT CONFIG (runtime explícito)
 def init_config(env_path: str = None, secrets_dir: str = None):
@@ -90,11 +90,11 @@ def init_config(env_path: str = None, secrets_dir: str = None):
 
     # Actualizar DB desde entorno (posible cambio tras cargar .env)
     DB = {
-        "host": os.getenv("DB_HOST"),
-        "port": int(os.getenv("DB_PORT", 5432)),
-        "name": os.getenv("DB_NAME"),
-        "user": os.getenv("DB_USER"),
-        "password": os.getenv("DB_PASSWORD"),
+        "host": os.getenv("POSTGRES_HOST"),
+        "port": int(os.getenv("POSTGRES_PORT", 5432)),
+        "name": os.getenv("POSTGRES_NAME"),
+        "user": os.getenv("POSTGRES_USER"),
+        "password": os.getenv("POSTGRES_PASSWORD"),
     }
 
     # Leer secrets SMTP del filesystem si están disponibles; fallback a variables de entorno

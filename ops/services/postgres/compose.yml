@@ -1,0 +1,37 @@
+services:
+  postgres:
+    image: postgres:14.3
+    container_name: ${POSTGRES_CONTAINER_NAME}
+    restart: always
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_NAME}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data  # Persistencia de la BBDD de monitorización
+      - ../../backups:/backups                  # Ubicación backup host-bind relativo al micro-stack
+      - ./init:/docker-entrypoint-initdb.d:ro
+    networks:
+      - monitoring-net # Red compartida (Grafana, Loki, Postgres, SMTP relay...)
+    # Añadido healthcheck para detectar cuando la BBDD no está operativa
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_NAME}"]
+      interval: 30s               # cada cuánto se prueba
+      timeout: 10s                # cuánto espera la prueba
+      retries: 5                  # cuántos fallos consecutivos para marcar unhealthy
+      start_period: 30s           # tiempo inicial de gracia tras arrancar el contenedor
+    deploy:
+      resources:
+        limits:
+          memory: 500M
+          cpus: "0.5"
+
+volumes:
+  postgres-data:
+    driver: local
+
+networks:
+  monitoring-net:
+    external: true

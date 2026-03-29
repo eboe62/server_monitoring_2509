@@ -1,4 +1,4 @@
-ADR-0008 – Clasificación de servicios: Micro-stack vs Infraestructura Operativa
+# ADR-0008 – Clasificación de servicios: Micro-stack vs Infraestructura Operativa
 
 Fecha: 2026-02-17
 Estado: Propuesto
@@ -25,9 +25,9 @@ Ubicación:
 
 Debe cumplir obligatoriamente:
 - Dockerfile propio
-- docker-compose.yaml propio
+- docker-compose.yml propio
 - build independiente (contexto acotado al servicio)
-- no depender de archivos fuera del directorio del servicio
+- no depender de archivos fuera del directorio del servicio, salvo la imagen base común definida en ADR-0006, siempre que se respete el principio de reemplazabilidad.
 - no montar rutas absolutas del host como dependencia estructural
 - no versionar secrets
 - no incluir secrets ni .env en la imagen
@@ -61,6 +61,22 @@ Debe:
 Objetivo:
   Proveer capacidades operativas del entorno, no servicios exportables.
 
+3️⃣ Uso de docker.sock
+Los infra-stacks pueden montar:
+  /var/run/docker.sock:/var/run/docker.sock
+
+Únicamente cuando sea necesario para operaciones de infraestructura (inspección de contenedores, control del runtime o automatización).
+
+RIESGO:
+El acceso a docker.sock concede privilegios equivalentes a root sobre el host Docker.
+
+MITIGACIONES:
+- Solo infra-stacks pueden usarlo.
+- Nunca en micro-stacks de aplicación.
+- Las imágenes deben ser minimalistas y auditadas.
+- El contenedor debe ejecutarse sin privilegios adicionales.
+- Debe documentarse el motivo del acceso.
+
 ## Justificación
 - No todos los contenedores tienen naturaleza exportable.
 - Forzar infraestructura operativa a modelo micro-stack incrementa complejidad sin beneficio claro.
@@ -85,4 +101,4 @@ Objetivo:
 - No se introduce nuevo orquestador.
 
 ## Estado
-Propuesto.
+Aprobado.

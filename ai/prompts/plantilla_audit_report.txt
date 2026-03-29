@@ -1,0 +1,31 @@
+Analiza la siguiente salida de auditoría.
+
+Genera un INFORME DE AUDITORÍA estructurado con estas secciones obligatorias:
+
+1. Checklist FASE X con tick / cross
+   - separar auditoría por conceptos
+   - cada check debe incluir:
+     estado ✔ ✘ ⚠
+     breve explicación
+
+2. Evidencias
+   - incluir rutas de archivo o comandos que justifican cada check
+
+3. Acciones correctoras
+   - priorizadas (PRIORIDAD 1, 2, 3…)
+   - con explicación breve del riesgo
+
+4. Indefiniciones / contradicciones documentales
+   - indicar documento
+   - mostrar fragmento ANTES
+   - proponer DESPUÉS corregido
+
+5. Resumen ejecutivo final
+   - estado de la fase (COMPATIBLE / NO COMPATIBLE)
+   - motivos concretos
+
+Formato:
+- usar bloques de texto plano
+- usar checklist con ✔ ✘ ⚠
+- evitar gráficos
+- ser preciso y conciso

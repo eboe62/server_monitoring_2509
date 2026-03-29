@@ -1,4 +1,4 @@
-ADR-0007 – Política oficial de entorno VS Code + WSL para proyectos Linux/DevOps
+# ADR-0007 – Política oficial de entorno VS Code + WSL para proyectos Linux/DevOps
 
 Fecha: 2026-02-16
 Estado: Aprobado

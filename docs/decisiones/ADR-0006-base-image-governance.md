@@ -63,18 +63,3 @@ Por tanto:
 
 ## Estado
 Aceptado.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

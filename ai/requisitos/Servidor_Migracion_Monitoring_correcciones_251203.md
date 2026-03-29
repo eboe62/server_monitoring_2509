@@ -168,11 +168,11 @@ CC_LIST     = os.getenv("CC_LIST", "").split(",") if os.getenv("CC_LIST") else [
 SUBJECT     = os.getenv("SUBJECT", "📊 Informe del estado de droplet")
 
 DB = {
-    "host": os.getenv("DB_HOST"),
-    "port": int(os.getenv("DB_PORT", 5432)),
-    "name": os.getenv("DB_NAME"),
-    "user": os.getenv("DB_USER"),
-    "password": os.getenv("DB_PASSWORD"),
+    "host": os.getenv("POSTGRES_HOST"),
+    "port": int(os.getenv("POSTGRES_PORT", 5432)),
+    "name": os.getenv("POSTGRES_NAME"),
+    "user": os.getenv("POSTGRES_USER"),
+    "password": os.getenv("POSTGRES_PASSWORD"),
 }
 
 
@@ -485,12 +485,12 @@ fi
 # Archivo: cron/monitoring.cron (SUGERENCIA actualizada)
 
 # Usar docker exec para garantizar ejecución en el contenedor
-*/10 * * * * /opt/monitoring/scripts/log_ingest_batch.sh
-*/10 * * * * /opt/monitoring/scripts/log_fail2ban_batch.sh
-*/10 * * * * /opt/monitoring/scripts/log_kern_batch.sh
-*/10 * * * * /opt/monitoring/scripts/log_ip_geolocation.sh
-*/10 * * * * /opt/monitoring/scripts/log_honeypot_geolocation.sh
-0 12,22 * * * /opt/monitoring/scripts/alert_risk.sh
+*/10 * * * * python3 -m log_ingestor.log_ingest_batch.log_ingest_batch.sh
+*/10 * * * * python3 -m log_ingestor.log_ingest_batch.log_fail2ban_batch.sh
+*/10 * * * * python3 -m log_ingestor.log_ingest_batch.log_kern_batch.sh
+*/10 * * * * python3 -m log_ingestor.log_ingest_batch.log_ip_geolocation.sh
+*/10 * * * * python3 -m log_ingestor.log_ingest_batch.log_honeypot_geolocation.sh
+0 12,22 * * * python3 -m log_ingestor.log_ingest_batch.alert_risk.sh
 
 ---
 

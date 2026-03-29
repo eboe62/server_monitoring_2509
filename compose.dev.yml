@@ -1,0 +1,8 @@
+name: monitoring-dev
+
+include:
+  - ops/services/postgres/compose.yml
+  - ops/services/smtp_relay/compose.yml
+  - ops/stacks/python/compose.yml
+  - ops/stacks/cron/compose.yml
+  - ops/stacks/observability/compose.yml

@@ -1,130 +1,396 @@
-# Makefile global para /opt/monitoring
-# Uso: make <target>
-# P.e.: make deploy
+# ==========================================
+# Makefile Global - Monitoring Platform
+# ==========================================
 
-.PHONY: help all symlinks audit check-cron clean-logs snapshot up-services status logs build-base build-python build-cron deploy-cron deploy rebuild rebuild-all monitoring-net phase4-init
+PROJECT = monitoring
+COMPOSE = docker compose
 
-# Ruta base
-BASE_DIR ?= ops/services
+SERVICE_DIR = ops/services
+STACK_DIR   = ops/stacks
 
-## 📌 Ayuda: lista de comandos disponibles
+SERVICE_STACKS = postgres smtp_relay
+INFRA_STACKS   = python cron observability
+STACKS = $(SERVICE_STACKS) $(INFRA_STACKS)
+
+AUDIT_SCRIPT = ops/audit/audit_repo_host.sh
+DEV_COMPOSE = compose.dev.yml
+
+# ------------------------------------------
+# Validación STACK
+# ------------------------------------------
+
+define validate_stack
+@if [ -z "$(STACK)" ]; then \
+	echo "[ERROR] Debe especificar STACK=<nombre>"; \
+	exit 1; \
+fi; \
+if ! echo "$(STACKS)" | grep -w "$(STACK)" >/dev/null; then \
+	echo "[ERROR] STACK inválido: $(STACK)"; \
+	echo "Stacks disponibles: $(STACKS)"; \
+	exit 1; \
+fi
+endef
+
+define stack_path
+if [ -d "$(SERVICE_DIR)/$(STACK)" ]; then \
+	printf "%s" "$(SERVICE_DIR)/$(STACK)"; \
+else \
+	printf "%s" "$(STACK_DIR)/$(STACK)"; \
+fi
+endef
+
+.PHONY: help build build-base build-python build-cron \
+clean clean-docker monitoring-net phase4-init \
+stack-up stack-down stack-restart stack-status stack-logs \
+deploy rebuild rebuild-all doctor audit git-log \
+dev-up dev-down
+
+# ------------------------------------------
+# Help
+# ------------------------------------------
+
 help:
-	@echo "=== Makefile Global - Monitoring ==="
-	@grep -E '^[a-zA-Z_-]+:.*?##' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}'
+	@echo ""
+	@echo "=== Monitoring Platform ==="
+	@echo ""
+	@echo "Stacks disponibles:"
+	@echo "  $(STACKS)"
+	@echo ""
+	@echo "Ejemplos:"
+	@echo "  make stack-up STACK=postgres"
+	@echo "  make stack-up STACK=observability"
+	@echo ""
 
-## Ejecuta todas las tareas críticas de despliegue
-all: symlinks audit  ## Configura symlinks y ejecuta auditoría
+# ------------------------------------------
+# Git utilities
+# ------------------------------------------
 
-## Configura symlinks en /usr/local/bin (usando setup_symlinks.sh)
-symlinks:  ## Crea symlinks en /usr/local/bin
-	bash deployment/setup_symlinks.sh
+git-log: ## Historial git resumido
+	@echo ""
+	@echo "=== Git history (últimos 25 commits) ==="
+	sudo git log --oneline --decorate --graph --all -n 25
 
-## Ejecuta auditoría de binarios y guarda log en /var/log/auditoria_binarios.log
-audit:  ## Ejecuta auditoría de binarios
-	bash scripts/auditoria_binarios.sh >> /var/log/auditoria_binarios.log 2>&1
-	@echo "[OK] Auditoría ejecutada, ver /var/log/auditoria_binarios.log"
+# ------------------------------------------
+# Auditoría
+# ------------------------------------------
 
-## Muestra las entradas de cron actuales
-check-cron:  ## Lista las tareas cron del sistema
-	crontab -l
+audit: ## Ejecuta auditoría repositorio + host
+	@echo ""
+	@echo "=== Ejecutando auditoría ==="
+	chmod +x $(AUDIT_SCRIPT)
+	./$(AUDIT_SCRIPT)
 
-## Limpia todos los logs en /var/log (⚠️ cuidado en producción)
-clean-logs:  ## Elimina logs del sistema
-	rm -f /var/log/*.log
-	@echo "[OK] Logs limpiados"
+# ------------------------------------------
+# Infraestructura base
+# ------------------------------------------
 
-# --- Snapshots ---
-snapshot:  ## Crea snapshot previo al despliegue. ATENCION: Esta acción mejor la ejecutamos manualmente en DigitalOcean
-	@echo "Creando snapshot previo con fecha..."
-	snap_name="predeploy-$$(date +%Y%m%d%H%M%S)" && \
-	doctl compute snapshot create "$$snap_name" --droplet-id <DROPLET_ID>
-
-# --- Servicios principales ---
-up-services:
-	cd $(BASE_DIR)/smtp_relay && make up
-
-status:
-	cd $(BASE_DIR)/smtp_relay && make status
-
-# --- Logs ---
-logs:  ## Muestra últimos registros y genera logs_summary.txt
-	@echo "=== Mostrando últimos 20 registros ==="
-	@sleep 40  # latencia para dar tiempo a que arranquen los contenedores
-	@tail -n 20 /var/log/*.log
-	@echo "=== Logs de todos los contenedores activos ==="
-	@for c in $$(docker ps --format '{{.Names}}'); do \
-		echo "\n===== 📦 $$c ====="; \
-		docker logs $$c --tail=20 2>/dev/null || echo "⚠️  No se pudo obtener logs de $$c"; \
-	done
-#	@tail -n 20 /var/log/*.log | tee logs_summary.txt
-#	@echo "Resumen generado en logs_summary.txt"
-#	git add logs_summary.txt
-#	git commit -m "logs latest $$(date +%Y%m%d%H%M%S)"
-#	git push origin develop
-
-# --- Builds (siempre con no-cache) ---
-# --- FASE 4: Builds base y artefactos (no despliega contenedores) ---
-# build-base: Construye la imagen base usando los Dockerfile ubicados en ops/docker
-
-build-base:  ## FASE 4 - Construye imagen base sin cache (incluye requirements)
-	# Usa Dockerfile en ops/docker pero contexto raíz porque Dockerfile.base
-	# realiza "COPY requirements.txt" y "COPY . ." que requieren el repo root
-	docker build --no-cache -f ops/docker/Dockerfile.base -t monitoring-base .
-
-# build-python: usa el Dockerfile.python en ops/docker y el contexto del servicio python
-
-build-python:  ## FASE 4 - Construye imagen Python sin cache (no despliega)
-	# Usa Dockerfile en ops/docker; contexto raíz para evitar romper COPY que
-	# puedan depender de rutas fuera de ops/docker (ver reporte de inconsistencias)
-	docker build --no-cache -f ops/docker/Dockerfile.python -t monitoring-python .
-
-# build-cron: usa el Dockerfile.cron en ops/docker y el contexto del servicio cron
-
-build-cron:  ## FASE 4 - Construye imagen Cron sin cache (no despliega)
-	# Usa Dockerfile en ops/docker; contexto raíz por las mismas razones que arriba
-	docker build --no-cache -f ops/docker/Dockerfile.cron -t monitoring-cron .
-
-# --- Red Docker idempotente requerida para la FASE 4 ---
-monitoring-net:  ## FASE 4 - Crea la red Docker del proyecto de forma idempotente
-	@docker network inspect monitoring-net >/dev/null 2>&1 || docker network create --driver bridge monitoring-net
+monitoring-net:  ## Crea la red Docker si no existe
+	@docker network inspect monitoring-net >/dev/null 2>&1 || \
+	docker network create monitoring-net
 	@echo "[OK] network monitoring-net ready"
 
-# --- Target de inicialización de entorno base (FASE 4) ---
-phase4-init: monitoring-net build-base build-python build-cron  ## FASE 4 - Prepara entorno base (no despliega contenedores)
-	@echo "[OK] FASE 4 completa: red creada y builds realizados (sin despliegue)"
+# ------------------------------------------
+# Limpieza
+# ------------------------------------------
 
-# --- Atajos de rebuild ---
-rebuild: build-base build-python build-cron  ## Reconstruye todas las imágenes sin cache
-rebuild-all: rebuild deploy-cron ## Reconstruye e inmediatamente redepliega cron
+clean:
+	@echo "[INFO] limpiando imágenes dangling"
+	docker image prune -f
 
-# --- Despliegue completo ---
-deploy: up-services rebuild-all logs  ## Despliegue completo con rebuild y logs al final
+clean-docker:
+	@echo "[INFO] limpieza completa Docker"
+	docker container prune -f
+	docker image prune -f
+	docker builder prune -f
 
-# --- Cron ---
-deploy-cron: build-base build-cron ## Despliega contenedor de cron jobs
-	cd $(BASE_DIR)/cron && \
-	docker-compose down -v && \
-	docker-compose build --no-cache && \
-	docker-compose up -d
+# ------------------------------------------
+# Builds
+# ------------------------------------------
 
-# --- Python ---
-deploy-python: build-base build-python ## Despliega contenedor python
-	cd $(BASE_DIR)/python && \
-	docker-compose down -v && \
-#	docker-compose build --no-cache && \
-	docker-compose up -d
+build-base:
+	docker build --no-cache -f ops/images/base/Dockerfile -t monitoring-base .
 
-# --- Observability Stack ---
-deploy-observability:  ## Despliega el stack centralizado de Observability (Grafana, Loki, Promtail)
-	@echo "=== [🚀] Desplegando Observability Stack ==="
-	docker-compose -f $(BASE_DIR)/observability/docker-compose.yaml down -v
-	docker-compose -f $(BASE_DIR)/observability/docker-compose.yaml build --no-cache
-	docker-compose -f $(BASE_DIR)/observability/docker-compose.yaml up -d
-	@echo "=== [✅] Observability Stack desplegado correctamente ==="
+build-python:
+	docker build --no-cache -f ops/stacks/python/Dockerfile -t monitoring-python .
 
-# --- Restauración de Backups ---
-restore-backup:  ## Restaura la última copia de seguridad de la BBDD y muestra el log
-	@echo "=== [🧩] Iniciando restauración de backup ==="
-	bash $(BASE_DIR)/scripts/backup_restore.sh
-	@echo "=== [📄] Log de restauración (/var/log/backup_restore.log): ==="
-	@tail -n 20 /var/log/backup_restore.log
+build-cron:
+	docker build --no-cache -f ops/stacks/cron/Dockerfile -t monitoring-cron .
+
+build: build-base build-python build-cron  ## Construye todas las imágenes
+	@echo "[OK] imágenes construidas"
+
+phase4-init: monitoring-net build  ## Inicialización completa
+	@echo "[OK] entorno inicializado"
+
+# ------------------------------------------
+# Gestión genérica de micro-stacks
+# ------------------------------------------
+
+stack-up:  ## Levanta un stack (STACK=nombre)
+	$(call validate_stack)
+	@DIR=$$( $(call stack_path) ); \
+	echo "=== 🚀 Levantando stack $(STACK) ==="; \
+	cd $$DIR && $(COMPOSE) up -d --build
+
+stack-down:  ## Detiene un stack
+	$(call validate_stack)
+	@DIR=$$( $(call stack_path) ); \
+	echo "=== ⛔ Parando stack $(STACK) ==="; \
+	cd $$DIR && $(COMPOSE) down
+
+stack-restart:  ## Reinicia un stack
+	$(call validate_stack)
+	@DIR=$$( $(call stack_path) ); \
+	echo "=== 🔁 Reiniciando stack $(STACK) ==="; \
+	cd $$DIR && $(COMPOSE) restart
+
+stack-status:  ## Estado de un stack
+	$(call validate_stack)
+	@DIR=$$( $(call stack_path) ); \
+	echo "=== Estado stack $(STACK) ==="; \
+	cd $$DIR && $(COMPOSE) ps
+
+stack-logs:
+	$(call validate_stack)
+	@DIR=$$( $(call stack_path) ); \
+	cd $$DIR && $(COMPOSE) logs -f
+
+# ------------------------------------------
+# Despliegue completo
+# ------------------------------------------
+
+deploy: build
+	@set -e; \
+	echo "=== 🚀 Despliegue completo ==="; \
+	for s in $(SERVICE_STACKS); do \
+		echo "→ desplegando $$s"; \
+		cd $(SERVICE_DIR)/$$s && $(COMPOSE) up -d --build; \
+	done; \
+	for s in $(INFRA_STACKS); do \
+		echo "→ desplegando $$s"; \
+		cd $(STACK_DIR)/$$s && $(COMPOSE) up -d --build; \
+	done; \
+	echo "[OK] despliegue finalizado"
+
+dev-up:
+	$(COMPOSE) -f $(DEV_COMPOSE) up -d
+
+dev-down:
+	$(COMPOSE) -f $(DEV_COMPOSE) down
+
+# ------------------------------------------
+# Rebuild
+# ------------------------------------------
+
+rebuild: clean build
+	@echo "[OK] rebuild realizado"
+
+rebuild-all:
+	make clean-docker
+	make build
+	make deploy
+
+# ------------------------------------------
+# Logs
+# ------------------------------------------
+
+logs:  ## Muestra logs recientes del sistema y contenedores
+	@echo "=== Logs del sistema ==="
+	@echo ""
+	@echo "=== Logs contenedores ==="
+	@for c in $$(docker ps --format '{{.Names}}'); do \
+		echo "===== $$c ====="; \
+		docker logs $$c --tail=20; \
+	done
+
+# ------------------------------------------
+# Diagnóstico
+# ------------------------------------------
+
+doctor:  ## Verifica estado del entorno
+	@echo ""
+	@echo "=== Diagnóstico del sistema ==="
+	@echo ""
+
+	@echo "[1] Docker instalado:"
+	@docker --version || echo "Docker NO instalado"
+
+	@echo ""
+	@echo "[2] Docker Compose:"
+	@docker compose version || echo "Docker Compose V2 NO disponible"
+
+	@echo ""
+	@echo "[3] Contenedores activos:"
+	@docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+
+	@echo ""
+	@echo "[4] Red monitoring-net:"
+	@docker network inspect monitoring-net >/dev/null 2>&1 && \
+	echo "OK" || echo "No existe"
+
+	@echo ""
+	@echo "[5] Espacio en disco:"
+	@df -h /
+
+	@echo ""
+	@echo "[6] Uso Docker:"
+	@docker system df
+
+	@echo ""
+	@echo "[7] Volúmenes Docker:"
+	@docker volume ls
+
+	@echo ""
+	@echo "[8] Redes Docker:"
+	@docker network ls | grep monitoring || true
+
+	@echo ""
+	@echo "[9] Contenedores de la plataforma:"
+	@docker ps --format "{{.Names}}" | grep monitoring || echo "Ninguno activo"
+
+	@echo ""
+	@echo "[10] Stacks disponibles:"
+	@echo "$(STACKS)"
+
+	@echo ""
+	@echo "=== Fin diagnóstico ==="
+
+health:
+	@echo "=== HEALTH CHECK ==="
+	@docker ps --format "table {{.Names}}\t{{.Status}}"
+	@echo ""
+	@echo "[CHECK] Containers unhealthy:"
+	@docker ps --filter "health=unhealthy"
+	@echo ""
+	@echo "[CHECK] Restarting containers:"
+	@docker ps --filter "status=restarting"
+
+# ------------------------------------------
+# Debug / Operabilidad
+# ------------------------------------------
+
+debug-shell: ## Acceso shell a contenedor (STACK opcional)
+	@STACK_NAME=$${STACK:-python}; \
+	if ! echo "$(STACKS)" | grep -w "$$STACK_NAME" >/dev/null; then \
+		echo "[ERROR] STACK inválido: $$STACK_NAME"; \
+		echo "Stacks disponibles: $(STACKS)"; \
+		exit 1; \
+	fi; \
+	echo "=== Debug shell en $$STACK_NAME ==="; \
+	docker exec -it monitoring-$$STACK_NAME sh || \
+	echo "[ERROR] contenedor no disponible"
+
+debug-net: ## Verifica resolución DNS entre contenedores
+	@echo "=== Test DNS interno ==="
+	@docker exec monitoring-python getent hosts monitoring-postgres || echo "[ERROR] DNS fallo"
+
+debug-ports: ## Ver puertos expuestos en host
+	@echo "=== Puertos escuchando en host ==="
+	ss -tulpn
+
+debug-docker: ## Estado detallado Docker
+	@echo "=== Docker inspect resumido ==="
+	@docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+
+debug-logs: ## Logs rápidos de todos los contenedores
+	@for c in $$(docker ps --format '{{.Names}}'); do \
+		echo "===== $$c ====="; \
+		docker logs $$c --tail=50; \
+	done
+
+debug-exec: ## Ejecutar comando en contenedor (STACK opcional)
+	@STACK_NAME=$${STACK:-python}; \
+	if ! echo "$(STACKS)" | grep -w "$$STACK_NAME" >/dev/null; then \
+		echo "[ERROR] STACK inválido: $$STACK_NAME"; \
+		exit 1; \
+	fi; \
+	if [ -z "$(CMD)" ]; then \
+		echo "[ERROR] Debe especificar CMD='comando'"; \
+		exit 1; \
+	fi; \
+	echo "=== Ejecutando en $$STACK_NAME ==="; \
+	docker exec -it monitoring-$$STACK_NAME sh -c "$(CMD)"
+
+# ------------------------------------------
+# Debug container (toolbox)
+# ------------------------------------------
+
+DEBUG_IMAGE = nicolaka/netshoot
+DEBUG_CONTAINER = monitoring-debug
+
+debug-toolbox-up: ## Levanta contenedor de debugging en monitoring-net
+	@echo "=== Iniciando contenedor debug ==="
+	@docker rm -f $(DEBUG_CONTAINER) >/dev/null 2>&1 || true
+	@docker run -d --name $(DEBUG_CONTAINER) \
+		--network monitoring-net \
+		$(DEBUG_IMAGE) sleep infinity
+	@echo "[OK] contenedor debug activo"
+
+debug-toolbox-shell: ## Shell en contenedor debug
+	@docker exec -it $(DEBUG_CONTAINER) sh
+
+debug-toolbox-down: ## Elimina contenedor debug
+	@docker rm -f $(DEBUG_CONTAINER) || true
+	@echo "[OK] contenedor debug eliminado"
+
+# ------------------------------------------
+# Diagnóstico
+# ------------------------------------------
+
+test-resilience:
+	@echo "=== TEST RESILIENCIA ==="
+
+	@echo ""
+	@echo "[1] Test kill monitoring-python (auto-restart esperado)"
+	@if ! docker ps --format '{{.Names}}' | grep -q monitoring-python; then \
+		echo "[WARN] monitoring-python no está corriendo, levantando..."; \
+		$(MAKE) stack-up STACK=python; \
+		sleep 5; \
+	fi
+	@docker kill monitoring-python >/dev/null 2>&1 || true
+	@sleep 5
+	@docker ps --format '{{.Names}} {{.Status}}' | grep monitoring-python && \
+		echo "[OK] monitoring-python reiniciado" || \
+		echo "[ERROR] monitoring-python NO se ha reiniciado"
+
+	@echo ""
+	@echo "[2] Verificando RestartPolicy"
+	@docker inspect monitoring-python | grep -A 3 RestartPolicy
+
+	@echo ""
+	@echo "[3] Verificando RestartCount"
+	@docker inspect monitoring-python | grep RestartCount
+
+	@echo ""
+	@echo "[4] Test kill monitoring-postgres (auto-restart esperado)"
+	@if ! docker ps --format '{{.Names}}' | grep -q monitoring-postgres; then \
+		echo "[WARN] monitoring-postgres no está corriendo, levantando..."; \
+		$(MAKE) stack-up STACK=postgres; \
+		sleep 5; \
+	fi
+	@docker kill monitoring-postgres >/dev/null 2>&1 || true
+	@sleep 5
+	@docker ps --format '{{.Names}} {{.Status}}' | grep monitoring-postgres && \
+		echo "[OK] monitoring-postgres reiniciado" || \
+		echo "[ERROR] monitoring-postgres NO se ha reiniciado"
+
+	@echo ""
+	@echo "[5] Verificando RestartCount (postgres)"
+	@docker inspect monitoring-postgres | grep RestartCount
+
+	@echo ""
+	@echo "[6] Test restart stack observability"
+	@cd ops/stacks/observability && docker compose restart
+
+	@echo ""
+	@echo "[7] Health check global"
+	@$(MAKE) health
+
+	@echo ""
+	@echo "=== FIN TEST RESILIENCIA ==="
+
+test-observability:
+	@echo "=== TEST OBSERVABILITY ==="
+	@docker exec monitoring-cron sh -c "echo TEST_LOG >> /var/log/test.log"
+	@sleep 2
+	@docker exec monitoring-python sh -c "curl -s http://loki:3100/loki/api/v1/labels || echo ERROR"

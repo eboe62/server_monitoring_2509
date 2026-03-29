@@ -10,7 +10,7 @@ Resumen mínimo operativo:
 Coexistencia temporal con Infra-Stack
 -------------------------------------
 El volumen de datos se declara como `postgres-data` en este compose y NO es `external`. Por defecto Docker Compose crea volumes aislados por `project-name` (p. ej. `<project>_postgres-data`).
-Esto permite que este micro-stack coexista con la definición previa de Postgres en el Infra-Stack sin colisiones, salvo que se fuerce el mismo `COMPOSE_PROJECT_NAME` o se use `DB_CONTAINER_NAME` para forzar `container_name` explícito.
+Esto permite que este micro-stack coexista con la definición previa de Postgres en el Infra-Stack sin colisiones, salvo que se fuerce el mismo `COMPOSE_PROJECT_NAME` o se use `POSTGRES_CONTAINER_NAME` para forzar `container_name` explícito.
 
 Cumplimiento
 -----------
@@ -35,7 +35,7 @@ Operativa mínima
 ----------------
 - Copiar `.env.template` a `.env` en `ops/services/postgres/` y rellenar. NO cometas `.env`.
 - Crear `backups/` y `init/` si necesitas backups o scripts de inicialización. Los directorios ya existen como skeleton.
-- Para compatibilidad con scripts que esperan nombre de contenedor `monitoring-postgres`, puedes definir `DB_CONTAINER_NAME` en tu `.env` y usar `docker compose run --name ${DB_CONTAINER_NAME}` si lo necesitas; por defecto no se fuerza `container_name`.
+- Para compatibilidad con scripts que esperan nombre de contenedor `monitoring-postgres`, puedes definir `POSTGRES_CONTAINER_NAME` en tu `.env` y usar `docker compose run --name ${POSTGRES_CONTAINER_NAME}` si lo necesitas; por defecto no se fuerza `container_name`.
 
 Notas
 -----

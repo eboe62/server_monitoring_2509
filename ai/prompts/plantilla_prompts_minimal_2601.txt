@@ -79,7 +79,7 @@ Alcance del análisis:
 - Conflicto de volúmenes
 - Conflicto de nombres de contenedor
 - Conflicto de redes
-- Impacto en scripts dependientes de DB_CONTAINER_NAME
+- Impacto en scripts dependientes de POSTGRES_CONTAINER_NAME
 
 Restricciones absolutas:
 - No modificar archivos.
@@ -157,13 +157,13 @@ No es fase de análisis. Es fase de ejecución.
 
 Archivos a crear exclusivamente:
 
-1- ops/services/postgres/docker-compose.yaml
+1- ops/services/postgres/compose.yml
 2- ops/services/postgres/.env.template
 3- ops/services/postgres/README.md
 
 Requisitos técnicos obligatorios:
 
-docker-compose.yaml:
+docker-compose.yml:
 - Imagen: mantener exactamente la versión actual detectada (postgres:14.3).
 - No cambiar versión.
 - Declarar volumen propio postgres-data (sin external).
@@ -176,11 +176,11 @@ docker-compose.yaml:
 - No modificar container_name salvo que ya exista dependencia explícita.
 
 .env.template:
-- DB_USER
-- DB_PASSWORD
-- DB_NAME
-- DB_PORT
-- DB_CONTAINER_NAME (opcional)
+- POSTGRES_USER
+- POSTGRES_PASSWORD
+- POSTGRES_NAME
+- POSTGRES_PORT
+- POSTGRES_CONTAINER_NAME (opcional)
 
 README.md:
 - Instrucciones mínimas de:
@@ -195,7 +195,7 @@ Restricciones absolutas:
 - No refactorizar.
 - No tocar smtp_relay.
 - No modificar README raíz.
-- No modificar docker-compose.postgres.yaml existente.
+- No modificar /postgres/compose.yml existente.
 
 Entrega requerida:
 - Diff unificado completo de los tres archivos nuevos.

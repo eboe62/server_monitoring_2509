@@ -21,7 +21,7 @@ Este documento recoge:
 - Eliminación de docker-compose monolíticos.
 - Separación de cada servicio en micro-stack autónomo.
 - PostgreSQL deja de formar parte de un stack compartido y pasa a:
-    Tener su propio docker-compose.yaml
+    Tener su propio docker-compose.yml
     Declarar su propio volumen
     Ser desplegable y transferible de forma independiente
     No depender del orden de despliegue global
@@ -49,9 +49,9 @@ Este documento recoge:
   Dockerfile                → ops/docker/Dockerfile.main            - Estándar Generador
   Dockerfile.base           → ops/docker/Dockerfile.base            - Centralizar contenedores con imagen base universal
 
-  cron/Dockerfile           → ops/docker/Dockerfile.cron            - Homogeneización
-  cron/docker-compose.yml   → ops/docker/docker-compose.cron.yml    - Cada stack en su compose
-  cron/docker-entrypoint.sh → ops/docker/entrypoint.cron.sh         - Naming consistente
+  cron/Dockerfile           → ops/stacks/cron/Dockerfile            - Homogeneización
+  cron/docker-compose.yml   → ops/stacks/cron/compose.yml    - Cada stack en su compose
+  cron/docker-entrypoint.sh → ops/stacks/cron/entrypoint.sh         - Naming consistente
 
   logs_summary.txt          → resources/logs/                       - Agrupar artefactos
   logs_summary.txt          → resources/logs/logs_summary.txt
@@ -122,7 +122,7 @@ build:
 DESPUÉS:
 build:
   context: ./ops/docker
-  dockerfile: Dockerfile.cron
+  dockerfile: Dockerfile
 
 2.5 Correcciones críticas detectadas en correcciones_251203
 ----------------------------------
@@ -406,16 +406,16 @@ server_monitoring_2509/
 |____Makefile
 |____observability
 | |____config
-| | |____datasource.yaml
-| | |____loki-config.yaml
-| | |____promtail-config.yaml
-| |____docker-compose.yaml
+| | |____datasource.yml
+| | |____loki-config.yml
+| | |____promtail-config.yml
+| |____compose.yml
 | |____env
 |____postgres
-| |____docker-compose.yaml
+| |____compose.yml
 | |____env
 |____python
-| |____docker-compose.yml
+| |____compose.yml
 | |____docker-entrypoint.sh
 | |____Dockerfile
 |____README.md
@@ -443,7 +443,7 @@ server_monitoring_2509/
 |____smtp_relay
 | |____config
 | | |____patch-postfix.sh
-| |____docker-compose.yaml
+| |____compose.yml
 | |____Dockerfile
 | |____env
 | |____Makefile
@@ -473,9 +473,9 @@ server_monitoring_2512/
 ├── ci/
 │
 ├── config/
-│   ├ datasource.yaml
-│   ├ loki-config.yaml
-│   └ promtail-config.yaml
+│   ├ datasource.yml
+│   ├ loki-config.yml
+│   └ promtail-config.yml
 │
 ├── design/
 │
@@ -493,25 +493,28 @@ server_monitoring_2512/
 │ ├── deployment/
 │ │   └ setup_symlinks.sh
 │ │
-│ ├── docker/
+│ ├── stacks/
 │ │   ├ .env
 │ │   ├ Dockerfile.base
-│ │   ├ Dockerfile.cron
-│ │   ├ Dockerfile.python
-│ │   ├ docker-compose.cron.yml
-│ │   ├ docker-compose.observability.yml
-│ │   ├ docker-compose.postgres.yml
-│ │   ├ docker-compose.python.yml
-│ │   ├ docker-entrypoint.cron.sh
-│ │   └ docker-entrypoint.python.sh
+│ │   └── cron/
+│ │   ├ compose.yml
+│ │   ├ Dockerfile
+│ │   ├ docker-entrypoint.sh
+│ │   └── observatility/
+│ │   ├ compose.yml
+│ │   ├ Dockerfile
+│ │   └── python/
+│ │   ├ compose.yml
+│ │   ├ Dockerfile
+│ │   └ docker-entrypoint.sh
 │ │
 │ └── services/
 │     └── smtp_relay/
 │         ├ .env
 │         ├ config/patch-postfix.sh
 │         ├ scripts/test_mail.py
-│         ├ secrets/smtp_pass
-│         └ secrets/smtp_user
+│     └── postgres/
+│ │   ├ compose.yml
 │
 ├── resources/
 │   └── logs/
