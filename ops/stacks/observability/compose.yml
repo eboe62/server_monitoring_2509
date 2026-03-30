@@ -40,9 +40,9 @@ services:
       - ./config/loki-config.yml:/etc/loki/loki-config.yml:ro  # Configuración de Loki
 #      - ./data/loki:/var/lib/loki  # Persistencia de datos para Loki
       - loki-data:/var/lib/loki  # Persistencia de datos para Loki con logs indexados
-    ports:
+#    ports:
 #      Sin exposición de puertos (solo red interna monitoring-net)
-      - "127.0.0.1:${LOKI_PORT}:3100"  # API de Loki accesible desde el host
+#      - "127.0.0.1:${LOKI_PORT}:3100"  # API de Loki accesible desde el host
     restart: unless-stopped
 
     healthcheck:

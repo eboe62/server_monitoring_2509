@@ -311,6 +311,22 @@ debug-exec: ## Ejecutar comando en contenedor (STACK opcional)
 	echo "=== Ejecutando en $$STACK_NAME ==="; \
 	docker exec -it monitoring-$$STACK_NAME sh -c "$(CMD)"
 
+debug-loki: ## Test acceso interno a Loki (sin exposición de puertos)
+	@echo "=== DEBUG LOKI (internal) ==="
+
+	@echo "[1] Comprobando contenedor..."
+	@docker ps | grep loki >/dev/null || (echo "[ERROR] Loki no está corriendo" && exit 1)
+
+	@echo "[2] Test /ready desde red interna..."
+	@docker exec monitoring-python curl -s http://loki:3100/ready || (echo "[ERROR] Loki no responde" && exit 1)
+
+	@echo ""
+	@echo "[3] Labels disponibles:"
+	@docker exec monitoring-python curl -s http://loki:3100/loki/api/v1/labels
+
+	@echo ""
+	@echo "[OK] Loki accesible vía red interna"
+
 # ------------------------------------------
 # Debug container (toolbox)
 # ------------------------------------------
