@@ -341,13 +341,13 @@ test-resilience:
 	@echo "=== TEST RESILIENCIA ==="
 
 	@echo ""
-	@echo "[1] Test kill monitoring-python (auto-restart esperado)"
+	@echo "[1] Test stop monitoring-python (auto-restart esperado)"
 	@if ! docker ps --format '{{.Names}}' | grep -q monitoring-python; then \
 		echo "[WARN] monitoring-python no está corriendo, levantando..."; \
 		$(MAKE) stack-up STACK=python; \
 		sleep 5; \
 	fi
-	@docker kill monitoring-python >/dev/null 2>&1 || true
+	@docker stop monitoring-python >/dev/null 2>&1 || true
 	@sleep 5
 	@docker ps --format '{{.Names}} {{.Status}}' | grep monitoring-python && \
 		echo "[OK] monitoring-python reiniciado" || \
@@ -362,13 +362,13 @@ test-resilience:
 	@docker inspect monitoring-python | grep RestartCount
 
 	@echo ""
-	@echo "[4] Test kill monitoring-postgres (auto-restart esperado)"
+	@echo "[4] Test stop monitoring-postgres (auto-restart esperado)"
 	@if ! docker ps --format '{{.Names}}' | grep -q monitoring-postgres; then \
 		echo "[WARN] monitoring-postgres no está corriendo, levantando..."; \
 		$(MAKE) stack-up STACK=postgres; \
 		sleep 5; \
 	fi
-	@docker kill monitoring-postgres >/dev/null 2>&1 || true
+	@docker stop monitoring-postgres >/dev/null 2>&1 || true
 	@sleep 5
 	@docker ps --format '{{.Names}} {{.Status}}' | grep monitoring-postgres && \
 		echo "[OK] monitoring-postgres reiniciado" || \
@@ -391,6 +391,20 @@ test-resilience:
 
 test-observability:
 	@echo "=== TEST OBSERVABILITY ==="
-	@docker exec monitoring-cron sh -c "echo TEST_LOG >> /var/log/test.log"
-	@sleep 2
-	@docker exec monitoring-python sh -c "curl -s http://loki:3100/loki/api/v1/labels || echo ERROR"
+
+	@echo "[1] Esperando Loki..."
+	@timeout 20 sh -c 'until curl -s http://localhost:3100/ready; do sleep 2; done' || \
+		(echo "[ERROR] Loki no responde" && exit 1)
+
+	@echo "[OK] Loki accesible"
+
+	@echo "[2] Generando log"
+	@docker exec monitoring-cron sh -c "echo test >> /var/log/test.log"
+
+	@echo "[3] Query Loki"
+	@curl -G http://localhost:3100/loki/api/v1/query \
+		--data-urlencode 'query={job="varlogs"}' || \
+		echo "[WARN] Query sin resultados"
+
+	@echo ""
+	@echo "=== FIN TEST OBSERVABILITY ==="
