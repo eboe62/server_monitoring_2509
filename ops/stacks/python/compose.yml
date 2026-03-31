@@ -6,7 +6,7 @@ services:
 
     image: monitoring-python:v1.0.0
     container_name: monitoring-python
-    restart: unless-stopped
+    restart: always
 
     env_file:
       - ../../services/postgres/.env

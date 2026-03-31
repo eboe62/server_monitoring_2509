@@ -353,75 +353,120 @@ debug-toolbox-down: ## Elimina contenedor debug
 # Diagnóstico
 # ------------------------------------------
 
-test-network:
-	docker network inspect monitoring-net
-
-test-dns:
-	docker exec monitoring-python getent hosts monitoring-postgres
-
-force-recreate:
-	docker compose -f ops/services/postgres/compose.yml up -d --force-recreate
-	docker compose -f ops/stacks/python/compose.yml up -d --force-recreate
-
 test-resilience:
-	@echo "=== TEST RESILIENCIA REAL ==="
+	@echo "=== TEST RESILIENCIA ==="
 
-	@echo "\n[1] SIGKILL monitoring-python"
-	@docker kill monitoring-python || true
-	@sleep 3
-	@docker inspect monitoring-python --format='RestartCount={{.RestartCount}}'
-
-	@echo "\n[2] SIGKILL postgres"
-	@docker kill monitoring-postgres || true
+	@echo ""
+	@echo "[1] Test stop monitoring-python (auto-restart esperado)"
+	@if ! docker ps --format '{{.Names}}' | grep -q monitoring-python; then \
+		echo "[WARN] monitoring-python no está corriendo, levantando..."; \
+		$(MAKE) stack-up STACK=python; \
+		sleep 5; \
+	fi
+	@docker kill monitoring-python >/dev/null 2>&1 || true
 	@sleep 5
-	@docker inspect monitoring-postgres --format='RestartCount={{.RestartCount}}'
+	@docker ps --format '{{.Names}} {{.Status}}' | grep monitoring-python && \
+		echo "[OK] monitoring-python reiniciado" || \
+		echo "[ERROR] monitoring-python NO se ha reiniciado"
 
-	@echo "\n[3] TEST fallo conexión DB"
-	@echo "-> parando postgres"
-	@docker stop monitoring-postgres || true
+	@echo ""
+	@echo "[2] Verificando RestartPolicy"
+	@docker inspect monitoring-python | grep -A 3 RestartPolicy
+
+	@echo ""
+	@echo "[3] Verificando RestartCount"
+	@docker inspect monitoring-python | grep RestartCount
+
+	@echo ""
+	@echo "[4] Test stop monitoring-postgres (auto-restart esperado)"
+	@if ! docker ps --format '{{.Names}}' | grep -q monitoring-postgres; then \
+		echo "[WARN] monitoring-postgres no está corriendo, levantando..."; \
+		$(MAKE) stack-up STACK=postgres; \
+		sleep 5; \
+	fi
+	@docker kill monitoring-postgres >/dev/null 2>&1 || true
 	@sleep 5
+	@docker ps --format '{{.Names}} {{.Status}}' | grep monitoring-postgres && \
+		echo "[OK] monitoring-postgres reiniciado" || \
+		echo "[ERROR] monitoring-postgres NO se ha reiniciado"
 
-	@echo "-> comprobando health monitoring-python"
-	@docker inspect monitoring-python --format='Health={{.State.Health.Status}}'
+	@echo ""
+	@echo "[5] Verificando RestartCount (postgres)"
+	@docker inspect monitoring-postgres | grep RestartCount
 
-	@echo "-> levantando postgres"
-	@docker start monitoring-postgres
-	@sleep 5
+	@echo ""
+	@echo "[6] Test restart stack observability"
+	@cd ops/stacks/observability && docker compose restart
 
-	@echo "\n[4] TEST OOM (simulado)"
-	@docker exec monitoring-python sh -c "python3 -c 'a=[\"A\"*1024*1024]*1024'" || true
-	@sleep 3
-	@docker inspect monitoring-python --format='RestartCount={{.RestartCount}}'
+	@echo ""
+	@echo "[7] Health check global"
+	@$(MAKE) health
 
-	@echo "\n[5] Estado final"
-	@docker ps
-
-	@echo "\n=== FIN TEST RESILIENCIA ==="
+	@echo ""
+	@echo "=== FIN TEST RESILIENCIA ==="
 
 test-observability:
 	@echo "=== TEST OBSERVABILITY ==="
 
-	@echo "[1] Esperando Loki (host)..."
-	@timeout 30 sh -c 'until curl -s http://127.0.0.1:3100/ready; do sleep 2; done' || \
+	@echo "[1] Esperando Loki..."
+	@timeout 20 sh -c 'until curl -s http://localhost:3100/ready; do sleep 2; done' || \
 		(echo "[ERROR] Loki no responde" && exit 1)
 
 	@echo "[OK] Loki accesible"
 
-	@echo "[2] Generando log único"
-	@docker exec monitoring-cron sh -c "echo 'LokiTest_$$(date +%s)' >> /var/log/test.log"
+	@echo "[2] Generando log"
+	@docker exec monitoring-cron sh -c "echo test >> /var/log/test.log"
 
-	@sleep 5
-
-	@echo "[3] Verificando labels"
-	@curl -s http://127.0.0.1:3100/loki/api/v1/labels
-
-	@echo ""
-	@echo "[4] Query"
-	@curl -G http://127.0.0.1:3100/loki/api/v1/query \
+	@echo "[3] Query Loki"
+	@curl -G http://localhost:3100/loki/api/v1/query \
 		--data-urlencode 'query={job="varlogs"}' || \
-		echo "[WARN] sin resultados"
+		echo "[WARN] Query sin resultados"
 
 	@echo ""
 	@echo "=== FIN TEST OBSERVABILITY ==="
 
 
+cd /opt/monitoring/
+nano ops/services/postgres/.env
+make phase4-init
+make monitoring-net
+make deploy
+make help
+make stack-up STACK=postgres
+make stack-up STACK=smtp_relay
+make stack-up STACK=python
+make stack-up STACK=cron
+
+make stack-up STACK=observability
+docker ps
+docker ps --format "table {{.Names}}\t{{.Ports}}"
+docker volume ls
+ss -tulpn
+sudo ufw status verbose
+sudo fail2ban-client status
+make doctor
+make audit
+make health
+make test-resilience
+make test-observability
+make debug-loki
+
+
+ls -l /opt/monitoring/scripts
+docker network inspect monitoring-net
+docker exec monitoring-python getent hosts monitoring-postgres
+
+find . -not -path '*/.git*' | sed -e 's;[^/]*/;|____;g;s;____|; |;g'
+sudo git log --oneline --decorate --graph --all -n 25
+
+docker inspect monitoring-cron | grep docker.sock
+docker inspect monitoring-python | grep docker.sock
+docker exec -it monitoring-python ping monitoring-postgres
+cat ops/stacks/observability/compose.yml | grep "image:"
+cat ops/stacks/cron/compose.yml | grep "test"
+docker exec -it monitoring-cron sh
+python3 -m log_ingestor.log_honeypot_geolocation
+exit
+docker inspect monitoring-cron | grep -i cron
+docker exec monitoring-cron ps aux
+docker logs monitoring-cron | tail -n 20

@@ -47,7 +47,7 @@ services:
 
     networks:
       - monitoring-net  # Red compartida (Grafana, Loki, Postgres, SMTP relay...)
-    restart: unless-stopped
+    restart: always
 
 secrets:
   smtp_user:
