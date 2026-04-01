@@ -1,26 +1,22 @@
 #!/usr/bin/env bash
 
 # ==========================================
-# server_monitoring_2509
-# Auditoría FASE 4
+# AUDITORÍA SERVIDOR
 # Repositorio + Host
+# Informe técnico = diagnóstico
+# ¿Qué está mal y por qué?
 # ==========================================
 
 set -euo pipefail
 
-echo "------------------------------------------"
-echo "AUDITORÍA FASE 4 – server_monitoring_2509"
+echo "=========================================="
+echo "AUDITORÍA SERVIDOR"
 echo "Fecha: $(date)"
 echo "Host:  $(hostname)"
-echo "------------------------------------------"
+echo "=========================================="
 
-echo ""
-
-# ==========================================
 # helpers
-# ==========================================
-
-ok()   { echo "[OK]   $1"; }
+ok()   { echo "[ OK ] $1"; }
 warn() { echo "[WARN] $1"; }
 fail() { echo "[FAIL] $1"; }
 info() { echo "[INFO] $1"; }
@@ -30,11 +26,10 @@ echo "------------------------------------------"
 echo "A.- AUDITORÍA REPOSITORIO"
 echo "------------------------------------------"
 
-# ==========================================
-# A1 Git
-# ==========================================
 echo ""
+# ==========================================
 echo "A1 Git"
+# ==========================================
 echo ""
 
 info "Verificando repositorio Git"
@@ -57,11 +52,10 @@ else
     warn "Repositorio con cambios locales"
 fi
 
-# ==========================================
-# A2 estructura
-# ==========================================
 echo ""
+# ==========================================
 echo "A2 Estructura"
+# ==========================================
 echo ""
 
 info "Verificando estructura del proyecto"
@@ -82,11 +76,10 @@ for d in "${dirs[@]}"; do
     fi
 done
 
-# ==========================================
-# A3 docker compose
-# ==========================================
 echo ""
+# ==========================================
 echo "A3 docker compose"
+# ==========================================
 echo ""
 
 info "Buscando docker-compose"
@@ -108,11 +101,10 @@ for f in $COMPOSE_FILES; do
     fi
 done
 
-# ==========================================
-# A4 puertos declarados
-# ==========================================
 echo ""
+# ==========================================
 echo "A4 Puertos declarados"
+# ==========================================
 echo ""
 
 info "Buscando puertos publicados en compose"
@@ -126,11 +118,10 @@ else
     echo "$PORTS"
 fi
 
-# ==========================================
-# A5 cronfile
-# ==========================================
 echo ""
+# ==========================================
 echo "A5 Cronfile"
+# ==========================================
 echo ""
 
 if [ -f "ops/cron/monitoring.cron" ]; then
@@ -145,11 +136,10 @@ else
     warn "docker-compose cron no encontrado"
 fi
 
-# ==========================================
-# A6 ejecución python
-# ==========================================
 echo ""
+# ==========================================
 echo "A6 Ejecución Python"
+# ==========================================
 echo ""
 
 info "Buscando ejecuciones Python"
@@ -175,11 +165,10 @@ else
     ok "Uso de python3 -m detectado"
 fi
 
-# ==========================================
-# A7 docker socket
-# ==========================================
 echo ""
+# ==========================================
 echo "A7 Docker socket"
+# ==========================================
 echo ""
 
 info "Buscando uso de docker.sock"
@@ -193,11 +182,10 @@ else
     echo "$SOCK"
 fi
 
-# ==========================================
-# A8 secrets
-# ==========================================
 echo ""
+# ==========================================
 echo "A8 Secrets"
+# ==========================================
 echo ""
 
 info "Buscando directorios secrets"
@@ -211,11 +199,10 @@ else
     echo "$SECRETS"
 fi
 
-# ==========================================
-# A9 secrets versionados
-# ==========================================
 echo ""
+# ==========================================
 echo "A9 Secrets versionados"
+# ==========================================
 echo ""
 
 info "Verificando secrets versionados"
@@ -234,23 +221,20 @@ echo "------------------------------------------"
 echo "B.- AUDITORÍA HOST"
 echo "------------------------------------------"
 
-# ==========================================
-# B1 sistema
-# ==========================================
 echo ""
+# ==========================================
 echo "B1 Sistema"
+# ==========================================
 echo ""
 
 info "Sistema"
 
 uname -a
-echo ""
 
-# ==========================================
-# B2 ufw
-# ==========================================
 echo ""
+# ==========================================
 echo "B2 UFW"
+# ==========================================
 echo ""
 
 info "Estado UFW"
@@ -261,11 +245,10 @@ else
     warn "UFW no instalado"
 fi
 
-# ==========================================
-# B3 fail2ban
-# ==========================================
 echo ""
+# ==========================================
 echo "B3 fail2ban"
+# ==========================================
 echo ""
 
 info "Estado fail2ban"
@@ -276,11 +259,10 @@ else
     warn "fail2ban no activo"
 fi
 
-# ==========================================
-# B4 cron host
-# ==========================================
 echo ""
+# ==========================================
 echo "B4 Cron host"
+# ==========================================
 echo ""
 
 info "Cron del usuario"
@@ -291,11 +273,10 @@ info "Cron root"
 
 sudo crontab -l 2>/dev/null || echo "Sin crontab root"
 
-# ==========================================
-# B5 docker
-# ==========================================
 echo ""
+# ==========================================
 echo "B5 Docker"
+# ==========================================
 echo ""
 
 info "Docker runtime"
@@ -307,11 +288,10 @@ else
     fail "Docker no instalado"
 fi
 
-# ==========================================
-# B6 contenedores
-# ==========================================
 echo ""
+# ==========================================
 echo "B6 Contenedores"
+# ==========================================
 echo ""
 
 info "Contenedores activos"
@@ -324,22 +304,20 @@ else
     docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 fi
 
-# ==========================================
-# B7 puertos host
-# ==========================================
 echo ""
+# ==========================================
 echo "B7 Puertos host"
+# ==========================================
 echo ""
 
 info "Puertos abiertos en host"
 
 ss -tulpn
 
-# ==========================================
-# B8 redes docker
-# ==========================================
 echo ""
+# ==========================================
 echo "B8 Redes Docker"
+# ==========================================
 echo ""
 
 info "Redes Docker"
@@ -352,11 +330,10 @@ else
     warn "monitoring-net no encontrada"
 fi
 
-# ==========================================
-# B9 volúmenes
-# ==========================================
 echo ""
+# ==========================================
 echo "B9 Volúmenes"
+# ==========================================
 echo ""
 
 info "Volúmenes Docker"
@@ -368,12 +345,10 @@ echo "------------------------------------------"
 echo "C.- CUMPLIMIENTO ADR"
 echo "------------------------------------------"
 
-# ==========================================
-# C1 ADR-0014 / ADR-0015
-# Puertos docker expuestos
-# ==========================================
 echo ""
+# ==========================================
 echo "C1 ADR-0014 / ADR-0015"
+# ==========================================
 echo ""
 
 info "Verificando exposición de puertos Docker (ADR-0014 / ADR-0015)"
@@ -387,11 +362,10 @@ else
     echo "$BAD_PORTS"
 fi
 
-# ==========================================
-# C2 uso de :latest
-# ==========================================
 echo ""
+# ==========================================
 echo "C2 uso de :latest"
+# ==========================================
 echo ""
 
 info "Verificando uso de tags :latest (recomendación seguridad)"
@@ -405,11 +379,10 @@ else
     echo "$LATEST"
 fi
 
-# ==========================================
-# C3 docker.sock
-# ==========================================
 echo ""
+# ==========================================
 echo "C3 docker.sock"
+# ==========================================
 echo ""
 
 info "Verificando montaje docker.sock (superficie de ataque)"
@@ -423,11 +396,10 @@ else
     echo "$SOCK"
 fi
 
-# ==========================================
-# C4 servicios fuera de monitoring-net
-# ==========================================
 echo ""
+# ==========================================
 echo "C4 servicios fuera de monitoring-net"
+# ==========================================
 echo ""
 
 info "Verificando uso de red monitoring-net"
@@ -440,12 +412,10 @@ else
     warn "monitoring-net no existe"
 fi
 
-# ==========================================
-# C5 cron del host para lógica de aplicación
-# ADR-0016
-# ==========================================
 echo ""
-echo "C5 cron del host para lógica de aplicación"
+# ==========================================
+echo "C5 ADR-0016 cron del host para lógica de aplicación"
+# ==========================================
 echo ""
 
 info "Buscando ejecución de scripts del proyecto en cron del host"
@@ -459,11 +429,10 @@ else
     echo "$HOST_CRON"
 fi
 
-# ==========================================
-# C6 ejecución python fuera de contenedor
-# ==========================================
 echo ""
+# ==========================================
 echo "C6 ejecución python fuera de contenedor"
+# ==========================================
 echo ""
 
 info "Buscando ejecución directa de Python del proyecto"
@@ -477,12 +446,12 @@ else
     echo "$HOST_PY"
 fi
 
-# ==========================================
-# C7 permisos scripts host hardening
 # ADR-0016
-# ==========================================
+
 echo ""
+# ==========================================
 echo "C7 permisos scripts host hardening"
+# ==========================================
 echo ""
 
 info "Verificando scripts de hardening del host"
@@ -502,5 +471,5 @@ done
 
 echo ""
 echo "------------------------------------------"
-echo "FIN AUDITORÍA FASE 4"
+echo "FIN AUDITORÍA"
 echo "------------------------------------------"

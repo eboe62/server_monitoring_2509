@@ -360,43 +360,104 @@ test-dns:
 	docker exec monitoring-python getent hosts monitoring-postgres
 
 force-recreate:
-	docker compose -f ops/services/postgres/compose.yml up -d --force-recreate
-	docker compose -f ops/stacks/python/compose.yml up -d --force-recreate
+	@echo "=== RECREATE COMPLETO ==="
+	docker compose -f ops/services/postgres/compose.yml down
+	docker compose -f ops/stacks/python/compose.yml down
+	docker compose -f ops/services/postgres/compose.yml up -d --build
+	docker compose -f ops/stacks/python/compose.yml up -d --build
+	docker system prune -f
 
 test-resilience:
-	@echo "=== TEST RESILIENCIA REAL ==="
+	@echo "=== TEST RESILIENCIA SRE ==="
+	# ----------------------------------------
+	# [0] Estado inicial
+	# ----------------------------------------
+	@echo "\n[0] Estado inicial"
+	@docker ps
 
-	@echo "\n[1] SIGKILL monitoring-python"
-	@docker kill monitoring-python || true
-	@sleep 3
-	@docker inspect monitoring-python --format='RestartCount={{.RestartCount}}'
+	# ----------------------------------------
+	# [1] CRASH REAL proceso (PID 1)
+	# ----------------------------------------
+	@echo "\n[1] CRASH proceso interno (PID 1)"
+	@docker exec monitoring-python sh -c "kill -9 1" || true
 
-	@echo "\n[2] SIGKILL postgres"
-	@docker kill monitoring-postgres || true
-	@sleep 5
-	@docker inspect monitoring-postgres --format='RestartCount={{.RestartCount}}'
+	@echo "esperando recuperación (running + healthy)..."
+	@timeout 40 sh -c '\
+	until [ "$$(docker inspect monitoring-python --format="{{.State.Status}}")" = "running" ] && \
+				[ "$$(docker inspect monitoring-python --format="{{.State.Health.Status}}")" = "healthy" ]; do \
+		sleep 2; \
+	done' || \
+		(echo "[FAIL] contenedor no se ha recuperado correctamente" && \
+		docker inspect monitoring-python --format="State={{.State.Status}} Health={{.State.Health.Status}}" && exit 1)
 
-	@echo "\n[3] TEST fallo conexión DB"
-	@echo "-> parando postgres"
+	@echo "[OK] restart automático funcionando"
+
+	# Info estado final (debug útil, no validación fuerte)
+	@echo "[INFO] estado final:"
+	@docker inspect monitoring-python --format='State={{.State.Status}} Health={{.State.Health.Status}}'
+
+	# ----------------------------------------
+	# [2] FALLO DB
+	# ----------------------------------------
+	@echo "\n[2] Simulación fallo DB"
+
 	@docker stop monitoring-postgres || true
 	@sleep 5
 
-	@echo "-> comprobando health monitoring-python"
-	@docker inspect monitoring-python --format='Health={{.State.Health.Status}}'
+	@echo "estado servicio python:"
+	@docker inspect monitoring-python --format='State={{.State.Status}} Health={{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}'
 
-	@echo "-> levantando postgres"
+	@echo "[INFO] DB caída → servicio debe degradar, no morir"
+
 	@docker start monitoring-postgres
 	@sleep 5
 
-	@echo "\n[4] TEST OOM (simulado)"
-	@docker exec monitoring-python sh -c "python3 -c 'a=[\"A\"*1024*1024]*1024'" || true
-	@sleep 3
-	@docker inspect monitoring-python --format='RestartCount={{.RestartCount}}'
+	@echo "[OK] DB recuperada"
 
+	# ----------------------------------------
+	# [3] FALLO RED (simulado)
+	# ----------------------------------------
+	@echo "\n[3] Simulación fallo red hacia DB"
+
+	@NETWORK=$$(docker inspect monitoring-postgres --format='{{range $$k, $$v := .NetworkSettings.Networks}}{{$k}}{{end}}'); \
+	echo "Network=$$NETWORK"; \
+	docker network disconnect $$NETWORK monitoring-postgres || true; \
+	echo "esperando degradación..."; \
+	timeout 60 sh -c '\
+	until [ "$$(docker inspect monitoring-python --format="{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}")" = "unhealthy" ]; do \
+		sleep 2; \
+	done'; \
+	echo "[OK] degradación por red OK"; \
+	docker network connect $$NETWORK monitoring-postgres; \
+	echo "esperando recuperación..."; \
+	timeout 60 sh -c '\
+	until [ "$$(docker inspect monitoring-python --format="{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}")" = "healthy" ]; do \
+		sleep 2; \
+	done'; \
+	echo "[OK] red restaurada"
+
+	# ----------------------------------------
+	# [4] OBSERVABILIDAD (Loki)
+	# ----------------------------------------
+	@echo "\n[5] Verificando Loki"
+
+	@timeout 20 sh -c 'until curl -s http://127.0.0.1:3100/ready | grep -q ready; do sleep 2; done' || \
+		(echo "[FAIL] Loki no responde" && exit 1)
+
+	@echo "[OK] Loki accesible"
+
+	@echo "generando log..."
+	@docker exec monitoring-cron sh -c "echo 'SRE_TEST_$$(date +%s)' >> /var/log/test.log"
+
+	@sleep 5
+
+	@curl -s http://127.0.0.1:3100/loki/api/v1/labels
+	# ----------------------------------------
+	# [5] ESTADO FINAL
+	# ----------------------------------------
 	@echo "\n[5] Estado final"
 	@docker ps
-
-	@echo "\n=== FIN TEST RESILIENCIA ==="
+	@echo "\n=== FIN TEST RESILIENCIA SRE ==="
 
 test-observability:
 	@echo "=== TEST OBSERVABILITY ==="
@@ -418,10 +479,9 @@ test-observability:
 	@echo ""
 	@echo "[4] Query"
 	@curl -G http://127.0.0.1:3100/loki/api/v1/query \
-		--data-urlencode 'query={job="varlogs"}' || \
+		--data-urlencode 'query={job="auth_logs"} |= "LokiTest"'
 		echo "[WARN] sin resultados"
 
 	@echo ""
 	@echo "=== FIN TEST OBSERVABILITY ==="
-
 

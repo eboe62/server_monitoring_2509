@@ -1,10 +1,12 @@
 #!/bin/sh
-set -e
 
-if [ $# -eq 0 ]; then
-    echo "[INFO] No command specified. Container running idle (encendido pero ocioso para facilitar supervisión de logs)."
-    exec tail -f /dev/null
-fi
+echo "[INFO] monitoring-python iniciado"
 
-echo "[INFO] Ejecutando comando manual: $@"
-exec "$@"
+while true; do
+  if [ -f /opt/monitoring/tu_script.py ]; then
+    python3 /opt/monitoring/tu_script.py || echo "[WARN] fallo script"
+  else
+    echo "[WARN] script no encontrado, modo idle"
+  fi
+  sleep 10
+done
