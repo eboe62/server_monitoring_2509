@@ -506,10 +506,23 @@ test-observability:
 
 	@echo ""
 	@echo "[4] Query"
-	@curl -G http://127.0.0.1:3100/loki/api/v1/query \
-		--data-urlencode 'query={job="auth_logs"} |= "LokiTest"'
-		echo "[WARN] sin resultados"
+	@RESULT=$$(curl -s -G http://127.0.0.1:3100/loki/api/v1/query \
+		--data-urlencode 'query={job="auth_logs"} |= "LokiTest"' | jq '.data.result | length'); \
+	if [ "$$RESULT" -eq 0 ]; then \
+		echo "[WARN] sin resultados"; \
+	else \
+		echo "[OK] logs ingeridos"; \
+	fi
 
 	@echo ""
 	@echo "=== FIN TEST OBSERVABILITY ==="
 
+test-loki-ingestion:
+	cat /var/log/test.log | tail -n 5
+	@echo ""
+	docker exec monitoring-cron sh -c "echo 'TEST_$(date +%s)' >> /var/log/test.log"
+	sleep 2
+	curl -G http://127.0.0.1:3100/loki/api/v1/query \
+	--data-urlencode 'query={job="auth_logs"} |= "TEST_"'
+	@echo ""
+	cat /var/log/test.log | tail -n 5

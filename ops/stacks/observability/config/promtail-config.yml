@@ -21,7 +21,7 @@ scrape_configs:
         labels:
           job: auth_logs  # Etiqueta común para los logs
           service_name: system  # Nombre del servicio que queremos identificar
-          __path__: /var/log/auth.log  # Patrón para incluir logs específicos (excluye logs rotados)
+          __path__: /var/log/*.log  # Patrón para incluir logs específicos (excluye logs rotados)
 
     # Configuración del pipeline para procesamiento con deduplicación
     pipeline_stages:
