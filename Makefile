@@ -39,175 +39,74 @@ else \
 fi
 endef
 
-.PHONY: help build build-base build-python build-cron \
-clean clean-docker monitoring-net phase4-init \
-stack-up stack-down stack-restart stack-status stack-logs \
-deploy rebuild rebuild-all doctor audit git-log \
-dev-up dev-down
-
 # ------------------------------------------
 # Help
 # ------------------------------------------
+
+.PHONY: help
 
 help:
 	@echo ""
 	@echo "=== Monitoring Platform ==="
 	@echo ""
-	@echo "Stacks disponibles:"
-	@echo "  $(STACKS)"
+	@echo "CORE:"
+	@echo "  make audit        → Validación estructural (build-time)"
+	@echo "  make status       → Snapshot del sistema"
+	@echo "  make health       → Estado runtime (healthchecks)"
+	@echo "  make test         → Validación funcional"
+	@echo "  make debug        → Herramientas de diagnóstico"
+	@echo ""
+	@echo "STACKS:"
+	@echo "  make stack-up STACK=<name>"
+	@echo "  make stack-down STACK=<name>"
+	@echo "  make stack-restart STACK=<name>"
+	@echo "  make stack-status STACK=<name>"
+	@echo "  make stack-logs STACK=<name>"
 	@echo ""
 	@echo "Ejemplos:"
 	@echo "  make stack-up STACK=postgres"
 	@echo "  make stack-up STACK=observability"
 	@echo ""
-
-# ------------------------------------------
-# Git utilities
-# ------------------------------------------
-
-git-log: ## Historial git resumido
+	@echo "Stacks disponibles: $(STACKS)"
 	@echo ""
-	@echo "=== Git history (últimos 25 commits) ==="
-	sudo git log --oneline --decorate --graph --all -n 25
 
 # ------------------------------------------
-# Auditoría
+# AUDIT (build-time)
 # ------------------------------------------
+## Ejecuta diagnóstico estructural (offline)
+## Momento: build-time
+## Proposito: ¿Está bien construido el sistema?
+## Tipo: estático
+## ✔ Diagnóstico profundo
+## ✔ Busca problemas estructurales
+## ✔ Evalúa cumplimiento ADR
 
-audit: ## Ejecuta auditoría repositorio + host
+.PHONY: audit
+
+audit:
 	@echo ""
-	@echo "=== Ejecutando auditoría ==="
+	@echo "=== Ejecutando auditoría (estructura / ADR) ==="
 	chmod +x $(AUDIT_SCRIPT)
 	./$(AUDIT_SCRIPT)
 
 # ------------------------------------------
-# Infraestructura base
+# STATUS (snapshot)
 # ------------------------------------------
+## Verifica estado global
+## Momento: runtime snapshot
+## Proposito: ¿Que hay ahora mismo?
+## Tipo: snapshot
+## ✔ Estado del sistema en runtime
+## ✔ Snapshot global
+## Analiza:
+## - docker version
+## - disk
+## - network
+## - containers
 
-monitoring-net:  ## Crea la red Docker si no existe
-	@docker network inspect monitoring-net >/dev/null 2>&1 || \
-	docker network create monitoring-net
-	@echo "[OK] network monitoring-net ready"
+.PHONY: status
 
-# ------------------------------------------
-# Limpieza
-# ------------------------------------------
-
-clean:
-	@echo "[INFO] limpiando imágenes dangling"
-	docker image prune -f
-
-clean-docker:
-	@echo "[INFO] limpieza completa Docker"
-	docker container prune -f
-	docker image prune -f
-	docker builder prune -f
-
-# ------------------------------------------
-# Builds
-# ------------------------------------------
-
-build-base:
-	docker build --no-cache -f ops/images/base/Dockerfile -t monitoring-base .
-
-build-python:
-	docker build --no-cache -f ops/stacks/python/Dockerfile -t monitoring-python .
-
-build-cron:
-	docker build --no-cache -f ops/stacks/cron/Dockerfile -t monitoring-cron .
-
-build: build-base build-python build-cron  ## Construye todas las imágenes
-	@echo "[OK] imágenes construidas"
-
-phase4-init: monitoring-net build  ## Inicialización completa
-	@echo "[OK] entorno inicializado"
-
-# ------------------------------------------
-# Gestión genérica de micro-stacks
-# ------------------------------------------
-
-stack-up:  ## Levanta un stack (STACK=nombre)
-	$(call validate_stack)
-	@DIR=$$( $(call stack_path) ); \
-	echo "=== 🚀 Levantando stack $(STACK) ==="; \
-	cd $$DIR && $(COMPOSE) up -d --build
-
-stack-down:  ## Detiene un stack
-	$(call validate_stack)
-	@DIR=$$( $(call stack_path) ); \
-	echo "=== ⛔ Parando stack $(STACK) ==="; \
-	cd $$DIR && $(COMPOSE) down
-
-stack-restart:  ## Reinicia un stack
-	$(call validate_stack)
-	@DIR=$$( $(call stack_path) ); \
-	echo "=== 🔁 Reiniciando stack $(STACK) ==="; \
-	cd $$DIR && $(COMPOSE) restart
-
-stack-status:  ## Estado de un stack
-	$(call validate_stack)
-	@DIR=$$( $(call stack_path) ); \
-	echo "=== Estado stack $(STACK) ==="; \
-	cd $$DIR && $(COMPOSE) ps
-
-stack-logs:
-	$(call validate_stack)
-	@DIR=$$( $(call stack_path) ); \
-	cd $$DIR && $(COMPOSE) logs -f
-
-# ------------------------------------------
-# Despliegue completo
-# ------------------------------------------
-
-deploy: build
-	@set -e; \
-	echo "=== 🚀 Despliegue completo ==="; \
-	for s in $(SERVICE_STACKS); do \
-		echo "→ desplegando $$s"; \
-		cd $(SERVICE_DIR)/$$s && $(COMPOSE) up -d --build; \
-	done; \
-	for s in $(INFRA_STACKS); do \
-		echo "→ desplegando $$s"; \
-		cd $(STACK_DIR)/$$s && $(COMPOSE) up -d --build; \
-	done; \
-	echo "[OK] despliegue finalizado"
-
-dev-up:
-	$(COMPOSE) -f $(DEV_COMPOSE) up -d
-
-dev-down:
-	$(COMPOSE) -f $(DEV_COMPOSE) down
-
-# ------------------------------------------
-# Rebuild
-# ------------------------------------------
-
-rebuild: clean build
-	@echo "[OK] rebuild realizado"
-
-rebuild-all:
-	make clean-docker
-	make build
-	make deploy
-
-# ------------------------------------------
-# Logs
-# ------------------------------------------
-
-logs:  ## Muestra logs recientes del sistema y contenedores
-	@echo "=== Logs del sistema ==="
-	@echo ""
-	@echo "=== Logs contenedores ==="
-	@for c in $$(docker ps --format '{{.Names}}'); do \
-		echo "===== $$c ====="; \
-		docker logs $$c --tail=20; \
-	done
-
-# ------------------------------------------
-# Diagnóstico
-# ------------------------------------------
-
-doctor:  ## Verifica estado del entorno
+status:
 	@echo ""
 	@echo "=== Diagnóstico del sistema ==="
 	@echo ""
@@ -254,20 +153,287 @@ doctor:  ## Verifica estado del entorno
 
 	@echo ""
 	@echo "=== Fin diagnóstico ==="
+	@echo ""
+
+# ------------------------------------------
+# HEALTH (runtime state)
+# ------------------------------------------
+## Realizachequeo activo + autorepair
+## Momento: runtime behavior
+## Proposito: ¿Está funcionando correctamente ahora mismo?
+## Tipo: dinámico
+## ✔ Estado dinámico
+## ✔ Problemas operativos
+## Analiza:
+## - unhealthy
+## - restart
+## - auto-recovery
+
+.PHONY: health
 
 health:
 	@echo "=== HEALTH CHECK ==="
-	@docker ps --format "table {{.Names}}\t{{.Status}}"
+
+debug-docker: ## Estado detallado Docker
+	@echo "=== Docker inspect resumido ==="
+	@echo "\n[Containers]"
+	@docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 	@echo ""
+
 	@echo "[CHECK] Containers unhealthy:"
 	@docker ps --filter "health=unhealthy"
 	@echo ""
+
 	@echo "[CHECK] Restarting containers:"
 	@docker ps --filter "status=restarting"
+	@echo ""
 
 # ------------------------------------------
-# Debug / Operabilidad
+# TEST (validación funcional)
 # ------------------------------------------
+.PHONY: test
+
+test:
+	@echo "=== TEST COMMANDS ==="
+	@echo "make test-resilience-completo"
+	@echo "make test-resilience-restart"
+	@echo "make test-resilience-db"
+	@echo "make test-resilience-network"
+	@echo "make test-resilience-observability"
+	@echo "make test-observability"
+	@echo "make test-network"
+	@echo ""
+
+# --- Resilience
+
+.PHONY: test-resilience-completo
+
+test-resilience-completo: test-resilience-inicio test-resilience-restart test-resilience-db test-resilience-network test-resilience-observability test-resilience-fin
+
+test-resilience-inicio:
+	@echo "\n=== TEST RESILIENCIA SRE (Site Reliability Engineering) ==="
+	@echo ""
+	# ----------------------------------------
+	# [0] Estado inicial
+	# ----------------------------------------
+	@echo "[0] Estado inicial"
+	@docker ps
+	@echo ""
+
+test-resilience-restart:
+	# ----------------------------------------
+	# [1] CRASH REAL proceso (PID 1)
+	# ----------------------------------------
+## Testea:
+## - kill -9
+## - espera running
+## - espera healthy
+
+	@echo "[1] CRASH proceso interno (PID 1)"
+	@docker exec monitoring-python sh -c "kill -9 1" || true
+
+	# --- VALIDAR RESTART (no health aún) ---
+	@echo "esperando restart (running)..."
+	@timeout 30 sh -c '\
+	until [ "$$(docker inspect monitoring-python --format="{{.State.Status}}")" = "running" ]; do \
+					sleep 2; \
+	done' || \
+					(echo "[FAIL] contenedor no se ha reiniciado" && \
+					docker inspect monitoring-python --format="State={{.State.Status}}" && exit 1)
+
+	@echo "[ OK ] contenedor reiniciado"
+
+	# --- VALIDAR HEALTH POST-RESTART ---
+	@echo "esperando recuperación health (healthy)..."
+	@timeout 60 sh -c '\
+	until [ "$$(docker inspect monitoring-python --format="{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}")" = "healthy" ]; do \
+					sleep 2; \
+	done' || \
+					(echo "[FAIL] contenedor no alcanza healthy tras restart" && \
+					docker inspect monitoring-python --format="State={{.State.Status}} Health={{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}" && exit 1)
+
+	@echo "[ OK ] restart + recovery OK"
+
+	# Debug
+	@echo "[INFO] estado tras restart:"
+	@docker inspect monitoring-python --format='State={{.State.Status}} Health={{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}'
+	@echo ""
+
+test-resilience-db:
+	# ----------------------------------------
+	# [2] FALLO DB
+	# ----------------------------------------
+## Testea:
+## - stop postgres
+## - espera unhealthy
+## - start postgres
+## - espera healthy
+
+	@echo "[2] Simulación fallo DB"
+
+	@docker stop monitoring-postgres || true
+
+	@echo "esperando degradación (unhealthy)..."
+	@timeout 60 sh -c '\
+	until [ "$$(docker inspect monitoring-python --format="{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}")" = "unhealthy" ]; do \
+					sleep 2; \
+	done' || \
+					(echo "[FAIL] no entra en unhealthy tras caída DB" && \
+					docker inspect monitoring-python --format="State={{.State.Status}} Health={{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}" && exit 1)
+
+	@echo "[ OK ] degradación correcta (unhealthy)"
+
+	@docker start monitoring-postgres
+
+	@echo "esperando recuperación (healthy)..."
+	@timeout 60 sh -c '\
+	until [ "$$(docker inspect monitoring-python --format="{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}")" = "healthy" ]; do \
+					sleep 2; \
+	done' || \
+					(echo "[FAIL] no recupera healthy tras DB" && \
+					docker inspect monitoring-python --format="State={{.State.Status}} Health={{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}" && exit 1)
+
+	@echo "[ OK ] DB recuperada"
+	@echo ""
+
+test-resilience-network:
+	# ----------------------------------------
+	# [3] FALLO RED (simulado)
+	# ----------------------------------------
+## Testea:
+## - disconnect network
+## - espera unhealthy
+## - reconnect network
+## - espera healthy
+
+	@echo "[3] Simulación fallo red hacia DB"
+
+	@NETWORK=$$(docker inspect -f '{{range $$k, $$v := .NetworkSettings.Networks}}{{$$k}}{{end}}' monitoring-postgres); \
+	if [ -z "$$NETWORK" ]; then \
+		echo "[FAIL] no se pudo determinar la red"; \
+		exit 1; \
+	fi; \
+	echo "Network=$$NETWORK"; \
+	docker network disconnect $$NETWORK monitoring-postgres || true; \
+	echo "esperando degradación..."; \
+	timeout 60 sh -c '\
+	until [ "$$(docker inspect monitoring-python --format="{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}")" = "unhealthy" ]; do \
+		sleep 2; \
+	done' || (echo "[FAIL] no degrada por red" && exit 1); \
+	echo "[ OK ] degradación por red OK"; \
+	docker network connect $$NETWORK monitoring-postgres; \
+	echo "esperando recuperación..."; \
+	timeout 60 sh -c '\
+	until [ "$$(docker inspect monitoring-python --format="{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}")" = "healthy" ]; do \
+		sleep 2; \
+	done' || (echo "[FAIL] no recupera tras red" && exit 1); \
+	echo "[ OK ] red restaurada"
+	@echo ""
+
+test-resilience-observability:
+	# ----------------------------------------
+	# [4] OBSERVABILIDAD (Loki)
+	# ----------------------------------------
+## Testea:
+## - generar log
+## - comprobar Loki
+
+	@echo "[4] Verificando Loki"
+
+	@timeout 20 sh -c 'until curl -s http://127.0.0.1:3100/ready | grep -q ready; do sleep 2; done' || \
+		(echo "[FAIL] Loki no responde" && exit 1)
+
+	@echo "[ OK ] Loki accesible"
+
+	@echo "generando log..."
+	@docker exec monitoring-cron sh -c "echo 'SRE_TEST_$$(date +%s)' >> /var/log/test.log"
+
+	@sleep 5
+
+	@curl -s http://127.0.0.1:3100/loki/api/v1/labels
+	@echo ""
+
+test-resilience-fin:
+	# ----------------------------------------
+	# [5] ESTADO FINAL
+	# ----------------------------------------
+
+	@echo "[5] Estado final"
+	@docker ps
+
+	@echo "\n=== FIN TEST RESILIENCIA SRE ==="
+	@echo ""
+
+# --- Observability
+
+.PHONY: test-observability
+
+test-observability:
+	@echo "=== TEST OBSERVABILITY ==="
+	@echo ""
+
+	@echo "[1] Esperando Loki (host)..."
+	@timeout 30 sh -c 'until curl -s http://127.0.0.1:3100/ready; do sleep 2; done' || \
+		(echo "[ERROR] Loki no responde" && exit 1)
+	@echo ""
+
+	@echo "[ OK ] Loki accesible"
+	@echo ""
+
+	cat /var/log/test.log | tail -n 5
+	@echo ""
+
+	@echo "[2] Generando log único"
+	@docker exec monitoring-cron sh -c "echo 'LokiTest_$$(date +%s)' >> /var/log/test.log"
+	@echo ""
+
+	@sleep 5
+
+	@echo "[3] Verificando labels"
+	@curl -s http://127.0.0.1:3100/loki/api/v1/labels
+	@echo ""
+
+	@echo "[4] Query Loki..."
+	@RESULT=$$(curl -s -G http://127.0.0.1:3100/loki/api/v1/query \
+		--data-urlencode 'query={job="auth_logs"} |= "LokiTest"' | jq '.data.result | length'); \
+	if [ "$$RESULT" -eq 0 ]; then \
+		echo "[FAIL] sin ingestión"; exit 1; \
+	else \
+		echo "[ OK ] logs ingeridos"; \
+	fi
+	@echo ""
+
+	cat /var/log/test.log | tail -n 5
+	@echo ""
+
+	@echo "=== FIN TEST OBSERVABILITY ==="
+	@echo ""
+
+# --- Network
+
+.PHONY: test-network
+
+test-network:
+	docker network inspect monitoring-net
+	@echo ""
+
+# ------------------------------------------
+# DEBUG (troubleshooting)
+# ------------------------------------------
+
+.PHONY: debug
+
+debug:
+	@echo "=== DEBUG COMMANDS ==="
+	@echo "make debug-shell STACK=<name>"
+	@echo "make debug-containers"
+	@echo "make debug-net"
+	@echo "make debug-loki"
+	@echo ""
+
+# --- Shell
+
+.PHONY: debug-shell
 
 debug-shell: ## Acceso shell a contenedor (STACK opcional)
 	@STACK_NAME=$${STACK:-python}; \
@@ -279,37 +445,31 @@ debug-shell: ## Acceso shell a contenedor (STACK opcional)
 	echo "=== Debug shell en $$STACK_NAME ==="; \
 	docker exec -it monitoring-$$STACK_NAME sh || \
 	echo "[ERROR] contenedor no disponible"
+	@echo ""
+
+# --- Network
+
+.PHONY: debug-net
 
 debug-net: ## Verifica resolución DNS entre contenedores
 	@echo "=== Test DNS interno ==="
 	@docker exec monitoring-python getent hosts monitoring-postgres || echo "[ERROR] DNS fallo"
+	@echo ""
 
-debug-ports: ## Ver puertos expuestos en host
-	@echo "=== Puertos escuchando en host ==="
-	ss -tulpn
+# --- Containers logs
 
-debug-docker: ## Estado detallado Docker
-	@echo "=== Docker inspect resumido ==="
-	@docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+.PHONY: debug-containers
 
-debug-logs: ## Logs rápidos de todos los contenedores
+debug-containers: ## Logs rápidos de todos los contenedores
 	@for c in $$(docker ps --format '{{.Names}}'); do \
 		echo "===== $$c ====="; \
-		docker logs $$c --tail=50; \
+		docker logs $$c --tail=10; \
 	done
+	@echo ""
 
-debug-exec: ## Ejecutar comando en contenedor (STACK opcional)
-	@STACK_NAME=$${STACK:-python}; \
-	if ! echo "$(STACKS)" | grep -w "$$STACK_NAME" >/dev/null; then \
-		echo "[ERROR] STACK inválido: $$STACK_NAME"; \
-		exit 1; \
-	fi; \
-	if [ -z "$(CMD)" ]; then \
-		echo "[ERROR] Debe especificar CMD='comando'"; \
-		exit 1; \
-	fi; \
-	echo "=== Ejecutando en $$STACK_NAME ==="; \
-	docker exec -it monitoring-$$STACK_NAME sh -c "$(CMD)"
+# --- Loki
+
+.PHONY: debug-loki
 
 debug-loki: ## Test acceso interno a Loki (sin exposición de puertos)
 	@echo "=== DEBUG LOKI (internal) ==="
@@ -325,7 +485,27 @@ debug-loki: ## Test acceso interno a Loki (sin exposición de puertos)
 	@docker exec monitoring-python curl -s http://loki:3100/loki/api/v1/labels
 
 	@echo ""
-	@echo "[OK] Loki accesible vía red interna"
+	@echo "[ OK ] Loki accesible vía red interna"
+	@echo ""
+
+debug-ports: ## Ver puertos expuestos en host
+	@echo "=== Puertos escuchando en host ==="
+	ss -tulpn
+	@echo ""
+
+debug-exec: ## Ejecutar comando en contenedor (STACK opcional)
+	@STACK_NAME=$${STACK:-python}; \
+	if ! echo "$(STACKS)" | grep -w "$$STACK_NAME" >/dev/null; then \
+		echo "[ERROR] STACK inválido: $$STACK_NAME"; \
+		exit 1; \
+	fi; \
+	if [ -z "$(CMD)" ]; then \
+		echo "[ERROR] Debe especificar CMD='comando'"; \
+		exit 1; \
+	fi; \
+	echo "=== Ejecutando en $$STACK_NAME ==="; \
+	docker exec -it monitoring-$$STACK_NAME sh -c "$(CMD)"
+	@echo ""
 
 # ------------------------------------------
 # Debug container (toolbox)
@@ -340,189 +520,225 @@ debug-toolbox-up: ## Levanta contenedor de debugging en monitoring-net
 	@docker run -d --name $(DEBUG_CONTAINER) \
 		--network monitoring-net \
 		$(DEBUG_IMAGE) sleep infinity
-	@echo "[OK] contenedor debug activo"
+	@echo "[ OK ] contenedor debug activo"
+	@echo ""
 
 debug-toolbox-shell: ## Shell en contenedor debug
 	@docker exec -it $(DEBUG_CONTAINER) sh
+	@echo ""
 
 debug-toolbox-down: ## Elimina contenedor debug
 	@docker rm -f $(DEBUG_CONTAINER) || true
-	@echo "[OK] contenedor debug eliminado"
+	@echo "[ OK ] contenedor debug eliminado"
+	@echo ""
 
 # ------------------------------------------
-# Diagnóstico
+# Stack management - restart (simulación de fallo)
 # ------------------------------------------
 
-test-network:
-	docker network inspect monitoring-net
+.PHONY: stack-up stack-down stack-restart stack-status
 
-test-dns:
-	docker exec monitoring-python getent hosts monitoring-postgres
+stack-up:  ## Levanta un stack (STACK=nombre)
+	$(call validate_stack)
+	@DIR=$$( $(call stack_path) ); \
+	echo "=== 🚀 Levantando stack $(STACK) ==="; \
+	cd $$DIR && $(COMPOSE) up -d --build
+	@echo ""
+
+stack-down:  ## Detiene un stack
+	$(call validate_stack)
+	@DIR=$$( $(call stack_path) ); \
+	echo "=== ⛔ Parando stack $(STACK) ==="; \
+	cd $$DIR && $(COMPOSE) down
+	@echo ""
+
+stack-restart:  ## Reinicia un stack
+	$(call validate_stack)
+	@DIR=$$( $(call stack_path) ); \
+	echo "=== 🔁 Reiniciando stack $(STACK) ==="; \
+	cd $$DIR && $(COMPOSE) restart
+	@echo ""
+
+stack-status:  ## Estado de un stack
+	$(call validate_stack)
+	@DIR=$$( $(call stack_path) ); \
+	echo "=== Estado stack $(STACK) ==="; \
+	cd $$DIR && $(COMPOSE) ps
+	@echo ""
+
+stack-logs:
+	$(call validate_stack)
+	@DIR=$$( $(call stack_path) ); \
+	cd $$DIR && $(COMPOSE) logs -f
+	@echo ""
+
+# ------------------------------------------
+# Build / Deploy: Infraestructura base
+# ------------------------------------------
+
+.PHONY: monitoring-net
+
+monitoring-net:  ## Crea la red Docker si no existe
+	@docker network inspect monitoring-net >/dev/null 2>&1 || \
+	docker network create monitoring-net
+	@echo "[ OK ] network monitoring-net ready"
+	@echo ""
+
+# ------------------------------------------
+# Build / Deploy
+# ------------------------------------------
+
+.PHONY: build build-base build-python build-cron deploy
+
+## Inicialización completa - construye todas las imágenes
+build: monitoring-net build-base build-python build-cron
+	@echo "[ OK ] imágenes construidas"
+	@echo "[ OK ] entorno inicializado"
+	@echo ""
+
+build-base:
+	docker build --no-cache -f ops/images/base/Dockerfile -t monitoring-base .
+	@echo ""
+
+build-python:
+	docker build --no-cache -f ops/stacks/python/Dockerfile -t monitoring-python .
+	@echo ""
+
+build-cron:
+	docker build --no-cache -f ops/stacks/cron/Dockerfile -t monitoring-cron .
+	@echo ""
+
+deploy: build
+	@set -e; \
+	echo "=== 🚀 Despliegue completo ==="; \
+	for s in $(SERVICE_STACKS); do \
+		echo "→ desplegando $$s"; \
+		cd $(SERVICE_DIR)/$$s && $(COMPOSE) up -d --build; \
+	done; \
+	for s in $(INFRA_STACKS); do \
+		echo "→ desplegando $$s"; \
+		cd $(STACK_DIR)/$$s && $(COMPOSE) up -d --build; \
+	done; \
+	echo "[ OK ] despliegue finalizado"
+	@echo ""
+
+# ------------------------------------------
+# Limpieza
+# ------------------------------------------
+
+.PHONY: clean clean-docker
+
+clean:
+	@echo "[INFO] limpiando imágenes dangling"
+	docker image prune -f
+	@echo ""
+
+clean-docker:
+	@echo "[INFO] limpieza completa Docker"
+	docker container prune -f
+	docker image prune -f
+	docker builder prune -f
+	@echo ""
+
+# ------------------------------------------
+# Esquemas
+# ------------------------------------------
+
+.PHONY: esquema
+
+esquema:
+	@echo "=== SCHEME COMMANDS ==="
+	@echo "make esquema-arquitectura"
+	@echo "make esquema-git"
+	@echo ""
+
+esquema-arquitectura:
+	@echo "[INFO] Esquema de arquitectura"
+	find . -not -path '*/.git*' | sed -e 's;[^/]*/;|____;g;s;____|; |;g'
+	@echo ""
+
+esquema-git:
+	@echo "[INFO] Esquema de ramas Git"
+	sudo git log --oneline --decorate --graph --all -n 25
+	@echo ""
+
+
+# ------------------------------------------
+# ------------------------------------------
+# ------------------------------------------
+# POSIBLE BORRADO A PARTIR DE AQUI
+# ------------------------------------------
+# ------------------------------------------
+# ------------------------------------------
+
+
+# ------------------------------------------
+# Git utilities
+# ------------------------------------------
+
+.PHONY: git-log
+
+git-log: ## Historial git resumido
+	@echo ""
+	@echo "=== Git history (últimos 25 commits) ==="
+	sudo git log --oneline --decorate --graph --all -n 25
+	@echo ""
+
+# ------------------------------------------
+# LIFECYCLE: Despliegue completo
+# ------------------------------------------
+
+.PHONY: dev-up dev-down
+
+dev-up:
+	$(COMPOSE) -f $(DEV_COMPOSE) up -d
+	@echo ""
+
+dev-down:
+	$(COMPOSE) -f $(DEV_COMPOSE) down
+	@echo ""
+
+# ------------------------------------------
+# LIFECYCLE: Rebuild
+# ------------------------------------------
+
+.PHONY: rebuild rebuild-all
+
+rebuild: clean build
+	@echo "[ OK ] rebuild realizado"
+	@echo ""
+
+rebuild-all:
+	make clean-docker
+	make build
+	make deploy
+	@echo ""
+
+# ------------------------------------------
+# Logs
+# ------------------------------------------
+
+logs:  ## Muestra logs recientes del sistema y contenedores
+	@echo "=== Logs del sistema ==="
+	@echo ""
+	@echo "=== Logs contenedores ==="
+	@for c in $$(docker ps --format '{{.Names}}'); do \
+		echo "===== $$c ====="; \
+		docker logs $$c --tail=10; \
+	done
+	@echo ""
+
+# ------------------------------------------
+# VALIDATION / SRE: Diagnóstico
+# ------------------------------------------
 
 force-recreate:
-	@echo "=== RECREATE COMPLETO ==="
+	@echo "=== RECREATE postgres / python ==="
 	docker compose -f ops/services/postgres/compose.yml down
 	docker compose -f ops/stacks/python/compose.yml down
 	docker compose -f ops/services/postgres/compose.yml up -d --build
 	docker compose -f ops/stacks/python/compose.yml up -d --build
 	docker system prune -f
-
-test-resilience:
-	@echo "=== TEST RESILIENCIA SRE (Site Reliability Engineering) ==="
-	# ----------------------------------------
-	# [0] Estado inicial
-	# ----------------------------------------
-	@echo "\n[0] Estado inicial"
-	@docker ps
-
-	# ----------------------------------------
-	# [1] CRASH REAL proceso (PID 1)
-	# ----------------------------------------
-	@echo "\n[1] CRASH proceso interno (PID 1)"
-	@docker exec monitoring-python sh -c "kill -9 1" || true
-
-	# --- VALIDAR RESTART (no health aún) ---
-	@echo "esperando restart (running)..."
-	@timeout 30 sh -c '\
-	until [ "$$(docker inspect monitoring-python --format="{{.State.Status}}")" = "running" ]; do \
-					sleep 2; \
-	done' || \
-					(echo "[FAIL] contenedor no se ha reiniciado" && \
-					docker inspect monitoring-python --format="State={{.State.Status}}" && exit 1)
-
-	@echo "[OK] contenedor reiniciado"
-
-	# --- VALIDAR HEALTH POST-RESTART ---
-	@echo "esperando recuperación health (healthy)..."
-	@timeout 60 sh -c '\
-	until [ "$$(docker inspect monitoring-python --format="{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}")" = "healthy" ]; do \
-					sleep 2; \
-	done' || \
-					(echo "[FAIL] contenedor no alcanza healthy tras restart" && \
-					docker inspect monitoring-python --format="State={{.State.Status}} Health={{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}" && exit 1)
-
-	@echo "[OK] restart + recovery OK"
-
-	# Debug
-	@echo "[INFO] estado tras restart:"
-	@docker inspect monitoring-python --format='State={{.State.Status}} Health={{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}'
-
-	# ----------------------------------------
-	# [2] FALLO DB
-	# ----------------------------------------
-	@echo "\n[2] Simulación fallo DB"
-
-	@docker stop monitoring-postgres || true
-
-	@echo "esperando degradación (unhealthy)..."
-	@timeout 60 sh -c '\
-	until [ "$$(docker inspect monitoring-python --format="{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}")" = "unhealthy" ]; do \
-					sleep 2; \
-	done' || \
-					(echo "[FAIL] no entra en unhealthy tras caída DB" && \
-					docker inspect monitoring-python --format="State={{.State.Status}} Health={{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}" && exit 1)
-
-	@echo "[OK] degradación correcta (unhealthy)"
-
-	@docker start monitoring-postgres
-
-	@echo "esperando recuperación (healthy)..."
-	@timeout 60 sh -c '\
-	until [ "$$(docker inspect monitoring-python --format="{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}")" = "healthy" ]; do \
-					sleep 2; \
-	done' || \
-					(echo "[FAIL] no recupera healthy tras DB" && \
-					docker inspect monitoring-python --format="State={{.State.Status}} Health={{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}" && exit 1)
-
-	@echo "[OK] DB recuperada"
-
-	# ----------------------------------------
-	# [3] FALLO RED (simulado)
-	# ----------------------------------------
-	@echo "\n[3] Simulación fallo red hacia DB"
-
-	@NETWORK=$$(docker inspect -f '{{range $$k, $$v := .NetworkSettings.Networks}}{{$$k}}{{end}}' monitoring-postgres); \
-	if [ -z "$$NETWORK" ]; then \
-		echo "[FAIL] no se pudo determinar la red"; \
-		exit 1; \
-	fi; \
-	echo "Network=$$NETWORK"; \
-	docker network disconnect $$NETWORK monitoring-postgres || true; \
-	echo "esperando degradación..."; \
-	timeout 60 sh -c '\
-	until [ "$$(docker inspect monitoring-python --format="{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}")" = "unhealthy" ]; do \
-		sleep 2; \
-	done' || (echo "[FAIL] no degrada por red" && exit 1); \
-	echo "[OK] degradación por red OK"; \
-	docker network connect $$NETWORK monitoring-postgres; \
-	echo "esperando recuperación..."; \
-	timeout 60 sh -c '\
-	until [ "$$(docker inspect monitoring-python --format="{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}")" = "healthy" ]; do \
-		sleep 2; \
-	done' || (echo "[FAIL] no recupera tras red" && exit 1); \
-	echo "[OK] red restaurada"
-
-	# ----------------------------------------
-	# [4] OBSERVABILIDAD (Loki)
-	# ----------------------------------------
-	@echo "\n[4] Verificando Loki"
-
-	@timeout 20 sh -c 'until curl -s http://127.0.0.1:3100/ready | grep -q ready; do sleep 2; done' || \
-		(echo "[FAIL] Loki no responde" && exit 1)
-
-	@echo "[OK] Loki accesible"
-
-	@echo "generando log..."
-	@docker exec monitoring-cron sh -c "echo 'SRE_TEST_$$(date +%s)' >> /var/log/test.log"
-
-	@sleep 5
-
-	@curl -s http://127.0.0.1:3100/loki/api/v1/labels
-
-	# ----------------------------------------
-	# [5] ESTADO FINAL
-	# ----------------------------------------
-	@echo "\n[5] Estado final"
-	@docker ps
-
-	@echo "\n=== FIN TEST RESILIENCIA SRE ==="
-
-test-observability:
-	@echo "=== TEST OBSERVABILITY ==="
-
-	@echo "[1] Esperando Loki (host)..."
-	@timeout 30 sh -c 'until curl -s http://127.0.0.1:3100/ready; do sleep 2; done' || \
-		(echo "[ERROR] Loki no responde" && exit 1)
-
-	@echo "[OK] Loki accesible"
-
-	@echo "[2] Generando log único"
-	@docker exec monitoring-cron sh -c "echo 'LokiTest_$$(date +%s)' >> /var/log/test.log"
-
-	@sleep 5
-
-	@echo "[3] Verificando labels"
-	@curl -s http://127.0.0.1:3100/loki/api/v1/labels
-
 	@echo ""
-	@echo "[4] Query"
-	@RESULT=$$(curl -s -G http://127.0.0.1:3100/loki/api/v1/query \
-		--data-urlencode 'query={job="auth_logs"} |= "LokiTest"' | jq '.data.result | length'); \
-	if [ "$$RESULT" -eq 0 ]; then \
-		echo "[WARN] sin resultados"; \
-	else \
-		echo "[OK] logs ingeridos"; \
-	fi
 
-	@echo ""
-	@echo "=== FIN TEST OBSERVABILITY ==="
 
-test-loki-ingestion:
-	cat /var/log/test.log | tail -n 5
-	@echo ""
-	docker exec monitoring-cron sh -c "echo 'TEST_$(date +%s)' >> /var/log/test.log"
-	sleep 2
-	curl -G http://127.0.0.1:3100/loki/api/v1/query \
-	--data-urlencode 'query={job="auth_logs"} |= "TEST_"'
-	@echo ""
-	cat /var/log/test.log | tail -n 5
