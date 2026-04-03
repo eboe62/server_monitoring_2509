@@ -190,6 +190,16 @@ debug-docker: ## Estado detallado Docker
 
 # ------------------------------------------
 # TEST (validación funcional)
+# test = validación automatizable (CI/CD, reproducible, determinista)
+# Características:
+# - tiene PASS / FAIL
+# - se puede integrar en pipeline
+# - no requiere contexto humano
+# - objetivo: validar sistema
+# Los tests pueden usar herramientas de debug pero siguen siendo tests
+# Ejemplo:
+# - Kubernetes usa pods debug para tests
+# - Chaos engineering usa tooling externo
 # ------------------------------------------
 .PHONY: test
 
@@ -200,7 +210,11 @@ test:
 	@echo "make test-resilience-db"
 	@echo "make test-resilience-network"
 	@echo "make test-resilience-observability"
+	@echo "make test-python-health"
+	@echo "make test-cron-execution"
 	@echo "make test-observability"
+	@echo "make test-smtp-send"
+	@echo "make test-smtp-protocol"
 	@echo "make test-network"
 	@echo ""
 
@@ -268,6 +282,9 @@ test-resilience-db:
 ## - espera unhealthy
 ## - start postgres
 ## - espera healthy
+## Dependencias:
+## [ monitoring-postgres ]
+##     └── servicio base (stateful)
 
 	@echo "[2] Simulación fallo DB"
 
@@ -305,6 +322,9 @@ test-resilience-network:
 ## - espera unhealthy
 ## - reconnect network
 ## - espera healthy
+## Dependencias:
+## [ red ]
+##     monitoring-net conecta TODO
 
 	@echo "[3] Simulación fallo red hacia DB"
 
@@ -346,7 +366,7 @@ test-resilience-observability:
 	@echo "[ OK ] Loki accesible"
 
 	@echo "generando log..."
-	@docker exec monitoring-cron sh -c "echo 'SRE_TEST_$$(date +%s)' >> /var/log/test.log"
+	@docker exec monitoring-cron sh -c "echo 'SRE_test_$$(date +%s)' >> /var/log/test.log"
 
 	@sleep 5
 
@@ -362,6 +382,66 @@ test-resilience-fin:
 	@docker ps
 
 	@echo "\n=== FIN TEST RESILIENCIA SRE ==="
+	@echo ""
+
+# --- test-python-health
+## Testea:
+## - estado real (no solo "running")
+## Dependencias:
+## [ monitoring-python ]
+##     ├── depende de → monitoring-postgres
+##     ├── depende de → smtp-relay
+##     └── genera logs → /var/log → promtail → loki
+
+.PHONY: test-python-health
+
+test-python-health:
+	@echo "=== TEST PYTHON HEALTH ==="
+
+	@echo "[1] Estado contenedor"
+	@docker inspect monitoring-python --format='State={{.State.Status}} Health={{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}'
+
+	@echo ""
+	@echo "[2] Esperando healthy..."
+	@timeout 30 sh -c '\
+	until [ "$$(docker inspect monitoring-python --format="{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}")" = "healthy" ]; do \
+		sleep 2; \
+	done' || (echo "[FAIL] python no healthy" && exit 1)
+
+	@echo "[ OK ] python healthy"
+
+	@echo ""
+
+
+# --- test-cron-execution
+## Testea:
+## - problemas de permisos
+## - cron muerto
+## - path incorrecto
+## Dependencias:
+## [ monitoring-cron ]
+##     ├── depende de → monitoring-python (lógica)
+##     ├── escribe → /var/log/test.log
+##     └── (indirecto) → promtail → loki
+
+.PHONY: test-cron-execution
+
+test-cron-execution:
+	@echo "=== TEST CRON EXECUTION ==="
+
+	@echo "[1] Generando marca temporal"
+	@TS=$$(date +%s); \
+	docker exec monitoring-cron sh -c "echo cron_test_$$TS >> /var/log/test.log"; \
+	echo "TS=$$TS" > /tmp/cron_test_ts
+
+	@sleep 3
+
+	@echo "[2] Verificando ejecución..."
+	@TS=$$(cat /tmp/cron_test_ts | cut -d= -f2); \
+	grep $$TS /var/log/test.log >/dev/null && \
+		echo "[ OK ] cron escribe correctamente" || \
+		(echo "[FAIL] cron no ejecuta" && exit 1)
+
 	@echo ""
 
 # --- Observability
@@ -384,7 +464,7 @@ test-observability:
 	@echo ""
 
 	@echo "[2] Generando log único"
-	@docker exec monitoring-cron sh -c "echo 'LokiTest_$$(date +%s)' >> /var/log/test.log"
+	@docker exec monitoring-cron sh -c "echo 'loki_test_$$(date +%s)' >> /var/log/test.log"
 	@echo ""
 
 	@sleep 5
@@ -395,7 +475,7 @@ test-observability:
 
 	@echo "[4] Query Loki..."
 	@RESULT=$$(curl -s -G http://127.0.0.1:3100/loki/api/v1/query \
-		--data-urlencode 'query={job="auth_logs"} |= "LokiTest"' | jq '.data.result | length'); \
+		--data-urlencode 'query={job="auth_logs"} |= "loki_test_"' | jq '.data.result | length'); \
 	if [ "$$RESULT" -eq 0 ]; then \
 		echo "[FAIL] sin ingestión"; exit 1; \
 	else \
@@ -409,6 +489,53 @@ test-observability:
 	@echo "=== FIN TEST OBSERVABILITY ==="
 	@echo ""
 
+# --- test-smtp-send
+## Testea:
+## - Test mínimo viable: conectividad + handshake
+## Dependencias:
+## [ smtp-relay ]
+##    └── servicio independiente (infra soporte)
+
+.PHONY: test-smtp-send
+
+test-smtp-send:
+	@echo "=== TEST SMTP RELAY ==="
+
+	@echo "[0] Asegurando debug toolbox..."
+	@docker ps | grep monitoring-debug >/dev/null || make debug-toolbox-up
+
+	@echo "[1] Test conexión SMTP"
+	@docker exec monitoring-debug nc -zv smtp-relay 587 || \
+		(echo "[FAIL] no conecta a smtp-relay" && exit 1)
+
+	@echo "[ OK ] puerto accesible"
+
+	@echo ""
+	@echo "[2] Test banner SMTP"
+	@docker exec monitoring-debug sh -c "echo QUIT | nc smtp-relay 587" | grep -i smtp >/dev/null || \
+		(echo "[FAIL] no responde SMTP" && exit 1)
+
+	@echo "[ OK ] SMTP responde"
+
+	@echo ""
+
+# --- test-smtp-send
+
+.PHONY: test-smtp-protocol
+
+test-smtp-protocol:
+	@echo "=== TEST SMTP PROTOCOL ==="
+
+	@docker exec monitoring-debug sh -c '\
+		( \
+			sleep 1; echo "EHLO test"; \
+			sleep 1; echo "QUIT"; \
+		) | nc smtp-relay 25 \
+	' | grep -q "250" || \
+		(echo "[FAIL] SMTP handshake inválido" && exit 1)
+
+	@echo "[OK] SMTP handshake válido"
+
 # --- Network
 
 .PHONY: test-network
@@ -419,6 +546,12 @@ test-network:
 
 # ------------------------------------------
 # DEBUG (troubleshooting)
+# debug = exploración manual (humano, ad-hoc, no determinista)
+# Características:
+# - no tiene PASS / FAIL claro
+# - es interactivo
+# - depende del operador
+# - objetivo: investigar problema
 # ------------------------------------------
 
 .PHONY: debug

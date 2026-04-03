@@ -23,7 +23,7 @@ postconf -e "smtp_sasl_security_options = noanonymous"
 postconf -e "smtp_sasl_mechanism_filter = plain, login"
 
 # TLS con STARTTLS (no wrappermode específico para puerto 465)
-postconf -e "smtp_use_tls = yes"
+# postconf -e "smtp_use_tls = yes"
 postconf -e "smtp_tls_security_level = encrypt"
 postconf -e "smtp_tls_CAfile = /etc/ssl/certs/ca-certificates.crt"
 
@@ -45,3 +45,7 @@ postmap /etc/postfix/sasl_passwd || true
 # Lanza postfix
 echo "[INFO] Configuración aplicada. Lanzando Postfix..."
 exec /scripts/run.sh "$@"
+
+echo "[DEBUG] Postfix config:"
+postconf | grep daemon_directory
+postconf | grep relayhost
