@@ -213,8 +213,7 @@ test:
 	@echo "make test-python-health"
 	@echo "make test-cron-execution"
 	@echo "make test-observability"
-	@echo "make test-smtp-send"
-	@echo "make test-smtp-protocol"
+	@echo "make test-smtp-all"
 	@echo "make test-network"
 	@echo ""
 
@@ -489,39 +488,57 @@ test-observability:
 	@echo "=== FIN TEST OBSERVABILITY ==="
 	@echo ""
 
-# --- test-smtp-send
+## Inicialización completa - construye todas las imágenes
+build: monitoring-net build-base build-python build-cron
+	@echo "[ OK ] imágenes construidas"
+	@echo "[ OK ] entorno inicializado"
+	@echo ""
+
+test-smtp-all: test-smtp-connect test-smtp-banner test-smtp-protocol test-smtp-send test-smtp-queue test-smtp-delivery
+
+.PHONY: \
+test-smtp-connect \
+test-smtp-banner \
+test-smtp-protocol \
+test-smtp-send \
+test-smtp-delivery \
+test-smtp-queue
+
+# --- test-smtp-connect
 ## Testea:
 ## - Test mínimo viable: conectividad + handshake
 ## Dependencias:
 ## [ smtp-relay ]
 ##    └── servicio independiente (infra soporte)
 
-.PHONY: test-smtp-send
+test-smtp-connect:
+	@echo ""
+	@echo "=== TEST SMTP CONNECT ==="
 
-test-smtp-send:
-	@echo "=== TEST SMTP RELAY ==="
-
-	@echo "[0] Asegurando debug toolbox..."
+	@echo "Asegurando debug toolbox..."
 	@docker ps | grep monitoring-debug >/dev/null || make debug-toolbox-up
 
-	@echo "[1] Test conexión SMTP"
+	@echo "Test conexión SMTP"
 	@docker exec monitoring-debug nc -zv smtp-relay 587 || \
 		(echo "[FAIL] no conecta a smtp-relay" && exit 1)
 
-	@echo "[ OK ] puerto accesible"
-
-	@echo ""
-	@echo "[2] Test banner SMTP"
-	@docker exec monitoring-debug sh -c "echo QUIT | nc smtp-relay 587" | grep -i smtp >/dev/null || \
-		(echo "[FAIL] no responde SMTP" && exit 1)
-
-	@echo "[ OK ] SMTP responde"
-
+	@echo "[ OK ] conexión TCP correcta"
 	@echo ""
 
-# --- test-smtp-send
+# --- test-smtp-send-banner
 
-.PHONY: test-smtp-protocol
+test-smtp-banner:
+	@echo "=== TEST SMTP BANNER ==="
+
+	@docker exec monitoring-debug sh -c "\
+		timeout 5 nc smtp-relay 587 | head -n 1 \
+	" | grep -E '^220' >/dev/null || \
+		(echo '[FAIL] banner SMTP inválido' && exit 1)
+
+	@echo "[ OK ] banner SMTP correcto"
+	@echo ""
+
+# --- test-smtp-protocol (EHLO)
 
 test-smtp-protocol:
 	@echo "=== TEST SMTP PROTOCOL ==="
@@ -534,7 +551,53 @@ test-smtp-protocol:
 	' | grep -q "250" || \
 		(echo "[FAIL] SMTP handshake inválido" && exit 1)
 
-	@echo "[OK] SMTP handshake válido"
+	@echo "[ OK ] SMTP handshake válido"
+	@echo ""
+
+# --- test-smtp-send (relay acceptance)
+
+test-smtp-send:
+	@echo "=== TEST SMTP SEND (RELAY) ==="
+
+	@docker exec monitoring-python python3 -c "\
+	import smtplib; \
+	from email.mime.text import MIMEText; \
+	msg = MIMEText('Test SMTP desde monitoring'); \
+	msg['Subject'] = 'Test SMTP'; \
+	msg['From'] = 'noreply@appvisibility.es'; \
+	msg['To'] = 'contacto@appvisibility.es'; \
+	s = smtplib.SMTP('smtp-relay', 587, timeout=10); \
+	s.ehlo(); \
+	s.send_message(msg); \
+	s.quit(); \
+	print('[ OK ] correo aceptado por relay'); \
+	" || (echo "[FAIL] fallo envío al relay" && exit 1)
+	@echo ""
+
+# --- test-smtp-queue (Postfix interno)
+
+test-smtp-queue:
+	@echo "=== TEST SMTP QUEUE ==="
+
+	@docker exec monitoring-smtp-relay postqueue -p | grep -q "^[A-F0-9]" && \
+        (echo "[WARN] hay correos en cola") || \
+        (echo "[ OK ] cola vacía")
+	@echo ""
+
+# --- test-smtp-delivery (external provider)
+
+test-smtp-delivery:
+	@echo "=== TEST SMTP DELIVERY ==="
+
+	@docker logs monitoring-smtp-relay --tail 10 | grep -E "status=" > /tmp/smtp_status.log || true
+
+	@grep "status=sent" /tmp/smtp_status.log && echo "[ OK ] entregado" && exit 0 || true
+	@grep "status=deferred" /tmp/smtp_status.log && echo "[WARN] deferred" && exit 1 || true
+	@grep "status=bounced" /tmp/smtp_status.log && echo "[FAIL] bounced" && exit 1 || true
+
+	@echo "[FAIL] estado desconocido"
+	@exit 1
+	@echo ""
 
 # --- Network
 
@@ -690,6 +753,13 @@ stack-restart:  ## Reinicia un stack
 	@DIR=$$( $(call stack_path) ); \
 	echo "=== 🔁 Reiniciando stack $(STACK) ==="; \
 	cd $$DIR && $(COMPOSE) restart
+	@echo ""
+
+stack-rebuild:
+	$(call validate_stack)
+	@DIR=$$( $(call stack_path) ); \
+	echo "=== 🔁 Rebuild stack $(STACK) ==="; \
+	cd $$DIR && $(COMPOSE) up -d --build --force-recreate
 	@echo ""
 
 stack-status:  ## Estado de un stack
@@ -873,5 +943,3 @@ force-recreate:
 	docker compose -f ops/stacks/python/compose.yml up -d --build
 	docker system prune -f
 	@echo ""
-
-
