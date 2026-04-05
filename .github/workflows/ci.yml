@@ -65,6 +65,10 @@ jobs:
       # ----------------------------------------
       # Build images
       # ----------------------------------------
+      - name: Build base image
+        run: |
+          docker build -t monitoring-base:ci ops/images/base
+
       - name: Build containers
         run: |
           docker compose -f ops/stacks/python/compose.yml build
