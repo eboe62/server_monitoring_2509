@@ -32,6 +32,12 @@ jobs:
       # ----------------------------------------
       # Lint docker-compose
       # ----------------------------------------
+      - name: Create .env files from templates
+        run: |
+          cp ops/services/postgres/.env.template ops/services/postgres/.env
+          cp ops/services/smtp_relay/.env.template ops/services/smtp_relay/.env || true
+          cp ops/stacks/observability/.env.template ops/stacks/observability/.env || true
+
       - name: Validate docker-compose files
         run: |
           docker compose -f ops/stacks/cron/compose.yml config > /dev/null
@@ -69,6 +75,12 @@ jobs:
       # ----------------------------------------
       # Start full stack
       # ----------------------------------------
+      - name: Create .env files from templates
+        run: |
+          cp ops/services/postgres/.env.template ops/services/postgres/.env
+          cp ops/services/smtp_relay/.env.template ops/services/smtp_relay/.env || true
+          cp ops/stacks/observability/.env.template ops/stacks/observability/.env || true
+
       - name: Start stack
         run: |
           docker compose -f ops/stacks/observability/compose.yml up -d
@@ -139,6 +151,12 @@ jobs:
       # ----------------------------------------
       # Cleanup
       # ----------------------------------------
+      - name: Create .env files from templates
+        run: |
+          cp ops/services/postgres/.env.template ops/services/postgres/.env
+          cp ops/services/smtp_relay/.env.template ops/services/smtp_relay/.env || true
+          cp ops/stacks/observability/.env.template ops/stacks/observability/.env || true
+
       - name: Cleanup
         if: always()
         run: |
