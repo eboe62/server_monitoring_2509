@@ -18,6 +18,12 @@ Sin embargo, se decide mantener una imagen base común denominada monitoring-bas
 - Garantizar coherencia de entorno
 Esta decisión introduce un posible riesgo de acoplamiento si no se regula explícitamente su alcance.
 
+La imagen base común debe:
+- evitar uso de :latest
+- estar versionada explícitamente
+- minimizar superficie de ataque (paquetes mínimos)
+- no incluir herramientas de debug en producción
+
 ## Decisión
 Se mantiene la imagen monitoring-base bajo las siguientes reglas estrictas:
 Alcance permitido:

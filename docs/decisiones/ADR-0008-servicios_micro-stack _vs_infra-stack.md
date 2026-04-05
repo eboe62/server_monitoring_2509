@@ -58,6 +58,13 @@ Debe:
 - no incluir secrets dentro de la imagen
 - no introducir dependencias implícitas no documentadas
 
+- documentar explícitamente:
+  - uso de docker.sock (si aplica)
+  - montajes de rutas del host
+  - dependencias del host necesarias
+
+- ser auditable mediante scripts automatizados (FASE 4/5)
+
 Objetivo:
   Proveer capacidades operativas del entorno, no servicios exportables.
 
@@ -65,17 +72,40 @@ Objetivo:
 Los infra-stacks pueden montar:
   /var/run/docker.sock:/var/run/docker.sock
 
-Únicamente cuando sea necesario para operaciones de infraestructura (inspección de contenedores, control del runtime o automatización).
+Únicamente cuando sea estrictamente necesario para capacidades de infraestructura (inspección, control del runtime o automatización declarativa).
 
 RIESGO:
-El acceso a docker.sock concede privilegios equivalentes a root sobre el host Docker.
+El acceso a docker.sock concede privilegios equivalentes a root sobre el host Docker, permitiendo:
+- creación/eliminación de contenedores
+- acceso a volúmenes
+- ejecución arbitraria en el host
 
-MITIGACIONES:
-- Solo infra-stacks pueden usarlo.
-- Nunca en micro-stacks de aplicación.
-- Las imágenes deben ser minimalistas y auditadas.
-- El contenedor debe ejecutarse sin privilegios adicionales.
-- Debe documentarse el motivo del acceso.
+MITIGACIONES OBLIGATORIAS:
+
+1) Alcance
+- Exclusivo de infra-stacks (ops/docker/)
+- Prohibido en micro-stacks (ops/services/)
+
+2) Aislamiento
+- Contenedor sin exposición de puertos
+- No accesible desde el exterior (solo red interna Docker)
+
+3) Control de ejecución
+- No ejecutar código dinámico o no auditado dentro del contenedor
+- Scripts versionados y revisados en repositorio
+
+4) Principio de mínimo privilegio (reforzado)
+- user != root cuando sea posible
+- read_only: true cuando sea viable
+- cap_drop: ALL (añadir solo las necesarias si aplica)
+
+5) Trazabilidad
+- Toda operación que use docker.sock debe quedar registrada en logs
+
+6) Auditoría
+- Debe existir comprobación automática (audit script) que detecte:
+  - uso de docker.sock
+  - contenedores que lo montan
 
 ## Justificación
 - No todos los contenedores tienen naturaleza exportable.
@@ -89,10 +119,16 @@ MITIGACIONES:
 - Se mejora la coherencia documental.
 - Se evita refactorización innecesaria.
 
-## Riesgos controlado
-- Que infraestructura operativa crezca sin gobernanza.
-- Que se mezclen responsabilidades entre categorías.
-- Que en el futuro se requiera convertir un stack operativo en micro-stack (deberá evaluarse caso a caso).
+## Riesgos controlados
+- Crecimiento de infra-stacks con privilegios elevados (docker.sock, mounts host)
+- Compromiso del host si un contenedor con docker.sock es vulnerado
+- Mezcla de responsabilidades entre micro-stack e infra-stack
+- Dependencias implícitas del host no documentadas
+
+Controles:
+- Auditoría automática (FASE 4/5)
+- Restricción de exposición de red
+- Revisión obligatoria de ADR para cualquier excepción
 
 ## Fuera de alcance:
 - No se obliga a migrar postgres a micro-stack.
