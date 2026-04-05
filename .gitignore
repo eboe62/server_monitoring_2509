@@ -30,6 +30,10 @@ resources/logs/*.txt
 .env.*
 docker-compose.override.yml
 
+# Permitir templates necesarios para CI
+!.env.template
+!**/.env.template
+
 # === Otros ===
 /*.bak
 *.tmp
