@@ -34,11 +34,11 @@ jobs:
       # ----------------------------------------
       - name: Validate docker-compose files
         run: |
-          docker compose -f ops/stacks/cron/compose.yml config > /dev/null
-          docker compose -f ops/stacks/python/compose.yml config > /dev/null
-          docker compose -f ops/stacks/observability/compose.yml config > /dev/null
-          docker compose -f ops/services/postgres/compose.yml config > /dev/null
-          docker compose -f ops/services/smtp_relay/compose.yml config > /dev/null
+          docker compose -f ops/docker/docker-compose.cron.yml config > /dev/null
+          docker compose -f ops/docker/docker-compose.python.yml config > /dev/null
+          docker compose -f ops/docker/docker-compose.observability.yml config > /dev/null
+          docker compose -f ops/services/postgres/docker-compose.postgres.yaml config > /dev/null
+          docker compose -f ops/services/smtp_relay/docker-compose-smtp_relay.yaml config > /dev/null
 
       # ----------------------------------------
       # Check :latest forbidden
@@ -57,8 +57,8 @@ jobs:
       # ----------------------------------------
       - name: Build containers
         run: |
-          docker compose -f ops/stacks/python/compose.yml build
-          docker compose -f ops/stacks/cron/compose.yml build
+          docker compose -f ops/docker/docker-compose.python.yml build
+          docker compose -f ops/docker/docker-compose.cron.yml build
 
       # ----------------------------------------
       # Create network (required by stacks)
@@ -71,11 +71,11 @@ jobs:
       # ----------------------------------------
       - name: Start stack
         run: |
-          docker compose -f ops/stacks/observability/compose.yml up -d
-          docker compose -f ops/stacks/python/compose.yml up -d
-          docker compose -f ops/stacks/cron/compose.yml up -d
-          docker compose -f ops/services/postgres/compose.yml up -d
-          docker compose -f ops/services/smtp_relay/compose.yml up -d
+          docker compose -f ops/docker/docker-compose.observability.yml up -d
+          docker compose -f ops/docker/docker-compose.python.yml up -d
+          docker compose -f ops/docker/docker-compose.cron.yml up -d
+          docker compose -f ops/services/postgres/docker-compose.postgres.yaml up -d
+          docker compose -f ops/services/smtp_relay/docker-compose-smtp_relay.yaml up -d
 
       # ----------------------------------------
       # Wait for services
@@ -142,9 +142,9 @@ jobs:
       - name: Cleanup
         if: always()
         run: |
-          docker compose -f ops/stacks/observability/compose.yml down -v || true
-          docker compose -f ops/stacks/python/compose.yml down -v || true
-          docker compose -f ops/stacks/cron/compose.yml down -v || true
-          docker compose -f ops/services/postgres/compose.yml down -v || true
-          docker compose -f ops/services/smtp_relay/compose.yml down -v || true
+          docker compose -f ops/docker/docker-compose.observability.yml down -v || true
+          docker compose -f ops/docker/docker-compose.python.yml down -v || true
+          docker compose -f ops/docker/docker-compose.cron.yml down -v || true
+          docker compose -f ops/services/postgres/docker-compose.postgres.yaml down -v || true
+          docker compose -f ops/services/smtp_relay/docker-compose-smtp_relay.yaml down -v || true
           docker network rm monitoring-net || true
