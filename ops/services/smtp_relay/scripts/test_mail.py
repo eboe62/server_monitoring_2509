@@ -1,6 +1,8 @@
-#test_mail.py
-# Test E2E realista:
+# test_mail.py
+# Test E2E realista con captura de queue_id:
 # - Envío SMTP → smtp-relay
+# - Captura queue_id real de Postfix
+# - Permite correlación exacta en logs
 # - Validación: aceptación completa del flujo SMTP
 #
 # Uso:
@@ -11,16 +13,25 @@ import smtplib
 from email.mime.text import MIMEText
 import time
 import sys
+import socket
+import re
 
 SMTP_SERVER = "smtp-relay"
 SMTP_PORT = 587
 
-msg = MIMEText("¡Hola! Este es un test mail desde el contenedor boky/postfix monitoring-smtp-relay via Postmar: E2E Test SMTP relay + Postmark API")
-msg["Subject"] = f"E2E TEST {int(time.time())}"
+# Generar identificador único
+timestamp = int(time.time())
+subject = f"E2E TEST {timestamp}"
+
+msg = MIMEText(
+    "¡Hola! Este es un test mail desde el contenedor boky/postfix monitoring-smtp-relay via Postmar: Test SMTP relay con correlación de mensaje por queue_id (Postfix → Postmark)"
+)
+msg["Subject"] = subject
 msg["From"] = "noreply@appvisibility.es"
 msg["To"] = "contacto@appvisibility.es"
 
 print(f"Conectando a {SMTP_SERVER}:{SMTP_PORT}...")
+print(f"📨 Subject: {subject}")
 print("📤 Enviando email...")
 
 try:
@@ -28,16 +39,44 @@ try:
         server.set_debuglevel(1)  # Mostrar salida detallada con debug SMTP
         server.ehlo()
         # No se usa TLS ni login porque Postfix hace el relay
-        response = server.send_message(msg)
 
-    # send_message devuelve {} si todo OK
-    if response == {}:
-        print("✅ SMTP aceptado por el relay Postmark")
+        # MAIL FROM
+        code, resp = server.mail(msg["From"])
+        if code != 250:
+            print(f"❌ MAIL FROM falló: {resp}")
+            sys.exit(1)
 
-    else:
-        print("⚠️ Respuesta parcial del servidor:", response)
+        # RCPT TO
+        code, resp = server.rcpt(msg["To"])
+        if code != 250:
+            print(f"❌ RCPT TO falló: {resp}")
+            sys.exit(1)
 
-except Exception as e:
+        # DATA (aquí es donde obtenemos el queue_id)
+        code, resp = server.data(msg.as_string())
+
+        if code != 250:
+            print(f"❌ DATA falló: {resp}")
+            sys.exit(1)
+
+        # Ejemplo resp:
+        # b'2.0.0 Ok: queued as 707898BF47'
+        resp_str = resp.decode()
+
+        match = re.search(r"queued as ([A-F0-9]+)", resp_str)
+        if not match:
+            print(f"❌ No se pudo extraer queue_id de: {resp_str}")
+            sys.exit(1)
+
+        queue_id = match.group(1)
+        print(f"✅ SMTP aceptado por el relay Postmark")
+        print(f"📌 queue_id: {queue_id}")
+
+        # Guardar queue_id para correlación
+        with open("/tmp/smtp_queue_id", "w") as f:
+            f.write(queue_id)
+
+except (smtplib.SMTPException, socket.error) as e:
     print(f"❌ Error SMTP: {e}")
     sys.exit(1)
 
@@ -52,6 +91,7 @@ time.sleep(2)
 
 print("📬 Validación E2E:")
 print("   ✔ Postfix aceptó el mensaje")
+print("   ✔ queue_id capturado correctamente")
 print("   ✔ Relay hacia Postmark ejecutado")
 
 print("⚠️ Nota:")
