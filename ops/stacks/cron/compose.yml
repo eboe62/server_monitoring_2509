@@ -6,7 +6,7 @@ services:
 
     image: monitoring-cron:v1.0.0
     container_name: monitoring-cron
-    restart: unless-stopped
+    restart: always
 
     env_file:
       - ../../services/postgres/.env

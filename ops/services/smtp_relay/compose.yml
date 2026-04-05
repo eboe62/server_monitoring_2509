@@ -4,6 +4,7 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: ${SMTP_RELAY_CONTAINER_NAME}
+    image: monitoring-smtp-relay
     hostname: smtp-relay.local
     env_file:
       - .env
@@ -47,7 +48,7 @@ services:
 
     networks:
       - monitoring-net  # Red compartida (Grafana, Loki, Postgres, SMTP relay...)
-    restart: unless-stopped
+    restart: always
 
 secrets:
   smtp_user:

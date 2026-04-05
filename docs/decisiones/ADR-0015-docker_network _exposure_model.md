@@ -33,11 +33,11 @@ Características:
 
 Ejemplos típicos:
   - PostgreSQL
-  - Loki
   - Promtail
   - workers internos
   - contenedores de automatización
   - contenedores de cron
+  - contenedores de runtime interno
 
 Ejemplo docker-compose:
     services:
@@ -46,13 +46,18 @@ Ejemplo docker-compose:
           - monitoring-net
         # sin ports
 
-Nivel 2 — Host Local Access
+Nivel 2 — Host Local Access (Internal + Debug Loopback)
 Servicios accesibles desde el host únicamente mediante loopback.
 
 Características:
   - publicación de puertos restringida a 127.0.0.1
   - no accesibles directamente desde Internet
-  - utilizados para acceso administrativo o debugging
+  - utilizados para acceso administrativo, debugging, validación operativa, testing manual
+  - nunca deben exponerse en interfaces públicas (0.0.0.0)
+
+Servicios típicos:
+  - Grafana
+  - Loki (para observabilidad/debug)
 
 Ejemplo de exposición:
     ports:
@@ -67,6 +72,9 @@ El acceso remoto debe realizarse mediante:
   - SSH tunnel
   - reverse proxy
   - VPN
+
+El uso de exposición en loopback (127.0.0.1) debe estar justificado por necesidades operativas.
+No debe utilizarse como mecanismo de comunicación entre servicios.
 
 Nivel 3 — Public Access
 Servicios accesibles desde Internet de forma explícita.
@@ -90,14 +98,15 @@ Regla 1
 Todos los servicios deben clasificarse explícitamente en uno de los tres niveles definidos.
 
 Regla 2
-Los servicios de Nivel 1 no deben definir la directiva "ports" en Docker Compose.
+NO usar ports: Los servicios internos (Nivel 1) no deben definir la directiva "ports" en Docker Compose.
+
 
 Regla 3
-Los servicios de Nivel 2 deben usar obligatoriamente binding a loopback:
+Los servicios accesibles localmente (Nivel 2) deben usar obligatoriamente binding a loopback:
     127.0.0.1:<host_port>:<container_port>
 
 Regla 4
-La exposición pública (Nivel 3) debe justificarse mediante documentación explícita.
+Los servicios de exposición pública (Nivel 3) debe justificarse mediante documentación explícita y solo 80/443 gestionados por el host
 
 ## Consecuencias
 Positivas
