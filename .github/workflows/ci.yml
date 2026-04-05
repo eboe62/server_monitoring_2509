@@ -67,7 +67,7 @@ jobs:
       # ----------------------------------------
       - name: Build base image
         run: |
-          docker build -t monitoring-base:ci ops/images/base
+          docker build -t monitoring-base:ci -f ops/images/base/Dockerfile .
 
       - name: Build containers
         run: |
