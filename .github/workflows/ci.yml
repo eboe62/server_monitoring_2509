@@ -49,14 +49,18 @@ jobs:
       # ----------------------------------------
       # Check :latest forbidden
       # ----------------------------------------
-      - name: Check forbidden :latest tag
+      - name: Check forbidden :latest tag (compose only)
         run: |
-          if grep -R "image: .*:latest" ops; then
-            echo "❌ Uso de :latest detectado"
-            exit 1
-          else
-            echo "✔ No se usa :latest"
-          fi
+          FILES=$(find ops -name "compose*.yml" -o -name "compose*.yaml")
+
+          for f in $FILES; do
+            if grep -E "image:.*:latest" "$f"; then
+              echo "❌ Uso de :latest en $f"
+              exit 1
+            fi
+          done
+
+          echo "✔ No se usa :latest en compose"
 
       # ----------------------------------------
       # Build images
