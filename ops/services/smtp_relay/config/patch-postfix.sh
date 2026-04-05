@@ -17,7 +17,7 @@ chmod 600 /etc/postfix/sasl_passwd
 postmap /etc/postfix/sasl_passwd
 
 # Configuración Postfix y autenticación SASL
-# postconf -e "smtp_sasl_auth_enable = yes"
+postconf -e "smtp_sasl_auth_enable = yes"
 postconf -e "smtp_sasl_password_maps = hash:/etc/postfix/sasl_passwd"
 postconf -e "smtp_sasl_security_options = noanonymous"
 postconf -e "smtp_sasl_mechanism_filter = plain, login"

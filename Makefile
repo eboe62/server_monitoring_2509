@@ -488,21 +488,17 @@ test-observability:
 	@echo "=== FIN TEST OBSERVABILITY ==="
 	@echo ""
 
-## Inicialización completa - construye todas las imágenes
-build: monitoring-net build-base build-python build-cron
-	@echo "[ OK ] imágenes construidas"
-	@echo "[ OK ] entorno inicializado"
-	@echo ""
-
-test-smtp-all: test-smtp-connect test-smtp-banner test-smtp-protocol test-smtp-send test-smtp-queue test-smtp-delivery
+test-smtp-all: test-smtp-connect test-smtp-banner test-smtp-protocol test-smtp-e2e-real test-smtp-queue test-smtp-auth test-smtp-delivery test-smtp-logs-clean
 
 .PHONY: \
 test-smtp-connect \
 test-smtp-banner \
 test-smtp-protocol \
-test-smtp-send \
+test-smtp-e2e-real \
+test-smtp-queue \
+test-smtp-auth \
 test-smtp-delivery \
-test-smtp-queue
+test-smtp-logs-clean
 
 # --- test-smtp-connect
 ## Testea:
@@ -555,7 +551,7 @@ test-smtp-protocol:
 	@echo ""
 
 # --- test-smtp-send (relay acceptance)
-
+# BORRAR
 test-smtp-send:
 	@echo "=== TEST SMTP SEND (RELAY) ==="
 
@@ -574,6 +570,13 @@ test-smtp-send:
 	" || (echo "[FAIL] fallo envío al relay" && exit 1)
 	@echo ""
 
+# --- test-smtp-e2e-real
+
+test-smtp-e2e-real:
+	@echo "=== TEST SMTP E2E REAL (POSTMARK API) ==="
+	docker exec monitoring-python python3 ops/services/smtp_relay/test_mail.py || (echo "Fallo E2E" && exit 1)
+	@echo ""
+
 # --- test-smtp-queue (Postfix interno)
 
 test-smtp-queue:
@@ -584,20 +587,41 @@ test-smtp-queue:
         (echo "[ OK ] cola vacía")
 	@echo ""
 
+# --- test-smtp-auth
+
+test-smtp-auth:
+	@echo "=== TEST SMTP AUTH ==="
+	@docker exec monitoring-smtp-relay postconf smtp_sasl_auth_enable | grep -q yes || \
+		(echo "[FAIL] SASL desactivado" && exit 1)
+	@echo "[ OK ] SASL activo"
+	@echo ""
+
 # --- test-smtp-delivery (external provider)
 
 test-smtp-delivery:
 	@echo "=== TEST SMTP DELIVERY ==="
 
-	@docker logs monitoring-smtp-relay --tail 10 | grep -E "status=" > /tmp/smtp_status.log || true
+	@docker logs monitoring-smtp-relay --tail 50 > /tmp/smtp_status.log || true
 
-	@grep "status=sent" /tmp/smtp_status.log && echo "[ OK ] entregado" && exit 0 || true
-	@grep "status=deferred" /tmp/smtp_status.log && echo "[WARN] deferred" && exit 1 || true
-	@grep "status=bounced" /tmp/smtp_status.log && echo "[FAIL] bounced" && exit 1 || true
-
-	@echo "[FAIL] estado desconocido"
-	@exit 1
+	@if grep -q "status=sent" /tmp/smtp_status.log; then \
+		echo "[ OK ] entregado"; \
+	elif grep -q "status=deferred" /tmp/smtp_status.log; then \
+		echo "[WARN] deferred"; exit 1; \
+	elif grep -q "status=bounced" /tmp/smtp_status.log; then \
+		echo "[FAIL] bounced"; exit 1; \
+	else \
+		echo "[FAIL] estado desconocido"; exit 1; \
+	fi
+	@echo "[INFO] comprobar manualmente en Postmark Activity"
 	@echo ""
+
+# --- test-smtp-logs-clean
+
+test-smtp-logs-clean:
+	@echo "=== TEST SMTP LOG CLEAN ==="
+	@docker logs monitoring-smtp-relay --since 30s | grep -i warning && \
+		(echo "[WARN] warnings en logs") || \
+		(echo "[ OK ] logs limpios")
 
 # --- Network
 
