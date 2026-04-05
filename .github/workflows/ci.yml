@@ -1,0 +1,150 @@
+name: CI - Monitoring Stack
+
+on:
+  push:
+    branches: [ "main", "develop", "migracion" ]
+  pull_request:
+    branches: [ "main", "develop", "migracion" ]
+
+jobs:
+
+  build-and-test:
+    name: Build + Test + Audit
+    runs-on: ubuntu-latest
+
+    steps:
+
+      # ----------------------------------------
+      # Checkout
+      # ----------------------------------------
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ----------------------------------------
+      # Setup Docker
+      # ----------------------------------------
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Verify Docker
+        run: docker version
+
+      # ----------------------------------------
+      # Lint docker-compose
+      # ----------------------------------------
+      - name: Validate docker-compose files
+        run: |
+          docker compose -f ops/stacks/cron/compose.yml config > /dev/null
+          docker compose -f ops/stacks/python/compose.yml config > /dev/null
+          docker compose -f ops/stacks/observability/compose.yml config > /dev/null
+          docker compose -f ops/services/postgres/compose.yml config > /dev/null
+          docker compose -f ops/services/smtp_relay/compose.yml config > /dev/null
+
+      # ----------------------------------------
+      # Check :latest forbidden
+      # ----------------------------------------
+      - name: Check forbidden :latest tag
+        run: |
+          if grep -R "image: .*:latest" ops; then
+            echo "❌ Uso de :latest detectado"
+            exit 1
+          else
+            echo "✔ No se usa :latest"
+          fi
+
+      # ----------------------------------------
+      # Build images
+      # ----------------------------------------
+      - name: Build containers
+        run: |
+          docker compose -f ops/stacks/python/compose.yml build
+          docker compose -f ops/stacks/cron/compose.yml build
+
+      # ----------------------------------------
+      # Create network (required by stacks)
+      # ----------------------------------------
+      - name: Create monitoring network
+        run: docker network create monitoring-net || true
+
+      # ----------------------------------------
+      # Start full stack
+      # ----------------------------------------
+      - name: Start stack
+        run: |
+          docker compose -f ops/stacks/observability/compose.yml up -d
+          docker compose -f ops/stacks/python/compose.yml up -d
+          docker compose -f ops/stacks/cron/compose.yml up -d
+          docker compose -f ops/services/postgres/compose.yml up -d
+          docker compose -f ops/services/smtp_relay/compose.yml up -d
+
+      # ----------------------------------------
+      # Wait for services
+      # ----------------------------------------
+      - name: Wait for containers
+        run: sleep 20
+
+      # ----------------------------------------
+      # SECURITY CHECKS (ADR-0018)
+      # ----------------------------------------
+      - name: Check exposed ports
+        run: |
+          docker ps --format "{{.Names}} {{.Ports}}"
+          if docker ps --format "{{.Ports}}" | grep -E "0.0.0.0"; then
+            echo "❌ Puertos expuestos incorrectamente"
+            exit 1
+          else
+            echo "✔ Puertos correctamente restringidos"
+          fi
+
+      - name: Check docker.sock usage
+        run: |
+          if grep -R "docker.sock" ops; then
+            echo "⚠ docker.sock detectado (verificar ADR-0008)"
+          else
+            echo "✔ docker.sock no usado"
+          fi
+
+      # ----------------------------------------
+      # TESTS (Makefile)
+      # ----------------------------------------
+      - name: Test resilience
+        run: make test-resilience-completo
+
+      - name: Test observability
+        run: make test-observability
+
+      - name: Test cron
+        run: make test-cron-execution
+
+      - name: Test python health
+        run: make test-python-health
+
+      - name: Test SMTP (infra only)
+        run: make test-smtp-all
+
+      # ----------------------------------------
+      # Logs on failure
+      # ----------------------------------------
+      - name: Dump logs on failure
+        if: failure()
+        run: |
+          docker ps -a
+          docker logs grafana || true
+          docker logs loki || true
+          docker logs monitoring-python || true
+          docker logs monitoring-cron || true
+          docker logs monitoring-postgres || true
+          docker logs monitoring-smtp-relay || true
+
+      # ----------------------------------------
+      # Cleanup
+      # ----------------------------------------
+      - name: Cleanup
+        if: always()
+        run: |
+          docker compose -f ops/stacks/observability/compose.yml down -v || true
+          docker compose -f ops/stacks/python/compose.yml down -v || true
+          docker compose -f ops/stacks/cron/compose.yml down -v || true
+          docker compose -f ops/services/postgres/compose.yml down -v || true
+          docker compose -f ops/services/smtp_relay/compose.yml down -v || true
+          docker network rm monitoring-net || true
