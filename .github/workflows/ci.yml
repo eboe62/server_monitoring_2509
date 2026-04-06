@@ -68,12 +68,11 @@ jobs:
       # ------------------------------------------
       # Build base image (CRÍTICO)
       # ------------------------------------------
-      - name: Build base image
+      - name: Build base image (for compose)
         run: |
-          docker buildx build \
-            -t monitoring-base:ci \
+          docker build \
+            -t monitoring-base \
             -f ops/images/base/Dockerfile \
-            --load \
             .
 
       # ------------------------------------------
