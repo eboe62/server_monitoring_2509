@@ -1,5 +1,5 @@
 # Imagen para cronjobs basada en la base
-FROM monitoring-base
+FROM monitoring-base:ci
 
 # Instalar utilidades necesarias y supercronic
 RUN apt-get update \
