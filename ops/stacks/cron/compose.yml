@@ -1,8 +1,15 @@
 services:
+  monitoring-base:
+    build:
+      context: .
+      dockerfile: ops/images/base/Dockerfile
+
   monitoring-cron:
     build:
       context: ../../..
       dockerfile: ops/stacks/cron/Dockerfile
+    depends_on:
+      - monitoring-base
 
     image: monitoring-cron:v1.0.0
     container_name: monitoring-cron
