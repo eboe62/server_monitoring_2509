@@ -1,12 +1,12 @@
 services:
   monitoring-base:
     build:
-      context: .
+      context: ../../../
       dockerfile: ops/images/base/Dockerfile
 
   monitoring-cron:
     build:
-      context: .
+      context: ../../../
       dockerfile: ops/stacks/cron/Dockerfile
     depends_on:
       - monitoring-base
