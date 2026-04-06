@@ -1,8 +1,9 @@
 services:
-  monitoring-base:
-    build:
-      context: ../../../
-      dockerfile: ops/images/base/Dockerfile
+monitoring-base:
+  image: monitoring-base:local
+  build:
+    context: ../../../
+    dockerfile: ops/images/base/Dockerfile
 
   monitoring-python:
     build:
