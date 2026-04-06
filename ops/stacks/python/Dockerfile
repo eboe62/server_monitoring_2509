@@ -1,5 +1,5 @@
 # Imagen para ejecutar scripts Python
-FROM monitoring-base
+FROM monitoring-base:local
 
 # Copiar entrypoint específico para la imagen Python
 COPY ops/stacks/python/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
