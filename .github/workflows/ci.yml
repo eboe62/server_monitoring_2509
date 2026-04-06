@@ -70,10 +70,10 @@ jobs:
       # ------------------------------------------
       - name: Build base image (for compose)
         run: |
-        docker build \
-          -t monitoring-base \
-          -f ops/images/base/Dockerfile \
-          .
+          docker build \
+            -t monitoring-base \
+            -f ops/images/base/Dockerfile \
+            .
 
       docker image ls | grep monitoring-base
 
