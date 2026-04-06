@@ -75,7 +75,7 @@ jobs:
             -f ops/images/base/Dockerfile \
             .
 
-      docker image ls | grep monitoring-base
+          docker image ls | grep monitoring-base
 
       # ------------------------------------------
       # Build containers
