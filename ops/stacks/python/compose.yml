@@ -1,12 +1,12 @@
 services:
   monitoring-base:
     build:
-      context: .
+      context: ../../../
       dockerfile: ops/images/base/Dockerfile
 
   monitoring-python:
     build:
-      context: .
+      context: ../../../
       dockerfile: ops/stacks/python/Dockerfile
     depends_on:
       - monitoring-base
