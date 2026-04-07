@@ -1,10 +1,4 @@
 services:
-  monitoring-base:
-    image: monitoring-base
-    build:
-      context: ../../..
-      dockerfile: ops/images/base/Dockerfile
-
   monitoring-cron:
     build:
       context: ../../..
