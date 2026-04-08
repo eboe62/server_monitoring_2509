@@ -66,18 +66,6 @@ jobs:
           echo "✔ No se usa :latest en compose"
 
       # ------------------------------------------
-      # Build base image (CRÍTICO)
-      # ------------------------------------------
-      - name: Build base image (for compose)
-        run: |
-          docker build \
-            -t monitoring-base \
-            -f ops/images/base/Dockerfile \
-            .
-
-          docker image ls | grep monitoring-base
-
-      # ------------------------------------------
       # Build containers
       # ------------------------------------------
       - name: Build containers

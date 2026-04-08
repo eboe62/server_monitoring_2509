@@ -804,16 +804,12 @@ monitoring-net:  ## Crea la red Docker si no existe
 # Build / Deploy
 # ------------------------------------------
 
-.PHONY: build build-base build-python build-cron deploy
+.PHONY: build build-python build-cron deploy
 
 ## Inicialización completa - construye todas las imágenes
-build: monitoring-net build-base build-python build-cron
+build: monitoring-net build-python build-cron
 	@echo "[ OK ] imágenes construidas"
 	@echo "[ OK ] entorno inicializado"
-	@echo ""
-
-build-base:
-	docker build --no-cache -f ops/images/base/Dockerfile -t monitoring-base .
 	@echo ""
 
 build-python:

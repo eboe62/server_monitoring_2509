@@ -27,7 +27,9 @@ Debe cumplir obligatoriamente:
 - Dockerfile propio
 - docker-compose.yml propio
 - build independiente (contexto acotado al servicio)
-- no depender de archivos fuera del directorio del servicio, salvo la imagen base común definida en ADR-0006, siempre que se respete el principio de reemplazabilidad.
+- no depender de archivos fuera del directorio del servicio
+- no depender de imágenes base internas del repositorio
+- solo se permite el uso de imágenes base oficiales externas versionadas (ej. python:3.12-slim)
 - no montar rutas absolutas del host como dependencia estructural
 - no versionar secrets
 - no incluir secrets ni .env en la imagen
@@ -47,7 +49,8 @@ Incluye:
 - observability
 
 Puede:
-- usar build context superior
+- usar build context superior (solo para acceso a código del repositorio)
+- no definir imágenes base reutilizables por otros stacks
 - montar rutas del host justificadas
 - acceder a /var/run/docker.sock
 - acceder a logs del host

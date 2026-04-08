@@ -114,11 +114,11 @@ Opción B — Python distribuido en varios contenedores
   Resultado: rechazada
 
 Opción C — Runtime Python centralizado en contenedor infra
-
-  monitoring-cron
-    ├ cron
-    ├ python
-    └ scripts
+Resultado: rechazada
+Motivo:
+- introduce acoplamiento entre servicios
+- dificulta la validación en CI/CD
+- rompe el principio de autonomía de stacks
 
   Ventajas:
   - arquitectura simple
@@ -127,6 +127,13 @@ Opción C — Runtime Python centralizado en contenedor infra
   - dependencias centralizadas
 
   Resultado: aceptada
+
+Opción D — Runtime Python autónomo por stack
+Cada stack (ej. monitoring-python, monitoring-cron):
+- define su propio runtime Python
+- instala sus dependencias
+- es completamente independiente en build y ejecución
+Resultado: aceptada
 
 ## Consecuencias
 Positivas

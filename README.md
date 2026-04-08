@@ -172,19 +172,6 @@ Modelo de programación de tareas
 - Todas las tareas programadas se ejecutan dentro del contenedor monitoring-cron.
 - Supercronic es el scheduler oficial del proyecto.
 - El host no contiene entradas crontab relacionadas con la aplicación.
-
-🐳 **Dockerfile base**
-
-```dockerfile
-FROM python:3.12-slim AS monitoring-base
-
-WORKDIR /opt/monitoring
-RUN apt-get update && apt-get install -y --no-install-recommends docker-cli bash && rm -rf /var/lib/apt/lists/*
-
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-COPY . .
 ```
 
 📦 **Dependencias (requirements.txt)**

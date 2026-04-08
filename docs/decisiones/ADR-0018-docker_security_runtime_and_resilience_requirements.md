@@ -29,6 +29,12 @@ Se establecen dos bloques normativos obligatorios:
 - Se aplica principio de mínimo privilegio
 - Toda excepción debe estar documentada en ADR
 
+No se permite compartir runtime entre contenedores.
+Cada contenedor:
+- define su propio entorno de ejecución
+- limita su superficie de ataque
+- evita dependencias implícitas con otros stacks
+
 ## 1.2 Usuarios en contenedores
 Regla:
 - Los contenedores deben ejecutarse con usuario no root siempre que sea viable
@@ -112,6 +118,12 @@ El sistema debe ser capaz de:
 - Degradarse de forma controlada
 - Recuperarse automáticamente
 - Mantener observabilidad durante incidencias
+
+La resiliencia se garantiza a nivel de contenedor individual.
+Cada servicio debe:
+- poder reiniciarse de forma independiente
+- no depender de runtime compartido
+- mantener funcionamiento degradado si otros servicios fallan
 
 ## 2.2 Requisitos obligatorios
 R1 – Reinicio automático
