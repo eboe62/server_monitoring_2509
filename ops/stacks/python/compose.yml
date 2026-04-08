@@ -1,16 +1,8 @@
 services:
-monitoring-base:
-  image: monitoring-base:local
-  build:
-    context: ../../../
-    dockerfile: ops/images/base/Dockerfile
-
   monitoring-python:
     build:
       context: ../../../
       dockerfile: ops/stacks/python/Dockerfile
-    depends_on:
-      - monitoring-base
 
     image: monitoring-python:v1.0.0
     container_name: monitoring-python
