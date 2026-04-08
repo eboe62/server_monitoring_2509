@@ -143,8 +143,12 @@ Positivas
 - despliegue completamente versionado
 
 Negativas
-- las utilidades Python dependen del contenedor monitoring-cron
 - algunos scripts pueden requerir herramientas adicionales en la imagen
+- las utilidades Python se distribuyen entre stacks según responsabilidad:
+    monitoring-python → ejecución manual / scripts
+    monitoring-cron → ejecución programada
+
+Ambos son independientes a nivel de runtime
 
 ## Relación con otros ADR
 Este ADR complementa:
