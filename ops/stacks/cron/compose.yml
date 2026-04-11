@@ -28,9 +28,9 @@ services:
 
     healthcheck:
       test: ["CMD-SHELL", "pidof supercronic || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+      interval: 10s
+      timeout: 20s
+      retries: 5
 
     networks:
       - monitoring-net  # Red compartida (Grafana, Loki, Postgres, SMTP relay...)
