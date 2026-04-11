@@ -20,7 +20,6 @@ RUN apt-get update \
     https://github.com/aptible/supercronic/releases/download/v0.2.29/supercronic-linux-amd64 \
     -o /usr/local/bin/supercronic \
  && chmod +x /usr/local/bin/supercronic \
- && /usr/local/bin/supercronic --version \
  && rm -rf /var/lib/apt/lists/*
 
 # Copiar requirements
