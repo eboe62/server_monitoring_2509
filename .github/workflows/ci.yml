@@ -100,10 +100,22 @@ jobs:
           docker compose -f ops/services/smtp_relay/compose.yml up -d
 
       # ------------------------------------------
-      # Wait
+      # Wait for PostgreSQL (dependency readiness)
+      # ------------------------------------------
+      - name: Wait for PostgreSQL ready
+        run: |
+          timeout 60 sh -c '
+          until docker exec monitoring-postgres pg_isready; do
+            echo "Esperando PostgreSQL..."
+            sleep 2
+          done
+          '
+
+      # ------------------------------------------
+      # Wait for containers stabilization
       # ------------------------------------------
       - name: Wait for containers
-        run: sleep 20
+        run: sleep 10
 
       # ------------------------------------------
       # SECURITY CHECKS

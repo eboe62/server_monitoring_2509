@@ -1,12 +1,8 @@
-#!/bin/sh
+#!/bin/bash
+set -e
 
-echo "[INFO] monitoring-python iniciado"
+echo "[INIT] esperando PostgreSQL..."
+python3 scripts/check_postgres_ready.py
 
-while true; do
-  if [ -f /opt/monitoring/tu_script.py ]; then
-    python3 /opt/monitoring/tu_script.py || echo "[WARN] fallo script"
-  else
-    echo "[WARN] script no encontrado, modo idle"
-  fi
-  sleep 10
-done
+echo "[INIT] arrancando servicio python..."
+exec python3 -m monitoring.main
