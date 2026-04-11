@@ -52,9 +52,9 @@ services:
 
 secrets:
   smtp_user:
-    file: ./secrets/smtp_user
+    file: ${SMTP_USER_FILE:-./secrets/smtp_user}
   smtp_pass:
-    file: ./secrets/smtp_pass
+    file: ${SMTP_PASS_FILE:-./secrets/smtp_pass}
 
 networks:
   monitoring-net:

@@ -39,6 +39,15 @@ jobs:
           cp ops/stacks/observability/.env.template ops/stacks/observability/.env || true
 
       # ------------------------------------------
+      # Secrets for SMTP (CI)
+      # ------------------------------------------
+      - name: Create SMTP secrets (CI)
+        run: |
+          mkdir -p ops/services/smtp_relay/secrets
+          echo "ci_user@test.com" > ops/services/smtp_relay/secrets/smtp_user
+          echo "ci_pass" > ops/services/smtp_relay/secrets/smtp_pass
+
+      # ------------------------------------------
       # Lint docker-compose
       # ------------------------------------------
       - name: Validate docker-compose files
