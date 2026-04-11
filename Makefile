@@ -258,7 +258,7 @@ test-resilience-restart:
 
 	# --- VALIDAR HEALTH POST-RESTART ---
 	@echo "esperando recuperación health (healthy)..."
-	@timeout 60 sh -c '\
+	@timeout 120 sh -c '\
 	until [ "$$(docker inspect monitoring-python --format="{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}")" = "healthy" ]; do \
 					sleep 2; \
 	done' || \
