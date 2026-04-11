@@ -260,11 +260,12 @@ test-resilience-restart:
 	@echo "esperando recuperación health (healthy)..."
 	@timeout 120 sh -c '\
 	until [ "$$(docker inspect monitoring-python --format="{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}")" = "healthy" ]; do \
-					sleep 2; \
+					sleep 3; \
 	done' || \
 					(echo "[FAIL] contenedor no alcanza healthy tras restart" && \
 					docker inspect monitoring-python --format="State={{.State.Status}} Health={{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}" && exit 1)
-
+	@echo "[DEBUG] estado health actual:"
+	@docker inspect monitoring-python --format='Health={{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}'
 	@echo "[ OK ] restart + recovery OK"
 
 	# Debug
