@@ -9,17 +9,18 @@ ENV PYTHONUNBUFFERED=1 \
 
 WORKDIR /opt/monitoring
 
-# Instalar utilidades necesarias, supercronic y limpiar cache
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
     curl \
     bc \
     docker-cli \
     bash \
-   COPY ops/vendor/supercronic/supercronic-linux-amd64 /usr/local/bin/supercronic
+ && rm -rf /var/lib/apt/lists/*
 
-   RUN chmod +x /usr/local/bin/supercronic \
-   && /usr/local/bin/supercronic --version
+COPY ops/vendor/supercronic/supercronic-linux-amd64 /usr/local/bin/supercronic
+
+RUN chmod +x /usr/local/bin/supercronic \
+ && /usr/local/bin/supercronic --version
 
 # Copiar requirements
 COPY requirements.txt .
