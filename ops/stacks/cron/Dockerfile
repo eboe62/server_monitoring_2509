@@ -16,10 +16,10 @@ RUN apt-get update \
     bc \
     docker-cli \
     bash \
- && curl -L https://github.com/aptible/supercronic/releases/download/v0.2.29/supercronic-linux-amd64 \
-    -o /usr/local/bin/supercronic \
- && chmod +x /usr/local/bin/supercronic \
- && rm -rf /var/lib/apt/lists/*
+   COPY ops/vendor/supercronic/supercronic-linux-amd64 /usr/local/bin/supercronic
+
+   RUN chmod +x /usr/local/bin/supercronic \
+   && /usr/local/bin/supercronic --version
 
 # Copiar requirements
 COPY requirements.txt .
