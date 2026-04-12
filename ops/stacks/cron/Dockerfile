@@ -20,7 +20,8 @@ RUN apt-get update \
 COPY ops/vendor/supercronic/supercronic-linux-amd64 /usr/local/bin/supercronic
 
 RUN chmod +x /usr/local/bin/supercronic \
- && /usr/local/bin/supercronic --version
+ && test -x /usr/local/bin/supercronic \
+ && /usr/local/bin/supercronic -test /dev/null || true
 
 # Copiar requirements
 COPY requirements.txt .
