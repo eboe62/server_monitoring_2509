@@ -205,6 +205,8 @@ debug-docker: ## Estado detallado Docker
 
 CI ?= false
 
+WAIT_SCRIPT=./scripts/wait_for_health.sh
+
 test:
 	@echo "=== TEST COMMANDS ==="
 	@echo "make test-resilience-completo"
@@ -250,28 +252,19 @@ test-resilience-restart:
 
 	# --- VALIDAR RESTART (no health aún) ---
 	@echo "esperando restart (running)..."
-	@timeout 30 sh -c '\
+	timeout 30 sh -c '\
 	until [ "$$(docker inspect monitoring-python --format="{{.State.Status}}")" = "running" ]; do \
-					sleep 2; \
-	done' || \
-	(echo "[FAIL] contenedor no se ha reiniciado" && exit 1)
+		sleep 2; \
+	done' || (echo "[FAIL] no reinicia" && exit 1)
 
 	@echo "[ OK ] contenedor reiniciado"
 
 	# --- VALIDAR HEALTH POST-RESTART ---
 	@echo "esperando recuperación health (healthy)..."
 	@if [ "$(CI)" = "true" ]; then \
-		echo "[INFO] modo CI: aceptando healthy o starting"; \
-	@timeout 60 sh -c '\
-	until [ "$$(docker inspect monitoring-python --format="{{.State.Health.Status}}")" = "healthy" ] || \
-				[ "$$(docker inspect monitoring-python --format="{{.State.Health.Status}}")" = "starting" ]; do \
-				sleep 2; \
-		done' || (echo "[FAIL] no alcanza estado válido en CI" && exit 1); \
+		$(WAIT_SCRIPT) monitoring-python ci 60; \
 	else \
-		timeout 90 sh -c '\
-		until [ "$$(docker inspect monitoring-python --format="{{.State.Health.Status}}")" = "healthy" ]; do \
-			sleep 2; \
-		done' || (echo "[FAIL] no alcanza healthy tras restart" && exit 1); \
+		$(WAIT_SCRIPT) monitoring-python strict 90; \
 	fi
 
 	@echo "[ OK ] restart + recovery OK"
@@ -297,9 +290,9 @@ test-resilience-db:
 	@docker stop monitoring-postgres || true
 
 	@echo "esperando degradación (unhealthy)..."
-	@timeout 60 sh -c '\
+	timeout 60 sh -c '\
 	until [ "$$(docker inspect monitoring-python --format="{{.State.Health.Status}}")" = "unhealthy" ]; do \
-					sleep 2; \
+		sleep 2; \
 	done' || (echo "[FAIL] no entra en unhealthy" && exit 1)
 
 	@echo "[ OK ] degradación correcta (unhealthy)"
@@ -308,16 +301,9 @@ test-resilience-db:
 
 	@echo "esperando recuperación (healthy)..."
 	@if [ "$(CI)" = "true" ]; then \
-		timeout 60 sh -c '\
-		until [ "$$(docker inspect monitoring-python --format="{{.State.Health.Status}}")" = "healthy" ] || \
-		      [ "$$(docker inspect monitoring-python --format="{{.State.Health.Status}}")" = "starting" ]; do \
-			sleep 2; \
-		done'; \
+		$(WAIT_SCRIPT) monitoring-python ci 60; \
 	else \
-		timeout 90 sh -c '\
-		until [ "$$(docker inspect monitoring-python --format="{{.State.Health.Status}}")" = "healthy" ]; do \
-			sleep 2; \
-		done' || (echo "[FAIL] no recupera healthy" && exit 1); \
+		$(WAIT_SCRIPT) monitoring-python strict 90; \
 	fi
 
 	@echo "[ OK ] DB recuperada"
@@ -338,41 +324,28 @@ test-resilience-network:
 
 	@echo "[3] Simulación fallo red hacia DB"
 
-	@sh -c '\
-	NETWORK=$$(docker inspect -f "{{range $$k, $$v := .NetworkSettings.Networks}}{{$$k}}{{end}}" monitoring-postgres); \
-	if [ -z "$$NETWORK" ]; then \
-		echo "[FAIL] no se pudo determinar la red"; \
-		exit 1; \
-	fi; \
+	@NETWORK=$$(docker inspect -f '{{range $$k, $$v := .NetworkSettings.Networks}}{{$$k}}{{end}}' monitoring-postgres); \
 	echo "Network=$$NETWORK"; \
-	docker network disconnect $$NETWORK monitoring-postgres || true; \
+	docker network disconnect $$NETWORK monitoring-postgres || true
 
-	echo "esperando degradación..."; \
-	timeout 60 sh -c "\
-	until [ \"$$(docker inspect monitoring-python --format=\"{{.State.Health.Status}}\")\" = \"unhealthy\" ]; do \
+	@echo "esperando degradación..."
+	timeout 60 sh -c '\
+	until [ "$$(docker inspect monitoring-python --format="{{.State.Health.Status}}")" = "unhealthy" ]; do \
 		sleep 2; \
-	done" || (echo "[FAIL] no degrada por red" && exit 1); \
+	done' || (echo "[FAIL] no degrada red" && exit 1)
 
-	echo "[ OK ] degradación por red OK"; \
+	@echo "[ OK ] degradación por red OK"
 
-	docker network connect $$NETWORK monitoring-postgres; \
+	@docker network connect $$NETWORK monitoring-postgres
 
 	echo "esperando recuperación..."; \
-	if [ "$(CI)" = "true" ]; then \
-		timeout 60 sh -c "\
-		until [ \"$$(docker inspect monitoring-python --format=\"{{.State.Health.Status}}\")\" = \"healthy\" ] || \
-		      [ \"$$(docker inspect monitoring-python --format=\"{{.State.Health.Status}}\")\" = \"starting\" ]; do \
-			sleep 2; \
-		done"; \
+	@if [ "$(CI)" = "true" ]; then \
+		$(WAIT_SCRIPT) monitoring-python ci 60; \
 	else \
-		timeout 90 sh -c "\
-		until [ \"$$(docker inspect monitoring-python --format=\"{{.State.Health.Status}}\")\" = \"healthy\" ]; do \
-			sleep 2; \
-		done" || (echo "[FAIL] no recupera tras red" && exit 1); \
-	fi; \
+		$(WAIT_SCRIPT) monitoring-python strict 90; \
+	fi
 
-	echo "[ OK ] red restaurada"; \
-	'
+	@echo "[ OK ] red restaurada"
 	@echo ""
 
 test-resilience-observability:
@@ -385,7 +358,7 @@ test-resilience-observability:
 
 	@echo "[4] Verificando Loki"
 
-	@timeout 30 sh -c 'until curl -s http://127.0.0.1:3100/ready | grep -q ready; do sleep 2; done' || \
+	timeout 30 sh -c 'until curl -s http://127.0.0.1:3100/ready | grep -q ready; do sleep 2; done' || \
 		(echo "[FAIL] Loki no responde" && exit 1)
 
 	@echo "[ OK ] Loki accesible"
@@ -433,21 +406,14 @@ test-python-health:
 	@echo ""
 
 	@echo "[2] Esperando healthy..."
-	@timeout 30 sh -c '\
 	@if [ "$(CI)" = "true" ]; then \
-		timeout 60 sh -c '\
-		until [ "$$(docker inspect monitoring-python --format="{{.State.Health.Status}}")" = "healthy" ] || \
-		      [ "$$(docker inspect monitoring-python --format="{{.State.Health.Status}}")" = "starting" ]; do \
-			sleep 2; \
-		done'; \
+		$(WAIT_SCRIPT) monitoring-python ci 60; \
 	else \
-		timeout 90 sh -c '\
-		until [ "$$(docker inspect monitoring-python --format="{{.State.Health.Status}}")" = "healthy" ]; do \
-			sleep 2; \
-		done' || (echo "[FAIL] python no healthy" && exit 1); \
+		$(WAIT_SCRIPT) monitoring-python strict 90; \
 	fi
 
 	@echo "[ OK ] python healthy"
+
 
 	@echo ""
 
@@ -491,7 +457,7 @@ test-observability:
 	@echo ""
 
 	@echo "[1] Esperando Loki (host)..."
-	@timeout 30 sh -c 'until curl -s http://127.0.0.1:3100/ready; do sleep 2; done' || \
+	timeout 30 sh -c 'until curl -s http://127.0.0.1:3100/ready; do sleep 2; done' || \
 		(echo "[ERROR] Loki no responde" && exit 1)
 	@echo ""
 
