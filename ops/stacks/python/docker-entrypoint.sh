@@ -54,5 +54,6 @@ except Exception:
   fi
 else
   echo "[WARN] script no encontrado, modo idle"
-fi  sleep 10
+fi
+sleep 10
 done
