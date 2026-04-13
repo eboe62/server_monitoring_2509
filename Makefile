@@ -641,9 +641,13 @@ test-smtp-queue:
 
 test-smtp-logs-clean:
 	@echo "=== TEST SMTP LOG CLEAN ==="
-	@docker logs monitoring-smtp-relay --since 30s | grep -i warning && \
-		(echo "[WARN] warnings en logs") || \
-		(echo "[ OK ] logs limpios")
+
+	@docker logs monitoring-smtp-relay --since 30s | \
+	grep -i warning | \
+	grep -v "sasl-xoauth2" && \
+		(echo "[WARN] warnings relevantes en logs" && exit 1) || \
+		(echo "[ OK ] logs limpios (sin warnings relevantes)")
+
 	@echo ""
 
 # --- Network
