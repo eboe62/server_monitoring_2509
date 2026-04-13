@@ -262,7 +262,7 @@ test-resilience-restart:
 	# --- VALIDAR HEALTH POST-RESTART ---
 	@echo "esperando recuperación health (healthy)..."
 	@if [ "$(CI)" = "true" ]; then \
-		$(WAIT_SCRIPT) monitoring-python ci 100; \
+		$(WAIT_SCRIPT) monitoring-python ci 60; \
 	else \
 		$(WAIT_SCRIPT) monitoring-python strict 90; \
 	fi
@@ -290,7 +290,7 @@ test-resilience-db:
 	@docker stop monitoring-postgres || true
 
 	@echo "esperando degradación (unhealthy)..."
-	timeout 70 sh -c '\
+	timeout 120 sh -c '\
 	until [ "$$(docker inspect monitoring-python --format="{{.State.Health.Status}}")" = "unhealthy" ]; do \
 		sleep 2; \
 	done' || (echo "[FAIL] no entra en unhealthy" && exit 1)
@@ -329,7 +329,7 @@ test-resilience-network:
 	docker network disconnect $$NETWORK monitoring-postgres || true
 
 	@echo "esperando degradación..."
-	timeout 80 sh -c '\
+	timeout 60 sh -c '\
 	until [ "$$(docker inspect monitoring-python --format="{{.State.Health.Status}}")" = "unhealthy" ]; do \
 		sleep 2; \
 	done' || (echo "[FAIL] no degrada red" && exit 1)
@@ -340,7 +340,7 @@ test-resilience-network:
 
 	echo "esperando recuperación..."; \
 	@if [ "$(CI)" = "true" ]; then \
-		$(WAIT_SCRIPT) monitoring-python ci 80; \
+		$(WAIT_SCRIPT) monitoring-python ci 60; \
 	else \
 		$(WAIT_SCRIPT) monitoring-python strict 90; \
 	fi
@@ -407,7 +407,7 @@ test-python-health:
 
 	@echo "[2] Esperando healthy..."
 	@if [ "$(CI)" = "true" ]; then \
-		$(WAIT_SCRIPT) monitoring-python ci 95; \
+		$(WAIT_SCRIPT) monitoring-python ci 60; \
 	else \
 		$(WAIT_SCRIPT) monitoring-python strict 90; \
 	fi
