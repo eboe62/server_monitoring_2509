@@ -333,7 +333,7 @@ test-resilience-network:
 
 	@sh -c '\
 	set -e; \
-	NETWORK=$$(docker inspect -f "{{range $$k, $$v := .NetworkSettings.Networks}}{{$$k}}{{end}}" monitoring-postgres); \
+	NETWORK=$$(docker inspect -f "{{range $$k := .NetworkSettings.Networks}}{{printf \"%s\" $$k}}{{end}}" monitoring-postgres); \
 	if [ -z "$$NETWORK" ]; then \
 		echo "[FAIL] no se pudo determinar la red"; \
 		exit 1; \
