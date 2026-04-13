@@ -17,7 +17,7 @@
 
 CONTAINER="$1"
 MODE="$2"
-TIMEOUT="${3:-120}"
+TIMEOUT="${3:-60}"
 
 if [ -z "$CONTAINER" ] || [ -z "$MODE" ]; then
     echo "[ERROR] uso: wait_for_health.sh <container> <mode> [timeout]"
