@@ -22,14 +22,11 @@ services:
       # - /var/run/docker.sock:/var/run/docker.sock
 
     healthcheck:
-      test: [
-        "CMD-SHELL",
-        "python3 -c 'import os, psycopg2; psycopg2.connect(host=os.getenv(\"POSTGRES_HOST\"), port=os.getenv(\"POSTGRES_PORT\"), user=os.getenv(\"POSTGRES_USER\"), password=os.getenv(\"POSTGRES_PASSWORD\"), dbname=os.getenv(\"POSTGRES_NAME\"))' || exit 1"
-      ]
+      test: ["CMD", "sh", "./scripts/healthcheck.sh"]
       interval: 10s
       timeout: 5s
-      retries: 5
-      start_period: 20s
+      retries: 10
+      start_period: 30s
 
     networks:
       - monitoring-net  # Red compartida (Grafana, Loki, Postgres, SMTP relay...)
