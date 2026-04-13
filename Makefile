@@ -333,11 +333,15 @@ test-resilience-network:
 
 	@sh -c '\
 	set -e; \
-	NETWORK=$$(docker inspect -f "{{range $$k := .NetworkSettings.Networks}}{{printf \"%s\" $$k}}{{end}}" monitoring-postgres); \
-	if [ -z "$$NETWORK" ]; then \
+	\
+	echo "[STEP] obteniendo red del contenedor..."; \
+	NETWORK=$$(docker inspect monitoring-postgres | jq -r ".[0].NetworkSettings.Networks | keys[0]"); \
+	\
+	if [ -z "$$NETWORK" ] || [ "$$NETWORK" = "null" ]; then \
 		echo "[FAIL] no se pudo determinar la red"; \
 		exit 1; \
 	fi; \
+	\
 	echo "Network=$$NETWORK"; \
 	\
 	echo "[STEP] desconectando red..."; \
@@ -352,6 +356,7 @@ test-resilience-network:
 		echo "$$LOGS" | grep -E "WAIT|no disponible|connection" >/dev/null && found=1 && break; \
 			sleep 2; \
 	done; \
+	\
 	if [ "$$found" != "1" ]; then \
 		echo "[FAIL] no se detecta degradación funcional por red"; \
 		exit 1; \
@@ -372,7 +377,6 @@ test-resilience-network:
 	echo "[ OK ] red restaurada"; \
 	'
 
-	@echo "[ OK ] red restaurada"
 	@echo ""
 
 test-resilience-observability:
