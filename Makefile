@@ -331,16 +331,19 @@ test-resilience-network:
 
 	@echo "[3] Simulación fallo red hacia DB"
 
-	@NETWORK=$$(docker inspect -f '{{range $$k, $$v := .NetworkSettings.Networks}}{{$$k}}{{end}}' monitoring-postgres); \
+	@sh -c '\
+	set -e; \
+	NETWORK=$$(docker inspect -f "{{range $$k, $$v := .NetworkSettings.Networks}}{{$$k}}{{end}}" monitoring-postgres); \
 	if [ -z "$$NETWORK" ]; then \
 		echo "[FAIL] no se pudo determinar la red"; \
 		exit 1; \
 	fi; \
 	echo "Network=$$NETWORK"; \
-	docker network disconnect $$NETWORK monitoring-postgres || true
-
-	@echo "esperando degradación (comportamiento, no health)..."
-	timeout 60 sh -c '\
+	\
+	echo "[STEP] desconectando red..."; \
+	docker network disconnect $$NETWORK monitoring-postgres || true; \
+	\
+	echo "[STEP] esperando degradación (comportamiento, no health)..."; \
 	found=0; \
 	for i in $$(seq 1 30); do \
 			LOGS=$$(docker logs monitoring-python 2>&1 | tail -n 20); \
@@ -349,20 +352,25 @@ test-resilience-network:
 		echo "$$LOGS" | grep -E "WAIT|no disponible|connection" >/dev/null && found=1 && break; \
 			sleep 2; \
 	done; \
-	[ "$$found" = "1" ]' || \
-	(echo "[FAIL] no se detecta degradación funcional por red" && exit 1)
-
-	@echo "[ OK ] degradación funcional detectada"
-
-	@echo "reconectando red..."
-	@docker network connect $$NETWORK monitoring-postgres
-
-	@echo "esperando recuperación..."
-	@if [ "$(CI)" = "true" ]; then \
+	if [ "$$found" != "1" ]; then \
+		echo "[FAIL] no se detecta degradación funcional por red"; \
+		exit 1; \
+	fi; \
+	\
+	echo "[ OK ] degradación funcional detectada"; \
+	\
+	echo "[STEP] reconectando red..."; \
+	docker network connect $$NETWORK monitoring-postgres; \
+	\
+	echo "[STEP] esperando recuperación..."; \
+	if [ "$(CI)" = "true" ]; then \
 		$(WAIT_SCRIPT) monitoring-python ci 60; \
 	else \
 		$(WAIT_SCRIPT) monitoring-python strict 90; \
-	fi
+	fi; \
+	\
+	echo "[ OK ] red restaurada"; \
+	'
 
 	@echo "[ OK ] red restaurada"
 	@echo ""
