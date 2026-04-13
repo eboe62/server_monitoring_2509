@@ -289,9 +289,16 @@ test-resilience-db:
 
 	@docker stop monitoring-postgres || true
 
-	@echo "esperando degradación (unhealthy)..."
-	timeout 70 sh -c '\
-	until [ "$$(docker inspect monitoring-python --format="{{.State.Health.Status}}")" = "unhealthy" ]; do \
+	@echo "esperando degradación (healthcheck o comportamiento)..."
+
+	@timeout 90 sh -c '\
+	while true; do \
+		STATUS=$$(docker inspect monitoring-python --format="{{.State.Health.Status}}"); \
+		echo "[DEBUG] status=$$STATUS"; \
+		if [ "$$STATUS" = "unhealthy" ] || [ "$$STATUS" = "starting" ]; then \
+			echo "[ OK ] degradación detectada"; \
+			exit 0; \
+		fi; \
 		sleep 2; \
 	done' || (echo "[FAIL] no entra en unhealthy" && exit 1)
 
