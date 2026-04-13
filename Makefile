@@ -335,8 +335,19 @@ test-resilience-network:
 	echo "Network=$$NETWORK"; \
 	docker network disconnect $$NETWORK monitoring-postgres || true
 
-	@echo "esperando degradación..."
+	@echo "esperando degradación (comportamiento, no health)..."
 	timeout 60 sh -c '\
+	found=0; \
+	for i in $$(seq 1 30); do \
+			LOGS=$$(docker logs monitoring-python 2>&1 | tail -n 20); \
+			echo "[DEBUG] logs recientes:"; echo "$$LOGS"; \
+			echo "$$LOGS" | grep -q "WAIT\|no disponible\|connection" && found=1 && break; \
+			sleep 2; \
+	done; \
+	[ "$$found" = "1" ]' || \
+	(echo "[FAIL] no se detecta degradación funcional por red" && exit 1)
+
+	@echo "[ OK ] degradación funcional detectada"
 	until [ "$$(docker inspect monitoring-python --format="{{.State.Health.Status}}")" = "unhealthy" ]; do \
 		sleep 2; \
 	done' || (echo "[FAIL] no degrada red" && exit 1)
