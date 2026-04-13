@@ -322,9 +322,9 @@ test-resilience-network:
 	# ----------------------------------------
 ## Testea:
 ## - disconnect network
-## - espera unhealthy
+## - detectar degradación funcional (logs)
 ## - reconnect network
-## - espera healthy
+## - esperar recuperación
 ## Dependencias:
 ## [ red ]
 ##     monitoring-net conecta TODO
@@ -332,6 +332,10 @@ test-resilience-network:
 	@echo "[3] Simulación fallo red hacia DB"
 
 	@NETWORK=$$(docker inspect -f '{{range $$k, $$v := .NetworkSettings.Networks}}{{$$k}}{{end}}' monitoring-postgres); \
+	if [ -z "$$NETWORK" ]; then \
+		echo "[FAIL] no se pudo determinar la red"; \
+		exit 1; \
+	fi; \
 	echo "Network=$$NETWORK"; \
 	docker network disconnect $$NETWORK monitoring-postgres || true
 
@@ -340,23 +344,20 @@ test-resilience-network:
 	found=0; \
 	for i in $$(seq 1 30); do \
 			LOGS=$$(docker logs monitoring-python 2>&1 | tail -n 20); \
-			echo "[DEBUG] logs recientes:"; echo "$$LOGS"; \
-			echo "$$LOGS" | grep -q "WAIT\|no disponible\|connection" && found=1 && break; \
+		echo "[DEBUG] logs recientes:"; \
+		echo "$$LOGS"; \
+		echo "$$LOGS" | grep -E "WAIT|no disponible|connection" >/dev/null && found=1 && break; \
 			sleep 2; \
 	done; \
 	[ "$$found" = "1" ]' || \
 	(echo "[FAIL] no se detecta degradación funcional por red" && exit 1)
 
 	@echo "[ OK ] degradación funcional detectada"
-	until [ "$$(docker inspect monitoring-python --format="{{.State.Health.Status}}")" = "unhealthy" ]; do \
-		sleep 2; \
-	done' || (echo "[FAIL] no degrada red" && exit 1)
 
-	@echo "[ OK ] degradación por red OK"
-
+	@echo "reconectando red..."
 	@docker network connect $$NETWORK monitoring-postgres
 
-	echo "esperando recuperación..."; \
+	@echo "esperando recuperación..."
 	@if [ "$(CI)" = "true" ]; then \
 		$(WAIT_SCRIPT) monitoring-python ci 60; \
 	else \
