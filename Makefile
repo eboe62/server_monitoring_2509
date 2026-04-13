@@ -290,7 +290,7 @@ test-resilience-db:
 	@docker stop monitoring-postgres || true
 
 	@echo "esperando degradación (unhealthy)..."
-	timeout 120 sh -c '\
+	timeout 70 sh -c '\
 	until [ "$$(docker inspect monitoring-python --format="{{.State.Health.Status}}")" = "unhealthy" ]; do \
 		sleep 2; \
 	done' || (echo "[FAIL] no entra en unhealthy" && exit 1)
@@ -301,7 +301,7 @@ test-resilience-db:
 
 	@echo "esperando recuperación (healthy)..."
 	@if [ "$(CI)" = "true" ]; then \
-		$(WAIT_SCRIPT) monitoring-python ci 70; \
+		$(WAIT_SCRIPT) monitoring-python ci 120; \
 	else \
 		$(WAIT_SCRIPT) monitoring-python strict 90; \
 	fi
