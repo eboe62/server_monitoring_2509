@@ -205,8 +205,6 @@ debug-docker: ## Estado detallado Docker
 
 CI ?= false
 
-WAIT_SCRIPT=./scripts/wait_for_health.sh
-
 test:
 	@echo "=== TEST COMMANDS ==="
 	@echo "make test-resilience-completo"
@@ -225,7 +223,7 @@ test:
 
 .PHONY: test-resilience-completo
 
-test-resilience-completo: test-resilience-inicio test-resilience-restart test-resilience-db test-resilience-network test-resilience-observability test-resilience-fin
+test-resilience-completo: test-resilience-inicio test-resilience-wait test-resilience-restart test-resilience-db test-resilience-network test-resilience-observability test-resilience-fin
 
 test-resilience-inicio:
 	@echo "\n=== TEST RESILIENCIA SRE (Site Reliability Engineering) ==="
@@ -235,6 +233,29 @@ test-resilience-inicio:
 	# ----------------------------------------
 	@echo "[0] Estado inicial"
 	@docker ps
+	@echo ""
+
+test-resilience-wait:
+	# ----------------------------------------
+	# [PRE] ESPERA ESTABILIZACIÓN GLOBAL
+	# ----------------------------------------
+	@echo "[PRE] esperando estabilización de servicios..."
+
+	# Esperar a que postgres esté listo
+	@timeout 60 sh -c '\
+	until docker exec monitoring-postgres pg_isready >/dev/null 2>&1; do \
+		echo "[DEBUG] esperando postgres..."; \
+		sleep 2; \
+	done' || (echo "[FAIL] postgres no listo" && exit 1)
+
+	# Esperar a que python pueda conectar (real check)
+	@timeout 60 sh -c '\
+	until docker exec monitoring-python sh -c "nc -z monitoring-postgres 5432" >/dev/null 2>&1; do \
+		echo "[DEBUG] python sin conectividad DB..."; \
+		sleep 2; \
+	done' || (echo "[FAIL] python no conecta a DB" && exit 1)
+
+	@echo "[ OK ] entorno estable"
 	@echo ""
 
 test-resilience-restart:
@@ -250,7 +271,7 @@ test-resilience-restart:
 
 	@docker exec monitoring-python sh -c "kill -9 1" || true
 
-	# --- VALIDAR RESTART (no health aún) ---
+	# --- VALIDAR RESTART ---
 	@echo "esperando restart (running)..."
 	@timeout 30 sh -c '\
 	until [ "$$(docker inspect monitoring-python --format="{{.State.Status}}")" = "running" ]; do \
@@ -259,14 +280,16 @@ test-resilience-restart:
 
 	@echo "[ OK ] contenedor reiniciado"
 
-	# --- VALIDAR HEALTH POST-RESTART ---
-	@echo "[STEP] validando que acepta exec..."
-	@timeout 30 sh -c '\
-	until docker exec monitoring-python echo ok >/dev/null 2>&1; do \
-		sleep 2; \
-	done' || (echo "[FAIL] contenedor no responde a exec" && exit 1)
+	# --- VALIDAR RECUPERACIÓN REAL (DB connectivity) ---
+	@echo "[STEP] validando recuperación funcional..."
 
-	@echo "[ OK ] contenedor operativo"
+	@timeout 60 sh -c '\
+	until docker exec monitoring-python sh -c "nc -z monitoring-postgres 5432" >/dev/null 2>&1; do \
+		echo "[DEBUG] esperando conexión a DB..."; \
+		sleep 2; \
+	done' || (echo "[FAIL] no recupera conectividad tras restart" && exit 1)
+
+	@echo "[ OK ] recovery funcional OK"
 
 	@docker inspect monitoring-python --format='State={{.State.Status}}'
 	@echo ""
@@ -306,31 +329,23 @@ test-resilience-db:
 	done' || (echo "[FAIL] DNS no recupera" && exit 1)
 
 	# --- FASE 2: TCP estable ---
-	@timeout 180 sh -c '\
-	stable=0; \
+	@timeout 120 sh -c '\
 	success_count=0; \
-	for i in $$(seq 1 120); do \
+	for i in $$(seq 1 60); do \
 		if docker exec monitoring-python sh -c "nc -z monitoring-postgres 5432" >/dev/null 2>&1; then \
 			success_count=$$((success_count+1)); \
-			echo "[DEBUG] intento OK ($$success_count consecutivos)"; \
+			echo "[DEBUG] intento OK ($$success_count/3)"; \
 		else \
 			success_count=0; \
-			echo "[DEBUG] esperando TCP estable..."; \
+			echo "[DEBUG] esperando TCP..."; \
 		fi; \
-		\
 		if [ "$$success_count" -ge 3 ]; then \
-			stable=1; \
-			break; \
+			echo "[DEBUG] TCP estable confirmado"; \
+			exit 0; \
 		fi; \
 		sleep 2; \
 	done; \
-	\
-	if [ "$$stable" != "1" ]; then \
-		echo "[FAIL] DB no alcanza estado estable"; \
-		exit 1; \
-	fi'
-
-	@echo "[ OK ] DB recuperada"
+	echo "[FAIL] DB no estable"; exit 1'
 	@echo ""
 
 test-resilience-network:
