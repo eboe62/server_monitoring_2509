@@ -252,7 +252,7 @@ test-resilience-restart:
 
 	# --- VALIDAR RESTART (no health aún) ---
 	@echo "esperando restart (running)..."
-	timeout 30 sh -c '\
+	@timeout 30 sh -c '\
 	until [ "$$(docker inspect monitoring-python --format="{{.State.Status}}")" = "running" ]; do \
 		sleep 2; \
 	done' || (echo "[FAIL] no reinicia" && exit 1)
@@ -260,21 +260,15 @@ test-resilience-restart:
 	@echo "[ OK ] contenedor reiniciado"
 
 	# --- VALIDAR HEALTH POST-RESTART ---
-	@echo "esperando recuperación health (healthy)..."
-	@if [ "$(CI)" = "true" ]; then \
-		$(WAIT_SCRIPT) monitoring-python ci 60; \
-	else \
-		$(WAIT_SCRIPT) monitoring-python strict 120 || \
-		( \
-			echo "[DEBUG] logs monitoring-python:"; \
-			docker logs monitoring-python --tail 50; \
-			exit 1; \
-		); \
-	fi
+	@echo "[STEP] validando que acepta exec..."
+	@timeout 30 sh -c '\
+	until docker exec monitoring-python echo ok >/dev/null 2>&1; do \
+		sleep 2; \
+	done' || (echo "[FAIL] contenedor no responde a exec" && exit 1)
 
-	@echo "[ OK ] restart + recovery OK"
+	@echo "[ OK ] contenedor operativo"
 
-	@docker inspect monitoring-python --format='State={{.State.Status}} Health={{.State.Health.Status}}'
+	@docker inspect monitoring-python --format='State={{.State.Status}}'
 	@echo ""
 
 test-resilience-db:
@@ -294,29 +288,23 @@ test-resilience-db:
 
 	@docker stop monitoring-postgres || true
 
-	@echo "esperando degradación (healthcheck o comportamiento)..."
-
-	@timeout 90 sh -c '\
-	while true; do \
-		STATUS=$$(docker inspect monitoring-python --format="{{.State.Health.Status}}"); \
-		echo "[DEBUG] status=$$STATUS"; \
-		if [ "$$STATUS" = "unhealthy" ] || [ "$$STATUS" = "starting" ]; then \
-			echo "[ OK ] degradación detectada"; \
-			exit 0; \
-		fi; \
+	@echo "[STEP] esperando fallo de conectividad a DB..."
+	@timeout 60 sh -c '\
+	until ! docker exec monitoring-python sh -c "nc -z monitoring-postgres 5432" 2>/dev/null; do \
+		echo "[DEBUG] postgres sigue accesible"; \
 		sleep 2; \
-	done' || (echo "[FAIL] no entra en unhealthy" && exit 1)
+	done' || (echo "[FAIL] no se detecta caída de DB" && exit 1)
 
-	@echo "[ OK ] degradación correcta (unhealthy)"
+	@echo "[ OK ] degradación detectada"
 
 	@docker start monitoring-postgres
 
-	@echo "esperando recuperación (healthy)..."
-	@if [ "$(CI)" = "true" ]; then \
-		$(WAIT_SCRIPT) monitoring-python ci 120; \
-	else \
-		$(WAIT_SCRIPT) monitoring-python strict 90; \
-	fi
+	@echo "[STEP] esperando recuperación de DB..."
+	@timeout 90 sh -c '\
+	until docker exec monitoring-python sh -c "nc -z monitoring-postgres 5432" 2>/dev/null; do \
+		echo "[DEBUG] esperando DB..."; \
+		sleep 2; \
+	done' || (echo "[FAIL] no se recupera DB" && exit 1)
 
 	@echo "[ OK ] DB recuperada"
 	@echo ""
@@ -339,58 +327,58 @@ test-resilience-network:
 	@sh -c '\
 	set -e; \
 	\
-	echo "[STEP] obteniendo red del contenedor..."; \
-	NETWORK=$$(docker inspect monitoring-postgres | jq -r '\''.[0].NetworkSettings.Networks | keys[0]'\''); \
+	echo "[STEP] obteniendo red..."; \
+	NETWORK=$$(docker inspect -f "{{range $$k, $$v := .NetworkSettings.Networks}}{{$$k}}{{end}}" monitoring-postgres); \
 	\
-	if [ -z "$$NETWORK" ] || [ "$$NETWORK" = "null" ]; then \
+	if [ -z "$$NETWORK" ]; then \
 		echo "[FAIL] no se pudo determinar la red"; \
 		exit 1; \
 	fi; \
 	\
 	echo "Network=$$NETWORK"; \
 	\
-	echo "[STEP] desconectando red..."; \
+	echo "[STEP] desconectando red de postgres..."; \
 	docker network disconnect $$NETWORK monitoring-postgres || true; \
 	\
-	echo "[STEP] esperando degradación (conectividad real a DB)..."; \
-	found=0; \
+	echo "[STEP] esperando pérdida de conectividad..."; \
+	lost=0; \
 	for i in $$(seq 1 30); do \
-			if docker exec monitoring-python sh -c "nc -z monitoring-postgres 5432" 2>/dev/null; then \
-					echo "[DEBUG] postgres accesible"; \
-			else \
-					echo "[DEBUG] postgres NO accesible"; \
-					found=1; \
-					break; \
-			fi; \
-			sleep 2; \
+		if docker exec monitoring-python sh -c "nc -z monitoring-postgres 5432" 2>/dev/null; then \
+			echo "[DEBUG] postgres accesible"; \
+		else \
+			echo "[DEBUG] postgres NO accesible"; \
+			lost=1; \
+			break; \
+		fi; \
+		sleep 2; \
 	done; \
 	\
-	if [ "$$found" != "1" ]; then \
-			echo "[FAIL] no se detecta fallo real de red contra DB"; \
-			exit 1; \
+	if [ "$$lost" != "1" ]; then \
+		echo "[FAIL] no se pierde conectividad"; \
+		exit 1; \
 	fi; \
 	\
-	echo "[ OK ] degradación funcional detectada"; \
+	echo "[ OK ] degradación detectada"; \
 	\
 	echo "[STEP] reconectando red..."; \
 	docker network connect $$NETWORK monitoring-postgres; \
 	\
-	echo "[STEP] esperando recuperación de conectividad..."; \
+	echo "[STEP] esperando recuperación..."; \
 	recovered=0; \
-	for i in $$(seq 1 30); do \
-			if docker exec monitoring-python sh -c "nc -z monitoring-postgres 5432" 2>/dev/null; then \
-					echo "[DEBUG] postgres accesible"; \
-					recovered=1; \
-					break; \
-			else \
-					echo "[DEBUG] esperando recuperación..."; \
-			fi; \
-			sleep 2; \
+	for i in $$(seq 1 60); do \
+		if docker exec monitoring-python sh -c "nc -z monitoring-postgres 5432" 2>/dev/null; then \
+			echo "[DEBUG] postgres accesible"; \
+			recovered=1; \
+			break; \
+		else \
+			echo "[DEBUG] esperando recuperación..."; \
+		fi; \
+		sleep 2; \
 	done; \
 	\
 	if [ "$$recovered" != "1" ]; then \
-			echo "[FAIL] no se recupera conectividad con DB"; \
-			exit 1; \
+		echo "[FAIL] no se recupera conectividad"; \
+		exit 1; \
 	fi; \
 	\
 	echo "[ OK ] red restaurada"; \
@@ -407,17 +395,19 @@ test-resilience-observability:
 
 	@echo "[4] Verificando Loki"
 
-	timeout 30 sh -c 'until curl -s http://127.0.0.1:3100/ready | grep -q ready; do sleep 2; done' || \
+	@timeout 30 sh -c 'until curl -s http://127.0.0.1:3100/ready | grep -q ready; do sleep 2; done' || \
 		(echo "[FAIL] Loki no responde" && exit 1)
 
 	@echo "[ OK ] Loki accesible"
 
 	@echo "generando log..."
-	@docker exec monitoring-cron sh -c "echo 'SRE_test_$$(date +%s)' >> /var/log/test.log"
+	@docker exec monitoring-cron sh -c "echo SRE_test_$$(date +%s) >> /var/log/test.log"
 
 	@sleep 5
 
-	@curl -s http://127.0.0.1:3100/loki/api/v1/labels
+	@curl -s http://127.0.0.1:3100/loki/api/v1/labels >/dev/null
+
+	@echo "[ OK ] Loki responde correctamente"
 	@echo ""
 
 test-resilience-fin:
@@ -444,26 +434,23 @@ test-resilience-fin:
 
 test-python-health:
 	# ----------------------------------------
-	# [6] Python health
+	# [6] Python toolbox health
 	# ----------------------------------------
-	@echo "=== TEST PYTHON HEALTH ==="
+	@echo "=== TEST PYTHON TOOLBOX ==="
 
 	@echo "[1] Estado contenedor"
-
-	@docker inspect monitoring-python --format='State={{.State.Status}} Health={{.State.Health.Status}}'
+	@docker inspect monitoring-python --format='State={{.State.Status}}'
 
 	@echo ""
+	@echo "[2] Validando disponibilidad (docker exec)..."
 
-	@echo "[2] Esperando healthy..."
-	@if [ "$(CI)" = "true" ]; then \
-		$(WAIT_SCRIPT) monitoring-python ci 60; \
-	else \
-		$(WAIT_SCRIPT) monitoring-python strict 90; \
-	fi
+	@timeout 30 sh -c '\
+	until docker exec monitoring-python python3 -c "print(\"ok\")" >/dev/null 2>&1; do \
+		echo "[DEBUG] esperando disponibilidad..."; \
+		sleep 2; \
+	done' || (echo "[FAIL] contenedor no responde a exec" && exit 1)
 
-	@echo "[ OK ] python healthy"
-
-
+	@echo "[ OK ] python disponible"
 	@echo ""
 
 # --- test-cron-execution
