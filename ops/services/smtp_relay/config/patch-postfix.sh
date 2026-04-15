@@ -63,7 +63,13 @@ postconf -e "myhostname = smtp-relay.local"
 postconf -e "myorigin = ${EMAIL_DOMAIN}"
 postconf -e "mydestination = localhost.localdomain, localhost"
 
-# --- Red interna confiable, permitir localhost y Docker network ---
+# --- MYNETWORKS opcional con fallback seguro ---
+if [ -z "${MYNETWORKS:-}" ]; then
+  echo "[WARN] MYNETWORKS no definido, usando valor por defecto (Docker network)"
+  MYNETWORKS="127.0.0.0/8, 172.16.0.0/12"
+fi
+
+# --- Red interna confiable ---
 postconf -e "mynetworks = ${MYNETWORKS}"
 
 # --- Debug controlado (sin ruido) ---
