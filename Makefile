@@ -340,7 +340,7 @@ test-resilience-network:
 	set -e; \
 	\
 	echo "[STEP] obteniendo red del contenedor..."; \
-	NETWORK=$$(docker inspect monitoring-postgres | jq -r ".[0].NetworkSettings.Networks | keys[0]"); \
+	NETWORK=$$(docker inspect monitoring-postgres | jq -r '\''.[0].NetworkSettings.Networks | keys[0]'\''); \
 	\
 	if [ -z "$$NETWORK" ] || [ "$$NETWORK" = "null" ]; then \
 		echo "[FAIL] no se pudo determinar la red"; \
@@ -392,6 +392,9 @@ test-resilience-network:
 			echo "[FAIL] no se recupera conectividad con DB"; \
 			exit 1; \
 	fi; \
+	\
+	echo "[ OK ] red restaurada"; \
+	'
 	@echo ""
 
 test-resilience-observability:
