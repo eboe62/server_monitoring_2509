@@ -299,12 +299,24 @@ test-resilience-db:
 
 	@docker start monitoring-postgres
 
-	@echo "[STEP] esperando recuperación de DB..."
-	@timeout 90 sh -c '\
-	until docker exec monitoring-python sh -c "nc -z monitoring-postgres 5432" 2>/dev/null; do \
-		echo "[DEBUG] esperando DB..."; \
+	@echo "[STEP] esperando recuperación de DB (arranque real)..."
+	@timeout 150 sh -c '\
+	recovered=0; \
+	for i in $$(seq 1 75); do \
+		if docker exec monitoring-python sh -c "nc -z monitoring-postgres 5432" 2>/dev/null; then \
+			echo "[DEBUG] postgres accesible"; \
+			recovered=1; \
+			break; \
+		else \
+			echo "[DEBUG] esperando DB (arranque real postgres)..."; \
+		fi; \
 		sleep 2; \
-	done' || (echo "[FAIL] no se recupera DB" && exit 1)
+	done; \
+	\
+	if [ "$$recovered" != "1" ]; then \
+		echo "[FAIL] no se recupera DB"; \
+		exit 1; \
+	fi'
 
 	@echo "[ OK ] DB recuperada"
 	@echo ""
