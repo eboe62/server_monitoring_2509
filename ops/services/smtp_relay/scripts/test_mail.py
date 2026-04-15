@@ -16,6 +16,7 @@ import time
 import sys
 import socket
 import re
+import os
 
 SMTP_SERVER = os.getenv("SMTP_SERVER", "smtp-relay")
 SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))

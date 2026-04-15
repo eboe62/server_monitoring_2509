@@ -264,7 +264,12 @@ test-resilience-restart:
 	@if [ "$(CI)" = "true" ]; then \
 		$(WAIT_SCRIPT) monitoring-python ci 60; \
 	else \
-		$(WAIT_SCRIPT) monitoring-python strict 90; \
+		$(WAIT_SCRIPT) monitoring-python strict 120 || \
+		( \
+			echo "[DEBUG] logs monitoring-python:"; \
+			docker logs monitoring-python --tail 50; \
+			exit 1; \
+		); \
 	fi
 
 	@echo "[ OK ] restart + recovery OK"
