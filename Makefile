@@ -277,12 +277,9 @@ test-resilience-db:
 	# ----------------------------------------
 ## Testea:
 ## - stop postgres
-## - espera unhealthy
+## - detectar pérdida de conectividad real
 ## - start postgres
-## - espera healthy
-## Dependencias:
-## [ monitoring-postgres ]
-##     └── servicio base (stateful)
+## - esperar recuperación real (DNS + TCP)
 
 	@echo "[2] Simulación fallo DB"
 
@@ -290,7 +287,7 @@ test-resilience-db:
 
 	@echo "[STEP] esperando fallo de conectividad a DB..."
 	@timeout 60 sh -c '\
-	until ! docker exec monitoring-python sh -c "nc -z monitoring-postgres 5432" 2>/dev/null; do \
+	until ! docker exec monitoring-python sh -c "getent hosts monitoring-postgres >/dev/null 2>&1 && nc -z monitoring-postgres 5432" 2>/dev/null; do \
 		echo "[DEBUG] postgres sigue accesible"; \
 		sleep 2; \
 	done' || (echo "[FAIL] no se detecta caída de DB" && exit 1)
@@ -299,16 +296,16 @@ test-resilience-db:
 
 	@docker start monitoring-postgres
 
-	@echo "[STEP] esperando recuperación de DB (arranque real)..."
-	@timeout 150 sh -c '\
+	@echo "[STEP] esperando recuperación de DB (DNS + arranque real)..."
+	@timeout 180 sh -c '\
 	recovered=0; \
-	for i in $$(seq 1 75); do \
-		if docker exec monitoring-python sh -c "nc -z monitoring-postgres 5432" 2>/dev/null; then \
-			echo "[DEBUG] postgres accesible"; \
+	for i in $$(seq 1 90); do \
+		if docker exec monitoring-python sh -c "getent hosts monitoring-postgres >/dev/null 2>&1 && nc -z monitoring-postgres 5432" 2>/dev/null; then \
+			echo "[DEBUG] postgres accesible (DNS + TCP OK)"; \
 			recovered=1; \
 			break; \
 		else \
-			echo "[DEBUG] esperando DB (arranque real postgres)..."; \
+			echo "[DEBUG] esperando DB (startup real postgres)..."; \
 		fi; \
 		sleep 2; \
 	done; \
@@ -327,9 +324,9 @@ test-resilience-network:
 	# ----------------------------------------
 ## Testea:
 ## - disconnect network
-## - detectar degradación funcional (logs)
+## - detectar pérdida de conectividad real
 ## - reconnect network
-## - esperar recuperación
+## - esperar recuperación real (DNS + TCP)
 ## Dependencias:
 ## [ red ]
 ##     monitoring-net conecta TODO
@@ -352,25 +349,10 @@ test-resilience-network:
 	echo "[STEP] desconectando red de postgres..."; \
 	docker network disconnect $$NETWORK monitoring-postgres || true; \
 	\
-	echo "[STEP] esperando pérdida de conectividad..."; \
+	echo "[STEP] esperando pérdida de conectividad (DNS/TCP)..."; \
 	lost=0; \
-	echo "[STEP] esperando recuperación de conectividad (red + postgres)..."; \
-	recovered=0; \
-	for i in $$(seq 1 90); do \
+	for i in $$(seq 1 30); do \
 		if docker exec monitoring-python sh -c "getent hosts monitoring-postgres >/dev/null 2>&1 && nc -z monitoring-postgres 5432" 2>/dev/null; then \
-			echo "[DEBUG] postgres accesible (DNS + TCP OK)"; \
-			recovered=1; \
-			break; \
-		else \
-			echo "[DEBUG] esperando recuperación (DNS/TCP)..."; \
-		fi; \
-		sleep 2; \
-	done; \
-	\
-	if [ "$$recovered" != "1" ]; then \
-		echo "[FAIL] no se recupera conectividad con DB"; \
-		exit 1; \
-	fi; \
 			echo "[DEBUG] postgres accesible"; \
 		else \
 			echo "[DEBUG] postgres NO accesible"; \
@@ -390,21 +372,21 @@ test-resilience-network:
 	echo "[STEP] reconectando red..."; \
 	docker network connect $$NETWORK monitoring-postgres; \
 	\
-	echo "[STEP] esperando recuperación..."; \
+	echo "[STEP] esperando recuperación de conectividad (DNS + TCP)..."; \
 	recovered=0; \
-	for i in $$(seq 1 60); do \
-		if docker exec monitoring-python sh -c "nc -z monitoring-postgres 5432" 2>/dev/null; then \
-			echo "[DEBUG] postgres accesible"; \
+	for i in $$(seq 1 90); do \
+		if docker exec monitoring-python sh -c "getent hosts monitoring-postgres >/dev/null 2>&1 && nc -z monitoring-postgres 5432" 2>/dev/null; then \
+			echo "[DEBUG] postgres accesible (DNS + TCP OK)"; \
 			recovered=1; \
 			break; \
 		else \
-			echo "[DEBUG] esperando recuperación..."; \
+			echo "[DEBUG] esperando recuperación (DNS/TCP)..."; \
 		fi; \
 		sleep 2; \
 	done; \
 	\
 	if [ "$$recovered" != "1" ]; then \
-		echo "[FAIL] no se recupera conectividad"; \
+		echo "[FAIL] no se recupera conectividad con DB"; \
 		exit 1; \
 	fi; \
 	\
