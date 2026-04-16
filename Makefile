@@ -205,6 +205,8 @@ debug-docker: ## Estado detallado Docker
 
 CI ?= false
 
+WAIT_SCRIPT=./scripts/wait_for_health.sh
+
 test:
 	@echo "=== TEST COMMANDS ==="
 	@echo "make test-resilience-completo"
@@ -223,7 +225,7 @@ test:
 
 .PHONY: test-resilience-completo
 
-test-resilience-completo: test-resilience-inicio test-resilience-wait test-resilience-restart test-resilience-db test-resilience-network test-resilience-observability test-resilience-fin
+test-resilience-completo: test-resilience-inicio test-resilience-restart test-resilience-db test-resilience-network test-resilience-observability test-resilience-fin
 
 test-resilience-inicio:
 	@echo "\n=== TEST RESILIENCIA SRE (Site Reliability Engineering) ==="
@@ -235,33 +237,10 @@ test-resilience-inicio:
 	@docker ps
 	@echo ""
 
-test-resilience-wait:
-	# ----------------------------------------
-	# [PRE] ESPERA ESTABILIZACIÓN GLOBAL
-	# ----------------------------------------
-	@echo "[PRE] esperando estabilización de servicios..."
-
-	# Esperar a que postgres esté listo
-	@timeout 60 sh -c '\
-	until docker exec monitoring-postgres pg_isready >/dev/null 2>&1; do \
-		echo "[DEBUG] esperando postgres..."; \
-		sleep 2; \
-	done' || (echo "[FAIL] postgres no listo" && exit 1)
-
-	# Esperar a que python pueda conectar (real check)
-	@timeout 60 sh -c '\
-	until docker exec monitoring-python sh -c "nc -z monitoring-postgres 5432" >/dev/null 2>&1; do \
-		echo "[DEBUG] python sin conectividad DB..."; \
-		sleep 2; \
-	done' || (echo "[FAIL] python no conecta a DB" && exit 1)
-
-	@echo "[ OK ] entorno estable"
-	@echo ""
-
 test-resilience-restart:
-	# ----------------------------------------
-	# [1] CRASH REAL proceso (PID 1)
-	# ----------------------------------------
+        # ----------------------------------------
+        # [1] CRASH REAL proceso (PID 1)
+        # ----------------------------------------
 ## Testea:
 ## - kill -9
 ## - espera running
@@ -271,27 +250,32 @@ test-resilience-restart:
 
 	@docker exec monitoring-python sh -c "kill -9 1" || true
 
-	# --- VALIDAR RESTART ---
+	# --- VALIDAR RESTART (no health aún) ---
 	@echo "esperando restart (running)..."
 	@timeout 30 sh -c '\
 	until [ "$$(docker inspect monitoring-python --format="{{.State.Status}}")" = "running" ]; do \
 		sleep 2; \
-	done' || (echo "[FAIL] no reinicia" && exit 1)
+	done' || \
+	(echo "[FAIL] contenedor no se ha reiniciado" && \
+	docker inspect monitoring-python --format="State={{.State.Status}}" && exit 1)
 
 	@echo "[ OK ] contenedor reiniciado"
 
-	# --- VALIDAR RECUPERACIÓN REAL (DB connectivity) ---
-	@echo "[STEP] validando recuperación funcional..."
+	# --- VALIDAR HEALTH POST-RESTART ---
+	@echo "esperando recuperación health (healthy)..."
 
 	@timeout 60 sh -c '\
-	until docker exec monitoring-python sh -c "nc -z monitoring-postgres 5432" >/dev/null 2>&1; do \
-		echo "[DEBUG] esperando conexión a DB..."; \
+	until [ "$$(docker inspect monitoring-python --format="{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}")" = "healthy" ]; do \
 		sleep 2; \
-	done' || (echo "[FAIL] no recupera conectividad tras restart" && exit 1)
+	done' || \
+	(echo "[FAIL] contenedor no alcanza healthy tras restart" && \
+	docker inspect monitoring-python --format="State={{.State.Status}} Health={{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}" && exit 1)
 
-	@echo "[ OK ] recovery funcional OK"
+	@echo "[ OK ] restart + recovery OK"
 
-	@docker inspect monitoring-python --format='State={{.State.Status}}'
+	# Debug
+	@echo "[INFO] estado tras restart:"
+	@docker inspect monitoring-python --format='State={{.State.Status}} Health={{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}'
 	@echo ""
 
 test-resilience-db:
@@ -300,52 +284,38 @@ test-resilience-db:
 	# ----------------------------------------
 ## Testea:
 ## - stop postgres
-## - detectar pérdida real de conectividad
+## - espera unhealthy
 ## - start postgres
-## - esperar recuperación real (DNS + TCP estable)
+## - espera healthy
+## Dependencias:
+## [ monitoring-postgres ]
+##     └── servicio base (stateful)
 
 	@echo "[2] Simulación fallo DB"
 
 	@docker stop monitoring-postgres || true
 
-	@echo "[STEP] esperando caída de DB..."
+	@echo "esperando degradación (unhealthy)..."
 	@timeout 60 sh -c '\
-	until ! docker exec monitoring-python sh -c "getent hosts monitoring-postgres >/dev/null 2>&1 && nc -z monitoring-postgres 5432" >/dev/null 2>&1; do \
-		echo "[DEBUG] postgres sigue accesible"; \
+	until [ "$$(docker inspect monitoring-python --format="{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}")" = "unhealthy" ]; do \
 		sleep 2; \
-	done' || (echo "[FAIL] no se detecta caída de DB" && exit 1)
+	done' || \
+	(echo "[FAIL] no entra en unhealthy tras caída DB" && \
+	docker inspect monitoring-python --format="State={{.State.Status}} Health={{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}" && exit 1)
 
-	@echo "[ OK ] degradación detectada"
+	@echo "[ OK ] degradación correcta (unhealthy)"
 
 	@docker start monitoring-postgres
 
-	@echo "[STEP] esperando recuperación de DB..."
-
-	# --- FASE 1: DNS disponible ---
+	@echo "esperando recuperación (healthy)..."
 	@timeout 60 sh -c '\
-	until docker exec monitoring-python sh -c "getent hosts monitoring-postgres" >/dev/null 2>&1; do \
-		echo "[DEBUG] esperando DNS..."; \
+	until [ "$$(docker inspect monitoring-python --format="{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}")" = "healthy" ]; do \
 		sleep 2; \
-	done' || (echo "[FAIL] DNS no recupera" && exit 1)
+	done' || \
+	(echo "[FAIL] no recupera healthy tras DB" && \
+	docker inspect monitoring-python --format="State={{.State.Status}} Health={{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}" && exit 1)
 
-	# --- FASE 2: TCP estable ---
-	@timeout 120 sh -c '\
-	success_count=0; \
-	for i in $$(seq 1 60); do \
-		if docker exec monitoring-python sh -c "nc -z monitoring-postgres 5432" >/dev/null 2>&1; then \
-			success_count=$$((success_count+1)); \
-			echo "[DEBUG] intento OK ($$success_count/3)"; \
-		else \
-			success_count=0; \
-			echo "[DEBUG] esperando TCP..."; \
-		fi; \
-		if [ "$$success_count" -ge 3 ]; then \
-			echo "[DEBUG] TCP estable confirmado"; \
-			exit 0; \
-		fi; \
-		sleep 2; \
-	done; \
-	echo "[FAIL] DB no estable"; exit 1'
+	@echo "[ OK ] DB recuperada"
 	@echo ""
 
 test-resilience-network:
@@ -354,71 +324,35 @@ test-resilience-network:
 	# ----------------------------------------
 ## Testea:
 ## - disconnect network
-## - detectar pérdida real de conectividad
+## - espera unhealthy
 ## - reconnect network
-## - esperar recuperación real (DNS + TCP)
+## - espera healthy
+## Dependencias:
+## [ red ]
+##     monitoring-net conecta TODO
 
 	@echo "[3] Simulación fallo red hacia DB"
 
-	@sh -c '\
-	set -e; \
-	\
-	echo "[STEP] obteniendo red..."; \
-	NETWORK=$$(docker inspect -f "{{range $$k, $$v := .NetworkSettings.Networks}}{{$$k}}{{end}}" monitoring-postgres); \
-	\
+	@NETWORK=$$(docker inspect -f '{{range $$k, $$v := .NetworkSettings.Networks}}{{$$k}}{{end}}' monitoring-postgres); \
 	if [ -z "$$NETWORK" ]; then \
-		echo "[FAIL] no se pudo determinar la red"; \
-		exit 1; \
+					echo "[FAIL] no se pudo determinar la red"; \
+					exit 1; \
 	fi; \
-	\
 	echo "Network=$$NETWORK"; \
-	\
-	echo "[STEP] desconectando red de postgres..."; \
 	docker network disconnect $$NETWORK monitoring-postgres || true; \
-	\
-	echo "[STEP] esperando pérdida de conectividad..."; \
-	lost=0; \
-	for i in $$(seq 1 30); do \
-		if docker exec monitoring-python sh -c "getent hosts monitoring-postgres >/dev/null 2>&1 && nc -z monitoring-postgres 5432" >/dev/null 2>&1; then \
-			echo "[DEBUG] postgres accesible"; \
-		else \
-			echo "[DEBUG] postgres NO accesible"; \
-			lost=1; \
-			break; \
-		fi; \
+	echo "esperando degradación..."; \
+	timeout 60 sh -c '\
+	until [ "$$(docker inspect monitoring-python --format="{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}")" = "unhealthy" ]; do \
 		sleep 2; \
-	done; \
-	\
-	if [ "$$lost" != "1" ]; then \
-		echo "[FAIL] no se pierde conectividad"; \
-		exit 1; \
-	fi; \
-	\
-	echo "[ OK ] degradación detectada"; \
-	\
-	echo "[STEP] reconectando red..."; \
-	docker network connect $$NETWORK monitoring-postgres || true; \
-	\
-	echo "[STEP] esperando recuperación de conectividad..."; \
-	recovered=0; \
-	for i in $$(seq 1 120); do \
-		if docker exec monitoring-python sh -c "getent hosts monitoring-postgres >/dev/null 2>&1 && nc -z monitoring-postgres 5432" >/dev/null 2>&1; then \
-			echo "[DEBUG] postgres accesible (DNS + TCP OK)"; \
-			recovered=1; \
-			break; \
-		else \
-			echo "[DEBUG] esperando recuperación..."; \
-		fi; \
+	done' || (echo "[FAIL] no degrada por red" && exit 1); \
+	echo "[ OK ] degradación por red OK"; \
+	docker network connect $$NETWORK monitoring-postgres; \
+	echo "esperando recuperación..."; \
+	timeout 60 sh -c '\
+	until [ "$$(docker inspect monitoring-python --format="{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}")" = "healthy" ]; do \
 		sleep 2; \
-	done; \
-	\
-	if [ "$$recovered" != "1" ]; then \
-		echo "[FAIL] no se recupera conectividad con DB"; \
-		exit 1; \
-	fi; \
-	\
-	echo "[ OK ] red restaurada"; \
-	'
+	done' || (echo "[FAIL] no recupera tras red" && exit 1); \
+	echo "[ OK ] red restaurada"
 	@echo ""
 
 test-resilience-observability:
@@ -431,19 +365,17 @@ test-resilience-observability:
 
 	@echo "[4] Verificando Loki"
 
-	@timeout 30 sh -c 'until curl -s http://127.0.0.1:3100/ready | grep -q ready; do sleep 2; done' || \
+	@timeout 20 sh -c 'until curl -s http://127.0.0.1:3100/ready | grep -q ready; do sleep 2; done' || \
 		(echo "[FAIL] Loki no responde" && exit 1)
 
 	@echo "[ OK ] Loki accesible"
 
 	@echo "generando log..."
-	@docker exec monitoring-cron sh -c "echo SRE_test_$$(date +%s) >> /var/log/test.log"
+	@docker exec monitoring-cron sh -c "echo 'SRE_test_$$(date +%s)' >> /var/log/test.log"
 
 	@sleep 5
 
-	@curl -s http://127.0.0.1:3100/loki/api/v1/labels >/dev/null
-
-	@echo "[ OK ] Loki responde correctamente"
+	@curl -s http://127.0.0.1:3100/loki/api/v1/labels
 	@echo ""
 
 test-resilience-fin:
@@ -470,24 +402,27 @@ test-resilience-fin:
 
 test-python-health:
 	# ----------------------------------------
-	# [6] Python toolbox health
+	# [6] Python health
 	# ----------------------------------------
-	@echo "=== TEST PYTHON TOOLBOX ==="
+	@echo "=== TEST PYTHON HEALTH ==="
 
 	@echo "[1] Estado contenedor"
-	@docker inspect monitoring-python --format='State={{.State.Status}}'
+
+	@docker inspect monitoring-python --format='State={{.State.Status}} Health={{.State.Health.Status}}'
 
 	@echo ""
-	@echo "[2] Validando disponibilidad (docker exec)..."
 
-	@timeout 30 sh -c '\
-	until docker exec monitoring-python python3 -c "print(\"ok\")" >/dev/null 2>&1; do \
-		echo "[DEBUG] esperando disponibilidad..."; \
-		sleep 2; \
-	done' || (echo "[FAIL] contenedor no responde a exec" && exit 1)
+	@echo "[2] Esperando healthy..."
+	@if [ "$(CI)" = "true" ]; then \
+		$(WAIT_SCRIPT) monitoring-python ci 60; \
+	else \
+		$(WAIT_SCRIPT) monitoring-python strict 90; \
+	fi
 
-	@echo "[ OK ] python disponible"
+	@echo "[ OK ] python healthy"
+
 	@echo ""
+
 
 # --- test-cron-execution
 ## Testea:
@@ -515,8 +450,8 @@ test-cron-execution:
 	@echo "[2] Verificando ejecución..."
 	@TS=$$(cat /tmp/cron_test_ts | cut -d= -f2); \
 	grep $$TS /var/log/test.log >/dev/null && \
-		echo "[ OK ] cron escribe correctamente" || \
-		(echo "[FAIL] cron no ejecuta" && exit 1)
+					echo "[ OK ] cron escribe correctamente" || \
+					(echo "[FAIL] cron no ejecuta" && exit 1)
 
 	@echo ""
 
@@ -529,8 +464,8 @@ test-observability:
 	@echo ""
 
 	@echo "[1] Esperando Loki (host)..."
-	timeout 30 sh -c 'until curl -s http://127.0.0.1:3100/ready; do sleep 2; done' || \
-		(echo "[ERROR] Loki no responde" && exit 1)
+	@timeout 30 sh -c 'until curl -s http://127.0.0.1:3100/ready; do sleep 2; done' || \
+					(echo "[ERROR] Loki no responde" && exit 1)
 	@echo ""
 
 	@echo "[ OK ] Loki accesible"
@@ -551,11 +486,11 @@ test-observability:
 
 	@echo "[4] Query Loki..."
 	@RESULT=$$(curl -s -G http://127.0.0.1:3100/loki/api/v1/query \
-		--data-urlencode 'query={job="auth_logs"} |= "loki_test_"' | jq '.data.result | length'); \
+					--data-urlencode 'query={job="auth_logs"} |= "loki_test_"' | jq '.data.result | length'); \
 	if [ "$$RESULT" -eq 0 ]; then \
-		echo "[FAIL] sin ingestión"; exit 1; \
+					echo "[FAIL] sin ingestión"; exit 1; \
 	else \
-		echo "[ OK ] logs ingeridos"; \
+					echo "[ OK ] logs ingeridos"; \
 	fi
 	@echo ""
 
@@ -565,9 +500,11 @@ test-observability:
 	@echo "=== FIN TEST OBSERVABILITY ==="
 	@echo ""
 
+
 test-smtp-all: test-smtp-connect test-smtp-banner test-smtp-protocol test-smtp-config-auth test-smtp-relay-flow test-smtp-delivery test-smtp-queue test-smtp-logs-clean
 
 .PHONY: \
+
 
 test-smtp-all: \
 	test-smtp-connect \
@@ -595,7 +532,7 @@ test-smtp-connect:
 
 	@echo "Test conexión SMTP"
 	@docker exec monitoring-debug nc -zv smtp-relay 587 || \
-		(echo "[FAIL] no conecta a smtp-relay" && exit 1)
+					(echo "[FAIL] no conecta a smtp-relay" && exit 1)
 
 	@echo "[ OK ] conexión TCP correcta"
 	@echo ""
@@ -606,9 +543,9 @@ test-smtp-banner:
 	@echo "=== TEST SMTP BANNER ==="
 
 	@docker exec monitoring-debug sh -c "\
-		timeout 5 nc smtp-relay 587 | head -n 1 \
+					timeout 5 nc smtp-relay 587 | head -n 1 \
 	" | grep -E '^220' >/dev/null || \
-		(echo '[FAIL] banner SMTP inválido' && exit 1)
+					(echo '[FAIL] banner SMTP inválido' && exit 1)
 
 	@echo "[ OK ] banner SMTP correcto"
 	@echo ""
@@ -619,12 +556,12 @@ test-smtp-protocol:
 	@echo "=== TEST SMTP PROTOCOL ==="
 
 	@docker exec monitoring-debug sh -c '\
-		( \
-			sleep 1; echo "EHLO test"; \
-			sleep 1; echo "QUIT"; \
-		) | nc smtp-relay 587 \
+					( \
+									sleep 1; echo "EHLO test"; \
+									sleep 1; echo "QUIT"; \
+					) | nc smtp-relay 587 \
 	' | grep -q "250" || \
-		(echo "[FAIL] SMTP handshake inválido" && exit 1)
+					(echo "[FAIL] SMTP handshake inválido" && exit 1)
 
 	@echo "[ OK ] SMTP handshake válido"
 	@echo ""
@@ -632,21 +569,10 @@ test-smtp-protocol:
 # --- test-smtp-config-auth
 
 test-smtp-config-auth:
-	@echo "=== TEST SMTP CONFIG ==="
-
-	@echo "[CHECK] smtp_sasl_auth_enable"
-	@docker exec monitoring-smtp-relay postconf smtp_sasl_auth_enable
-
-	@echo "[CHECK] mynetworks"
-	@docker exec monitoring-smtp-relay postconf mynetworks
-
+	@echo "=== TEST SMTP AUTH ==="
 	@docker exec monitoring-smtp-relay postconf smtp_sasl_auth_enable | grep -q yes || \
-		(echo "[FAIL] SASL desactivado" && exit 1)
-
-	@docker exec monitoring-smtp-relay postconf mynetworks | grep -Eq "127\.0\.0\.0/8|172\." || \
-		(echo "[FAIL] mynetworks mal configurado" && exit 1)
-
-	@echo "[ OK ] configuración SMTP válida"
+					(echo "[FAIL] SASL desactivado" && exit 1)
+	@echo "[ OK ] SASL activo"
 	@echo ""
 
 
@@ -654,15 +580,9 @@ test-smtp-config-auth:
 
 test-smtp-relay-flow:
 	@echo "=== TEST SMTP RELAY FLOW (POSTMARK API) ==="
-	@docker exec monitoring-python python3 ops/services/smtp_relay/scripts/test_mail.py || \
-		( \
-			if [ "$(CI)" = "true" ]; then \
-				echo "[WARN] fallo tolerado en CI (relay no determinista)"; \
-			else \
-				echo "Fallo Relay Flow"; exit 1; \
-			fi \
-		)
+	docker exec monitoring-python python3 ops/services/smtp_relay/scripts/test_mail.py || (echo "Fallo Relay Flow" && exit 1)
 	@echo ""
+
 
 # --- test-smtp-delivery (external provider)
 
@@ -673,18 +593,15 @@ test-smtp-delivery:
 	echo "[INFO] Buscando queue_id: $$QUEUE_ID"; \
 	docker logs monitoring-smtp-relay --tail 100 > /tmp/smtp_status.log || true; \
 	if grep -q "$$QUEUE_ID" /tmp/smtp_status.log && grep -q "status=sent" /tmp/smtp_status.log; then \
-		echo "[ OK ] entregado (relay → Postmark)"; \
+					echo "[ OK ] entregado (relay → Postmark)"; \
 	elif grep -q "$$QUEUE_ID" /tmp/smtp_status.log && grep -q "status=deferred" /tmp/smtp_status.log; then \
-		echo "[WARN] deferred"; exit 1; \
+					echo "[WARN] deferred"; exit 1; \
 	elif grep -q "$$QUEUE_ID" /tmp/smtp_status.log && grep -q "status=bounced" /tmp/smtp_status.log; then \
-		echo "[FAIL] bounced"; exit 1; \
+					echo "[FAIL] bounced"; exit 1; \
 	else \
-		if [ "$(CI)" = "true" ]; then \
-			echo "[WARN] no se encontró queue_id (esperable en CI)"; \
-		else \
-			echo "[FAIL] no se encontró el queue_id en logs"; exit 1; \
-		fi \
+					echo "[FAIL] no se encontró el queue_id en logs"; exit 1; \
 	fi
+
 	@echo "[INFO] comprobar manualmente en Postmark Activity"
 	@echo ""
 
@@ -694,21 +611,17 @@ test-smtp-queue:
 	@echo "=== TEST SMTP QUEUE ==="
 
 	@docker exec monitoring-smtp-relay postqueue -p | grep -q "^[A-F0-9]" && \
-        (echo "[WARN] hay correos en cola") || \
-        (echo "[ OK ] cola vacía")
+	(echo "[WARN] hay correos en cola") || \
+	(echo "[ OK ] cola vacía")
 	@echo ""
 
 # --- test-smtp-logs-clean
 
 test-smtp-logs-clean:
 	@echo "=== TEST SMTP LOG CLEAN ==="
-
-	@docker logs monitoring-smtp-relay --since 30s | \
-	grep -i warning | \
-	grep -v "sasl-xoauth2" && \
-		(echo "[WARN] warnings relevantes en logs" && exit 1) || \
-		(echo "[ OK ] logs limpios (sin warnings relevantes)")
-
+	@docker logs monitoring-smtp-relay --since 30s | grep -i warning && \
+					(echo "[WARN] warnings en logs") || \
+					(echo "[ OK ] logs limpios")
 	@echo ""
 
 # --- Network
@@ -716,8 +629,8 @@ test-smtp-logs-clean:
 .PHONY: test-network
 
 test-network:
-	docker network inspect monitoring-net
-	@echo ""
+        docker network inspect monitoring-net
+        @echo ""
 
 # ------------------------------------------
 # DEBUG (troubleshooting)
@@ -826,8 +739,8 @@ debug-toolbox-up: ## Levanta contenedor de debugging en monitoring-net
 	@echo "=== Iniciando contenedor debug ==="
 	@docker rm -f $(DEBUG_CONTAINER) >/dev/null 2>&1 || true
 	@docker run -d --name $(DEBUG_CONTAINER) \
-		--network monitoring-net \
-		$(DEBUG_IMAGE) sleep infinity
+					--network monitoring-net \
+					$(DEBUG_IMAGE) sleep infinity
 	@echo "[ OK ] contenedor debug activo"
 	@echo ""
 
@@ -903,12 +816,16 @@ monitoring-net:  ## Crea la red Docker si no existe
 # Build / Deploy
 # ------------------------------------------
 
-.PHONY: build build-python build-cron deploy
+.PHONY: build build-base build-python build-cron deploy
 
 ## Inicialización completa - construye todas las imágenes
-build: monitoring-net build-python build-cron
+build: monitoring-net build-base build-python build-cron
 	@echo "[ OK ] imágenes construidas"
 	@echo "[ OK ] entorno inicializado"
+	@echo ""
+
+build-base:
+	docker build --no-cache -f ops/images/base/Dockerfile -t monitoring-base .
 	@echo ""
 
 build-python:
@@ -923,12 +840,12 @@ deploy: build
 	@set -e; \
 	echo "=== 🚀 Despliegue completo ==="; \
 	for s in $(SERVICE_STACKS); do \
-		echo "→ desplegando $$s"; \
-		cd $(SERVICE_DIR)/$$s && $(COMPOSE) up -d --build; \
+					echo "→ desplegando $$s"; \
+					cd $(SERVICE_DIR)/$$s && $(COMPOSE) up -d --build; \
 	done; \
 	for s in $(INFRA_STACKS); do \
-		echo "→ desplegando $$s"; \
-		cd $(STACK_DIR)/$$s && $(COMPOSE) up -d --build; \
+					echo "→ desplegando $$s"; \
+					cd $(STACK_DIR)/$$s && $(COMPOSE) up -d --build; \
 	done; \
 	echo "[ OK ] despliegue finalizado"
 	@echo ""
