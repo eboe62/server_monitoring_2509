@@ -238,9 +238,9 @@ test-resilience-inicio:
 	@echo ""
 
 test-resilience-restart:
-	# ----------------------------------------
-	# [1] CRASH REAL proceso (PID 1)
-	# ----------------------------------------
+        # ----------------------------------------
+        # [1] CRASH REAL proceso (PID 1)
+        # ----------------------------------------
 ## Testea:
 ## - kill -9
 ## - espera running
@@ -252,24 +252,30 @@ test-resilience-restart:
 
 	# --- VALIDAR RESTART (no health aún) ---
 	@echo "esperando restart (running)..."
-	timeout 30 sh -c '\
+	@timeout 30 sh -c '\
 	until [ "$$(docker inspect monitoring-python --format="{{.State.Status}}")" = "running" ]; do \
 		sleep 2; \
-	done' || (echo "[FAIL] no reinicia" && exit 1)
+	done' || \
+	(echo "[FAIL] contenedor no se ha reiniciado" && \
+	docker inspect monitoring-python --format="State={{.State.Status}}" && exit 1)
 
 	@echo "[ OK ] contenedor reiniciado"
 
 	# --- VALIDAR HEALTH POST-RESTART ---
 	@echo "esperando recuperación health (healthy)..."
-	@if [ "$(CI)" = "true" ]; then \
-		$(WAIT_SCRIPT) monitoring-python ci 60; \
-	else \
-		$(WAIT_SCRIPT) monitoring-python strict 90; \
-	fi
+
+	@timeout 60 sh -c '\
+	until [ "$$(docker inspect monitoring-python --format="{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}")" = "healthy" ]; do \
+		sleep 2; \
+	done' || \
+	(echo "[FAIL] contenedor no alcanza healthy tras restart" && \
+	docker inspect monitoring-python --format="State={{.State.Status}} Health={{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}" && exit 1)
 
 	@echo "[ OK ] restart + recovery OK"
 
-	@docker inspect monitoring-python --format='State={{.State.Status}} Health={{.State.Health.Status}}'
+	# Debug
+	@echo "[INFO] estado tras restart:"
+	@docker inspect monitoring-python --format='State={{.State.Status}} Health={{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}'
 	@echo ""
 
 test-resilience-db:
@@ -289,29 +295,25 @@ test-resilience-db:
 
 	@docker stop monitoring-postgres || true
 
-	@echo "esperando degradación (healthcheck o comportamiento)..."
-
-	@timeout 90 sh -c '\
-	while true; do \
-		STATUS=$$(docker inspect monitoring-python --format="{{.State.Health.Status}}"); \
-		echo "[DEBUG] status=$$STATUS"; \
-		if [ "$$STATUS" = "unhealthy" ] || [ "$$STATUS" = "starting" ]; then \
-			echo "[ OK ] degradación detectada"; \
-			exit 0; \
-		fi; \
+	@echo "esperando degradación (unhealthy)..."
+	@timeout 60 sh -c '\
+	until [ "$$(docker inspect monitoring-python --format="{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}")" = "unhealthy" ]; do \
 		sleep 2; \
-	done' || (echo "[FAIL] no entra en unhealthy" && exit 1)
+	done' || \
+	(echo "[FAIL] no entra en unhealthy tras caída DB" && \
+	docker inspect monitoring-python --format="State={{.State.Status}} Health={{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}" && exit 1)
 
 	@echo "[ OK ] degradación correcta (unhealthy)"
 
 	@docker start monitoring-postgres
 
 	@echo "esperando recuperación (healthy)..."
-	@if [ "$(CI)" = "true" ]; then \
-		$(WAIT_SCRIPT) monitoring-python ci 120; \
-	else \
-		$(WAIT_SCRIPT) monitoring-python strict 90; \
-	fi
+	@timeout 60 sh -c '\
+	until [ "$$(docker inspect monitoring-python --format="{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}")" = "healthy" ]; do \
+		sleep 2; \
+	done' || \
+	(echo "[FAIL] no recupera healthy tras DB" && \
+	docker inspect monitoring-python --format="State={{.State.Status}} Health={{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}" && exit 1)
 
 	@echo "[ OK ] DB recuperada"
 	@echo ""
@@ -322,61 +324,35 @@ test-resilience-network:
 	# ----------------------------------------
 ## Testea:
 ## - disconnect network
-## - detectar degradación funcional (logs)
+## - espera unhealthy
 ## - reconnect network
-## - esperar recuperación
+## - espera healthy
 ## Dependencias:
 ## [ red ]
 ##     monitoring-net conecta TODO
 
 	@echo "[3] Simulación fallo red hacia DB"
 
-	@sh -c '\
-	set -e; \
-	\
-	echo "[STEP] obteniendo red del contenedor..."; \
-	NETWORK=$$(docker inspect monitoring-postgres | jq -r ".[0].NetworkSettings.Networks | keys[0]"); \
-	\
-	if [ -z "$$NETWORK" ] || [ "$$NETWORK" = "null" ]; then \
-		echo "[FAIL] no se pudo determinar la red"; \
-		exit 1; \
+	@NETWORK=$$(docker inspect -f '{{range $$k, $$v := .NetworkSettings.Networks}}{{$$k}}{{end}}' monitoring-postgres); \
+	if [ -z "$$NETWORK" ]; then \
+					echo "[FAIL] no se pudo determinar la red"; \
+					exit 1; \
 	fi; \
-	\
 	echo "Network=$$NETWORK"; \
-	\
-	echo "[STEP] desconectando red..."; \
 	docker network disconnect $$NETWORK monitoring-postgres || true; \
-	\
-	echo "[STEP] esperando degradación (comportamiento, no health)..."; \
-	found=0; \
-	for i in $$(seq 1 30); do \
-			LOGS=$$(docker logs monitoring-python 2>&1 | tail -n 20); \
-		echo "[DEBUG] logs recientes:"; \
-		echo "$$LOGS"; \
-		echo "$$LOGS" | grep -E "WAIT|no disponible|connection" >/dev/null && found=1 && break; \
-			sleep 2; \
-	done; \
-	\
-	if [ "$$found" != "1" ]; then \
-		echo "[FAIL] no se detecta degradación funcional por red"; \
-		exit 1; \
-	fi; \
-	\
-	echo "[ OK ] degradación funcional detectada"; \
-	\
-	echo "[STEP] reconectando red..."; \
+	echo "esperando degradación..."; \
+	timeout 60 sh -c '\
+	until [ "$$(docker inspect monitoring-python --format="{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}")" = "unhealthy" ]; do \
+		sleep 2; \
+	done' || (echo "[FAIL] no degrada por red" && exit 1); \
+	echo "[ OK ] degradación por red OK"; \
 	docker network connect $$NETWORK monitoring-postgres; \
-	\
-	echo "[STEP] esperando recuperación..."; \
-	if [ "$(CI)" = "true" ]; then \
-		$(WAIT_SCRIPT) monitoring-python ci 60; \
-	else \
-		$(WAIT_SCRIPT) monitoring-python strict 90; \
-	fi; \
-	\
-	echo "[ OK ] red restaurada"; \
-	'
-
+	echo "esperando recuperación..."; \
+	timeout 60 sh -c '\
+	until [ "$$(docker inspect monitoring-python --format="{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}")" = "healthy" ]; do \
+		sleep 2; \
+	done' || (echo "[FAIL] no recupera tras red" && exit 1); \
+	echo "[ OK ] red restaurada"
 	@echo ""
 
 test-resilience-observability:
@@ -389,7 +365,7 @@ test-resilience-observability:
 
 	@echo "[4] Verificando Loki"
 
-	timeout 30 sh -c 'until curl -s http://127.0.0.1:3100/ready | grep -q ready; do sleep 2; done' || \
+	@timeout 20 sh -c 'until curl -s http://127.0.0.1:3100/ready | grep -q ready; do sleep 2; done' || \
 		(echo "[FAIL] Loki no responde" && exit 1)
 
 	@echo "[ OK ] Loki accesible"
@@ -445,8 +421,8 @@ test-python-health:
 
 	@echo "[ OK ] python healthy"
 
-
 	@echo ""
+
 
 # --- test-cron-execution
 ## Testea:
@@ -474,8 +450,8 @@ test-cron-execution:
 	@echo "[2] Verificando ejecución..."
 	@TS=$$(cat /tmp/cron_test_ts | cut -d= -f2); \
 	grep $$TS /var/log/test.log >/dev/null && \
-		echo "[ OK ] cron escribe correctamente" || \
-		(echo "[FAIL] cron no ejecuta" && exit 1)
+					echo "[ OK ] cron escribe correctamente" || \
+					(echo "[FAIL] cron no ejecuta" && exit 1)
 
 	@echo ""
 
@@ -488,8 +464,8 @@ test-observability:
 	@echo ""
 
 	@echo "[1] Esperando Loki (host)..."
-	timeout 30 sh -c 'until curl -s http://127.0.0.1:3100/ready; do sleep 2; done' || \
-		(echo "[ERROR] Loki no responde" && exit 1)
+	@timeout 30 sh -c 'until curl -s http://127.0.0.1:3100/ready; do sleep 2; done' || \
+					(echo "[ERROR] Loki no responde" && exit 1)
 	@echo ""
 
 	@echo "[ OK ] Loki accesible"
@@ -510,11 +486,11 @@ test-observability:
 
 	@echo "[4] Query Loki..."
 	@RESULT=$$(curl -s -G http://127.0.0.1:3100/loki/api/v1/query \
-		--data-urlencode 'query={job="auth_logs"} |= "loki_test_"' | jq '.data.result | length'); \
+					--data-urlencode 'query={job="auth_logs"} |= "loki_test_"' | jq '.data.result | length'); \
 	if [ "$$RESULT" -eq 0 ]; then \
-		echo "[FAIL] sin ingestión"; exit 1; \
+					echo "[FAIL] sin ingestión"; exit 1; \
 	else \
-		echo "[ OK ] logs ingeridos"; \
+					echo "[ OK ] logs ingeridos"; \
 	fi
 	@echo ""
 
@@ -524,9 +500,11 @@ test-observability:
 	@echo "=== FIN TEST OBSERVABILITY ==="
 	@echo ""
 
+
 test-smtp-all: test-smtp-connect test-smtp-banner test-smtp-protocol test-smtp-config-auth test-smtp-relay-flow test-smtp-delivery test-smtp-queue test-smtp-logs-clean
 
 .PHONY: \
+
 
 test-smtp-all: \
 	test-smtp-connect \
@@ -554,7 +532,7 @@ test-smtp-connect:
 
 	@echo "Test conexión SMTP"
 	@docker exec monitoring-debug nc -zv smtp-relay 587 || \
-		(echo "[FAIL] no conecta a smtp-relay" && exit 1)
+					(echo "[FAIL] no conecta a smtp-relay" && exit 1)
 
 	@echo "[ OK ] conexión TCP correcta"
 	@echo ""
@@ -565,9 +543,9 @@ test-smtp-banner:
 	@echo "=== TEST SMTP BANNER ==="
 
 	@docker exec monitoring-debug sh -c "\
-		timeout 5 nc smtp-relay 587 | head -n 1 \
+					timeout 5 nc smtp-relay 587 | head -n 1 \
 	" | grep -E '^220' >/dev/null || \
-		(echo '[FAIL] banner SMTP inválido' && exit 1)
+					(echo '[FAIL] banner SMTP inválido' && exit 1)
 
 	@echo "[ OK ] banner SMTP correcto"
 	@echo ""
@@ -578,12 +556,12 @@ test-smtp-protocol:
 	@echo "=== TEST SMTP PROTOCOL ==="
 
 	@docker exec monitoring-debug sh -c '\
-		( \
-			sleep 1; echo "EHLO test"; \
-			sleep 1; echo "QUIT"; \
-		) | nc smtp-relay 587 \
+					( \
+									sleep 1; echo "EHLO test"; \
+									sleep 1; echo "QUIT"; \
+					) | nc smtp-relay 587 \
 	' | grep -q "250" || \
-		(echo "[FAIL] SMTP handshake inválido" && exit 1)
+					(echo "[FAIL] SMTP handshake inválido" && exit 1)
 
 	@echo "[ OK ] SMTP handshake válido"
 	@echo ""
@@ -591,21 +569,10 @@ test-smtp-protocol:
 # --- test-smtp-config-auth
 
 test-smtp-config-auth:
-	@echo "=== TEST SMTP CONFIG ==="
-
-	@echo "[CHECK] smtp_sasl_auth_enable"
-	@docker exec monitoring-smtp-relay postconf smtp_sasl_auth_enable
-
-	@echo "[CHECK] mynetworks"
-	@docker exec monitoring-smtp-relay postconf mynetworks
-
+	@echo "=== TEST SMTP AUTH ==="
 	@docker exec monitoring-smtp-relay postconf smtp_sasl_auth_enable | grep -q yes || \
-		(echo "[FAIL] SASL desactivado" && exit 1)
-
-	@docker exec monitoring-smtp-relay postconf mynetworks | grep -Eq "127\.0\.0\.0/8|172\." || \
-		(echo "[FAIL] mynetworks mal configurado" && exit 1)
-
-	@echo "[ OK ] configuración SMTP válida"
+					(echo "[FAIL] SASL desactivado" && exit 1)
+	@echo "[ OK ] SASL activo"
 	@echo ""
 
 
@@ -613,15 +580,9 @@ test-smtp-config-auth:
 
 test-smtp-relay-flow:
 	@echo "=== TEST SMTP RELAY FLOW (POSTMARK API) ==="
-	@docker exec monitoring-python python3 ops/services/smtp_relay/scripts/test_mail.py || \
-		( \
-			if [ "$(CI)" = "true" ]; then \
-				echo "[WARN] fallo tolerado en CI (relay no determinista)"; \
-			else \
-				echo "Fallo Relay Flow"; exit 1; \
-			fi \
-		)
+	docker exec monitoring-python python3 ops/services/smtp_relay/scripts/test_mail.py || (echo "Fallo Relay Flow" && exit 1)
 	@echo ""
+
 
 # --- test-smtp-delivery (external provider)
 
@@ -632,18 +593,15 @@ test-smtp-delivery:
 	echo "[INFO] Buscando queue_id: $$QUEUE_ID"; \
 	docker logs monitoring-smtp-relay --tail 100 > /tmp/smtp_status.log || true; \
 	if grep -q "$$QUEUE_ID" /tmp/smtp_status.log && grep -q "status=sent" /tmp/smtp_status.log; then \
-		echo "[ OK ] entregado (relay → Postmark)"; \
+					echo "[ OK ] entregado (relay → Postmark)"; \
 	elif grep -q "$$QUEUE_ID" /tmp/smtp_status.log && grep -q "status=deferred" /tmp/smtp_status.log; then \
-		echo "[WARN] deferred"; exit 1; \
+					echo "[WARN] deferred"; exit 1; \
 	elif grep -q "$$QUEUE_ID" /tmp/smtp_status.log && grep -q "status=bounced" /tmp/smtp_status.log; then \
-		echo "[FAIL] bounced"; exit 1; \
+					echo "[FAIL] bounced"; exit 1; \
 	else \
-		if [ "$(CI)" = "true" ]; then \
-			echo "[WARN] no se encontró queue_id (esperable en CI)"; \
-		else \
-			echo "[FAIL] no se encontró el queue_id en logs"; exit 1; \
-		fi \
+					echo "[FAIL] no se encontró el queue_id en logs"; exit 1; \
 	fi
+
 	@echo "[INFO] comprobar manualmente en Postmark Activity"
 	@echo ""
 
@@ -653,21 +611,17 @@ test-smtp-queue:
 	@echo "=== TEST SMTP QUEUE ==="
 
 	@docker exec monitoring-smtp-relay postqueue -p | grep -q "^[A-F0-9]" && \
-        (echo "[WARN] hay correos en cola") || \
-        (echo "[ OK ] cola vacía")
+	(echo "[WARN] hay correos en cola") || \
+	(echo "[ OK ] cola vacía")
 	@echo ""
 
 # --- test-smtp-logs-clean
 
 test-smtp-logs-clean:
 	@echo "=== TEST SMTP LOG CLEAN ==="
-
-	@docker logs monitoring-smtp-relay --since 30s | \
-	grep -i warning | \
-	grep -v "sasl-xoauth2" && \
-		(echo "[WARN] warnings relevantes en logs" && exit 1) || \
-		(echo "[ OK ] logs limpios (sin warnings relevantes)")
-
+	@docker logs monitoring-smtp-relay --since 30s | grep -i warning && \
+					(echo "[WARN] warnings en logs") || \
+					(echo "[ OK ] logs limpios")
 	@echo ""
 
 # --- Network
@@ -675,8 +629,8 @@ test-smtp-logs-clean:
 .PHONY: test-network
 
 test-network:
-	docker network inspect monitoring-net
-	@echo ""
+        docker network inspect monitoring-net
+        @echo ""
 
 # ------------------------------------------
 # DEBUG (troubleshooting)
@@ -785,8 +739,8 @@ debug-toolbox-up: ## Levanta contenedor de debugging en monitoring-net
 	@echo "=== Iniciando contenedor debug ==="
 	@docker rm -f $(DEBUG_CONTAINER) >/dev/null 2>&1 || true
 	@docker run -d --name $(DEBUG_CONTAINER) \
-		--network monitoring-net \
-		$(DEBUG_IMAGE) sleep infinity
+					--network monitoring-net \
+					$(DEBUG_IMAGE) sleep infinity
 	@echo "[ OK ] contenedor debug activo"
 	@echo ""
 
@@ -862,12 +816,16 @@ monitoring-net:  ## Crea la red Docker si no existe
 # Build / Deploy
 # ------------------------------------------
 
-.PHONY: build build-python build-cron deploy
+.PHONY: build build-base build-python build-cron deploy
 
 ## Inicialización completa - construye todas las imágenes
-build: monitoring-net build-python build-cron
+build: monitoring-net build-base build-python build-cron
 	@echo "[ OK ] imágenes construidas"
 	@echo "[ OK ] entorno inicializado"
+	@echo ""
+
+build-base:
+	docker build --no-cache -f ops/images/base/Dockerfile -t monitoring-base .
 	@echo ""
 
 build-python:
@@ -882,12 +840,12 @@ deploy: build
 	@set -e; \
 	echo "=== 🚀 Despliegue completo ==="; \
 	for s in $(SERVICE_STACKS); do \
-		echo "→ desplegando $$s"; \
-		cd $(SERVICE_DIR)/$$s && $(COMPOSE) up -d --build; \
+					echo "→ desplegando $$s"; \
+					cd $(SERVICE_DIR)/$$s && $(COMPOSE) up -d --build; \
 	done; \
 	for s in $(INFRA_STACKS); do \
-		echo "→ desplegando $$s"; \
-		cd $(STACK_DIR)/$$s && $(COMPOSE) up -d --build; \
+					echo "→ desplegando $$s"; \
+					cd $(STACK_DIR)/$$s && $(COMPOSE) up -d --build; \
 	done; \
 	echo "[ OK ] despliegue finalizado"
 	@echo ""

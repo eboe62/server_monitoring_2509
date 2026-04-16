@@ -1,59 +1,55 @@
 #!/bin/sh
+set -e
 
 echo "[INFO] monitoring-python iniciado"
+echo "[INFO] modo toolbox (docker exec)"
 
-echo "[INFO] esperando disponibilidad de Postgres..."
+# --------------------------------------------------
+# CONTEXTO DEL CONTENEDOR
+# --------------------------------------------------
+# Este contenedor NO es un servicio.
+# NO ejecuta procesos de negocio automáticamente.
+# NO expone API.
+# NO actúa como worker ni scheduler.
+#
+# Su único propósito es servir como entorno de ejecución
+# para scripts Python lanzados manualmente o desde Makefile:
+#
+# Ejemplos:
+#   docker exec monitoring-python python3 script.py
+#   docker exec monitoring-python python3 ops/.../test_mail.py
+#
+# Casos de uso:
+#   ✔ tests E2E (SMTP, DB, etc.)
+#   ✔ scripts de diagnóstico
+#   ✔ utilidades operativas
+#   ✔ tareas ad-hoc
+#
+# --------------------------------------------------
+# DECISIONES DE DISEÑO
+# --------------------------------------------------
+# - No depende de Postgres ni otros servicios en arranque
+# - No tiene lógica interna ni bucles de negocio
+# - No implementa retry/backoff global
+# - Cada script es responsable de su propia resiliencia
+#
+# Esto evita:
+#   ✘ estados inconsistentes (CI vs PROD)
+#   ✘ falsos negativos en healthchecks
+#   ✘ acoplamiento innecesario a la infraestructura
+#
+# --------------------------------------------------
+# LIFECYCLE
+# --------------------------------------------------
+# El contenedor se mantiene vivo únicamente para permitir
+# la ejecución de comandos vía "docker exec".
+#
+# No hacer exit automático es clave para:
+#   ✔ debugging interactivo
+#   ✔ ejecución repetida de scripts
+#   ✔ estabilidad en pipelines CI
+#
+# --------------------------------------------------
 
-# Espera activa a Postgres (resiliencia real)
-until python3 -c '
-import os, psycopg2, sys
-try:
-    psycopg2.connect(
-        host=os.getenv("POSTGRES_HOST"),
-        port=os.getenv("POSTGRES_PORT"),
-        user=os.getenv("POSTGRES_USER"),
-        password=os.getenv("POSTGRES_PASSWORD"),
-        dbname=os.getenv("POSTGRES_NAME")
-    )
-except Exception as e:
-    print(f"[WAIT] postgres no disponible: {e}")
-    sys.exit(1)
-'; do
-  sleep 2
-done
-
-echo "[OK] conexión a Postgres disponible"
-
-# Loop principal
-while true; do
-if [ -f /opt/monitoring/tu_script.py ]; then
-  python3 /opt/monitoring/tu_script.py
-  STATUS=$?
-
-  if [ "$STATUS" -ne 0 ]; then
-    echo "[WARN] fallo script → reintentando con espera de DB..."
-
-    # Espera activa a DB en runtime (NO solo en arranque)
-    until python3 -c '
-import os, psycopg2, sys
-try:
-    psycopg2.connect(
-        host=os.getenv("POSTGRES_HOST"),
-        port=os.getenv("POSTGRES_PORT"),
-        user=os.getenv("POSTGRES_USER"),
-        password=os.getenv("POSTGRES_PASSWORD"),
-        dbname=os.getenv("POSTGRES_NAME")
-    )
-except Exception:
-    sys.exit(1)
-'; do
-      sleep 2
-    done
-
-    echo "[OK] DB recuperada, siguiente iteración"
-  fi
-else
-  echo "[WARN] script no encontrado, modo idle"
-fi
-sleep 10
-done
+# Mantener contenedor vivo de forma determinista
+tail -f /dev/null
