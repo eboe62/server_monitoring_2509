@@ -238,9 +238,9 @@ test-resilience-inicio:
 	@echo ""
 
 test-resilience-restart:
-        # ----------------------------------------
-        # [1] CRASH REAL proceso (PID 1)
-        # ----------------------------------------
+	# ----------------------------------------
+	# [1] CRASH REAL proceso (PID 1)
+	# ----------------------------------------
 ## Testea:
 ## - kill -9
 ## - espera running
@@ -335,8 +335,8 @@ test-resilience-network:
 
 	@NETWORK=$$(docker inspect -f '{{range $$k, $$v := .NetworkSettings.Networks}}{{$$k}}{{end}}' monitoring-postgres); \
 	if [ -z "$$NETWORK" ]; then \
-					echo "[FAIL] no se pudo determinar la red"; \
-					exit 1; \
+		echo "[FAIL] no se pudo determinar la red"; \
+		exit 1; \
 	fi; \
 	echo "Network=$$NETWORK"; \
 	docker network disconnect $$NETWORK monitoring-postgres || true; \
@@ -450,8 +450,8 @@ test-cron-execution:
 	@echo "[2] Verificando ejecución..."
 	@TS=$$(cat /tmp/cron_test_ts | cut -d= -f2); \
 	grep $$TS /var/log/test.log >/dev/null && \
-					echo "[ OK ] cron escribe correctamente" || \
-					(echo "[FAIL] cron no ejecuta" && exit 1)
+		echo "[ OK ] cron escribe correctamente" || \
+		(echo "[FAIL] cron no ejecuta" && exit 1)
 
 	@echo ""
 
@@ -486,11 +486,11 @@ test-observability:
 
 	@echo "[4] Query Loki..."
 	@RESULT=$$(curl -s -G http://127.0.0.1:3100/loki/api/v1/query \
-					--data-urlencode 'query={job="auth_logs"} |= "loki_test_"' | jq '.data.result | length'); \
+		--data-urlencode 'query={job="auth_logs"} |= "loki_test_"' | jq '.data.result | length'); \
 	if [ "$$RESULT" -eq 0 ]; then \
-					echo "[FAIL] sin ingestión"; exit 1; \
+		echo "[FAIL] sin ingestión"; exit 1; \
 	else \
-					echo "[ OK ] logs ingeridos"; \
+		echo "[ OK ] logs ingeridos"; \
 	fi
 	@echo ""
 
@@ -532,7 +532,7 @@ test-smtp-connect:
 
 	@echo "Test conexión SMTP"
 	@docker exec monitoring-debug nc -zv smtp-relay 587 || \
-					(echo "[FAIL] no conecta a smtp-relay" && exit 1)
+		(echo "[FAIL] no conecta a smtp-relay" && exit 1)
 
 	@echo "[ OK ] conexión TCP correcta"
 	@echo ""
@@ -543,9 +543,9 @@ test-smtp-banner:
 	@echo "=== TEST SMTP BANNER ==="
 
 	@docker exec monitoring-debug sh -c "\
-					timeout 5 nc smtp-relay 587 | head -n 1 \
+		timeout 5 nc smtp-relay 587 | head -n 1 \
 	" | grep -E '^220' >/dev/null || \
-					(echo '[FAIL] banner SMTP inválido' && exit 1)
+		(echo '[FAIL] banner SMTP inválido' && exit 1)
 
 	@echo "[ OK ] banner SMTP correcto"
 	@echo ""
@@ -556,12 +556,12 @@ test-smtp-protocol:
 	@echo "=== TEST SMTP PROTOCOL ==="
 
 	@docker exec monitoring-debug sh -c '\
-					( \
-									sleep 1; echo "EHLO test"; \
-									sleep 1; echo "QUIT"; \
-					) | nc smtp-relay 587 \
+		( \
+		sleep 1; echo "EHLO test"; \
+		sleep 1; echo "QUIT"; \
+		) | nc smtp-relay 587 \
 	' | grep -q "250" || \
-					(echo "[FAIL] SMTP handshake inválido" && exit 1)
+		(echo "[FAIL] SMTP handshake inválido" && exit 1)
 
 	@echo "[ OK ] SMTP handshake válido"
 	@echo ""
@@ -571,7 +571,7 @@ test-smtp-protocol:
 test-smtp-config-auth:
 	@echo "=== TEST SMTP AUTH ==="
 	@docker exec monitoring-smtp-relay postconf smtp_sasl_auth_enable | grep -q yes || \
-					(echo "[FAIL] SASL desactivado" && exit 1)
+		(echo "[FAIL] SASL desactivado" && exit 1)
 	@echo "[ OK ] SASL activo"
 	@echo ""
 
@@ -593,13 +593,13 @@ test-smtp-delivery:
 	echo "[INFO] Buscando queue_id: $$QUEUE_ID"; \
 	docker logs monitoring-smtp-relay --tail 100 > /tmp/smtp_status.log || true; \
 	if grep -q "$$QUEUE_ID" /tmp/smtp_status.log && grep -q "status=sent" /tmp/smtp_status.log; then \
-					echo "[ OK ] entregado (relay → Postmark)"; \
+		echo "[ OK ] entregado (relay → Postmark)"; \
 	elif grep -q "$$QUEUE_ID" /tmp/smtp_status.log && grep -q "status=deferred" /tmp/smtp_status.log; then \
-					echo "[WARN] deferred"; exit 1; \
+		echo "[WARN] deferred"; exit 1; \
 	elif grep -q "$$QUEUE_ID" /tmp/smtp_status.log && grep -q "status=bounced" /tmp/smtp_status.log; then \
-					echo "[FAIL] bounced"; exit 1; \
+		echo "[FAIL] bounced"; exit 1; \
 	else \
-					echo "[FAIL] no se encontró el queue_id en logs"; exit 1; \
+		echo "[FAIL] no se encontró el queue_id en logs"; exit 1; \
 	fi
 
 	@echo "[INFO] comprobar manualmente en Postmark Activity"
@@ -620,8 +620,8 @@ test-smtp-queue:
 test-smtp-logs-clean:
 	@echo "=== TEST SMTP LOG CLEAN ==="
 	@docker logs monitoring-smtp-relay --since 30s | grep -i warning && \
-					(echo "[WARN] warnings en logs") || \
-					(echo "[ OK ] logs limpios")
+	(echo "[WARN] warnings en logs") || \
+	(echo "[ OK ] logs limpios")
 	@echo ""
 
 # --- Network
@@ -629,8 +629,8 @@ test-smtp-logs-clean:
 .PHONY: test-network
 
 test-network:
-        docker network inspect monitoring-net
-        @echo ""
+	docker network inspect monitoring-net
+	@echo ""
 
 # ------------------------------------------
 # DEBUG (troubleshooting)
@@ -739,8 +739,8 @@ debug-toolbox-up: ## Levanta contenedor de debugging en monitoring-net
 	@echo "=== Iniciando contenedor debug ==="
 	@docker rm -f $(DEBUG_CONTAINER) >/dev/null 2>&1 || true
 	@docker run -d --name $(DEBUG_CONTAINER) \
-					--network monitoring-net \
-					$(DEBUG_IMAGE) sleep infinity
+		--network monitoring-net \
+		$(DEBUG_IMAGE) sleep infinity
 	@echo "[ OK ] contenedor debug activo"
 	@echo ""
 
@@ -840,12 +840,12 @@ deploy: build
 	@set -e; \
 	echo "=== 🚀 Despliegue completo ==="; \
 	for s in $(SERVICE_STACKS); do \
-					echo "→ desplegando $$s"; \
-					cd $(SERVICE_DIR)/$$s && $(COMPOSE) up -d --build; \
+		echo "→ desplegando $$s"; \
+		cd $(SERVICE_DIR)/$$s && $(COMPOSE) up -d --build; \
 	done; \
 	for s in $(INFRA_STACKS); do \
-					echo "→ desplegando $$s"; \
-					cd $(STACK_DIR)/$$s && $(COMPOSE) up -d --build; \
+		echo "→ desplegando $$s"; \
+		cd $(STACK_DIR)/$$s && $(COMPOSE) up -d --build; \
 	done; \
 	echo "[ OK ] despliegue finalizado"
 	@echo ""
@@ -890,7 +890,6 @@ esquema-git:
 	sudo git log --oneline --decorate --graph --all -n 25
 	@echo ""
 
-
 # ------------------------------------------
 # ------------------------------------------
 # ------------------------------------------
@@ -898,7 +897,6 @@ esquema-git:
 # ------------------------------------------
 # ------------------------------------------
 # ------------------------------------------
-
 
 # ------------------------------------------
 # Git utilities
