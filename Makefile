@@ -522,11 +522,22 @@ test-observability:
 	@echo "=== FIN TEST OBSERVABILITY ==="
 	@echo ""
 
+# --- test-smtp-ci
+
+.PHONY: test-smtp-ci
+
+test-smtp-ci: \
+	test-smtp-connect \
+	test-smtp-banner \
+	test-smtp-protocol \
+	test-smtp-config-auth \
+	test-smtp-relay-local \
+	test-smtp-queue \
+	test-smtp-logs-clean
 
 test-smtp-all: test-smtp-connect test-smtp-banner test-smtp-protocol test-smtp-config-auth test-smtp-relay-flow test-smtp-delivery test-smtp-queue test-smtp-logs-clean
 
 .PHONY: \
-
 
 test-smtp-all: \
 	test-smtp-connect \
@@ -597,6 +608,30 @@ test-smtp-config-auth:
 	@echo "[ OK ] SASL activo"
 	@echo ""
 
+# --- test-smtp-config-auth (para CI, sin credenciales reales)
+
+.PHONY: test-smtp-relay-local
+
+test-smtp-relay-local:
+	@echo "=== TEST SMTP RELAY LOCAL (SIN POSTMARK) ==="
+
+	@docker exec monitoring-debug sh -c '\
+		( \
+			sleep 1; echo "EHLO test"; \
+			sleep 1; echo "MAIL FROM:<test@local>"; \
+			sleep 1; echo "RCPT TO:<fake@local>"; \
+			sleep 1; echo "DATA"; \
+			sleep 1; echo "Subject: test"; \
+			sleep 1; echo ""; \
+			sleep 1; echo "body"; \
+			sleep 1; echo "."; \
+			sleep 1; echo "QUIT"; \
+		) | nc smtp-relay 587 \
+	' | grep -q "250" || \
+		(echo "[FAIL] relay local no acepta flujo SMTP" && exit 1)
+
+	@echo "[ OK ] relay acepta MAIL FROM / RCPT / DATA"
+	@echo ""
 
 # --- test-smtp-relay-flow (relay acceptance)
 

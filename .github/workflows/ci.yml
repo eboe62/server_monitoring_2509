@@ -153,8 +153,8 @@ jobs:
       - name: Test python health
         run: make test-python-health
 
-      - name: Test SMTP (infra only)
-        run: make test-smtp-all
+      - name: Test SMTP (CI safe)
+        run: make test-smtp-ci
 
       # ------------------------------------------
       # Logs on failure

@@ -49,7 +49,7 @@ postconf -e "smtp_sasl_auth_enable = yes"
 postconf -e "smtp_sasl_password_maps = hash:${SASL_PASSWD_FILE}"
 postconf -e "smtp_sasl_security_options = noanonymous"
 
-# ⚠️ Forzamos mecanismos compatibles y evitamos XOAUTH2
+# ⚠️ Forzamos mecanismos compatibles
 postconf -e "smtp_sasl_mechanism_filter = plain, login"
 
 # Forzamos TLS obligatorio con STARTTLS (no wrappermode específico para puerto 465)
@@ -76,9 +76,11 @@ postconf -e "mynetworks = ${MYNETWORKS}"
 echo "[DEBUG] Configuración relevante:"
 postconf | grep -E "relayhost|smtp_sasl|smtp_tls|myhostname|mynetworks"
 
-# --- Nota sobre XOAUTH2 ---
-echo "[INFO] Nota: warnings sasl-xoauth2 pueden aparecer si el plugin existe en la imagen."
-echo "[INFO] No afecta a Postmark (usa LOGIN/PLAIN)."
+# 🔧 Eliminar plugins SASL no necesarios (evita warnings xoauth2)
+if [ -d /usr/lib/sasl2 ]; then
+  echo "[INFO] Limpiando plugins SASL no utilizados..."
+  find /usr/lib/sasl2 -type f ! -name 'libplain.so' ! -name 'liblogin.so' -delete || true
+fi
 
 # --- Lanzar Postfix ---
 echo "[INFO] Configuración aplicada. Lanzando Postfix..."
