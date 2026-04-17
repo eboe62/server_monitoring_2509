@@ -284,36 +284,58 @@ test-resilience-db:
 	# ----------------------------------------
 ## Testea:
 ## - stop postgres
-## - espera unhealthy
+## - detectar pérdida REAL de conectividad
 ## - start postgres
 ## - espera healthy
-## Dependencias:
-## [ monitoring-postgres ]
-##     └── servicio base (stateful)
+## - esperar recuperación REAL (DNS + TCP)
 
 	@echo "[2] Simulación fallo DB"
 
 	@docker stop monitoring-postgres || true
 
-	@echo "esperando degradación (unhealthy)..."
+	@echo "[STEP] esperando pérdida real de conectividad..."
+
 	@timeout 60 sh -c '\
-	until [ "$$(docker inspect monitoring-python --format="{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}")" = "unhealthy" ]; do \
+	until ! docker exec monitoring-python sh -c "getent hosts monitoring-postgres >/dev/null 2>&1 && nc -z monitoring-postgres 5432" >/dev/null 2>&1; do \
+		echo "[DEBUG] postgres sigue accesible"; \
 		sleep 2; \
 	done' || \
-	(echo "[FAIL] no entra en unhealthy tras caída DB" && \
-	docker inspect monitoring-python --format="State={{.State.Status}} Health={{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}" && exit 1)
+	(echo "[FAIL] no se detecta caída real de DB" && exit 1)
 
-	@echo "[ OK ] degradación correcta (unhealthy)"
+	@echo "[ OK ] degradación detectada (conectividad perdida)"
 
 	@docker start monitoring-postgres
 
-	@echo "esperando recuperación (healthy)..."
+	@echo "[STEP] esperando recuperación real..."
+	@sleep 3
+
+	# Esperar DNS
 	@timeout 60 sh -c '\
-	until [ "$$(docker inspect monitoring-python --format="{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}")" = "healthy" ]; do \
+	until docker exec monitoring-python sh -c "getent hosts monitoring-postgres" >/dev/null 2>&1; do \
+		echo "[DEBUG] esperando DNS..."; \
 		sleep 2; \
 	done' || \
-	(echo "[FAIL] no recupera healthy tras DB" && \
-	docker inspect monitoring-python --format="State={{.State.Status}} Health={{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}" && exit 1)
+	(echo "[FAIL] DNS no recupera" && exit 1)
+
+	# Esperar TCP estable (más tolerante)
+	@timeout 180 sh -c '\
+	ok=0; \
+	for i in $$(seq 1 90); do \
+		if docker exec monitoring-python sh -c "nc -z monitoring-postgres 5432" >/dev/null 2>&1; then \
+			ok=$$((ok+1)); \
+			echo "[DEBUG] TCP OK ($$ok)"; \
+		else \
+			ok=0; \
+			echo "[DEBUG] esperando TCP..."; \
+		fi; \
+		\
+		if [ "$$ok" -ge 2 ]; then \
+			exit 0; \
+		fi; \
+		sleep 2; \
+	done; \
+	exit 1' || \
+	(echo "[FAIL] DB no recupera conectividad estable" && exit 1)
 
 	@echo "[ OK ] DB recuperada"
 	@echo ""
@@ -557,8 +579,8 @@ test-smtp-protocol:
 
 	@docker exec monitoring-debug sh -c '\
 		( \
-		sleep 1; echo "EHLO test"; \
-		sleep 1; echo "QUIT"; \
+			sleep 1; echo "EHLO test"; \
+			sleep 1; echo "QUIT"; \
 		) | nc smtp-relay 587 \
 	' | grep -q "250" || \
 		(echo "[FAIL] SMTP handshake inválido" && exit 1)

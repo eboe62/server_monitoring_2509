@@ -22,7 +22,7 @@ services:
       # - /var/run/docker.sock:/var/run/docker.sock
 
     healthcheck:
-      test: ["CMD", "sh", "./scripts/healthcheck.sh"]
+      test: ["CMD", "python3", "scripts/healthcheck.py"]
       interval: 10s
       timeout: 5s
       retries: 10
