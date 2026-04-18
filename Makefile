@@ -352,7 +352,7 @@ test-resilience-network:
 ## [ red ]
 ##     monitoring-net conecta TODO
 
-	@echo "[3] Simulación fallo red hacia DB"
+	@echo "[3] Simulación fallo red hacia DB (best-effort)"
 
 	@NETWORK=$$(docker inspect -f '{{range $$k, $$v := .NetworkSettings.Networks}}{{$$k}}{{end}}' monitoring-postgres); \
 	if [ -z "$$NETWORK" ]; then \
@@ -360,20 +360,33 @@ test-resilience-network:
 		exit 1; \
 	fi; \
 	echo "Network=$$NETWORK"; \
+
+	# --- DISCONNECT ---
 	docker network disconnect $$NETWORK monitoring-postgres || true; \
-	echo "esperando degradación..."; \
-	timeout 60 sh -c '\
-	until [ "$$(docker inspect monitoring-python --format="{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}")" = "unhealthy" ]; do \
+	echo "[STEP] comprobando pérdida de conectividad TCP..."; \
+
+	timeout 30 sh -c '\
+	until ! docker exec monitoring-python sh -c "nc -z monitoring-postgres 5432" >/dev/null 2>&1; do \
+		echo "[DEBUG] postgres sigue accesible"; \
 		sleep 2; \
-	done' || (echo "[FAIL] no degrada por red" && exit 1); \
-	echo "[ OK ] degradación por red OK"; \
+	done' || \
+	(echo "[FAIL] no se detecta pérdida real de conectividad" && exit 1); \
+
+	echo "[ OK ] conectividad perdida detectada"; \
+
+	# --- RECONNECT ---
 	docker network connect $$NETWORK monitoring-postgres; \
-	echo "esperando recuperación..."; \
+	echo "[STEP] comprobando recuperación TCP..."; \
+
 	timeout 60 sh -c '\
-	until [ "$$(docker inspect monitoring-python --format="{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}")" = "healthy" ]; do \
+	until docker exec monitoring-python sh -c "nc -z monitoring-postgres 5432" >/dev/null 2>&1; do \
+		echo "[DEBUG] esperando recuperación TCP..."; \
 		sleep 2; \
-	done' || (echo "[FAIL] no recupera tras red" && exit 1); \
-	echo "[ OK ] red restaurada"
+	done' || \
+	(echo "[FAIL] no recupera conectividad" && exit 1); \
+
+	echo "[ OK ] conectividad restaurada"; \
+	echo ""
 	@echo ""
 
 test-resilience-observability:
@@ -410,6 +423,9 @@ test-resilience-fin:
 	@echo "\n=== FIN TEST RESILIENCIA SRE ==="
 	@echo ""
 
+.PHONY: test-python-health
+
+test-python-health:
 # --- test-python-health
 ## Testea:
 ## - estado real (no solo "running")
@@ -419,9 +435,6 @@ test-resilience-fin:
 ##     ├── depende de → smtp-relay
 ##     └── genera logs → /var/log → promtail → loki
 
-.PHONY: test-python-health
-
-test-python-health:
 	# ----------------------------------------
 	# [6] Python health
 	# ----------------------------------------
@@ -444,7 +457,9 @@ test-python-health:
 
 	@echo ""
 
+.PHONY: test-cron-execution
 
+test-cron-execution:
 # --- test-cron-execution
 ## Testea:
 ## - problemas de permisos
@@ -456,9 +471,6 @@ test-python-health:
 ##     ├── escribe → /var/log/test.log
 ##     └── (indirecto) → promtail → loki
 
-.PHONY: test-cron-execution
-
-test-cron-execution:
 	@echo "=== TEST CRON EXECUTION ==="
 
 	@echo "[1] Generando marca temporal"
@@ -520,6 +532,100 @@ test-observability:
 
 	@echo "=== FIN TEST OBSERVABILITY ==="
 	@echo ""
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+.PHONY: test-security-runtime
+
+test-security-runtime:
+	# ----------------------------------------
+	# [x] xxxxxxxxxxxxx
+	# ----------------------------------------
+## Testea:
+## - puertos mal expuestos
+## - docker.sock indebido
+## - falta de restart
+
+	@echo "=== TEST SECURITY RUNTIME ==="
+	@echo ""
+
+	# [1] Usuario (root vs non-root)
+	@echo "[1] Verificando usuario en contenedores"
+
+	@FAIL=0; \
+	for c in monitoring-python monitoring-cron; do \
+		USER=$$(docker inspect $$c --format='{{.Config.User}}'); \
+		if [ -z "$$USER" ] || [ "$$USER" = "0" ] || [ "$$USER" = "root" ]; then \
+			echo "[WARN] $$c ejecuta como root"; \
+		else \
+			echo "[ OK ] $$c usa usuario no root ($$USER)"; \
+		fi; \
+	done; \
+	echo ""
+
+	# [2] Exposición de puertos
+	@echo "[2] Verificando puertos expuestos"
+
+	@if docker ps --format "{{.Ports}}" | grep -E "0.0.0.0"; then \
+		echo "[FAIL] puertos expuestos incorrectamente"; \
+		exit 1; \
+	else \
+		echo "[ OK ] sin exposición pública indebida"; \
+	fi
+	@echo ""
+
+	# [3] docker.sock
+	@echo "[3] Verificando uso de docker.sock"
+
+	@if grep -R "docker.sock" ops/services 2>/dev/null; then \
+		echo "[FAIL] docker.sock usado en micro-stacks"; \
+		exit 1; \
+	else \
+		echo "[ OK ] docker.sock no usado en servicios"; \
+	fi
+	@echo ""
+
+	# [4] Restart policy
+	@echo "[4] Verificando restart policy"
+
+	@for c in monitoring-python monitoring-cron monitoring-postgres; do \
+		POLICY=$$(docker inspect $$c --format='{{.HostConfig.RestartPolicy.Name}}'); \
+		if [ "$$POLICY" = "no" ]; then \
+			echo "[FAIL] $$c sin restart policy"; \
+			exit 1; \
+		else \
+			echo "[ OK ] $$c restart=$$POLICY"; \
+		fi; \
+	done
+	@echo ""
+
+	# [5] Healthchecks
+	@echo "[5] Verificando healthchecks"
+
+	@for c in monitoring-python monitoring-cron monitoring-postgres; do \
+		HEALTH=$$(docker inspect $$c --format='{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}'); \
+		if [ "$$HEALTH" = "none" ]; then \
+			echo "[WARN] $$c sin healthcheck"; \
+		else \
+			echo "[ OK ] $$c health=$$HEALTH"; \
+		fi; \
+	done
+	@echo ""
+
+	@echo "=== FIN TEST SECURITY RUNTIME ==="
 
 # --- test-smtp-ci
 

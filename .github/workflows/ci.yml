@@ -157,6 +157,12 @@ jobs:
         run: make test-smtp-ci
 
       # ------------------------------------------
+      # SECURITY RUNTIME (ADR-0018)
+      # ------------------------------------------
+      - name: Test security runtime
+        run: make test-security-runtime
+
+      # ------------------------------------------
       # Logs on failure
       # ------------------------------------------
       - name: Dump logs on failure
