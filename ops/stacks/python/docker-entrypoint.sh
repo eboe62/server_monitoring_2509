@@ -4,6 +4,9 @@ set -e
 echo "[INFO] monitoring-python iniciado"
 echo "[INFO] modo toolbox (docker exec)"
 
+# Validación mínima runtime
+python3 --version || exit 1
+
 # --------------------------------------------------
 # CONTEXTO DEL CONTENEDOR
 # --------------------------------------------------

@@ -14,6 +14,7 @@ RUN apt-get update \
  && apt-get install -y --no-install-recommends \
     docker-cli \
     bash \
+    netcat-openbsd \
  && rm -rf /var/lib/apt/lists/*
 
 # Copiar requirements primero (cache)
@@ -29,6 +30,7 @@ COPY scripts/ scripts/
 # Copiar entrypoint específico para la imagen Python
 COPY ops/stacks/python/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh \
+ && chmod +x scripts/healthcheck.py
 
 ENTRYPOINT ["docker-entrypoint.sh"]
