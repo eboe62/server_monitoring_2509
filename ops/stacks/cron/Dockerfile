@@ -23,6 +23,11 @@ RUN chmod +x /usr/local/bin/supercronic \
  && test -x /usr/local/bin/supercronic \
  && /usr/local/bin/supercronic -test /dev/null || true
 
+#RUN echo "87625cd179eff21226f0be6f2f47dd357037064598e6c1f9ffcbd0335d402bbd  /tmp/supercronic/supercronic-linux-amd64" | sha256sum -c - \
+# && mv /tmp/supercronic/supercronic-linux-amd64 /usr/local/bin/supercronic \
+# && chmod +x /usr/local/bin/supercronic \
+# && /usr/local/bin/supercronic --version
+
 # Copiar requirements
 COPY requirements.txt .
 
