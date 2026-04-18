@@ -9,32 +9,33 @@ ENV PYTHONUNBUFFERED=1 \
 
 WORKDIR /opt/monitoring
 
+# Paquetes mínimos necesarios
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
     curl \
     bc \
     docker-cli \
     bash \
+    coreutils \
  && rm -rf /var/lib/apt/lists/*
 
-COPY ops/vendor/supercronic/supercronic-linux-amd64 /usr/local/bin/supercronic
+# Supercronic (vendor + checksum)
+COPY ops/vendor/supercronic /tmp/supercronic
 
-RUN chmod +x /usr/local/bin/supercronic \
- && test -x /usr/local/bin/supercronic \
- && /usr/local/bin/supercronic -test /dev/null || true
+RUN cd /tmp/supercronic \
+ && sha256sum -c SHA256SUMS \
+ && mv supercronic-linux-amd64 /usr/local/bin/supercronic \
+ && chmod +x /usr/local/bin/supercronic \
+ && /usr/local/bin/supercronic -test /dev/null \
+ && rm -rf /tmp/supercronic
 
-#RUN echo "87625cd179eff21226f0be6f2f47dd357037064598e6c1f9ffcbd0335d402bbd  /tmp/supercronic/supercronic-linux-amd64" | sha256sum -c - \
-# && mv /tmp/supercronic/supercronic-linux-amd64 /usr/local/bin/supercronic \
-# && chmod +x /usr/local/bin/supercronic \
-# && /usr/local/bin/supercronic --version
-
-# Copiar requirements
+# Copiar requirements con dependencias python
 COPY requirements.txt .
 
 # Instalar dependencias Python
 RUN pip install --no-cache-dir --no-compile -r requirements.txt
 
-# Copiar SOLO lo necesario para el servicio
+# Copiar código del servicio
 COPY src/ src/
 COPY scripts/ scripts/
 
@@ -43,7 +44,7 @@ COPY ops/stacks/cron/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-# Healthcheck para detectar fallo de cron
+# Healthcheck para detectar fallos de cron
 HEALTHCHECK CMD pgrep supercronic || exit 1
 
 ENTRYPOINT ["docker-entrypoint.sh"]
