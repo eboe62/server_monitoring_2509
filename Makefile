@@ -307,9 +307,8 @@ test-resilience-db:
 	@docker start monitoring-postgres
 
 	@echo "[STEP] esperando recuperación real..."
-	@sleep 3
 
-	# Esperar DNS
+	# --- FASE 1: DNS ---
 	@timeout 60 sh -c '\
 	until docker exec monitoring-python sh -c "getent hosts monitoring-postgres" >/dev/null 2>&1; do \
 		echo "[DEBUG] esperando DNS..."; \
@@ -317,10 +316,10 @@ test-resilience-db:
 	done' || \
 	(echo "[FAIL] DNS no recupera" && exit 1)
 
-	# Esperar TCP estable (más tolerante)
+	# --- FASE 2: TCP + warmup Postgres ---
 	@timeout 180 sh -c '\
 	ok=0; \
-	for i in $$(seq 1 90); do \
+	for i in $$(seq 1 120); do \
 		if docker exec monitoring-python sh -c "nc -z monitoring-postgres 5432" >/dev/null 2>&1; then \
 			ok=$$((ok+1)); \
 			echo "[DEBUG] TCP OK ($$ok)"; \
@@ -329,7 +328,7 @@ test-resilience-db:
 			echo "[DEBUG] esperando TCP..."; \
 		fi; \
 		\
-		if [ "$$ok" -ge 2 ]; then \
+		if [ "$$ok" -ge 3 ]; then \
 			exit 0; \
 		fi; \
 		sleep 2; \
@@ -873,16 +872,12 @@ monitoring-net:  ## Crea la red Docker si no existe
 # Build / Deploy
 # ------------------------------------------
 
-.PHONY: build build-base build-python build-cron deploy
+.PHONY: build build-python build-cron deploy
 
 ## Inicialización completa - construye todas las imágenes
-build: monitoring-net build-base build-python build-cron
+build: monitoring-net build-python build-cron
 	@echo "[ OK ] imágenes construidas"
 	@echo "[ OK ] entorno inicializado"
-	@echo ""
-
-build-base:
-	docker build --no-cache -f ops/images/base/Dockerfile -t monitoring-base .
 	@echo ""
 
 build-python:
