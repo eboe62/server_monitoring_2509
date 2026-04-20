@@ -12,7 +12,6 @@ WORKDIR /opt/monitoring
 # Dependencias del sistema
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
-    docker-cli \
     bash \
     netcat-openbsd \
  && rm -rf /var/lib/apt/lists/*
@@ -35,10 +34,9 @@ COPY scripts/ scripts/
 COPY ops/stacks/python/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
 # Permisos
-RUN chmod 750 /usr/local/bin/docker-entrypoint.sh \
- && chmod +x scripts/healthcheck.py \
- && chown -R appuser:appuser /opt/monitoring \
- && chmod -R 750 /opt/monitoring
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh \
+ && chmod +x scripts/*.py || true \
+ && chown -R appuser:appuser /opt/monitoring
 
 # Cambiar a usuario no root
 USER appuser
