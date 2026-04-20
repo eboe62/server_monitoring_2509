@@ -353,26 +353,20 @@ test-resilience-network:
 ##     monitoring-net conecta TODO
 
 test-resilience-network:
-	@echo "[3] Simulación fallo red REAL (aislamiento total)"
+	@echo "[3] Simulación fallo red REAL (aislamiento cliente)"
 
-	@echo "[STEP] obteniendo redes del contenedor postgres..."
-
-	@NETWORKS=$$(docker inspect -f '{{range $$k, $$v := .NetworkSettings.Networks}}{{$$k}} {{end}}' monitoring-postgres); \
-	if [ -z "$$NETWORKS" ]; then \
-		echo "[FAIL] no se encontraron redes"; \
+	@NETWORK=$$(docker inspect -f '{{range $$k, $$v := .NetworkSettings.Networks}}{{$$k}}{{end}}' monitoring-python); \
+	if [ -z "$$NETWORK" ]; then \
+		echo "[FAIL] no se pudo determinar la red"; \
 		exit 1; \
 	fi; \
-	echo "Networks=$$NETWORKS"; \
+	echo "Network=$$NETWORK"; \
 
-	# DESCONECTAR TODAS LAS REDES
-	for net in $$NETWORKS; do \
-		echo "[INFO] desconectando $$net"; \
-		docker network disconnect $$net monitoring-postgres || true; \
-	done; \
+	echo "[STEP] desconectando monitoring-python de red..."; \
+	docker network disconnect $$NETWORK monitoring-python || true; \
 
-	# VALIDAR PÉRDIDA REAL TCP
 	echo "[STEP] comprobando pérdida de conectividad TCP..."; \
-	timeout 40 sh -c '\
+	timeout 30 sh -c '\
 	until ! docker exec monitoring-python sh -c "nc -z monitoring-postgres 5432" >/dev/null 2>&1; do \
 		echo "[DEBUG] postgres sigue accesible"; \
 		sleep 2; \
@@ -381,23 +375,17 @@ test-resilience-network:
 
 	echo "[ OK ] aislamiento de red efectivo"; \
 
-	# RECONEXIÓN
-	echo "[STEP] restaurando redes..."; \
-	for net in $$NETWORKS; do \
-		echo "[INFO] reconectando $$net"; \
-		docker network connect $$net monitoring-postgres; \
-	done; \
+	echo "[STEP] reconectando red..."; \
+	docker network connect $$NETWORK monitoring-python; \
 
-	# VALIDAR RECUPERACIÓN
-	echo "[STEP] esperando recuperación TCP..."; \
+	echo "[STEP] esperando recuperación..."; \
 	timeout 60 sh -c '\
 	until docker exec monitoring-python sh -c "nc -z monitoring-postgres 5432" >/dev/null 2>&1; do \
-		echo "[DEBUG] esperando recuperación..."; \
 		sleep 2; \
 	done' || \
 	(echo "[FAIL] no recupera conectividad" && exit 1); \
 
-	echo "[ OK ] red restaurada correctamente"; \
+	echo "[ OK ] red restaurada"
 	@echo ""
 
 test-resilience-observability:
