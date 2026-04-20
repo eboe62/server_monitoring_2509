@@ -563,10 +563,13 @@ test-security-runtime:
 	# [1] USER (no root)
 	@echo "[1] Verificando usuario no root..."
 
-	@docker inspect monitoring-python --format='{{.Config.User}}' | grep -v '^$$' >/dev/null || \
-		(echo "[FAIL] monitoring-python ejecuta como root" && exit 1)
-
-	@echo "[ OK ] usuario definido"
+	@USER=$$(docker inspect monitoring-python --format='{{.Config.User}}'); \
+	if [ -z "$$USER" ] || [ "$$USER" = "0" ] || [ "$$USER" = "root" ]; then \
+		echo "[FAIL] monitoring-python ejecuta como root (USER=$$USER)"; \
+		exit 1; \
+	else \
+		echo "[ OK ] usuario no root (USER=$$USER)"; \
+	fi
 
 	# [2] READ-ONLY FS
 	@echo "[2] Verificando read-only filesystem..."

@@ -17,8 +17,9 @@ RUN apt-get update \
     netcat-openbsd \
  && rm -rf /var/lib/apt/lists/*
 
-# Crear usuario no root
-RUN useradd -ms /bin/bash appuser
+# Crear usuario no root (UID fijo)
+RUN groupadd -g 10001 appuser \
+ && useradd -u 10001 -g appuser -ms /bin/bash appuser
 
 # Copiar requirements primero (cache)
 COPY requirements.txt .
@@ -34,10 +35,10 @@ COPY scripts/ scripts/
 COPY ops/stacks/python/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
 # Permisos
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh \
+RUN chmod 750 /usr/local/bin/docker-entrypoint.sh \
  && chmod +x scripts/healthcheck.py \
- && chmod -R 755 /opt/monitoring \
- && chown -R appuser:appuser /opt/monitoring
+ && chown -R appuser:appuser /opt/monitoring \
+ && chmod -R 750 /opt/monitoring
 
 # Cambiar a usuario no root
 USER appuser
