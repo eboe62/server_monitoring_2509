@@ -341,7 +341,7 @@ test-resilience-db:
 
 test-resilience-network:
 	# ----------------------------------------
-	# [3] FALLO RED (simulado)
+	# [3] FALLO RED (REAL - aislamiento cliente)
 	# ----------------------------------------
 ## Testea:
 ## - disconnect network
@@ -362,25 +362,25 @@ test-resilience-network:
 	fi; \
 	echo "Network=$$NETWORK"; \
 
-	echo "[STEP] desconectando monitoring-python de red..."; \
+	echo "[STEP] desconectando cliente (monitoring-python)..."; \
 	docker network disconnect $$NETWORK monitoring-python || true; \
 
-	echo "[STEP] comprobando pérdida de conectividad TCP..."; \
+	echo "[STEP] comprobando pérdida real TCP..."; \
 	timeout 30 sh -c '\
-	until ! docker exec monitoring-python sh -c "nc -z monitoring-postgres 5432" >/dev/null 2>&1; do \
+	until ! docker exec monitoring-python sh -c "nc -z -w 2 monitoring-postgres 5432" >/dev/null 2>&1; do \
 		echo "[DEBUG] postgres sigue accesible"; \
 		sleep 2; \
 	done' || \
 	(echo "[FAIL] no se detecta pérdida real de conectividad" && exit 1); \
 
-	echo "[ OK ] aislamiento de red efectivo"; \
+	echo "[ OK ] aislamiento efectivo"; \
 
-	echo "[STEP] reconectando red..."; \
+	echo "[STEP] reconectando cliente..."; \
 	docker network connect $$NETWORK monitoring-python; \
 
 	echo "[STEP] esperando recuperación..."; \
 	timeout 60 sh -c '\
-	until docker exec monitoring-python sh -c "nc -z monitoring-postgres 5432" >/dev/null 2>&1; do \
+	until docker exec monitoring-python sh -c "nc -z -w 2 monitoring-postgres 5432" >/dev/null 2>&1; do \
 		sleep 2; \
 	done' || \
 	(echo "[FAIL] no recupera conectividad" && exit 1); \
