@@ -49,10 +49,11 @@ RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 # Permisos
 RUN chmod 750 /usr/local/bin/docker-entrypoint.sh \
- && mkdir -p /var/log \
+RUN mkdir -p /var/log \
+ && touch /var/log/test.log \
  && chown -R appuser:appuser /opt/monitoring /var/log \
- && chmod -R 750 /opt/monitoring \
- && chmod 755 /var/log
+ && chmod -R 755 /opt/monitoring \
+ && chmod 666 /var/log/test.log
 
 # Cambiar a usuario no root
 USER appuser
