@@ -42,14 +42,16 @@ RUN pip install --no-cache-dir --no-compile -r requirements.txt
 COPY src/ src/
 COPY scripts/ scripts/
 
-# Copiar entrypoint
+# Copiar cronfile
 COPY ops/stacks/cron/monitoring.cron ops/stacks/cron/monitoring.cron
 
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+# Copiar entrypoint
+COPY ops/stacks/cron/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
 # Permisos
 # Permisos
 RUN chmod 750 /usr/local/bin/docker-entrypoint.sh \
+ && chmod 644 /opt/monitoring/ops/stacks/cron/monitoring.cron \
  && mkdir -p /var/log \
  && touch /var/log/test.log \
  && chown -R appuser:appuser /opt/monitoring /var/log \
