@@ -48,8 +48,9 @@ COPY ops/stacks/cron/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 # Permisos
+# Permisos
 RUN chmod 750 /usr/local/bin/docker-entrypoint.sh \
-RUN mkdir -p /var/log \
+ && mkdir -p /var/log \
  && touch /var/log/test.log \
  && chown -R appuser:appuser /opt/monitoring /var/log \
  && chmod -R 755 /opt/monitoring \
