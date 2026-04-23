@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-CRONFILE="ops/stacks/cron/monitoring.cron"
+CRONFILE="/opt/monitoring/ops/stacks/cron/monitoring.cron"
 
 if [ $# -gt 0 ]; then
     echo "[INFO] Ejecutando comando manual: $@"

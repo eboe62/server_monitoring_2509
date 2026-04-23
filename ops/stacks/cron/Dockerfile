@@ -43,7 +43,7 @@ COPY src/ src/
 COPY scripts/ scripts/
 
 # Copiar entrypoint
-COPY ops/stacks/cron/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+COPY ops/stacks/cron/monitoring.cron ops/stacks/cron/monitoring.cron
 
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
