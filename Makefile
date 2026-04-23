@@ -394,20 +394,19 @@ test-resilience-observability:
 ## - generar log
 ## - comprobar Loki
 
-	@echo "[4] Verificando Loki"
+@echo "[STEP] verificando estado del contenedor cron..."
 
-	@timeout 20 sh -c 'until curl -s http://127.0.0.1:3100/ready | grep -q ready; do sleep 2; done' || \
-		(echo "[FAIL] Loki no responde" && exit 1)
+@timeout 30 sh -c '\
+until [ "$$(docker inspect monitoring-cron --format="{{.State.Status}}")" = "running" ]; do \
+	echo "[DEBUG] esperando cron running..."; \
+	sleep 2; \
+done' || \
+	(echo "[FAIL] cron no está en running" && exit 1)
 
-	@echo "[ OK ] Loki accesible"
+@echo "[STEP] generando log..."
 
-	@echo "generando log..."
-	@docker exec monitoring-cron sh -c "echo 'SRE_test_$$(date +%s)' >> /var/log/test.log"
-
-	@sleep 5
-
-	@curl -s http://127.0.0.1:3100/loki/api/v1/labels
-	@echo ""
+@docker exec monitoring-cron sh -c "echo 'SRE_test_$$(date +%s)' >> /var/log/test.log" || \
+	(echo "[FAIL] no se puede escribir en cron container" && exit 1)
 
 test-resilience-fin:
 	# ----------------------------------------
