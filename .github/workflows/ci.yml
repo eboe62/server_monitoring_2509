@@ -80,8 +80,7 @@ jobs:
       - name: Build containers
         run: |
           docker compose -f ops/stacks/python/compose.yml build --no-cache
-          docker compose -f ops/stacks/cron/compose.yml build
-
+          docker compose -f ops/stacks/cron/compose.yml build --no-cache
       # ------------------------------------------
       # Network
       # ------------------------------------------
@@ -94,10 +93,16 @@ jobs:
       - name: Start stack
         run: |
           docker compose -f ops/stacks/observability/compose.yml up -d
-          docker compose -f ops/stacks/python/compose.yml up -d
-          docker compose -f ops/stacks/cron/compose.yml up -d
+          docker compose -f ops/stacks/python/compose.yml up -d --force-recreate --build
+          docker compose -f ops/stacks/cron/compose.yml up -d --force-recreate --build
           docker compose -f ops/services/postgres/compose.yml up -d
           docker compose -f ops/services/smtp_relay/compose.yml up -d
+
+      # ------------------------------------------
+      # Debug user python
+      # ------------------------------------------
+      - name: Debug user
+        run: docker exec monitoring-python id
 
       # ------------------------------------------
       # Wait for PostgreSQL (dependency readiness)

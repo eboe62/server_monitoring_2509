@@ -391,12 +391,23 @@ test-resilience-observability:
 
 	@echo "[ OK ] Loki accesible"
 
-	@echo "generando log..."
-	@docker exec monitoring-cron sh -c "echo 'SRE_test_$$(date +%s)' >> /var/log/test.log"
+	@echo "[STEP] verificando estado del contenedor cron..."
+	@timeout 30 sh -c '\
+	until [ "$$(docker inspect monitoring-cron --format="{{.State.Status}}")" = "running" ]; do \
+		echo "[DEBUG] esperando cron running..."; \
+		sleep 2; \
+	done' || \
+	(echo "[FAIL] cron no está en running" && exit 1)
 
-	@sleep 5
+	@echo "[STEP] generando log..."
+	@docker exec monitoring-cron sh -c "echo 'SRE_test_$$(date +%s)' >> /var/log/test.log" || \
+		(echo "[FAIL] no se puede escribir en cron container" && exit 1)
 
-	@curl -s http://127.0.0.1:3100/loki/api/v1/labels
+	@echo "[STEP] verificando respuesta Loki..."
+	@curl -s http://127.0.0.1:3100/loki/api/v1/labels >/dev/null || \
+		(echo "[FAIL] Loki no responde tras log" && exit 1)
+
+	@echo "[ OK ] observabilidad funcional"
 	@echo ""
 
 test-resilience-fin:
@@ -520,6 +531,85 @@ test-observability:
 
 	@echo "=== FIN TEST OBSERVABILITY ==="
 	@echo ""
+
+.PHONY: test-security-runtime
+
+test-security-runtime:
+	# ----------------------------------------
+	# Test security runtime (ADR-0018)
+	# ----------------------------------------
+## Testea:
+## - puertos mal expuestos
+## - docker.sock indebido
+## - falta de restart
+
+	@echo "=== TEST SECURITY RUNTIME ==="
+	@echo ""
+
+	# [1] Usuario (root vs non-root)
+	@echo "[1] Verificando usuario en contenedores"
+
+	@FAIL=0; \
+	for c in monitoring-python monitoring-cron; do \
+		USER=$$(docker inspect $$c --format='{{.Config.User}}'); \
+		if [ -z "$$USER" ] || [ "$$USER" = "0" ] || [ "$$USER" = "root" ]; then \
+			echo "[WARN] $$c ejecuta como root"; \
+		else \
+			echo "[ OK ] $$c usa usuario no root ($$USER)"; \
+		fi; \
+	done; \
+	echo ""
+
+	# [2] Exposición de puertos
+	@echo "[2] Verificando puertos expuestos"
+
+	@if docker ps --format "{{.Ports}}" | grep -E "0.0.0.0"; then \
+		echo "[FAIL] puertos expuestos incorrectamente"; \
+		exit 1; \
+	else \
+		echo "[ OK ] sin exposición pública indebida"; \
+	fi
+	@echo ""
+
+	# [3] docker.sock
+	@echo "[3] Verificando uso de docker.sock"
+
+	@if grep -R "docker.sock" ops/services 2>/dev/null; then \
+		echo "[FAIL] docker.sock usado en micro-stacks"; \
+		exit 1; \
+	else \
+		echo "[ OK ] docker.sock no usado en servicios"; \
+	fi
+	@echo ""
+
+	# [4] Restart policy
+	@echo "[4] Verificando restart policy"
+
+	@for c in monitoring-python monitoring-cron monitoring-postgres; do \
+		POLICY=$$(docker inspect $$c --format='{{.HostConfig.RestartPolicy.Name}}'); \
+		if [ "$$POLICY" = "no" ]; then \
+			echo "[FAIL] $$c sin restart policy"; \
+			exit 1; \
+		else \
+			echo "[ OK ] $$c restart=$$POLICY"; \
+		fi; \
+	done
+	@echo ""
+
+	# [5] Healthchecks
+	@echo "[5] Verificando healthchecks"
+
+	@for c in monitoring-python monitoring-cron monitoring-postgres; do \
+		HEALTH=$$(docker inspect $$c --format='{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}'); \
+		if [ "$$HEALTH" = "none" ]; then \
+			echo "[WARN] $$c sin healthcheck"; \
+		else \
+			echo "[ OK ] $$c health=$$HEALTH"; \
+		fi; \
+	done
+	@echo ""
+
+	@echo "=== FIN TEST SECURITY RUNTIME ==="
 
 # --- test-smtp-ci
 

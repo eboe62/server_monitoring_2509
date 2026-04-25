@@ -12,10 +12,13 @@ WORKDIR /opt/monitoring
 # Dependencias del sistema
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
-    docker-cli \
     bash \
     netcat-openbsd \
  && rm -rf /var/lib/apt/lists/*
+
+# Crear usuario no root (UID fijo)
+RUN groupadd -g 10001 appuser \
+ && useradd -u 10001 -g appuser -ms /bin/bash appuser
 
 # Copiar requirements primero (cache)
 COPY requirements.txt .
@@ -30,7 +33,12 @@ COPY scripts/ scripts/
 # Copiar entrypoint específico para la imagen Python
 COPY ops/stacks/python/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
+# Permisos
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh \
- && chmod +x scripts/healthcheck.py
+ && chmod +x scripts/*.py || true \
+ && chown -R appuser:appuser /opt/monitoring
+
+# Cambiar a usuario no root
+USER appuser
 
 ENTRYPOINT ["docker-entrypoint.sh"]
