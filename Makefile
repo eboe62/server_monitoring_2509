@@ -392,8 +392,9 @@ test-resilience-observability:
 	@echo "[ OK ] Loki accesible"
 
 	@echo "[STEP] verificando estado del contenedor cron..."
-	@timeout 30 sh -c '\
-	until [ "$$(docker inspect monitoring-cron --format="{{.State.Status}}")" = "running" ]; do \
+
+	@timeout 60 sh -c '\
+	until docker inspect monitoring-cron --format="{{.State.Running}}" | grep true >/dev/null 2>&1; do \
 		echo "[DEBUG] esperando cron running..."; \
 		sleep 2; \
 	done' || \
