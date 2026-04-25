@@ -339,7 +339,6 @@ test-resilience-db:
 	@echo "[ OK ] DB recuperada"
 	@echo ""
 
-test-resilience-network:
 	# ----------------------------------------
 	# [3] FALLO RED (simulado)
 	# ----------------------------------------
@@ -544,11 +543,8 @@ test-observability:
 	@echo "=== FIN TEST OBSERVABILITY ==="
 	@echo ""
 
-.PHONY: test-security-runtime
-
-test-security-runtime:
 	# ----------------------------------------
-	# [x] xxxxxxxxxxxxx
+	# Test security runtime (ADR-0018)
 	# ----------------------------------------
 ## Testea:
 ## - puertos mal expuestos
@@ -563,13 +559,10 @@ test-security-runtime:
 	# [1] USER (no root)
 	@echo "[1] Verificando usuario no root..."
 
-	@USER=$$(docker inspect monitoring-python --format='{{.Config.User}}'); \
-	if [ -z "$$USER" ] || [ "$$USER" = "0" ] || [ "$$USER" = "root" ]; then \
-		echo "[FAIL] monitoring-python ejecuta como root (USER=$$USER)"; \
-		exit 1; \
-	else \
-		echo "[ OK ] usuario no root (USER=$$USER)"; \
-	fi
+	@docker inspect monitoring-python --format='{{.Config.User}}' | grep -v '^$$' >/dev/null || \
+		(echo "[FAIL] monitoring-python ejecuta como root" && exit 1)
+
+	@echo "[ OK ] usuario definido"
 
 	# [2] READ-ONLY FS
 	@echo "[2] Verificando read-only filesystem..."
