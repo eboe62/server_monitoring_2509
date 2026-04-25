@@ -14,6 +14,7 @@ RUN apt-get update \
  && apt-get install -y --no-install-recommends \
     curl \
     bc \
+    docker-cli \
     bash \
     coreutils \
  && rm -rf /var/lib/apt/lists/*
@@ -24,13 +25,12 @@ COPY ops/vendor/supercronic /tmp/supercronic
 RUN cd /tmp/supercronic \
  && sha256sum -c SHA256SUMS \
  && mv supercronic-linux-amd64 /usr/local/bin/supercronic \
- && chmod 755 /usr/local/bin/supercronic \
+ && chmod +x /usr/local/bin/supercronic \
  && /usr/local/bin/supercronic -test /dev/null \
  && rm -rf /tmp/supercronic
 
-# Usuario no root (UID fijo)
-RUN groupadd -g 10001 appuser \
- && useradd -u 10001 -g appuser -ms /bin/bash appuser
+# Crear usuario no root
+RUN useradd -ms /bin/bash appuser
 
 # Copiar requirements con dependencias python
 COPY requirements.txt .
@@ -48,11 +48,10 @@ COPY ops/stacks/cron/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 # Permisos
-RUN chmod 750 /usr/local/bin/docker-entrypoint.sh \
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh \
+ && chmod -R 755 /opt/monitoring \
  && mkdir -p /var/log \
- && chown -R appuser:appuser /opt/monitoring /var/log \
- && chmod -R 750 /opt/monitoring \
- && chmod 755 /var/log
+ && chown -R appuser:appuser /opt/monitoring /var/log
 
 # Cambiar a usuario no root
 USER appuser
