@@ -146,6 +146,9 @@ jobs:
       # ------------------------------------------
       # TESTS
       # ------------------------------------------
+      - name: Test security runtime (ADR-0018)
+        run: make test-security-runtime
+
       - name: Test resilience
         run: make test-resilience-completo
 
