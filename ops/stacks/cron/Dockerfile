@@ -29,9 +29,6 @@ RUN cd /tmp/supercronic \
  && /usr/local/bin/supercronic -test /dev/null \
  && rm -rf /tmp/supercronic
 
-# Crear usuario no root
-RUN useradd -ms /bin/bash appuser
-
 # Copiar requirements con dependencias python
 COPY requirements.txt .
 
@@ -46,15 +43,6 @@ COPY scripts/ scripts/
 COPY ops/stacks/cron/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
-
-# Permisos
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh \
- && chmod -R 755 /opt/monitoring \
- && mkdir -p /var/log \
- && chown -R appuser:appuser /opt/monitoring /var/log
-
-# Cambiar a usuario no root
-USER appuser
 
 # Healthcheck para detectar fallos de cron
 HEALTHCHECK CMD pgrep supercronic || exit 1
