@@ -48,6 +48,9 @@ COPY ops/stacks/cron/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
+# Usuario no root
+USER appuser
+
 # Healthcheck para detectar fallos de cron
 HEALTHCHECK CMD pgrep supercronic || exit 1
 
