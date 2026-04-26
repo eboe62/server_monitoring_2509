@@ -19,6 +19,10 @@ RUN apt-get update \
     coreutils \
  && rm -rf /var/lib/apt/lists/*
 
+# Crear usuario no root (UID fijo)
+RUN groupadd -g 10001 appuser \
+ && useradd -u 10001 -g appuser -ms /bin/bash appuser
+
 # Supercronic (vendor + checksum)
 COPY ops/vendor/supercronic /tmp/supercronic
 
@@ -29,7 +33,7 @@ RUN cd /tmp/supercronic \
  && /usr/local/bin/supercronic -test /dev/null \
  && rm -rf /tmp/supercronic
 
-# Copiar requirements con dependencias python
+# Dependencias Python
 COPY requirements.txt .
 
 # Instalar dependencias Python
