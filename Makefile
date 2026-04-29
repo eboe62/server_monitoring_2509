@@ -465,7 +465,7 @@ test-python-health:
 ## Dependencias:
 ## [ monitoring-cron ]
 ##     ├── depende de → monitoring-python (lógica)
-##     ├── escribe → /var/log/test.log
+##     ├── escribe → /tmp/monitoring/test.log
 ##     └── (indirecto) → promtail → loki
 
 .PHONY: test-cron-execution
@@ -475,14 +475,14 @@ test-cron-execution:
 
 	@echo "[1] Generando marca temporal"
 	@TS=$$(date +%s); \
-	docker exec monitoring-cron sh -c "echo cron_test_$$TS >> /var/log/test.log"; \
+	docker exec monitoring-cron sh -c "echo cron_test_$$TS >> /tmp/monitoring/test.log"; \
 	echo "TS=$$TS" > /tmp/cron_test_ts
 
 	@sleep 3
 
 	@echo "[2] Verificando ejecución..."
 	@TS=$$(cat /tmp/cron_test_ts | cut -d= -f2); \
-	grep $$TS /var/log/test.log >/dev/null && \
+	grep $$TS /tmp/monitoring/test.log >/dev/null && \
 		echo "[ OK ] cron escribe correctamente" || \
 		(echo "[FAIL] cron no ejecuta" && exit 1)
 
@@ -504,11 +504,11 @@ test-observability:
 	@echo "[ OK ] Loki accesible"
 	@echo ""
 
-	cat /var/log/test.log | tail -n 5
+	cat /tmp/monitoring/test.log | tail -n 5
 	@echo ""
 
 	@echo "[2] Generando log único"
-	@docker exec monitoring-cron sh -c "echo 'loki_test_$$(date +%s)' >> /var/log/test.log"
+	@docker exec monitoring-cron sh -c "echo 'loki_test_$$(date +%s)' >> /tmp/monitoring/test.log"
 	@echo ""
 
 	@sleep 5
@@ -527,7 +527,7 @@ test-observability:
 	fi
 	@echo ""
 
-	cat /var/log/test.log | tail -n 5
+	cat /tmp/monitoring/test.log | tail -n 5
 	@echo ""
 
 	@echo "=== FIN TEST OBSERVABILITY ==="
