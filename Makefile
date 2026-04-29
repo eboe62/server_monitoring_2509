@@ -497,37 +497,32 @@ test-observability:
 	@echo ""
 
 	@echo "[1] Esperando Loki (host)..."
-	@timeout 30 sh -c 'until curl -s http://127.0.0.1:3100/ready; do sleep 2; done' || \
-					(echo "[ERROR] Loki no responde" && exit 1)
+	@timeout 60 sh -c 'until curl -s http://127.0.0.1:3100/ready | grep -q ready; do sleep 2; done' || \
+		(echo "[FAIL] Loki no responde" && exit 1)
 	@echo ""
 
 	@echo "[ OK ] Loki accesible"
 	@echo ""
 
-	cat /tmp/monitoring/test.log | tail -n 5
+	@echo "[2] Generando log único en contenedor"
+	@docker exec monitoring-cron sh -c "mkdir -p /tmp/monitoring && echo 'loki_test_$$(date +%s)' >> /tmp/monitoring/test.log"
 	@echo ""
 
-	@echo "[2] Generando log único"
-	@docker exec monitoring-cron sh -c "echo 'loki_test_$$(date +%s)' >> /tmp/monitoring/test.log"
+	@echo "[3] Verificando log en contenedor"
+	@docker exec monitoring-cron sh -c "tail -n 5 /tmp/monitoring/test.log" || \
+		(echo "[FAIL] no se puede leer log en contenedor" && exit 1)
 	@echo ""
 
-	@sleep 5
-
-	@echo "[3] Verificando labels"
-	@curl -s http://127.0.0.1:3100/loki/api/v1/labels
+	@echo "[4] Esperando ingestión Loki..."
+	@timeout 60 sh -c '\
+	until [ "$$(curl -s -G http://127.0.0.1:3100/loki/api/v1/query \
+		--data-urlencode "query={job=\"test_logs\"} |= \"loki_test_\"" | jq ".data.result | length")" -gt 0 ]; do \
+		echo "[DEBUG] esperando ingestión..."; \
+		sleep 3; \
+	done' || (echo "[FAIL] sin ingestión" && exit 1)
 	@echo ""
 
-	@echo "[4] Query Loki..."
-	@RESULT=$$(curl -s -G http://127.0.0.1:3100/loki/api/v1/query \
-		--data-urlencode 'query={job="auth_logs"} |= "loki_test_"' | jq '.data.result | length'); \
-	if [ "$$RESULT" -eq 0 ]; then \
-		echo "[FAIL] sin ingestión"; exit 1; \
-	else \
-		echo "[ OK ] logs ingeridos"; \
-	fi
-	@echo ""
-
-	cat /tmp/monitoring/test.log | tail -n 5
+	@echo "[ OK ] logs ingeridos"
 	@echo ""
 
 	@echo "=== FIN TEST OBSERVABILITY ==="

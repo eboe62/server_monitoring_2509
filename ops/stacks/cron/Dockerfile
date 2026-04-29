@@ -50,7 +50,8 @@ RUN chmod 755 /usr/local/bin/docker-entrypoint.sh \
  && chown appuser:appuser /usr/local/bin/docker-entrypoint.sh \
  && mkdir -p /opt/monitoring/logs \
  && chown -R appuser:appuser /opt/monitoring \
- && chmod -R 755 /opt/monitoring
+ && chmod -R 755 /opt/monitoring \
+ && chmod 1777 /tmp
 
 # Usuario no root
 USER appuser
