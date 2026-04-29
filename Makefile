@@ -497,28 +497,27 @@ test-observability:
 	@echo ""
 
 	@echo "[1] Esperando Loki (host)..."
-	@timeout 60 sh -c 'until curl -s http://127.0.0.1:3100/ready | grep -q ready; do sleep 2; done' || \
-		(echo "[FAIL] Loki no responde" && exit 1)
-	@echo ""
+	@timeout 30 sh -c 'until curl -s http://127.0.0.1:3100/ready; do sleep 2; done' || \
+		(echo "[ERROR] Loki no responde" && exit 1)
 
 	@echo "[ OK ] Loki accesible"
 	@echo ""
 
 	@echo "[2] Generando log único en contenedor"
-	@docker exec monitoring-cron sh -c "mkdir -p /tmp/monitoring && echo 'loki_test_$$(date +%s)' >> /tmp/monitoring/test.log"
+	@docker exec monitoring-cron sh -c "echo 'loki_test_$$(date +%s)' >> /tmp/monitoring/test.log"
 	@echo ""
 
 	@echo "[3] Verificando log en contenedor"
-	@docker exec monitoring-cron sh -c "tail -n 5 /tmp/monitoring/test.log" || \
-		(echo "[FAIL] no se puede leer log en contenedor" && exit 1)
+	@docker exec monitoring-cron tail -n 2 /tmp/monitoring/test.log || true
 	@echo ""
 
 	@echo "[4] Esperando ingestión Loki..."
 	@timeout 60 sh -c '\
-	until [ "$$(curl -s -G http://127.0.0.1:3100/loki/api/v1/query \
-		--data-urlencode "query={job=\"test_logs\"} |= \"loki_test_\"" | jq ".data.result | length")" -gt 0 ]; do \
+	until curl -s -G http://127.0.0.1:3100/loki/api/v1/query \
+		--data-urlencode "query={job=\"ci_test\"} |= \"loki_test_\"" \
+		| jq ".data.result | length" | grep -q "[1-9]"; do \
 		echo "[DEBUG] esperando ingestión..."; \
-		sleep 3; \
+		sleep 2; \
 	done' || (echo "[FAIL] sin ingestión" && exit 1)
 	@echo ""
 

@@ -151,12 +151,12 @@ scrape_configs:
             - labels:
                 reason: 'Otros'
 
-  - job_name: test_logs
+  - job_name: ci_test_logs
     static_configs:
       - targets:
           - localhost
         labels:
-          job: test_logs
+          job: ci_test
           service_name: monitoring
           __path__: /tmp/monitoring/*.log
 
