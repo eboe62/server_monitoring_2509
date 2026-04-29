@@ -25,6 +25,13 @@ RUN groupadd -g 10001 appuser \
 # Copiar requirements primero (cache)
 COPY requirements.txt .
 
+# Instalar dependencias Python
+RUN pip install --no-cache-dir --no-compile -r requirements.txt
+
+# Copiar código del servicio
+COPY src/ src/
+COPY scripts/ scripts/
+
  # Supercronic (vendor + checksum)
 COPY ops/vendor/supercronic /tmp/supercronic
 
@@ -35,29 +42,20 @@ RUN cd /tmp/supercronic \
  && /usr/local/bin/supercronic -test /dev/null \
  && rm -rf /tmp/supercronic
 
-# Instalar dependencias Python
-RUN pip install --no-cache-dir --no-compile -r requirements.txt
-
-# Copiar código del servicio
-COPY src/ src/
-COPY scripts/ scripts/
-
 # Copiar Cron + entrypoint
-COPY ops/stacks/cron/monitoring.cron ops/stacks/cron/monitoring.cron
+COPY ops/stacks/cron/monitoring.cron /opt/monitoring/ops/stacks/cron/monitoring.cron
 COPY ops/stacks/cron/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
-
-# Permisos
+# Logs internos y Permisos  explícitos fuera de /opt
 RUN chmod 755 /usr/local/bin/docker-entrypoint.sh \
- && mkdir -p /var/log \
- && touch /var/log/test.log \
- && chown -R appuser:appuser /opt/monitoring /var/log \
- && chmod -R 755 /opt/monitoring \
- && chmod 666 /var/log/test.log
+ && chown appuser:appuser /usr/local/bin/docker-entrypoint.sh \
+ && mkdir -p /opt/monitoring/logs \
+ && chown -R appuser:appuser /opt/monitoring \
+ && chmod -R 755 /opt/monitoring
 
 # Usuario no root
-#USER appuser
+USER appuser
 
 # Healthcheck para detectar fallos de cron
 HEALTHCHECK CMD pgrep supercronic || exit 1
 
-ENTRYPOINT ["docker-entrypoint.sh"]
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]

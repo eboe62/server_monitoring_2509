@@ -401,7 +401,7 @@ test-resilience-observability:
 	(echo "[FAIL] cron no está en running" && exit 1)
 
 	@echo "[STEP] generando log..."
-	@docker exec monitoring-cron sh -c "echo 'SRE_test_$$(date +%s)' >> /var/log/test.log" || \
+	@docker exec monitoring-cron sh -c "echo 'SRE_test_$$(date +%s)' >> /tmp/monitoring/test.log" || \
 		(echo "[FAIL] no se puede escribir en cron container" && exit 1)
 
 	@echo "[STEP] verificando respuesta Loki..."
