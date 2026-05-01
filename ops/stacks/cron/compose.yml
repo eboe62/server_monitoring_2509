@@ -20,6 +20,8 @@ services:
       # Proyecto completo (scripts Python y utilidades)
       - ../../../:/opt/monitoring
 
+      - monitoring-tmp:/tmp/monitoring
+
       # ❌ ELIMINADO → rompe permisos: Logs del host para que los scripts puedan escribir ahí
       # - /var/log:/var/log
 
@@ -38,3 +40,6 @@ services:
 networks:
   monitoring-net:
     external: true
+
+volumes:
+  monitoring-tmp:
