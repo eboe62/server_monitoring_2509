@@ -401,7 +401,7 @@ test-resilience-observability:
 	(echo "[FAIL] cron no está en running" && exit 1)
 
 	@echo "[STEP] generando log..."
-	@docker exec monitoring-cron sh -c "echo 'SRE_test_$$(date +%s)' >> /tmp/monitoring/test.log" || \
+	@docker exec monitoring-cron sh -c "echo 'SRE_test_$$(date +%s)' >> /var/log/test.log" || \
 		(echo "[FAIL] no se puede escribir en cron container" && exit 1)
 
 	@echo "[STEP] verificando respuesta Loki..."
@@ -465,7 +465,7 @@ test-python-health:
 ## Dependencias:
 ## [ monitoring-cron ]
 ##     ├── depende de → monitoring-python (lógica)
-##     ├── escribe → /tmp/monitoring/test.log
+##     ├── escribe → /var/log/test.log
 ##     └── (indirecto) → promtail → loki
 
 .PHONY: test-cron-execution
@@ -475,14 +475,14 @@ test-cron-execution:
 
 	@echo "[1] Generando marca temporal"
 	@TS=$$(date +%s); \
-	docker exec monitoring-cron sh -c "echo cron_test_$$TS >> /tmp/monitoring/test.log"; \
+	docker exec monitoring-cron sh -c "echo cron_test_$$TS >> /var/log/test.log"; \
 	echo "TS=$$TS" > /tmp/cron_test_ts
 
 	@sleep 3
 
 	@echo "[2] Verificando ejecución..."
 	@TS=$$(cat /tmp/cron_test_ts | cut -d= -f2); \
-	grep $$TS /tmp/monitoring/test.log >/dev/null && \
+	grep $$TS /var/log/test.log >/dev/null && \
 		echo "[ OK ] cron escribe correctamente" || \
 		(echo "[FAIL] cron no ejecuta" && exit 1)
 
@@ -498,30 +498,36 @@ test-observability:
 
 	@echo "[1] Esperando Loki (host)..."
 	@timeout 30 sh -c 'until curl -s http://127.0.0.1:3100/ready; do sleep 2; done' || \
-		(echo "[ERROR] Loki no responde" && exit 1)
+					(echo "[ERROR] Loki no responde" && exit 1)
+	@echo ""
 
 	@echo "[ OK ] Loki accesible"
 	@echo ""
 
-	@echo "[2] Generando log único en contenedor"
-	@docker exec monitoring-cron sh -c "echo 'loki_test_$$(date +%s)' >> /tmp/monitoring/test.log"
+	cat /var/log/test.log | tail -n 5
 	@echo ""
 
-	@echo "[3] Verificando log en contenedor"
-	@docker exec monitoring-cron tail -n 2 /tmp/monitoring/test.log || true
+	@echo "[2] Generando log único"
+	@docker exec monitoring-cron sh -c "echo 'loki_test_$$(date +%s)' >> /var/log/test.log"
 	@echo ""
 
-	@echo "[4] Esperando ingestión Loki..."
-	@timeout 60 sh -c '\
-	until curl -s -G http://127.0.0.1:3100/loki/api/v1/query \
-		--data-urlencode "query={job=\"ci_test\"} |= \"loki_test_\"" \
-		| jq ".data.result | length" | grep -q "[1-9]"; do \
-		echo "[DEBUG] esperando ingestión..."; \
-		sleep 2; \
-	done' || (echo "[FAIL] sin ingestión" && exit 1)
+	@sleep 5
+
+	@echo "[3] Verificando labels"
+	@curl -s http://127.0.0.1:3100/loki/api/v1/labels
 	@echo ""
 
-	@echo "[ OK ] logs ingeridos"
+	@echo "[4] Query Loki..."
+	@RESULT=$$(curl -s -G http://127.0.0.1:3100/loki/api/v1/query \
+		--data-urlencode 'query={job="auth_logs"} |= "loki_test_"' | jq '.data.result | length'); \
+	if [ "$$RESULT" -eq 0 ]; then \
+		echo "[FAIL] sin ingestión"; exit 1; \
+	else \
+		echo "[ OK ] logs ingeridos"; \
+	fi
+	@echo ""
+
+	cat /var/log/test.log | tail -n 5
 	@echo ""
 
 	@echo "=== FIN TEST OBSERVABILITY ==="

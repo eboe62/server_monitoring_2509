@@ -151,15 +151,6 @@ scrape_configs:
             - labels:
                 reason: 'Otros'
 
-  - job_name: ci_test_logs
-    static_configs:
-      - targets:
-          - localhost
-        labels:
-          job: ci_test
-          service_name: monitoring
-          __path__: /tmp/monitoring/*.log
-
 # Logs del honeypot nginx (CapRover)
   - job_name: honeypot # Nombre descriptivo del trabajo
     static_configs:

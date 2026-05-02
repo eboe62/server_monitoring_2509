@@ -12,7 +12,6 @@ services:
       - /var/log:/var/log:rw  # Permitir escritura para actualizar promtail-positions.yml
       - ./config/promtail-config.yml:/etc/promtail/promtail-config.yml:ro  # Configuración de Promtail
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
-      - monitoring-tmp:/tmp/monitoring
 
     command: -config.file=/etc/promtail/promtail-config.yml
 
@@ -116,8 +115,6 @@ services:
       - monitoring-net # Red compartida (Grafana, Loki, Postgres, SMTP relay...)
 
 volumes:
-  monitoring-tmp:
-
   loki-data:
     driver: local
 
