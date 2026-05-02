@@ -50,7 +50,16 @@ RUN chmod 755 /usr/local/bin/docker-entrypoint.sh \
  && chown appuser:appuser /usr/local/bin/docker-entrypoint.sh \
  && mkdir -p /opt/monitoring/logs \
  && chown -R appuser:appuser /opt/monitoring \
- && chmod -R 755 /opt/monitoring \
+ && chmod 755 /opt/monitoring \
+ && chmod 755 /opt/monitoring/src /opt/monitoring/scripts \
+ \
+ # 🔑 CRÍTICO: logs escribibles
+ && chmod 775 /opt/monitoring/logs \
+ \
+ # Cron legible
+ && chmod 644 /opt/monitoring/ops/stacks/cron/monitoring.cron \
+ \
+ # tmp necesario para runtime
  && chmod 1777 /tmp
 
 # Usuario no root

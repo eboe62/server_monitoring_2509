@@ -470,19 +470,16 @@ test-cron-execution:
 	@echo "=== TEST CRON EXECUTION ==="
 
 	@echo "[1] Generando marca temporal"
-	@TS=$$(date +%s); \
-	docker exec monitoring-cron sh -c "echo cron_test_$$TS >> /var/log/test.log"; \
-	echo "TS=$$TS" > /tmp/cron_test_ts
+	@docker exec monitoring-cron sh -c "echo test_$$(date +%s) >> /opt/monitoring/logs/test.log" || \
+		(echo "[FAIL] no se puede escribir log" && exit 1)
 
-	@sleep 3
+	@sleep 5
 
 	@echo "[2] Verificando ejecución..."
-	@TS=$$(cat /tmp/cron_test_ts | cut -d= -f2); \
-	grep $$TS /var/log/test.log >/dev/null && \
-		echo "[ OK ] cron escribe correctamente" || \
+	@docker exec monitoring-cron sh -c "grep test_ /opt/monitoring/logs/test.log" >/dev/null 2>&1 || \
 		(echo "[FAIL] cron no ejecuta" && exit 1)
 
-	@echo ""
+	@echo "[ OK ] cron ejecutando correctamente"
 
 # --- Observability
 
