@@ -12,17 +12,11 @@ services:
       - ../../services/postgres/.env
 
     volumes:
-      # Monta el proyecto para ejecutar scripts Python
+      # Código del proyecto
       - ../../../:/opt/monitoring
 
       # Solo lectura de logs docker
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
-
-      # ❌ ELIMINADO
-      # - /var/log:/var/log
-
-      # Acceso al socket de Docker para los scripts de docker_resources.sh y .py - SE INHABILITA POR SEGURIDAD EN LOS MICRO-STACKS
-      # - /var/run/docker.sock:/var/run/docker.sock
 
     healthcheck:
       test: ["CMD", "python3", "scripts/healthcheck.py"]
@@ -32,7 +26,7 @@ services:
       start_period: 30s
 
     networks:
-      - monitoring-net  # Red compartida (Grafana, Loki, Postgres, SMTP relay...)
+      - monitoring-net
 
 networks:
   monitoring-net:

@@ -39,10 +39,9 @@ RUN chmod +x /usr/local/bin/docker-entrypoint.sh \
  && chown -R appuser:appuser /opt/monitoring
 
 # ⚠️ IMPORTANTE: crear dir para secrets runtime accesibles
- && mkdir -p /run/secrets-copy \
- && chown -R appuser:appuser /opt/monitoring /run/secrets-copy
+RUN mkdir -p /run/secrets-copy \
+ && chown -R appuser:appuser /run/secrets-copy
 
-# ⚠️ IMPORTANTE: mantener root para poder usar `su`
 USER root
 
 ENTRYPOINT ["docker-entrypoint.sh"]
