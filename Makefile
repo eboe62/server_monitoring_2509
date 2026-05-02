@@ -391,11 +391,11 @@ test-resilience-observability:
 
 	@echo "[ OK ] Loki accesible"
 
-	@echo "[STEP] generando log en stdout..."
-	@docker exec monitoring-cron sh -c "echo 'SRE_test_$$(date +%s)'" || \
-		(echo "[FAIL] no se puede ejecutar comando en cron container" && exit 1)
+	@echo "[STEP] generando log REAL en contenedor (PID 1)..."
+	@docker exec monitoring-cron sh -c "echo 'SRE_test_$$(date +%s)' >> /proc/1/fd/1" || \
+		(echo "[FAIL] no se puede escribir en stdout del contenedor" && exit 1)
 
-	@sleep 5
+	@sleep 7
 
 	@echo "[STEP] verificando ingestión en Loki..."
 	@RESULT=$$(curl -s -G http://127.0.0.1:3100/loki/api/v1/query \
@@ -500,11 +500,11 @@ test-observability:
 	@echo "[ OK ] Loki accesible"
 	@echo ""
 
-	@echo "[2] Generando log en stdout"
-	@docker exec monitoring-cron sh -c "echo 'loki_test_$$(date +%s)'"
+	@echo "[2] Generando log REAL en contenedor"
+	@docker exec monitoring-cron sh -c "echo 'loki_test_$$(date +%s)' >> /proc/1/fd/1"
 	@echo ""
 
-	@sleep 5
+	@sleep 7
 
 	@echo "[3] Query Loki..."
 	@RESULT=$$(curl -s -G http://127.0.0.1:3100/loki/api/v1/query \

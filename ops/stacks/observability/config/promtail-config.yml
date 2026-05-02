@@ -152,14 +152,20 @@ scrape_configs:
           __path__: /var/lib/docker/containers/*/*.log
 
     pipeline_stages:
-      - docker: {}
+      - json:
+          expressions:
+            log: log
+            stream: stream
+            time: time
 
-      # ❗ EXCLUIR honeypot
-      - drop:
-          expression: '.*honeypot.*'
+      - timestamp:
+          source: time
+          format: RFC3339Nano
+
+      - output:
+          source: log
 
       - labels:
-          container_name:
           stream:
 
 # HONEYPOT (SOLO ESTE CONTENEDOR)
