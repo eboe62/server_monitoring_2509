@@ -4,10 +4,10 @@ set -e
 CRONFILE="/opt/monitoring/ops/stacks/cron/monitoring.cron"
 LOG_DIR="/opt/monitoring/logs"
 
-# Aseguramos logs en runtime
-mkdir -p "$LOG_DIR"
-chown -R appuser:appuser "$LOG_DIR" 2>/dev/null || true
-chmod 775 "$LOG_DIR" 2>/dev/null || true
+# Aseguramos logs en runtime, SOLO crear logs si no existen (sin romper runtime)
+if [ ! -d "$LOG_DIR" ]; then
+    mkdir -p "$LOG_DIR"
+fi
 
 # Exec manual
 if [ $# -gt 0 ]; then
