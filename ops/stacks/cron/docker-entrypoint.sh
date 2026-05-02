@@ -2,7 +2,14 @@
 set -e
 
 CRONFILE="/opt/monitoring/ops/stacks/cron/monitoring.cron"
+LOG_DIR="/opt/monitoring/logs"
 
+# Aseguramos logs en runtime
+mkdir -p "$LOG_DIR"
+chown -R appuser:appuser "$LOG_DIR" 2>/dev/null || true
+chmod 775 "$LOG_DIR" 2>/dev/null || true
+
+# Exec manual
 if [ $# -gt 0 ]; then
     echo "[INFO] Ejecutando comando manual: $@"
     exec "$@"
@@ -10,7 +17,7 @@ fi
 
 echo "[INFO] Arrancando supercronic con cronfile: $CRONFILE"
 
-# No matar contenedor si falta cronfile
+# Validación cronfile, n matar contenedor si falta cronfile
 if [ ! -f "$CRONFILE" ]; then
     echo "[ERROR] Cronfile no encontrado: $CRONFILE"
     echo "[WARN] entrando en modo idle (CI safe)"

@@ -48,7 +48,6 @@ COPY ops/stacks/cron/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 # Logs internos y Permisos  explícitos fuera de /opt
 RUN chmod 755 /usr/local/bin/docker-entrypoint.sh \
  && chown appuser:appuser /usr/local/bin/docker-entrypoint.sh \
- && mkdir -p /opt/monitoring/logs \
  && chown -R appuser:appuser /opt/monitoring \
  && chmod 755 /opt/monitoring \
  && chmod 755 /opt/monitoring/src /opt/monitoring/scripts \
