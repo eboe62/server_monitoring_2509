@@ -38,7 +38,10 @@ RUN chmod +x /usr/local/bin/docker-entrypoint.sh \
  && chmod +x scripts/*.py || true \
  && chown -R appuser:appuser /opt/monitoring
 
-# Cambiar a usuario no root
-USER appuser
+# ⚠️ IMPORTANTE: crear dir para secrets runtime accesibles
+RUN mkdir -p /run/secrets-copy \
+ && chown -R appuser:appuser /run/secrets-copy
+
+USER root
 
 ENTRYPOINT ["docker-entrypoint.sh"]

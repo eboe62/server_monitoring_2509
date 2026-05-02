@@ -1,11 +1,16 @@
 #!/bin/sh
 set -e
 
-echo "[INFO] monitoring-python iniciado"
-echo "[INFO] modo toolbox (docker exec)"
+# Copiar secrets a ubicación accesible si existen
+if [ -d "/run/secrets" ]; then
+    echo "[INFO] Copiando secrets para appuser..."
+    cp -r /run/secrets/* /run/secrets-copy/ 2>/dev/null || true
+    chown -R appuser:appuser /run/secrets-copy
+    chmod -R 600 /run/secrets-copy || true
+fi
 
-# Validación mínima runtime
-python3 --version || exit 1
+# Bajar privilegios
+exec su appuser -c "$@"
 
 # --------------------------------------------------
 # CONTEXTO DEL CONTENEDOR
@@ -54,5 +59,3 @@ python3 --version || exit 1
 #
 # --------------------------------------------------
 
-# Mantener contenedor vivo de forma determinista
-tail -f /dev/null
