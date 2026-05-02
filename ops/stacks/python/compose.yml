@@ -15,6 +15,9 @@ services:
       # Monta el proyecto para ejecutar scripts Python
       - ../../../:/opt/monitoring
 
+      # Logs del host para que los scripts puedan escribir ahí
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+
       # ❌ ELIMINADO
       # - /var/log:/var/log
 
