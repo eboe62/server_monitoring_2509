@@ -469,13 +469,16 @@ test-python-health:
 test-cron-execution:
 	@echo "=== TEST CRON EXECUTION ==="
 
-	@echo "[1] Generando marca temporal"
+	@echo "[1] Preparando entorno logs"
+	@docker exec monitoring-cron sh -c "mkdir -p /opt/monitoring/logs"
+
+	@echo "[2] Generando marca temporal"
 	@docker exec monitoring-cron sh -c "echo test_$$(date +%s) >> /opt/monitoring/logs/test.log" || \
 		(echo "[FAIL] no se puede escribir log" && exit 1)
 
 	@sleep 5
 
-	@echo "[2] Verificando ejecución..."
+	@echo "[3] Verificando ejecución..."
 	@docker exec monitoring-cron sh -c "grep test_ /opt/monitoring/logs/test.log" >/dev/null 2>&1 || \
 		(echo "[FAIL] cron no ejecuta" && exit 1)
 
