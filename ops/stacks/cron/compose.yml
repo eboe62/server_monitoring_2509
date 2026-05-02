@@ -34,3 +34,7 @@ services:
 
     networks:
       - monitoring-net  # Red compartida (Grafana, Loki, Postgres, SMTP relay...)
+
+networks:
+  monitoring-net:
+    external: true
