@@ -386,30 +386,26 @@ test-resilience-observability:
 
 	@echo "[4] Verificando Loki"
 
-	@timeout 20 sh -c 'until curl -s http://127.0.0.1:3100/ready | grep -q ready; do sleep 2; done' || \
+	@timeout 30 sh -c 'until curl -s http://127.0.0.1:3100/ready; do sleep 2; done' || \
 		(echo "[FAIL] Loki no responde" && exit 1)
 
 	@echo "[ OK ] Loki accesible"
 
-	@echo "[STEP] verificando estado del contenedor cron..."
+	@echo "[STEP] generando log en stdout..."
+	@docker exec monitoring-cron sh -c "echo 'SRE_test_$$(date +%s)'" || \
+		(echo "[FAIL] no se puede ejecutar comando en cron container" && exit 1)
 
-	@timeout 60 sh -c '\
-	until docker inspect monitoring-cron --format="{{.State.Running}}" | grep true >/dev/null 2>&1; do \
-		echo "[DEBUG] esperando cron running..."; \
-		sleep 2; \
-	done' || \
-	(echo "[FAIL] cron no está en running" && exit 1)
+	@sleep 5
 
-	@echo "[STEP] generando log..."
-	@docker exec monitoring-cron sh -c "echo 'SRE_test_$$(date +%s)' >> /var/log/test.log" || \
-		(echo "[FAIL] no se puede escribir en cron container" && exit 1)
-
-	@echo "[STEP] verificando respuesta Loki..."
-	@curl -s http://127.0.0.1:3100/loki/api/v1/labels >/dev/null || \
-		(echo "[FAIL] Loki no responde tras log" && exit 1)
-
-	@echo "[ OK ] observabilidad funcional"
-	@echo ""
+	@echo "[STEP] verificando ingestión en Loki..."
+	@RESULT=$$(curl -s -G http://127.0.0.1:3100/loki/api/v1/query \
+		--data-urlencode 'query={job="container_logs"} |= "SRE_test_"' \
+		| jq '.data.result | length'); \
+	if [ "$$RESULT" -eq 0 ]; then \
+		echo "[FAIL] Loki no ingiere logs"; exit 1; \
+	else \
+		echo "[ OK ] Loki ingestando logs"; \
+	fi
 
 test-resilience-fin:
 	# ----------------------------------------

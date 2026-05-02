@@ -15,8 +15,8 @@ services:
       # Monta el proyecto para ejecutar scripts Python
       - ../../../:/opt/monitoring
 
-      # Logs del host para que los scripts puedan escribir ahí
-      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      # ❌ ELIMINADO
+      # - /var/log:/var/log
 
       # Acceso al socket de Docker para los scripts de docker_resources.sh y .py - SE INHABILITA POR SEGURIDAD EN LOS MICRO-STACKS
       # - /var/run/docker.sock:/var/run/docker.sock
@@ -30,7 +30,3 @@ services:
 
     networks:
       - monitoring-net  # Red compartida (Grafana, Loki, Postgres, SMTP relay...)
-
-networks:
-  monitoring-net:
-    external: true
