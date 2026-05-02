@@ -151,6 +151,14 @@ scrape_configs:
             - labels:
                 reason: 'Otros'
 
+  - job_name: docker_logs
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: container_logs
+          __path__: /var/lib/docker/containers/*/*.log
+
 # Logs del honeypot nginx (CapRover)
   - job_name: honeypot # Nombre descriptivo del trabajo
     static_configs:

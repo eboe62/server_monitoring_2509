@@ -496,38 +496,29 @@ test-observability:
 	@echo "=== TEST OBSERVABILITY ==="
 	@echo ""
 
-	@echo "[1] Esperando Loki (host)..."
+	@echo "[1] Esperando Loki..."
 	@timeout 30 sh -c 'until curl -s http://127.0.0.1:3100/ready; do sleep 2; done' || \
-					(echo "[ERROR] Loki no responde" && exit 1)
+		(echo "[ERROR] Loki no responde" && exit 1)
 	@echo ""
 
 	@echo "[ OK ] Loki accesible"
 	@echo ""
 
-	cat /var/log/test.log | tail -n 5
-	@echo ""
-
-	@echo "[2] Generando log único"
-	@docker exec monitoring-cron sh -c "echo 'loki_test_$$(date +%s)' >> /var/log/test.log"
+	@echo "[2] Generando log en stdout"
+	@docker exec monitoring-cron sh -c "echo 'loki_test_$$(date +%s)'"
 	@echo ""
 
 	@sleep 5
 
-	@echo "[3] Verificando labels"
-	@curl -s http://127.0.0.1:3100/loki/api/v1/labels
-	@echo ""
-
-	@echo "[4] Query Loki..."
+	@echo "[3] Query Loki..."
 	@RESULT=$$(curl -s -G http://127.0.0.1:3100/loki/api/v1/query \
-		--data-urlencode 'query={job="auth_logs"} |= "loki_test_"' | jq '.data.result | length'); \
+		--data-urlencode 'query={job="container_logs"} |= "loki_test_"' \
+		| jq '.data.result | length'); \
 	if [ "$$RESULT" -eq 0 ]; then \
 		echo "[FAIL] sin ingestión"; exit 1; \
 	else \
 		echo "[ OK ] logs ingeridos"; \
 	fi
-	@echo ""
-
-	cat /var/log/test.log | tail -n 5
 	@echo ""
 
 	@echo "=== FIN TEST OBSERVABILITY ==="
