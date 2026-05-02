@@ -10,9 +10,6 @@ if [ -d "/run/secrets" ]; then
     chmod -R 600 /run/secrets-copy || true
 fi
 
-# Bajar privilegios
-exec su appuser -c "$@"
-
 # --------------------------------------------------
 # CONTEXTO DEL CONTENEDOR
 # --------------------------------------------------
@@ -64,7 +61,7 @@ exec su appuser -c "$@"
 # Si se pasa comando → ejecutar como appuser
 # --------------------------------------------------
 if [ "$#" -gt 0 ]; then
-    exec su appuser -c "$@"
+    exec su -s /bin/sh appuser -c "$*"
 fi
 
 # --------------------------------------------------
