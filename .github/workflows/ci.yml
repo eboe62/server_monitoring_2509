@@ -123,24 +123,43 @@ jobs:
         run: sleep 10
 
       # ------------------------------------------
-      # Network connectivity test (CRÍTICO)
+      # Network connectivity test (robusto)
       # ------------------------------------------
+      - name: Test network (debug container)
+        run: |
+          echo "=== TEST NETWORK (CI) ==="
+
+          docker run --rm --network monitoring-net nicolaka/netshoot sh -c "
+            echo '→ DNS loki'
+            nslookup loki
+
+            echo '→ TCP postgres'
+            nc -zv monitoring-postgres 5432
+
+            echo '→ HTTP loki'
+            curl -f http://loki:3100/ready
+          "
+
+          echo "✔ Network test OK"
+
       - name: Test service connectivity
         run: |
           echo "=== TEST CONNECTIVITY ==="
 
-          # Postgres desde python
-          docker exec monitoring-python bash -c "
-            apt-get update >/dev/null 2>&1 || true
-            apt-get install -y netcat >/dev/null 2>&1 || true
-            nc -zv monitoring-postgres 5432
+          # Crear contenedor temporal en la red
+          docker run --rm --network monitoring-net nicolaka/netshoot sh -c "
+            echo '→ testing postgres';
+            nc -zv monitoring-postgres 5432;
+
+            echo '→ testing loki';
+            curl -f http://loki:3100/ready;
+
+            echo '→ testing grafana';
+            curl -f http://grafana:3000;
           "
 
-          # Loki desde promtail
-          docker exec promtail wget -qO- http://loki:3100/ready
-
-          # Loki desde host
-          curl -f http://localhost:3100/ready || (echo "❌ Loki no accesible" && exit 1)
+          # Test desde host
+          curl -f http://localhost:3100/ready || (echo "❌ Loki no accesible desde host" && exit 1)
 
           echo "✔ Conectividad OK"
 
