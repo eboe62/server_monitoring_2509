@@ -20,8 +20,8 @@ services:
       # Proyecto completo (scripts Python y utilidades)
       - ../../../:/opt/monitoring
 
-      # Logs del host para que los scripts puedan escribir ahí
-      - /var/log:/var/log
+      # ❌ ELIMINADO → rompe seguridad y permisos
+      # - /var/log:/var/log
 
       # Acceso al socket de Docker para los scripts de docker_resources.sh y .py - SE INHABILITA POR SEGURIDAD EN LOS MICRO-STACKS
       # - /var/run/docker.sock:/var/run/docker.sock

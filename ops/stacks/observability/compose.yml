@@ -121,6 +121,10 @@ volumes:
   grafana-data:
     driver: local
 
+# ------------------------------------------
+# NETWORKS
+# ------------------------------------------
+
 networks:
   monitoring-net:
     external: true

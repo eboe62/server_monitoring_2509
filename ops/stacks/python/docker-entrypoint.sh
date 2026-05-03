@@ -1,11 +1,14 @@
 #!/bin/sh
 set -e
 
-echo "[INFO] monitoring-python iniciado"
-echo "[INFO] modo toolbox (docker exec)"
-
-# Validación mínima runtime
-python3 --version || exit 1
+# Copiar secrets a ubicación accesible si existen
+if [ -d "/run/secrets" ]; then
+    echo "[INFO] Copiando secrets para appuser..."
+    mkdir -p /run/secrets-copy
+    cp -r /run/secrets/* /run/secrets-copy/ 2>/dev/null || true
+    chown -R appuser:appuser /run/secrets-copy
+    chmod -R 600 /run/secrets-copy || true
+fi
 
 # --------------------------------------------------
 # CONTEXTO DEL CONTENEDOR
@@ -54,5 +57,15 @@ python3 --version || exit 1
 #
 # --------------------------------------------------
 
-# Mantener contenedor vivo de forma determinista
-tail -f /dev/null
+# --------------------------------------------------
+# Si se pasa comando → ejecutar como appuser
+# --------------------------------------------------
+if [ "$#" -gt 0 ]; then
+    exec su -s /bin/sh appuser -c "$*"
+fi
+
+# --------------------------------------------------
+# Modo idle (contenedor vivo para docker exec)
+# --------------------------------------------------
+echo "[INFO] monitoring-python en modo idle (listo para docker exec)"
+exec tail -f /dev/null

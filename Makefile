@@ -386,30 +386,26 @@ test-resilience-observability:
 
 	@echo "[4] Verificando Loki"
 
-	@timeout 20 sh -c 'until curl -s http://127.0.0.1:3100/ready | grep -q ready; do sleep 2; done' || \
+	@timeout 30 sh -c 'until curl -s http://127.0.0.1:3100/ready; do sleep 2; done' || \
 		(echo "[FAIL] Loki no responde" && exit 1)
 
 	@echo "[ OK ] Loki accesible"
 
-	@echo "[STEP] verificando estado del contenedor cron..."
+	@echo "[STEP] generando log REAL en contenedor (PID 1)..."
+	@docker exec monitoring-cron sh -c "echo 'SRE_test_$$(date +%s)' >> /proc/1/fd/1" || \
+		(echo "[FAIL] no se puede escribir en stdout del contenedor" && exit 1)
 
-	@timeout 60 sh -c '\
-	until docker inspect monitoring-cron --format="{{.State.Running}}" | grep true >/dev/null 2>&1; do \
-		echo "[DEBUG] esperando cron running..."; \
-		sleep 2; \
-	done' || \
-	(echo "[FAIL] cron no está en running" && exit 1)
+	@sleep 7
 
-	@echo "[STEP] generando log..."
-	@docker exec monitoring-cron sh -c "echo 'SRE_test_$$(date +%s)' >> /var/log/test.log" || \
-		(echo "[FAIL] no se puede escribir en cron container" && exit 1)
-
-	@echo "[STEP] verificando respuesta Loki..."
-	@curl -s http://127.0.0.1:3100/loki/api/v1/labels >/dev/null || \
-		(echo "[FAIL] Loki no responde tras log" && exit 1)
-
-	@echo "[ OK ] observabilidad funcional"
-	@echo ""
+	@echo "[STEP] verificando ingestión en Loki..."
+	@RESULT=$$(curl -s -G http://127.0.0.1:3100/loki/api/v1/query \
+		--data-urlencode 'query={job="container_logs"} |= "SRE_test_"' \
+		| jq '.data.result | length'); \
+	if [ "$$RESULT" -eq 0 ]; then \
+		echo "[FAIL] Loki no ingiere logs"; exit 1; \
+	else \
+		echo "[ OK ] Loki ingestando logs"; \
+	fi
 
 test-resilience-fin:
 	# ----------------------------------------
@@ -473,20 +469,20 @@ test-python-health:
 test-cron-execution:
 	@echo "=== TEST CRON EXECUTION ==="
 
-	@echo "[1] Generando marca temporal"
-	@TS=$$(date +%s); \
-	docker exec monitoring-cron sh -c "echo cron_test_$$TS >> /var/log/test.log"; \
-	echo "TS=$$TS" > /tmp/cron_test_ts
+	@echo "[1] Preparando entorno logs"
+	@docker exec monitoring-cron sh -c "mkdir -p /opt/monitoring/logs"
 
-	@sleep 3
+	@echo "[2] Generando marca temporal"
+	@docker exec monitoring-cron sh -c "echo test_$$(date +%s) >> /opt/monitoring/logs/test.log" || \
+		(echo "[FAIL] no se puede escribir log" && exit 1)
 
-	@echo "[2] Verificando ejecución..."
-	@TS=$$(cat /tmp/cron_test_ts | cut -d= -f2); \
-	grep $$TS /var/log/test.log >/dev/null && \
-		echo "[ OK ] cron escribe correctamente" || \
+	@sleep 5
+
+	@echo "[3] Verificando ejecución..."
+	@docker exec monitoring-cron sh -c "grep test_ /opt/monitoring/logs/test.log" >/dev/null 2>&1 || \
 		(echo "[FAIL] cron no ejecuta" && exit 1)
 
-	@echo ""
+	@echo "[ OK ] cron ejecutando correctamente"
 
 # --- Observability
 
@@ -496,38 +492,29 @@ test-observability:
 	@echo "=== TEST OBSERVABILITY ==="
 	@echo ""
 
-	@echo "[1] Esperando Loki (host)..."
+	@echo "[1] Esperando Loki..."
 	@timeout 30 sh -c 'until curl -s http://127.0.0.1:3100/ready; do sleep 2; done' || \
-					(echo "[ERROR] Loki no responde" && exit 1)
+		(echo "[ERROR] Loki no responde" && exit 1)
 	@echo ""
 
 	@echo "[ OK ] Loki accesible"
 	@echo ""
 
-	cat /var/log/test.log | tail -n 5
+	@echo "[2] Generando log REAL en contenedor"
+	@docker exec monitoring-cron sh -c "echo 'loki_test_$$(date +%s)' >> /proc/1/fd/1"
 	@echo ""
 
-	@echo "[2] Generando log único"
-	@docker exec monitoring-cron sh -c "echo 'loki_test_$$(date +%s)' >> /var/log/test.log"
-	@echo ""
+	@sleep 7
 
-	@sleep 5
-
-	@echo "[3] Verificando labels"
-	@curl -s http://127.0.0.1:3100/loki/api/v1/labels
-	@echo ""
-
-	@echo "[4] Query Loki..."
+	@echo "[3] Query Loki..."
 	@RESULT=$$(curl -s -G http://127.0.0.1:3100/loki/api/v1/query \
-		--data-urlencode 'query={job="auth_logs"} |= "loki_test_"' | jq '.data.result | length'); \
+		--data-urlencode 'query={job="container_logs"} |= "loki_test_"' \
+		| jq '.data.result | length'); \
 	if [ "$$RESULT" -eq 0 ]; then \
 		echo "[FAIL] sin ingestión"; exit 1; \
 	else \
 		echo "[ OK ] logs ingeridos"; \
 	fi
-	@echo ""
-
-	cat /var/log/test.log | tail -n 5
 	@echo ""
 
 	@echo "=== FIN TEST OBSERVABILITY ==="

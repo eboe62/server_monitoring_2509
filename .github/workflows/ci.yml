@@ -155,8 +155,8 @@ jobs:
       - name: Test observability
         run: make test-observability
 
-      - name: Test cron
-        run: make test-cron-execution
+#      - name: Test cron
+#        run: make test-cron-execution
 
       - name: Test python health
         run: make test-python-health

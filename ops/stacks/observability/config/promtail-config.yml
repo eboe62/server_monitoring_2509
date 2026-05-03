@@ -13,6 +13,8 @@ positions:
 
 scrape_configs:
 #   Logs de autenticación del sistema
+
+# AUTH LOGS (host)
   - job_name: auth_logs  # Nombre descriptivo del trabajo
     # Captura de todos los logs .log y sus versiones rotadas
     static_configs:
@@ -56,10 +58,10 @@ scrape_configs:
                 # Expresión regular corregida para "Accepted publickey"
                 expression: '\\]: (?P<reason>Accepted publickey) (?:for )?(?P<user>\\S+) (?:with )?(?:from )?(?P<ip>[0-9.]+) port (?P<port>[0-9]+)'
             - labels:
-                reason: '{{ .reason }}'
-                user: '{{ .user }}' # Etiqueta para el usuario autenticado
-                ip: '{{ .ip }}'  # Etiqueta para la dirección IP de origen
-                port: '{{ .port }}'  # Etiqueta para el puerto de origen
+                reason:
+                user:
+                ip:
+                port:
 
       # Etapa para manejar "Connection closed by invalid user"
       - match:
@@ -70,11 +72,10 @@ scrape_configs:
 #                expression: 'Connection closed by (?P<reason>.*?)(?: port \d+|\[.*\]|$)'
                 expression: '\\]: (?P<reason>(Invalid user|Connection closed by invalid user|Disconnected from invalid user)) (?P<user>\\S+) (?:with )?(?:from )?(?P<ip>[0-9.]+) port (?P<port>[0-9]+)'
             - labels:
-                reason: 'Invalid user'
-#                reason: '{{ .reason }}'
-                user: '{{ .user }}'
-                ip: '{{ .ip }}'
-                port: '{{ .port }}'
+                reason: Invalid user
+                user:
+                ip:
+                port:
 
       # Etapa para manejar "Received disconnect"
       - match:
@@ -83,10 +84,9 @@ scrape_configs:
             - regex:
                 expression: '\\]: (?P<reason>(Received disconnect|Disconecting authenticating|error: maximum)) from (?P<ip>[0-9.]+) port (?P<port>[0-9]+)'
             - labels:
-                reason: 'Desconexion expulsado'
-#                reason: '{{ .reason }}'
-                ip: '{{ .ip }}'
-                port: '{{ .port }}'
+                reason: Desconexion expulsado
+                ip:
+                port:
 
       # Etapa para manejar "Removed session"
       - match:
@@ -95,8 +95,8 @@ scrape_configs:
             - regex:
                 expression: '\\]: (?P<reason>Removed session) (?P<session_id>\\d+)'
             - labels:
-                reason: '{{ .reason }}'
-                session_id: '{{ .session_id }}'
+                reason:
+                session_id:
 
       # Etapa para extraer información de "Unable to negotiate with"
       - match:
@@ -106,9 +106,9 @@ scrape_configs:
                 # Extraer razón del log "Unable to negotiate with"
                 expression: '\\]: (?P<reason>Unable to negotiate) (?:with )?(?P<ip>[0-9.]+) port (?P<port>[0-9]+)'
             - labels:
-                reason: '{{ .reason }}'
-                ip: '{{ .ip }}'
-                port: '{{ .port }}'
+                reason:
+                ip:
+                port:
 
 #      - match:
 #          selector: '{job="auth_logs"}'
@@ -121,15 +121,6 @@ scrape_configs:
 #                reason: '{{ .reason }}'
 #                session_id: '{{ .session_id }}'
 
-      # Etapa para etiquetar el nombre del archivo de origen
-      - match:
-          selector: '{job="auth_logs"}'
-          stages:
-            - regex:
-                # Extrae el nombre del archivo de los logs
-                expression: '/var/log/(?P<filename>[^/]+)'
-            - labels:
-                filename: '{{ .filename }}'
 
       # Etapa para capturar razones generales con las dos primeras palabras después de "]:")
 #      - match:
@@ -149,8 +140,35 @@ scrape_configs:
                 source: reason
                 template: '{{ if .Value }}{{ .Value }}{{ else }}Otros{{ end }}'
             - labels:
-                reason: 'Otros'
+                reason:
 
+# DOCKER LOGS (TODOS EXCEPTO HONEYPOT)
+  - job_name: container_logs
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: container_logs
+          __path__: /var/lib/docker/containers/*/*.log
+
+    pipeline_stages:
+      - json:
+          expressions:
+            log: log
+            stream: stream
+            time: time
+
+      - timestamp:
+          source: time
+          format: RFC3339Nano
+
+      - output:
+          source: log
+
+      - labels:
+          stream:
+
+# HONEYPOT (SOLO ESTE CONTENEDOR)
 # Logs del honeypot nginx (CapRover)
   - job_name: honeypot # Nombre descriptivo del trabajo
     static_configs:
@@ -162,10 +180,15 @@ scrape_configs:
           honeypot: "true"
           __path__: /var/lib/docker/containers/*/*.log # Patrón para incluir logs específicos
     pipeline_stages:
-      - json:
-          expressions:
-            log: log
-      - regex:
-          expression: 'client: (?P<client_ip>[0-9.]+)'
-      - labels:
-          client_ip:
+      - docker: {}
+      - match:
+          selector: '{container_name=~".*honeypot.*"}'
+          stages:
+            - json:
+                expressions:
+                  log: log
+            - regex:
+                expression: 'client: (?P<client_ip>[0-9.]+)'
+            - labels:
+                client_ip:
+                container_name:
