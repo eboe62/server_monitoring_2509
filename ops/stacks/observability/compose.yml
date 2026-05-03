@@ -71,8 +71,10 @@ services:
     volumes:
       - grafana-data:/var/lib/grafana  # Persistencia de dashboards y configuración interna
       - ./config/datasource.yml:/etc/grafana/provisioning/datasources/datasource.yml:ro # Provisionamiento automático de datasources
+# Grafana expuesto en 3001 para evitar conflictos con CapRover  (3000)
     ports:
-      - "127.0.0.1:${GRAFANA_PORT}:3001" # Grafana expuesto en 3001 para evitar conflictos con CapRover  (3000)
+      - "127.0.0.1:${GRAFANA_PORT}:3001"
+
     environment:
 
       - GF_SECURITY_ADMIN_USER=${GF_SECURITY_ADMIN_USER}
@@ -106,7 +108,7 @@ services:
         condition: service_healthy
 
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:3001/api/health | grep -q 'ok' || exit 1"]
+      test: ["CMD", "sh", "-c", "exec 3<>/dev/tcp/localhost/3001"]
       interval: 30s
       timeout: 10s
       retries: 5
