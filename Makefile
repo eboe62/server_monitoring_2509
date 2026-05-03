@@ -766,6 +766,9 @@ test-network:
 	docker network inspect monitoring-net
 	@echo ""
 
+	docker exec monitoring-python nc -z monitoring-postgres 5432
+	@echo ""
+
 # ------------------------------------------
 # DEBUG (troubleshooting)
 # debug = exploración manual (humano, ad-hoc, no determinista)
@@ -977,6 +980,8 @@ deploy: build
 		echo "→ desplegando $$s"; \
 		cd $(STACK_DIR)/$$s && $(COMPOSE) up -d --build; \
 	done; \
+	echo "→ aplicando límites runtime"; \
+	bash ops/deployment/configure_docker_limits.sh; \
 	echo "[ OK ] despliegue finalizado"
 	@echo ""
 

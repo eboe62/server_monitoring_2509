@@ -123,6 +123,28 @@ jobs:
         run: sleep 10
 
       # ------------------------------------------
+      # Network connectivity test (CRÍTICO)
+      # ------------------------------------------
+      - name: Test service connectivity
+        run: |
+          echo "=== TEST CONNECTIVITY ==="
+
+          # Postgres desde python
+          docker exec monitoring-python bash -c "
+            apt-get update >/dev/null 2>&1 || true
+            apt-get install -y netcat >/dev/null 2>&1 || true
+            nc -zv monitoring-postgres 5432
+          "
+
+          # Loki desde promtail
+          docker exec promtail wget -qO- http://loki:3100/ready
+
+          # Loki desde host
+          curl -f http://localhost:3100/ready || (echo "❌ Loki no accesible" && exit 1)
+
+          echo "✔ Conectividad OK"
+
+      # ------------------------------------------
       # SECURITY CHECKS
       # ------------------------------------------
       - name: Check exposed ports
@@ -146,7 +168,10 @@ jobs:
       # ------------------------------------------
       # TESTS
       # ------------------------------------------
-      - name: Test security runtime (ADR-0018)
+      - name: Test network
+        run: make test-network
+
+        - name: Test security runtime (ADR-0018)
         run: make test-security-runtime
 
       - name: Test resilience

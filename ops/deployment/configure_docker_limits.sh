@@ -8,14 +8,22 @@ log_message() {
 # Porcentaje de recursos a asignar
 MEMORY_PERCENT=20
 CPU_PERCENT=10
+LABEL_FILTER="monitoring.managed=true"
 
-# Obtener memoria y CPU disponibles
+# Validaciones previas
+command -v docker >/dev/null 2>&1 || { echo "[ERROR] docker no está instalado"; exit 1; }
+command -v bc >/dev/null 2>&1 || { echo "[ERROR] bc no está instalado"; exit 1; }
+
+# Obtener recursos disponibles: memoria y CPU
 TOTAL_MEM=$(free -m | awk '/^Mem:/{print $2}') # Memoria total en MiB
 TOTAL_CPU=$(nproc)                             # Número total de CPUs
 
 # Calcular memoria y CPU en base al porcentaje
 LIMIT_MEM="$(echo "$TOTAL_MEM * $MEMORY_PERCENT / 100" | bc)M"
 LIMIT_CPU=$(echo "scale=1; $TOTAL_CPU * $CPU_PERCENT / 100" | bc)
+
+log_message "[INFO] Memoria total: ${TOTAL_MEM}MB → límite por contenedor: ${LIMIT_MEM}"
+log_message "[INFO] CPUs totales: ${TOTAL_CPU} → límite por contenedor: ${LIMIT_CPU}"
 
 # Esperar a que Docker esté en ejecución
 log_message "[🚀]: Esperando a que Docker se inicie..."
@@ -24,24 +32,44 @@ until docker info >/dev/null 2>&1; do
 done
 log_message "[✅]: Docker está en ejecución."
 
-# Aplicar los límites a los contenedores en ejecución
-for container_id in $(docker ps -q); do
-    log_message "[🔍]: Verificando el contenedor $container_id..."
-    INSPECT=$(docker inspect "$container_id")
+# Obtener contenedores gestionados
+CONTAINERS=$(docker ps --filter "label=$LABEL_FILTER" -q)
 
-    CURRENT_MEMORY=$(echo "$INSPECT" | grep -i '"Memory":' | awk '{print $2}' | tr -d ',')
-    CURRENT_CPUS=$(echo "$INSPECT" | grep -i '"NanoCpus":' | awk '{print $2}' | tr -d ',')
+if [ -z "$CONTAINERS" ]; then
+    log_message "[WARN] No hay contenedores con label '$LABEL_FILTER'"
+    exit 0
+fi
+
+# Aplicar los límites a los contenedores monitoring
+for container_id in $CONTAINERS; do
+
+    NAME=$(docker inspect --format='{{.Name}}' "$container_id" | sed 's/\///')
+
+    log_message "[🔍] Revisando $NAME ($container_id)"
+
+    CURRENT_MEMORY=$(docker inspect --format='{{.HostConfig.Memory}}' "$container_id")
+    CURRENT_CPUS=$(docker inspect --format='{{.HostConfig.NanoCpus}}' "$container_id")
 
     if [[ "$CURRENT_MEMORY" -eq 0 || "$CURRENT_CPUS" -eq 0 ]]; then
-        log_message "[⚙️]: Aplicando límites al contenedor $container_id..."
-        if docker update --memory "$LIMIT_MEM" --memory-swap "$(( ${LIMIT_MEM%M} * 2 ))M" --cpus="$LIMIT_CPU" "$container_id"; then
-            log_message "[✅]: Límites aplicados correctamente a $container_id."
+
+        log_message "[⚙️] Aplicando límites a $NAME"
+
+        if docker update \
+            --memory "$LIMIT_MEM" \
+            --memory-swap "$(( ${LIMIT_MEM%M} * 2 ))M" \
+            --cpus="$LIMIT_CPU" \
+            "$container_id" >/dev/null; then
+
+            log_message "[✅] Límites aplicados a $NAME"
+
         else
-            log_message "[❌]: Error al actualizar el contenedor $container_id."
+            log_message "[❌] Error aplicando límites a $NAME"
         fi
+
     else
-        log_message "[ℹ️]: El contenedor $container_id ya tiene límites configurados."
+        log_message "[ℹ️] $NAME ya tiene límites definidos"
     fi
+
 done
 
-log_message "[🎯]: Proceso de configuración de límites completado."
+log_message "[🎯] Configuración de límites completada"
