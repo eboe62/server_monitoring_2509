@@ -1,7 +1,7 @@
-ADR-0006 – Gobernanza de imagen base monitoring-base
+ADR-0006 – Gobernanza de imagen base monitoring-base (Rechazado)
 
-Fecha: 2026-02-14
-Estado: Aprobado
+Fecha: 2026-05-04
+Estado: Rechazado
 Contexto: Migración PRO server_monitoring_2602 – Modelo micro-stack autónomo
 
 ## Contexto
@@ -10,56 +10,72 @@ Cada servicio debe poder:
 - Construirse de forma independiente
 - Desplegarse sin dependencias implícitas
 - Ser trasladado a otro repositorio si fuera necesario
+- Evaluación de alternativa descartada
 
-Sin embargo, se decide mantener una imagen base común denominada monitoring-base para:
+Se evaluó la posibilidad de mantener una imagen base común denominada monitoring-base con los siguientes objetivos:
 - Reducir duplicación de dependencias
 - Estandarizar runtime Python
 - Optimizar tiempos de build
 - Garantizar coherencia de entorno
-Esta decisión introduce un posible riesgo de acoplamiento si no se regula explícitamente su alcance.
+Sin embargo, esta aproximación introduce un riesgo estructural de acoplamiento, especialmente en ausencia de un sistema de gobernanza estricta y verificable.
 
-La imagen base común debe:
-- evitar uso de :latest
-- estar versionada explícitamente
-- minimizar superficie de ataque (paquetes mínimos)
-- no incluir herramientas de debug en producción
+Condiciones teóricas de implementación (no adoptadas)
+
+En caso de haberse implementado, la imagen base debería haber cumplido:
+- Uso de versiones explícitas (prohibido :latest)
+- Superficie de ataque mínima (paquetes estrictamente necesarios)
+- Ausencia de herramientas de debug en producción
+- Separación total de configuración y secrets
 
 ## Decisión
-Se mantiene la imagen monitoring-base bajo las siguientes reglas estrictas:
-Alcance permitido:
-- Runtime común (Python, librerías compartidas)
-- Código fuente versionado del proyecto
-- Dependencias declaradas en requirements.txt
-- Configuración genérica no específica de servicio
+Se rechaza completamente el uso de una imagen base compartida (monitoring-base), incluso en el caso de cumplir condiciones estrictas de diseño.
 
-Prohibiciones explícitas:
-- No puede contener secrets
-- No puede contener archivos .env
-- No puede contener configuración específica de servicios
-- No puede incluir lógica de bootstrap específica
-- No puede ejecutar código en build-time que dependa de entorno PRO
+El rechazo aplica aunque la imagen:
+- Contenga únicamente runtime común (Python y librerías compartidas)
+- Incluya código fuente versionado del proyecto
+- Se limite a dependencias declaradas en requirements.txt
+- Mantenga configuración genérica no específica de servicio
 
-Principio de reemplazabilidad:
-- Cada servicio debe poder:
-  Extender directamente una imagen oficial (python:slim, etc.)
-  O sustituir monitoring-base sin romper arquitectura
-- monitoring-base es una optimización, no una dependencia estructural.
+También se rechaza aunque cumpla las siguientes garantías:
+- Restricciones teóricas (no suficientes para su adopción)
+- Ausencia de secrets y archivos .env
+- No inclusión de configuración específica de servicios
+- No ejecución de lógica dependiente de entorno en build-time
+- Cumplimiento del principio de reemplazabilidad
 
-No centralización de estado:
+Aunque cada servicio pudiera:
+- Extender directamente una imagen oficial (python:slim, etc.)
+- Sustituir monitoring-base sin romper la arquitectura
+
+Se considera que esto no elimina el riesgo de acoplamiento estructural en la práctica.
+
+Centralización de estado
+
+Se rechaza incluso aunque no tenga centralización de estado:
 - Ningún volumen ni dato persistente depende de la imagen base.
 - El estado siempre reside en volúmenes declarados por servicio.
+La existencia de una imagen base común seguiría introduciendo dependencia en fase de build.
 
 ## Consecuencias
-- Se mejora la eficiencia de builds y coherencia de runtime.
-- Se reduce duplicación entre servicios.
-- Se mantiene compatibilidad con el modelo micro-stack autónomo.
+Se acepta explícitamente la pérdida de las siguientes ventajas:
+- Mayor duplicación de dependencias entre servicios
+- Menor eficiencia en tiempos de build
+- Menor reutilización de capas Docker
+- Posible incremento del tamaño total de imágenes
 
-## Riesgos controlado
-- Si la imagen crece en responsabilidad, puede generar acoplamiento.
-- Si empieza a incluir configuración específica, rompe autonomía.
-- Si se convierte en requisito obligatorio no reemplazable, contradice el modelo PRO.
-Por tanto:
-- La gobernanza de monitoring-base es obligatoria en cada refactor o ampliación.
+Estas desventajas se consideran asumibles en favor de:
+
+aislamiento, reproducibilidad y coherencia con el modelo IaC PRO
+
+## Riesgos
+Se identifican como riesgos estructurales:
+- Crecimiento progresivo de responsabilidad de la imagen base
+- Introducción de configuración específica (acoplamiento oculto)
+- Dependencia implícita entre servicios en fase de build
+- Dificultad de validación independiente en CI/CD
+- Riesgo de convertir la imagen en dependencia no reemplazable
+
+Estos riesgos se consideran críticos y suficientes para justificar su no adopción.
 
 ## Fuera de alcance:
 - No se redefine la estructura de servicios.
@@ -68,4 +84,4 @@ Por tanto:
 - No se altera la política de secrets.
 
 ## Estado
-Aceptado.
+Rechazado.

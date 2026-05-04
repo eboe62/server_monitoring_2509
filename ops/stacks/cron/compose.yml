@@ -17,8 +17,8 @@ services:
       # Se monta en modo "ro" (read-only) por motivos de seguridad.
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
 
-      # Proyecto completo (scripts Python y utilidades)
-      - ../../../:/opt/monitoring
+      # ❌ ELIMINAR esto en PRO
+      # - ../../../:/opt/monitoring
 
       # ❌ ELIMINADO → rompe seguridad y permisos
       # - /var/log:/var/log

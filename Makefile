@@ -1082,10 +1082,10 @@ rebuild-all:
 logs:  ## Muestra logs recientes del sistema y contenedores
 	@echo "=== Logs del sistema ==="
 	@echo ""
-	@echo "=== Logs contenedores ==="
+	@echo "=== Logs de todos los contenedores activos ==="
 	@for c in $$(docker ps --format '{{.Names}}'); do \
 		echo "===== $$c ====="; \
-		docker logs $$c --tail=10; \
+		docker logs $$c --tail=20 2>/dev/null || echo "⚠️  No se pudo obtener logs de $$c"; \
 	done
 	@echo ""
 

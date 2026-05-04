@@ -6,10 +6,9 @@ Contexto: server_monitoring
 
 ## Contexto
 
-Durante la implementación de tests de resiliencia en CI se han observado
-comportamientos no deterministas al simular fallos reales de red mediante:
+Durante la implementación de tests de resiliencia en CI se han observado comportamientos no deterministas al simular fallos reales de red mediante:
 
-    docker network disconnect
+docker network disconnect
 
 Problemas detectados:
 - conexiones TCP persistentes (keep-alive)
@@ -19,11 +18,12 @@ Problemas detectados:
 
 Esto provocó múltiples falsos negativos en pipeline.
 
-Adicionalmente, se detectó un acoplamiento entre:
+Adicionalmente, se detectó acoplamiento indebido entre:
+- bind mounts del host
 - permisos de contenedores (USER no root)
-- escritura de logs en /var/log (montado desde host)
+- rutas de logs dependientes del host (/var/log montado desde host)
 
-Esto rompía los tests de observabilidad al no poder escribir logs.
+Esto rompía el principio de aislamiento del modelo IaC.
 
 ## Decisión
 Se separa la estrategia de testing en dos niveles:
@@ -33,10 +33,14 @@ Se implementa:
     test-resilience-network-ci
 
 Basado en:
-- desconexión controlada
-- validación vía healthchecks
+- desconexión controlada de red Docker
+- validación mediante healthchecks internos
 
 NO se valida conectividad TCP real.
+
+Objetivo:
+- determinismo
+- estabilidad en pipeline
 
 ### 2. Local / Staging (real)
 Se implementa:
@@ -45,8 +49,16 @@ Se implementa:
 Basado en:
 - aislamiento real de red
 - validación TCP (nc)
+- simulación de fallos reales
 
 Uso limitado a entornos controlados.
+
+### Principio clave
+
+Los tests de resiliencia NO deben depender de:
+- bind mounts del host
+- rutas del sistema (/var/log)
+- comportamiento no determinista del runtime Docker
 
 ### Logs
 Se elimina dependencia de:
@@ -56,15 +68,17 @@ Se adopta:
     /opt/monitoring/logs
 
 Motivo:
-- control total de permisos
-- evitar interferencia de volúmenes
-- compatibilidad con USER no root
+- coherencia con modelo IaC
+- aislamiento completo
+- independencia del host
+- reproducibilidad total
 
 ## Consecuencias
 - CI más estable y determinista
-- reducción de falsos negativos
-- separación clara entre testing funcional y testing realista
-- mejora de seguridad (no root viable)
+- coherencia con modelo IaC
+- aislamiento completo
+- independencia del host
+- reproducibilidad total
 
 ## Estado
 Adoptado

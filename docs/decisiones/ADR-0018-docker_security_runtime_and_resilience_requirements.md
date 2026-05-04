@@ -295,7 +295,6 @@ Este test debe cubrir:
 ---
 
 ## Relación con otros ADR
-ADR-0006 — Gobernanza de imagen base monitoring-base
 ADR-0008 — Clasificación de servicios - Micro-stack vs Infraestructura Operativa
 ADR-0014 — Docker Port Exposure Policy
 ADR-0015 — Docker Network Exposure Model
