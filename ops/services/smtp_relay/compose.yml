@@ -32,13 +32,7 @@ services:
       - smtp_relay_logs:/var/log
 
       # Redirección de logs a stdout y arranque de Postfix, esto asegura que los logs del contenedor también vayan a stdout (útil para make logs)
-    command: >
-      sh -c "
-      mkdir -p /var/log &&
-      touch /var/log/mail.log &&
-      ln -sf /proc/1/fd/1 /var/log/mail.log &&
-      exec /scripts/run.sh
-      "
+    command: ["/scripts/run.sh"]
     healthcheck:
       test: ["CMD-SHELL", "pgrep master || exit 1"]
       interval: 30s

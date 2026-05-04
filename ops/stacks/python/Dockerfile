@@ -16,7 +16,7 @@ RUN apt-get update \
     netcat-openbsd \
  && rm -rf /var/lib/apt/lists/*
 
-# Crear usuario no root (UID fijo)
+# Usuario estándar (no-root, pero simple)
 RUN groupadd -g 10001 appuser \
  && useradd -u 10001 -g appuser -ms /bin/bash appuser
 
@@ -36,10 +36,10 @@ COPY ops/stacks/python/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 # Permisos: ⚠️ IMPORTANTE: crear dir para secrets runtime accesibles
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh \
  && chmod +x scripts/*.py || true \
- && mkdir -p /run/secrets-copy \
- && chown -R appuser:appuser /opt/monitoring /run/secrets-copy
+ && mkdir -p /opt/monitoring/logs \
+ && chown -R appuser:appuser /opt/monitoring
 
 # ⚠️ IMPORTANTE: mantener root para poder usar `su`
-USER root
+USER appuser
 
 ENTRYPOINT ["docker-entrypoint.sh"]
