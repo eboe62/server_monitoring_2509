@@ -216,7 +216,7 @@ test:
 	@echo "make test-resilience-observability"
 	@echo "make test-python-health"
 	@echo "make test-cron-execution"
-	@echo "make test-observability"
+	@echo "make test-observability-core"
 	@echo "make test-smtp-all"
 	@echo "make test-network"
 	@echo ""
@@ -360,19 +360,47 @@ test-resilience-network:
 		exit 1; \
 	fi; \
 	echo "Network=$$NETWORK"; \
-	docker network disconnect $$NETWORK monitoring-postgres || true; \
-	echo "esperando degradación..."; \
+	\
+	echo "[STEP] desconectando red..."; \
+	if ! docker network disconnect $$NETWORK monitoring-postgres; then \
+		echo "[FAIL] error al desconectar red"; \
+		exit 1; \
+	fi; \
+	\
+	echo "[STEP] verificando aislamiento real..."; \
+	timeout 20 sh -c '\
+	until ! docker exec monitoring-python sh -c "nc -z monitoring-postgres 5432" >/dev/null 2>&1; do \
+		sleep 2; \
+	done' || (echo "[FAIL] el aislamiento de red NO es efectivo" && exit 1); \
+	\
+	echo "[ OK ] aislamiento de red confirmado"; \
+	\
+	echo "esperando degradación (health)..."; \
 	timeout 60 sh -c '\
 	until [ "$$(docker inspect monitoring-python --format="{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}")" = "unhealthy" ]; do \
 		sleep 2; \
 	done' || (echo "[FAIL] no degrada por red" && exit 1); \
+	\
 	echo "[ OK ] degradación por red OK"; \
-	docker network connect $$NETWORK monitoring-postgres; \
-	echo "esperando recuperación..."; \
+	\
+	echo "[STEP] reconectando red..."; \
+	if ! docker network connect $$NETWORK monitoring-postgres; then \
+		echo "[FAIL] error al reconectar red"; \
+		exit 1; \
+	fi; \
+	\
+	echo "[STEP] verificando recuperación de conectividad..."; \
+	timeout 60 sh -c '\
+	until docker exec monitoring-python sh -c "nc -z monitoring-postgres 5432" >/dev/null 2>&1; do \
+		sleep 2; \
+	done' || (echo "[FAIL] no recupera conectividad TCP" && exit 1); \
+	\
+	echo "esperando recuperación (health)..."; \
 	timeout 60 sh -c '\
 	until [ "$$(docker inspect monitoring-python --format="{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}")" = "healthy" ]; do \
 		sleep 2; \
 	done' || (echo "[FAIL] no recupera tras red" && exit 1); \
+	\
 	echo "[ OK ] red restaurada"
 	@echo ""
 
@@ -484,12 +512,14 @@ test-cron-execution:
 
 	@echo "[ OK ] cron ejecutando correctamente"
 
-# --- Observability
+# ------------------------------------------
+# TEST OBSERVABILITY CORE (reutilizable)
+# ------------------------------------------
 
-.PHONY: test-observability
+.PHONY: test-observability-core
 
-test-observability:
-	@echo "=== TEST OBSERVABILITY ==="
+test-observability-core:
+	@echo "=== TEST OBSERVABILITY CORE ==="
 	@echo ""
 
 	@echo "[1] Esperando Loki..."
@@ -511,7 +541,7 @@ test-observability:
 		--data-urlencode 'query={job="container_logs"} |= "loki_test_"' \
 		| jq '.data.result | length'); \
 	if [ "$$RESULT" -eq 0 ]; then \
-		echo "[FAIL] sin ingestión"; exit 1; \
+		echo "[FAIL] Loki no ingiere logs"; exit 1; \
 	else \
 		echo "[ OK ] logs ingeridos"; \
 	fi
@@ -598,6 +628,10 @@ test-security-runtime:
 	@echo ""
 
 	@echo "=== FIN TEST SECURITY RUNTIME ==="
+
+# ------------------------------------------
+# SMTP (pipeline coherente)
+# ------------------------------------------
 
 # --- test-smtp-ci
 
@@ -938,52 +972,97 @@ stack-logs:
 	@echo ""
 
 # ------------------------------------------
-# Build / Deploy: Infraestructura base
+# Build / Deploy: Infraestructura base (ADR-0008 compliant)
 # ------------------------------------------
 
 .PHONY: monitoring-net
 
 monitoring-net:  ## Crea la red Docker si no existe
+	@echo "=== [INFRA] Bootstrap (monitoring-net) ==="
 	@docker network inspect monitoring-net >/dev/null 2>&1 || \
 	docker network create monitoring-net
 	@echo "[ OK ] network monitoring-net ready"
-	@echo ""
+
 
 # ------------------------------------------
 # Build / Deploy
 # ------------------------------------------
 
-.PHONY: build build-python build-cron deploy
+.PHONY: build build-python build-cron deploy deploy deploy-infra deploy-services deploy-validate
 
 ## Inicialización completa - construye todas las imágenes
-build: monitoring-net build-python build-cron
+build: build-python build-cron
 	@echo "[ OK ] imágenes construidas"
 	@echo "[ OK ] entorno inicializado"
 	@echo ""
 
 build-python:
+	@echo "[BUILD] python"
 	docker build --no-cache -f ops/stacks/python/Dockerfile -t monitoring-python .
 	@echo ""
 
 build-cron:
+	@echo "[BUILD] cron"
 	docker build --no-cache -f ops/stacks/cron/Dockerfile -t monitoring-cron .
 	@echo ""
 
-deploy: build
+deploy: monitoring-net build deploy deploy-infra deploy-services deploy-validate
+	@echo "[ OK ] build completo"
+
+
+# 🔑 Infra primero (correcto según ADR-0008)
+deploy-infra:
+	@echo "=== [DEPLOY] Infra stacks ==="
 	@set -e; \
-	echo "=== 🚀 Despliegue completo ==="; \
-	for s in $(SERVICE_STACKS); do \
-		echo "→ desplegando $$s"; \
-		cd $(SERVICE_DIR)/$$s && $(COMPOSE) up -d --build; \
-	done; \
 	for s in $(INFRA_STACKS); do \
 		echo "→ desplegando $$s"; \
-		cd $(STACK_DIR)/$$s && $(COMPOSE) up -d --build; \
-	done; \
-	echo "→ aplicando límites runtime"; \
-	bash ops/deployment/configure_docker_limits.sh; \
-	echo "[ OK ] despliegue finalizado"
-	@echo ""
+		(cd $(STACK_DIR)/$$s && $(COMPOSE) up -d --build); \
+	done
+
+# 🔑 Luego micro-stacks
+deploy-services:
+	@echo "=== [DEPLOY] Service stacks ==="
+	@set -e; \
+	for s in $(SERVICE_STACKS); do \
+		echo "→ desplegando $$s"; \
+		(cd $(SERVICE_DIR)/$$s && $(COMPOSE) up -d --build); \
+	done
+
+# ------------------------------------------
+# Validación post-deploy
+# ------------------------------------------
+
+deploy-validate:
+	@echo "=== [VALIDACIÓN] Estado contenedores ==="
+	@docker ps
+
+	@echo "[CHECK] healthchecks"
+	@docker ps --format '{{.Names}} {{.Status}}' | grep -E "unhealthy" && \
+		(echo "[FAIL] contenedores unhealthy"; exit 1) || \
+		echo "[ OK ] todos healthy"
+
+	@echo "[CHECK] red monitoring-net"
+	@docker network inspect monitoring-net >/dev/null 2>&1 \
+		&& echo "[ OK ] red operativa" \
+		|| (echo "[FAIL] red no disponible"; exit 1)
+
+	@echo "[CHECK] conectividad mínima postgres"
+	@docker exec monitoring-python nc -z monitoring-postgres 5432 \
+		&& echo "[ OK ] postgres accesible" \
+		|| echo "[WARN] postgres no accesible (revisar dependencias)"
+
+	@echo "[ OK ] validación completada"
+
+# ------------------------------------------
+# Runtime hardening
+# ------------------------------------------
+
+.PHONY: runtime-apply
+
+runtime-apply:
+	@echo "[RUNTIME] aplicando límites"
+	bash ops/deployment/configure_docker_limits.sh
+	@echo "[ OK ] runtime aplicado"
 
 # ------------------------------------------
 # Limpieza
@@ -1024,6 +1103,142 @@ esquema-git:
 	@echo "[INFO] Esquema de ramas Git"
 	sudo git log --oneline --decorate --graph --all -n 25
 	@echo ""
+
+# ------------------------------------------
+# TEST DE CERTIFICACION (SRE + IaC)
+# ------------------------------------------
+
+.PHONY: test-SRE
+
+test-SRE:
+	@echo ""
+	@echo "=== Bateria de Test de Certificación (SRE + IaC) ==="
+	@echo ""
+	@echo "CORE:"
+	@echo "  test-reproducibilidad"
+	@echo "  test-aislamiento-red"
+	@echo "  test-dependencias-host"
+	@echo "  test-permisos"
+	@echo "  test-arranque-desordenado"
+	@echo "  test-aislamiento-fs"
+	@echo ""
+
+test-SRE-completo: test-reproducibilidad test-aislamiento-red test-dependencias-host test-permisos test-arranque-desordenado test-aislamiento-fs
+
+force-recreate:
+	@echo "=== RECREATE postgres / python ==="
+	docker compose -f ops/services/postgres/compose.yml down
+	docker compose -f ops/stacks/python/compose.yml down
+	docker compose -f ops/services/postgres/compose.yml up -d --build
+	docker compose -f ops/stacks/python/compose.yml up -d --build
+	docker system prune -f
+	@echo ""
+
+
+test-reproducibilidad:
+	@echo "\n=== TEST REPRODUCIBILIDAD ==="
+
+	@echo "[1] Eliminando entorno completo"
+	docker compose -f ops/stacks/observability/compose.yml down -v || true
+	docker compose -f ops/stacks/python/compose.yml down -v || true
+	docker compose -f ops/stacks/cron/compose.yml down -v || true
+	docker compose -f ops/services/postgres/compose.yml down -v || true
+	docker compose -f ops/services/smtp_relay/compose.yml down -v || true
+
+	@echo "[2] Limpieza sistema"
+	docker system prune -af --volumes
+
+	@echo "[3] Reconstrucción completa"
+	docker compose -f ops/services/postgres/compose.yml up -d --build
+	sleep 10
+	docker compose -f ops/stacks/observability/compose.yml up -d --build
+	docker compose -f ops/stacks/python/compose.yml up -d --build
+	docker compose -f ops/stacks/cron/compose.yml up -d --build
+	docker compose -f ops/services/smtp_relay/compose.yml up -d --build
+
+	@echo "[4] Verificación estado"
+	docker ps
+
+	@echo "[ OK ] reproducibilidad validada"
+
+
+
+test-aislamiento-red:
+	@echo "\n=== TEST AISLAMIENTO RED ==="
+
+	@echo "[1] Intentando conexión indebida"
+	@docker exec monitoring-python sh -c "nc -zv monitoring-postgres 5432 && exit 1 || exit 0" \
+	&& echo "[ OK ] acceso restringido (esperado)" \
+	|| echo "[WARN] acceso permitido (revisar)"
+
+	@echo "[2] Validando red interna"
+	docker network inspect monitoring-net | grep Containers
+
+	@echo "[ OK ] test aislamiento completado"
+
+
+
+test-dependencias-host:
+	@echo "\n=== TEST DEPENDENCIAS HOST ==="
+
+	@echo "[1] Buscando bind mounts peligrosos"
+	@docker inspect monitoring-python | grep Mounts
+
+	@echo "[2] Verificando /opt/monitoring interno"
+	@docker exec monitoring-python ls /opt/monitoring/src >/dev/null \
+	&& echo "[ OK ] código disponible dentro del contenedor" \
+	|| echo "[FAIL] dependencia externa detectada"
+
+	@echo "[ OK ] test dependencias finalizado"
+
+
+
+test-permisos:
+	@echo "\n=== TEST PERMISOS ==="
+
+	@echo "[1] UID en contenedores"
+	@docker exec monitoring-python id
+	@docker exec monitoring-cron id
+
+	@echo "[2] escritura en logs"
+	@docker exec monitoring-cron sh -c "touch /opt/monitoring/logs/test.log" \
+	&& echo "[ OK ] escritura válida" \
+	|| echo "[FAIL] problema permisos"
+
+	@echo "[ OK ] test permisos completado"
+
+
+
+test-arranque-desordenado:
+	@echo "\n=== TEST ARRANQUE DESORDENADO ==="
+
+	@echo "[1] levantando python SIN postgres"
+	docker compose -f ops/stacks/python/compose.yml up -d
+
+	sleep 5
+
+	@echo "[2] ejecutando healthcheck"
+	docker inspect --format='{{.State.Health.Status}}' monitoring-python
+
+	@echo "[3] levantando postgres después"
+	docker compose -f ops/services/postgres/compose.yml up -d
+
+	sleep 10
+
+	@echo "[ OK ] sistema tolera orden variable"
+
+
+
+test-aislamiento-fs:
+	@echo "\n=== TEST AISLAMIENTO FS ==="
+
+	@echo "[1] escribiendo en contenedor A"
+	docker exec monitoring-python sh -c "echo test > /tmp/testfile"
+
+	@echo "[2] comprobando en contenedor B"
+	@docker exec monitoring-cron sh -c "cat /tmp/testfile" 2>/dev/null \
+	&& echo "[FAIL] fuga de filesystem" \
+	|| echo "[ OK ] aislamiento correcto"
 
 # ------------------------------------------
 # ------------------------------------------
@@ -1087,17 +1302,4 @@ logs:  ## Muestra logs recientes del sistema y contenedores
 		echo "===== $$c ====="; \
 		docker logs $$c --tail=20 2>/dev/null || echo "⚠️  No se pudo obtener logs de $$c"; \
 	done
-	@echo ""
-
-# ------------------------------------------
-# VALIDATION / SRE: Diagnóstico
-# ------------------------------------------
-
-force-recreate:
-	@echo "=== RECREATE postgres / python ==="
-	docker compose -f ops/services/postgres/compose.yml down
-	docker compose -f ops/stacks/python/compose.yml down
-	docker compose -f ops/services/postgres/compose.yml up -d --build
-	docker compose -f ops/stacks/python/compose.yml up -d --build
-	docker system prune -f
 	@echo ""

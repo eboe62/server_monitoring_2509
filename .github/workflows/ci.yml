@@ -197,7 +197,7 @@ jobs:
         run: make test-resilience-completo
 
       - name: Test observability
-        run: make test-observability
+        run: make test-observability-core
 
 #      - name: Test cron
 #        run: make test-cron-execution
