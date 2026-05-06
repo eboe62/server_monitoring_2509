@@ -12,11 +12,11 @@ services:
       - ../../services/postgres/.env
 
     volumes:
-      # Monta el proyecto para ejecutar scripts Python
-      - ../../../:/opt/monitoring
-
       # Solo lectura de logs docker
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
+
+      # ❌ ELIMINADO → rompe reproducibilidad
+      # - ../../../:/opt/monitoring
 
       # ❌ ELIMINADO
       # - /var/log:/var/log

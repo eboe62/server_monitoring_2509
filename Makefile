@@ -1006,8 +1006,9 @@ build-cron:
 	docker build --no-cache -f ops/stacks/cron/Dockerfile -t monitoring-cron .
 	@echo ""
 
-deploy: monitoring-net build deploy deploy-infra deploy-services deploy-validate
+deploy: monitoring-net build deploy deploy-infra deploy-services deploy-validate runtime-apply
 	@echo "[ OK ] build completo"
+	@echo "=== 🚀 Despliegue completo ==="; \
 
 
 # 🔑 Infra primero (correcto según ADR-0008)
@@ -1134,6 +1135,7 @@ force-recreate:
 	docker system prune -f
 	@echo ""
 
+.PHONY: test-reproducibilidad
 
 test-reproducibilidad:
 	@echo "\n=== TEST REPRODUCIBILIDAD ==="
@@ -1148,20 +1150,31 @@ test-reproducibilidad:
 	@echo "[2] Limpieza sistema"
 	docker system prune -af --volumes
 
-	@echo "[3] Reconstrucción completa"
+	@echo "[3] Re-creando red compartida: bootstrap infraestructura"
+	$(MAKE) monitoring-net
+
+	@echo "[4] Levantando infraestructura base (Postgres)"
 	docker compose -f ops/services/postgres/compose.yml up -d --build
-	sleep 10
+
+	@echo "[WAIT] esperando Postgres healthy..."
+	@until [ "$$(docker inspect --format='{{.State.Health.Status}}' monitoring-postgres 2>/dev/null)" = "healthy" ]; do \
+		sleep 2; \
+	done
+
+	@echo "[4] Observabilidad"
 	docker compose -f ops/stacks/observability/compose.yml up -d --build
+
+	@echo "[5] Stacks aplicación"
 	docker compose -f ops/stacks/python/compose.yml up -d --build
 	docker compose -f ops/stacks/cron/compose.yml up -d --build
+
+	@echo "[6] SMTP relay"
 	docker compose -f ops/services/smtp_relay/compose.yml up -d --build
 
-	@echo "[4] Verificación estado"
+	@echo "[7] Verificación estado"
 	docker ps
 
 	@echo "[ OK ] reproducibilidad validada"
-
-
 
 test-aislamiento-red:
 	@echo "\n=== TEST AISLAMIENTO RED ==="
@@ -1176,8 +1189,6 @@ test-aislamiento-red:
 
 	@echo "[ OK ] test aislamiento completado"
 
-
-
 test-dependencias-host:
 	@echo "\n=== TEST DEPENDENCIAS HOST ==="
 
@@ -1190,8 +1201,6 @@ test-dependencias-host:
 	|| echo "[FAIL] dependencia externa detectada"
 
 	@echo "[ OK ] test dependencias finalizado"
-
-
 
 test-permisos:
 	@echo "\n=== TEST PERMISOS ==="
@@ -1206,8 +1215,6 @@ test-permisos:
 	|| echo "[FAIL] problema permisos"
 
 	@echo "[ OK ] test permisos completado"
-
-
 
 test-arranque-desordenado:
 	@echo "\n=== TEST ARRANQUE DESORDENADO ==="
@@ -1226,8 +1233,6 @@ test-arranque-desordenado:
 	sleep 10
 
 	@echo "[ OK ] sistema tolera orden variable"
-
-
 
 test-aislamiento-fs:
 	@echo "\n=== TEST AISLAMIENTO FS ==="

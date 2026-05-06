@@ -17,7 +17,7 @@ services:
       # Se monta en modo "ro" (read-only) por motivos de seguridad.
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
 
-      # ❌ ELIMINAR esto en PRO
+      # ❌ ELIMINADO → rompe reproducibilidad
       # - ../../../:/opt/monitoring
 
       # ❌ ELIMINADO → rompe seguridad y permisos
