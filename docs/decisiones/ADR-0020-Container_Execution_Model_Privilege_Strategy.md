@@ -100,9 +100,22 @@ No se permite mezclar roles.
 
 2. Eliminación de dependencias del host
 - prohibido uso de bind mounts de código en producción
-- permitido solo para:
+- el código debe integrarse en la imagen Docker durante el build
+- permitido solo:
     logs específicos (controlados)
     datos persistentes definidos explícitamente
+    sockets o recursos del host justificados documentalmente
+
+Validación obligatoria:
+    make test-reproducibilidad
+
+El test debe validar:
+- eliminación completa de contenedores
+- eliminación de imágenes
+- eliminación de volúmenes
+- recreación de monitoring-net
+- reconstrucción íntegra desde cero
+- ausencia de dependencias implícitas del host
 
 3. Coherencia con IaC
 

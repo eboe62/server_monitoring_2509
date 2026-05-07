@@ -50,10 +50,14 @@ Incluye:
 
 Puede:
 - usar build context superior (solo para acceso a código del repositorio)
-- no definir imágenes base reutilizables por otros stacks
-- montar rutas del host justificadas
-- acceder a /var/run/docker.sock
-- acceder a logs del host
+- montar exclusivamente volúmenes del host explícitamente justificados
+- acceder a /var/run/docker.sock únicamente bajo justificación explícita
+- acceder a logs del host en modo read-only cuando exista motivo operativo documentado
+
+Restricciones:
+- no se permiten bind mounts de código fuente en runtime productivo
+- el código ejecutable debe formar parte de la imagen Docker construida
+- el runtime debe ser reproducible desde un host limpio mediante reconstrucción declarativa
 
 Debe:
 - declarar monitoring-net como external: true
@@ -70,6 +74,20 @@ Debe:
 
 Objetivo:
   Proveer capacidades operativas del entorno, no servicios exportables.
+
+Importante:
+Los Infra-Stacks NO se consideran autónomos a nivel de repositorio ni de arquitectura exportable.
+Sin embargo, sí deben ser autónomos a nivel de ejecución (runtime), lo que implica:
+  - ausencia de bind mounts estructurales del código fuente
+  - capacidad de reconstrucción completa desde imágenes Docker
+  - funcionamiento tras:
+      docker system prune -af --volumes
+  - ausencia de dependencia implícita del filesystem del host
+
+Esto diferencia explícitamente:
+  - autonomía arquitectónica/exportable
+de:
+  - autonomía operativa/runtime
 
 3️⃣ Uso de docker.sock
 Los infra-stacks pueden montar:
