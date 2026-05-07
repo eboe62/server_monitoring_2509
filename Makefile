@@ -123,8 +123,8 @@ status:
 	@docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 
 	@echo ""
-	@echo "[4] Red monitoring-net:"
-	@docker network inspect monitoring-net >/dev/null 2>&1 && \
+	@echo "[4] Red monitoring-networks:"
+	@docker network inspect monitoring-networks >/dev/null 2>&1 && \
 	echo "OK" || echo "No existe"
 
 	@echo ""
@@ -350,7 +350,7 @@ test-resilience-network:
 ## - espera healthy
 ## Dependencias:
 ## [ red ]
-##     monitoring-net conecta TODO
+##     monitoring-networks conecta TODO
 
 	@echo "[3] Simulación fallo red hacia DB"
 
@@ -797,7 +797,9 @@ test-smtp-logs-clean:
 .PHONY: test-network
 
 test-network:
-	docker network inspect monitoring-net
+	docker network inspect backend-net
+	docker network inspect observability-net
+	docker network inspect restricted-net
 	@echo ""
 
 	docker exec monitoring-python nc -z monitoring-postgres 5432
@@ -906,11 +908,11 @@ debug-exec: ## Ejecutar comando en contenedor (STACK opcional)
 DEBUG_IMAGE = nicolaka/netshoot
 DEBUG_CONTAINER = monitoring-debug
 
-debug-toolbox-up: ## Levanta contenedor de debugging en monitoring-net
+debug-toolbox-up: ## Levanta contenedor de debugging en restricted-net
 	@echo "=== Iniciando contenedor debug ==="
 	@docker rm -f $(DEBUG_CONTAINER) >/dev/null 2>&1 || true
 	@docker run -d --name $(DEBUG_CONTAINER) \
-		--network monitoring-net \
+		--network restricted-net \
 		$(DEBUG_IMAGE) sleep infinity
 	@echo "[ OK ] contenedor debug activo"
 	@echo ""
@@ -975,13 +977,14 @@ stack-logs:
 # Build / Deploy: Infraestructura base (ADR-0008 compliant)
 # ------------------------------------------
 
-.PHONY: monitoring-net
+.PHONY: monitoring-networks
 
-monitoring-net:  ## Crea la red Docker si no existe
-	@echo "=== [INFRA] Bootstrap (monitoring-net) ==="
-	@docker network inspect monitoring-net >/dev/null 2>&1 || \
-	docker network create monitoring-net
-	@echo "[ OK ] network monitoring-net ready"
+monitoring-networks:  ## Crea las redes Docker usadas por la plataforma
+	@echo "=== [INFRA] Bootstrap (monitoring networks) ==="
+	@docker network inspect backend-net >/dev/null 2>&1 || docker network create backend-net
+	@docker network inspect observability-net >/dev/null 2>&1 || docker network create observability-net
+	@docker network inspect restricted-net >/dev/null 2>&1 || docker network create restricted-net
+	@echo "[ OK ] networks ready"
 
 
 # ------------------------------------------
@@ -1006,7 +1009,7 @@ build-cron:
 	docker build --no-cache -f ops/stacks/cron/Dockerfile -t monitoring-cron .
 	@echo ""
 
-deploy: monitoring-net build deploy deploy-infra deploy-services deploy-validate runtime-apply
+deploy: monitoring-networks build deploy deploy-infra deploy-services deploy-validate runtime-apply
 	@echo "[ OK ] build completo"
 	@echo "=== 🚀 Despliegue completo ==="; \
 
@@ -1042,10 +1045,12 @@ deploy-validate:
 		(echo "[FAIL] contenedores unhealthy"; exit 1) || \
 		echo "[ OK ] todos healthy"
 
-	@echo "[CHECK] red monitoring-net"
-	@docker network inspect monitoring-net >/dev/null 2>&1 \
-		&& echo "[ OK ] red operativa" \
-		|| (echo "[FAIL] red no disponible"; exit 1)
+	@echo "[CHECK] redes de monitorización (backend/observability/restricted)"
+	@docker network inspect backend-net >/dev/null 2>&1 \
+		&& docker network inspect observability-net >/dev/null 2>&1 \
+		&& docker network inspect restricted-net >/dev/null 2>&1 \
+		&& echo "[ OK ] redes operativas" \
+		|| (echo "[FAIL] alguna red no disponible"; exit 1)
 
 	@echo "[CHECK] conectividad mínima postgres"
 	@docker exec monitoring-python nc -z monitoring-postgres 5432 \
@@ -1151,7 +1156,7 @@ test-reproducibilidad:
 	docker system prune -af --volumes
 
 	@echo "[3] Re-creando red compartida: bootstrap infraestructura"
-	$(MAKE) monitoring-net
+	$(MAKE) monitoring-networks
 
 	@echo "[4] Levantando infraestructura base (Postgres)"
 	docker compose -f ops/services/postgres/compose.yml up -d --build
@@ -1176,16 +1181,19 @@ test-reproducibilidad:
 
 	@echo "[ OK ] reproducibilidad validada"
 
+
 test-aislamiento-red:
 	@echo "\n=== TEST AISLAMIENTO RED ==="
 
-	@echo "[1] Intentando conexión indebida"
-	@docker exec monitoring-python sh -c "nc -zv monitoring-postgres 5432 && exit 1 || exit 0" \
-	&& echo "[ OK ] acceso restringido (esperado)" \
-	|| echo "[WARN] acceso permitido (revisar)"
+	@echo "[1] Intentando conexión indebida (desde restricted-net)"
+	@docker run --rm --network restricted-net nicolaka/netshoot sh -c "nc -zv monitoring-postgres 5432" \
+	&& echo "[WARN] acceso permitido (revisar)" \
+	|| echo "[ OK ] acceso restringido (esperado)"
 
-	@echo "[2] Validando red interna"
-	docker network inspect monitoring-net | grep Containers
+	@echo "[2] Validando redes internas"
+	@docker network inspect backend-net | grep Containers || true
+	@docker network inspect observability-net | grep Containers || true
+	@docker network inspect restricted-net | grep Containers || true
 
 	@echo "[ OK ] test aislamiento completado"
 

@@ -33,8 +33,8 @@ services:
       retries: 3
 
     networks:
-      - monitoring-net  # Red compartida (Grafana, Loki, Postgres, SMTP relay...)
+      - backend-net  # Red backend (DB + aplicaciones autorizadas)
 
 networks:
-  monitoring-net:
+  backend-net:
     external: true

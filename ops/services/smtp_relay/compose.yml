@@ -41,7 +41,7 @@ services:
       start_period: 20s
 
     networks:
-      - monitoring-net  # Red compartida (Grafana, Loki, Postgres, SMTP relay...)
+      - restricted-net  # Red restringida para servicios con egress controlado
     restart: always
 
 secrets:
@@ -51,7 +51,7 @@ secrets:
     file: ${SMTP_PASS_FILE:-./secrets/smtp_pass}
 
 networks:
-  monitoring-net:
+  restricted-net:
     external: true
 
 volumes:

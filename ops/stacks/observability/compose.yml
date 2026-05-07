@@ -26,7 +26,7 @@ services:
 #      Sin exposición de puertos (solo red interna monitoring-net)
 #      - "${PROMTAIL_PORT}:9080"  # Exposición opcional de métricas Promtail
     networks:
-      - monitoring-net  # Red compartida (Grafana, Loki, Postgres, SMTP relay...)
+      - observability-net  # Red de observabilidad (Loki/Grafana/Promtail)
 
 # ------------------------------------------
 # LOKI
@@ -58,7 +58,7 @@ services:
           cpus: "0.5"
 
     networks:
-      - monitoring-net # Red compartida (Grafana, Loki, Postgres, SMTP relay...)
+      - observability-net # Red de observabilidad (Loki/Grafana/Promtail)
 
 # ------------------------------------------
 # GRAFANA
@@ -121,7 +121,7 @@ services:
           cpus: "0.3"
 
     networks:
-      - monitoring-net # Red compartida (Grafana, Loki, Postgres, SMTP relay...)
+      - observability-net # Red de observabilidad (Grafana/Loki/Promtail)
 
 volumes:
   loki-data:
@@ -135,5 +135,5 @@ volumes:
 # ------------------------------------------
 
 networks:
-  monitoring-net:
+  observability-net:
     external: true
