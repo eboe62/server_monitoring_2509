@@ -84,8 +84,11 @@ jobs:
       # ------------------------------------------
       # Network
       # ------------------------------------------
-      - name: Create monitoring network
-        run: docker network create monitoring-net || true
+      - name: Create monitoring networks
+        run: |
+          docker network create backend-net || true
+          docker network create observability-net || true
+          docker network create restricted-net || true
 
       # ------------------------------------------
       # Start stack
@@ -129,15 +132,17 @@ jobs:
         run: |
           echo "=== TEST NETWORK (CI) ==="
 
-          docker run --rm --network monitoring-net nicolaka/netshoot sh -c "
+          docker run --rm --network observability-net nicolaka/netshoot sh -c "
             echo '→ DNS loki'
             nslookup loki
 
-            echo '→ TCP postgres'
-            nc -zv monitoring-postgres 5432
-
             echo '→ HTTP loki'
             curl -f http://loki:3100/ready
+          "
+
+          docker run --rm --network backend-net nicolaka/netshoot sh -c "
+            echo '→ TCP postgres'
+            nc -zv monitoring-postgres 5432
           "
 
           echo "✔ Network test OK"
@@ -146,11 +151,14 @@ jobs:
         run: |
           echo "=== TEST CONNECTIVITY ==="
 
-          # Crear contenedor temporal en la red
-          docker run --rm --network monitoring-net nicolaka/netshoot sh -c "
+          # TCP test to Postgres in backend-net
+          docker run --rm --network backend-net nicolaka/netshoot sh -c "
             echo '→ testing postgres';
             nc -zv monitoring-postgres 5432;
+          "
 
+          # Loki / Grafana tests in observability-net
+          docker run --rm --network observability-net nicolaka/netshoot sh -c "
             echo '→ testing loki';
             curl -f http://loki:3100/ready;
 
@@ -158,7 +166,7 @@ jobs:
             curl -f http://grafana:3001;
           "
 
-          # Test desde host
+          # Test desde host (Loki expuesto en 127.0.0.1)
           curl -f http://localhost:3100/ready || (echo "❌ Loki no accesible desde host" && exit 1)
 
           echo "✔ Conectividad OK"
@@ -239,4 +247,6 @@ jobs:
           docker compose -f ops/stacks/cron/compose.yml down -v || true
           docker compose -f ops/services/postgres/compose.yml down -v || true
           docker compose -f ops/services/smtp_relay/compose.yml down -v || true
-          docker network rm monitoring-net || true
+          docker network rm backend-net || true
+          docker network rm observability-net || true
+          docker network rm restricted-net || true
