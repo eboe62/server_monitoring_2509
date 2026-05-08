@@ -33,7 +33,10 @@ services:
 
     networks:
       - backend-net  # Red backend (DB + aplicaciones autorizadas)
+      - observability-net # Acceso a la red de observabilidad (Loki)
 
 networks:
   backend-net:
+    external: true
+  observability-net:
     external: true

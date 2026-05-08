@@ -1772,6 +1772,40 @@ Checklist de verificación runtime exacto para cerrar FASE 4
 O diseñar formalmente FASE 5 con criterios de aceptación medibles
 
 ==========================================
+Edición: 260508
+Título: PRIORIDAD 2 AISLAMIENTO DE REDES
+Fase: 5
+Rama: aislamiento_redes
+Gestor: IA VSC Copilot
+==========================================
+
+Observo los siguientes problemas. Revisalo e informa. De momento no corregimos nada. El código actual pasa pipeline CI:
+Problema A:
+- monitoring-python NO puede acceder a Loki y probablemente debería. Verifica si es así y propón mejoras
+Problema B:
+Promtail ve todo el host
+/var/lib/docker/containers:/var/lib/docker/containers:ro
+Puedes verficar si Promtail es una infraestructura operativa privilegiada? Debería serlo? Está documentado?
+Problema C:
+restricted-net está realmente restringida? Es realmente un egress controlado? puede salir libremente a internet?
+Problema D:
+Revisa Makefile, especialmente test-aislamiento-red. He tenido que ampliarlo con las nuevas redes y es posible que no lo haya hecho bien. Especialmente los test negativos.
+Problema E:
+Revisa Makefile status
+Existe la red monitoring-networks?
+Problema F:
+Makefile deploy tiene una dependencia reflexiva. Corregir
+Problema G:
+Makefile debug-toolbox-up ahora usa restricted-net pero eso limita muchísimo el troubleshooting.
+Probablemente el debug toolbox debería: permitir elegir red o conectarse dinámicamente
+Problema H:
+Confirmar si:
+- python necesita Loki
+- grafana necesita postgres
+- cron necesita observability
+y adaptar las redes
+
+==========================================
 Edición: 260223
 Título: VALIDACION FINAL FASE 4
 Fase: 4

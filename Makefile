@@ -123,9 +123,10 @@ status:
 	@docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 
 	@echo ""
-	@echo "[4] Red monitoring-networks:"
-	@docker network inspect monitoring-networks >/dev/null 2>&1 && \
-	echo "OK" || echo "No existe"
+	@echo "[4] Redes Docker para monitoring (comprobación):"
+	@for n in backend-net observability-net restricted-net; do \
+		docker network inspect $$n >/dev/null 2>&1 && echo "$$n: OK" || echo "$$n: No existe"; \
+	done
 
 	@echo ""
 	@echo "[5] Espacio en disco:"
@@ -908,11 +909,13 @@ debug-exec: ## Ejecutar comando en contenedor (STACK opcional)
 DEBUG_IMAGE = nicolaka/netshoot
 DEBUG_CONTAINER = monitoring-debug
 
-debug-toolbox-up: ## Levanta contenedor de debugging en restricted-net
-	@echo "=== Iniciando contenedor debug ==="
+DEBUG_NET ?= restricted-net
+
+debug-toolbox-up: ## Levanta contenedor de debugging (DEBUG_NET=$(DEBUG_NET))
+	@echo "=== Iniciando contenedor debug (network=$(DEBUG_NET)) ==="
 	@docker rm -f $(DEBUG_CONTAINER) >/dev/null 2>&1 || true
 	@docker run -d --name $(DEBUG_CONTAINER) \
-		--network restricted-net \
+		--network $(DEBUG_NET) \
 		$(DEBUG_IMAGE) sleep infinity
 	@echo "[ OK ] contenedor debug activo"
 	@echo ""
@@ -1009,7 +1012,7 @@ build-cron:
 	docker build --no-cache -f ops/stacks/cron/Dockerfile -t monitoring-cron .
 	@echo ""
 
-deploy: monitoring-networks build deploy deploy-infra deploy-services deploy-validate runtime-apply
+deploy: monitoring-networks build deploy-infra deploy-services deploy-validate runtime-apply
 	@echo "[ OK ] build completo"
 	@echo "=== 🚀 Despliegue completo ==="; \
 
@@ -1186,9 +1189,12 @@ test-aislamiento-red:
 	@echo "\n=== TEST AISLAMIENTO RED ==="
 
 	@echo "[1] Intentando conexión indebida (desde restricted-net)"
-	@docker run --rm --network restricted-net nicolaka/netshoot sh -c "nc -zv monitoring-postgres 5432" \
-	&& echo "[WARN] acceso permitido (revisar)" \
-	|| echo "[ OK ] acceso restringido (esperado)"
+	@docker run --rm --network restricted-net nicolaka/netshoot sh -c '\
+		if nc -zv monitoring-postgres 5432 >/dev/null 2>&1; then \
+			echo "[FAIL] acceso permitido (revisar)"; exit 1; \
+		else \
+			echo "[ OK ] acceso restringido (esperado)"; \
+		fi'
 
 	@echo "[2] Validando redes internas"
 	@docker network inspect backend-net | grep Containers || true

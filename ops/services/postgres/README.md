@@ -14,7 +14,7 @@ Esto permite que este micro-stack coexista con la definición previa de Postgres
 
 Cumplimiento
 -----------
-Esta estructura cumple ADR-0008: servicio autónomo, volúmenes propios declarados y conexión a la red compartida `monitoring-net` (externa).
+Esta estructura cumple ADR-0008: servicio autónomo, volúmenes propios declarados y conexión a la red compartida `backend-net` (externa).
 
 Operaciones básicas
 -------------------
@@ -29,7 +29,7 @@ Notas
 
 Resumen
 -------
-Micro-stack autónomo PostgreSQL compatible con `monitoring-net` (external: true).
+Micro-stack autónomo PostgreSQL compatible con `backend-net` (external: true).
 
 Operativa mínima
 ----------------
@@ -40,7 +40,9 @@ Operativa mínima
 Notas
 -----
 - Volúmenes: `postgres-data` es declarado en este stack (driver local). Backups se montan desde `./backups` (relativo).
-- Redes: se conecta a `monitoring-net` (external: true). Asegúrate de que esa red existe en el host destino.
+- Redes: se conecta a `backend-net` (external: true). Asegúrate de que esa red existe en el host destino.
+
+Nota: Históricamente este proyecto referenciaba una red global `monitoring-net`. Tras la adopción de ADR-0021, la plataforma usa redes segmentadas: `backend-net`, `observability-net` y `restricted-net` según el propósito del servicio.
 - Secretos: no versionar ficheros sensibles. Usa `.env` (ignorado) o un directorio `secrets/` montado fuera del repo.
 
 Migración y checklist

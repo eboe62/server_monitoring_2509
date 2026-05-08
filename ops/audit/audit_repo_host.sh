@@ -324,10 +324,10 @@ info "Redes Docker"
 
 docker network ls
 
-if docker network inspect monitoring-net >/dev/null 2>&1; then
-    ok "monitoring-net existe"
+if docker network inspect backend-net >/dev/null 2>&1 || docker network inspect observability-net >/dev/null 2>&1 || docker network inspect restricted-net >/dev/null 2>&1; then
+    ok "Redes de monitoring (backend-net/observability-net/restricted-net) detectadas"
 else
-    warn "monitoring-net no encontrada"
+    warn "No se detectan redes de monitoring (backend-net/observability-net/restricted-net)"
 fi
 
 echo ""
@@ -398,18 +398,19 @@ fi
 
 echo ""
 # ==========================================
-echo "C4 servicios fuera de monitoring-net"
+echo "C4 servicios fuera de backend-net / observability-net / restricted-net"
 # ==========================================
 echo ""
 
-info "Verificando uso de red monitoring-net"
+
+info "Verificando uso de redes backend-net / observability-net / restricted-net"
 
 NO_NET=$(grep -R "services:" -n ops/stacks 2>/dev/null || true)
 
-if docker network inspect monitoring-net >/dev/null 2>&1; then
-    ok "Red monitoring-net disponible"
+if docker network inspect backend-net >/dev/null 2>&1; then
+    ok "Red backend-net disponible"
 else
-    warn "monitoring-net no existe"
+    warn "backend-net no existe"
 fi
 
 echo ""

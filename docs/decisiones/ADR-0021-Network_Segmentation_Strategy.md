@@ -4,6 +4,8 @@ Fecha: 2026-05-04
 Estado: Aprobado
 Contexto: server_monitoring
 
+Nota: Durante la migración de la plataforma la red histórica `monitoring-net` se ha sustituido por un conjunto de redes segmentadas: `backend-net`, `observability-net` y `restricted-net`. Este documento refleja la estrategia y la transición.
+
 ## Contexto
 
 Actualmente, todos los contenedores del sistema comparten una única red Docker:
