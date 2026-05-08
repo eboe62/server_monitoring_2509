@@ -8,9 +8,8 @@ Nota: Durante la migración de la plataforma la red histórica `monitoring-net` 
 
 ## Contexto
 
-Actualmente, todos los contenedores del sistema comparten una única red Docker:
-
-monitoring-net
+Historicamente todos los contenedores del sistema compartían una única red Docker:
+  monitoring-net
 
 Este enfoque simplifica la conectividad pero introduce problemas críticos:
 - comunicación lateral no restringida entre servicios
@@ -28,7 +27,7 @@ Este modelo entra en conflicto con:
   - entornos controlados y reproducibles
 
 ## Decisión
-Se adopta un modelo de segmentación de red basado en dominios funcionales.
+Se adopta un modelo de segmentación de red basado en dominios funcionales (ver monitoring-network en Makefile)
 Se reemplaza el uso de una única red global por múltiples redes especializadas.
 
 ## Modelo de redes
