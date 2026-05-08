@@ -106,20 +106,12 @@ Los nuevos servicios deben:
 
 ## Ejemplo de aplicación
 
-ANTES:
-
-monitoring-cron → monitoring-net
-postgres → monitoring-net
-grafana → monitoring-net
-
-DESPUÉS:
-
 monitoring-cron → backend-net
-postgres → backend-net
+postgres        → backend-net
 
-promtail → observability-net
-loki → observability-net
-grafana → observability-net + edge-net (opcional)
+promtail        → observability-net
+loki            → observability-net
+grafana         → observability-net + edge-net (opcional)
 
 ## Validación
 Se deben implementar tests específicos:

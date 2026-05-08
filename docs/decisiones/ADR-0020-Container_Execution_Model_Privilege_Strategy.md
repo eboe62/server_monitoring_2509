@@ -113,7 +113,7 @@ El test debe validar:
 - eliminación completa de contenedores
 - eliminación de imágenes
 - eliminación de volúmenes
-- recreación de monitoring-net
+ - recreación de las redes de monitoring (backend-net / observability-net / restricted-net)
 - reconstrucción íntegra desde cero
 - ausencia de dependencias implícitas del host
 

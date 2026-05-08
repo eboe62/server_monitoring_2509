@@ -33,7 +33,7 @@ Debe cumplir obligatoriamente:
 - no montar rutas absolutas del host como dependencia estructural
 - no versionar secrets
 - no incluir secrets ni .env en la imagen
-- declarar monitoring-net como external: true
+- declarar la red apropiada como external: true (p. ej. `backend-net` para micro-stacks)
 
 Objetivo:
 Permitir que el servicio pueda copiarse a otro repositorio y desplegarse de forma independiente.
@@ -60,7 +60,7 @@ Restricciones:
 - el runtime debe ser reproducible desde un host limpio mediante reconstrucción declarativa
 
 Debe:
-- declarar monitoring-net como external: true
+ - declarar la red apropiada como external: true (p. ej. `backend-net` para micro-stacks)
 - no versionar secrets
 - no incluir secrets dentro de la imagen
 - no introducir dependencias implícitas no documentadas

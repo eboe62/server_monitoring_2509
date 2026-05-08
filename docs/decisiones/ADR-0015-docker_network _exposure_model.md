@@ -43,7 +43,7 @@ Ejemplo docker-compose:
     services:
       postgres:
         networks:
-          - monitoring-net
+          - backend-net
         # sin ports
 
 Nivel 2 — Host Local Access (Internal + Debug Loopback)
