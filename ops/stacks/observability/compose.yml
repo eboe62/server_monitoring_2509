@@ -23,7 +23,7 @@ services:
           memory: 250M
           cpus: "0.25"
 #    ports:
-#      Sin exposición de puertos (solo red interna monitoring-net)
+#      Sin exposición de puertos (solo red interna observability-net)
 #      - "${PROMTAIL_PORT}:9080"  # Exposición opcional de métricas Promtail
     networks:
       - observability-net  # Red de observabilidad (Loki/Grafana/Promtail)
@@ -41,7 +41,7 @@ services:
 #      - ./data/loki:/var/lib/loki  # Persistencia de datos para Loki
       - loki-data:/var/lib/loki  # Persistencia de datos para Loki con logs indexados
     ports:
-#      Sin exposición de puertos (solo red interna monitoring-net)
+  #      Sin exposición de puertos (solo red interna observability-net)
       - "127.0.0.1:${LOKI_PORT}:3100"  # API de Loki accesible desde el host
     restart: always
 

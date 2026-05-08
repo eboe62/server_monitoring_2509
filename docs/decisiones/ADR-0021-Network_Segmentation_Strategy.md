@@ -4,11 +4,12 @@ Fecha: 2026-05-04
 Estado: Aprobado
 Contexto: server_monitoring
 
+Nota: Durante la migración de la plataforma la red histórica `monitoring-net` se ha sustituido por un conjunto de redes segmentadas: `backend-net`, `observability-net` y `restricted-net`. Este documento refleja la estrategia y la transición.
+
 ## Contexto
 
-Actualmente, todos los contenedores del sistema comparten una única red Docker:
-
-monitoring-net
+Historicamente todos los contenedores del sistema compartían una única red Docker:
+  monitoring-net
 
 Este enfoque simplifica la conectividad pero introduce problemas críticos:
 - comunicación lateral no restringida entre servicios
@@ -26,7 +27,7 @@ Este modelo entra en conflicto con:
   - entornos controlados y reproducibles
 
 ## Decisión
-Se adopta un modelo de segmentación de red basado en dominios funcionales.
+Se adopta un modelo de segmentación de red basado en dominios funcionales (ver monitoring-network en Makefile)
 Se reemplaza el uso de una única red global por múltiples redes especializadas.
 
 ## Modelo de redes
@@ -104,20 +105,12 @@ Los nuevos servicios deben:
 
 ## Ejemplo de aplicación
 
-ANTES:
-
-monitoring-cron → monitoring-net
-postgres → monitoring-net
-grafana → monitoring-net
-
-DESPUÉS:
-
 monitoring-cron → backend-net
-postgres → backend-net
+postgres        → backend-net
 
-promtail → observability-net
-loki → observability-net
-grafana → observability-net + edge-net (opcional)
+promtail        → observability-net
+loki            → observability-net
+grafana         → observability-net + edge-net (opcional)
 
 ## Validación
 Se deben implementar tests específicos:

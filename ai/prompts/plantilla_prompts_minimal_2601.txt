@@ -169,7 +169,7 @@ docker-compose.yml:
 - Declarar volumen propio postgres-data (sin external).
 - El volumen debe quedar aislado por project-name.
 - Montar ./backups:/backups (ruta relativa).
-- Conectar a monitoring-net con external: true.
+- Conectar a backend-net (o la red adecuada según ADR-0021) con `external: true`.
 - Incluir healthcheck con pg_isready.
 - No usar Swarm.
 - No usar secrets versionados.

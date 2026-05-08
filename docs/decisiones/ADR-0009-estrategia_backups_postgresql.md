@@ -20,7 +20,7 @@ Se adopta la siguiente estrategia:
 2. La lógica de backup se ubica dentro del micro-stack postgres:
      ops/services/postgres/scripts/
 3. El scheduler oficial continúa siendo el contenedor monitoring-cron.
-4. El proceso de backup se ejecuta mediante pg_dump contra el servicio postgres dentro de la red Docker monitoring-net.
+4. El proceso de backup se ejecuta mediante pg_dump contra el servicio postgres dentro de la red Docker backend-net.
       Ejemplo conceptual:
           monitoring-cron
             └ pg_dump -h postgres

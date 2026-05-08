@@ -17,12 +17,12 @@ Architectural Rules:
 - ADR documents are normative and binding.
 
 Architectural rules:
-- ADR documents are normative.
-- RULES.txt is binding.
-- Micro-stack and Infra-stack boundaries are strict.
-- No cross-service modifications unless explicitly requested.
-- monitoring-net must remain external unless explicitly changed.
-- No Swarm unless explicitly declared.
+ - ADR documents are normative.
+ - RULES.txt is binding.
+ - Micro-stack and Infra-stack boundaries are strict.
+ - No cross-service modifications unless explicitly requested.
+ - Declarar redes específicas como external: true según su propósito (p.ej. `backend-net`, `observability-net`, `restricted-net`).
+ - No Swarm unless explicitly declared.
 
 Execution rules:
 - Always propose plan before modifying files.
