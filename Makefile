@@ -783,7 +783,7 @@ test-smtp-relay-local:
 
 test-smtp-relay-flow:
 	@echo "=== TEST SMTP RELAY FLOW (POSTMARK API) ==="
-	docker exec monitoring-python python3 ops/services/smtp_relay/scripts/test_mail.py || (echo "Fallo Relay Flow" && exit 1)
+	docker exec monitoring-python python3 scripts/test_mail.py || (echo "Fallo Relay Flow" && exit 1)
 	@echo ""
 
 
