@@ -35,9 +35,14 @@ services:
     networks:
       - backend-net  # Red backend (DB + aplicaciones autorizadas)
       - observability-net # Acceso a la red de observabilidad (Loki)
+      - restricted-net # Red restringida para servicios específicos (sin acceso a Docker ni logs host)
 
 networks:
   backend-net:
     external: true
+
   observability-net:
+    external: true
+
+  restricted-net:
     external: true
