@@ -13,12 +13,13 @@ services:
 
     volumes:
       # Solo lectura de logs docker
+      # Se monta en modo "ro" (read-only) por motivos de seguridad.
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
 
       # ❌ ELIMINADO → rompe reproducibilidad
       # - ../../../:/opt/monitoring
 
-      # ❌ ELIMINADO
+      # ❌ ELIMINADO → rompe seguridad y permisos
       # - /var/log:/var/log
 
       # Acceso al socket de Docker para los scripts de docker_resources.sh y .py - SE INHABILITA POR SEGURIDAD EN LOS MICRO-STACKS

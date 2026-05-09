@@ -9,7 +9,7 @@ clients:
   - url: http://loki:3100/loki/api/v1/push
 
 positions:
-  filename: /var/log/promtail-positions.yml  # Archivo para rastrear las posiciones de lectura de logs
+  filename: /var/lib/promtail/promtail-positions.yml  # Archivo para rastrear las posiciones de lectura de logs
 
 scrape_configs:
 #   Logs de autenticación del sistema
@@ -23,7 +23,11 @@ scrape_configs:
         labels:
           job: auth_logs  # Etiqueta común para los logs
           service_name: system  # Nombre del servicio que queremos identificar
-          __path__: /var/log/*.log  # Patrón para incluir logs específicos (excluye logs rotados)
+          # Patrón para incluir logs específicos (excluye logs rotados)
+          __path__:
+            - /var/log/auth.log
+            - /var/log/fail2ban.log
+            - /var/log/kern.log
 
     # Configuración del pipeline para procesamiento con deduplicación
     pipeline_stages:

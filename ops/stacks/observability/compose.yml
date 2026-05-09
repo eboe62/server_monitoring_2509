@@ -9,9 +9,11 @@ services:
     container_name: ${PROMTAIL_CONTAINER_NAME}
 
     volumes:
-      - /var/log:/var/log:rw  # Permitir escritura para actualizar promtail-positions.yml
+      # Se monta en modo "ro" (read-only) por motivos de seguridad.
+      - /var/log:/var/log:ro
       - ./config/promtail-config.yml:/etc/promtail/promtail-config.yml:ro  # Configuración de Promtail
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - promtail-data:/var/lib/promtail
 
     command: -config.file=/etc/promtail/promtail-config.yml
 
@@ -26,7 +28,7 @@ services:
 #      Sin exposición de puertos (solo red interna observability-net)
 #      - "${PROMTAIL_PORT}:9080"  # Exposición opcional de métricas Promtail
     networks:
-      - observability-net  # Red de observabilidad (Loki/Grafana/Promtail)
+      - observability-net  # Red de observabilidad (Grafana/Loki/Promtail)
 
 # ------------------------------------------
 # LOKI
@@ -58,7 +60,7 @@ services:
           cpus: "0.5"
 
     networks:
-      - observability-net # Red de observabilidad (Loki/Grafana/Promtail)
+      - observability-net # Red de observabilidad (Grafana/Loki/Promtail)
 
 # ------------------------------------------
 # GRAFANA
@@ -126,8 +128,9 @@ services:
 volumes:
   loki-data:
     driver: local
-
   grafana-data:
+    driver: local
+  promtail-data:
     driver: local
 
 # ------------------------------------------
