@@ -9,7 +9,7 @@ ENV PYTHONUNBUFFERED=1 \
 
 WORKDIR /opt/monitoring
 
-# Paquetes mínimos necesarios
+# Paquetes con dependencias mínimas del sistema
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
     curl \
@@ -18,17 +18,17 @@ RUN apt-get update \
     coreutils \
  && rm -rf /var/lib/apt/lists/*
 
-# Crear usuario no root (UID fijo)
+# Usuario estándar (no-root, pero simple con UID fijo)
 RUN groupadd -g 10001 appuser \
  && useradd -u 10001 -g appuser -ms /bin/bash appuser
 
-# Copiar requirements primero (cache)
+# Copiar requirements primero con las dependencias Python (cache)
 COPY requirements.txt .
 
 # Instalar dependencias Python
 RUN pip install --no-cache-dir --no-compile -r requirements.txt
 
-# Copiar código del servicio
+# Copiar SOLO el código necesario para el servicio
 COPY src/ src/
 COPY scripts/ scripts/
 
@@ -43,18 +43,24 @@ RUN cd /tmp/supercronic \
  && rm -rf /tmp/supercronic
 
 # Copiar Cron + entrypoint
-COPY ops/stacks/cron/monitoring.cron /opt/monitoring/ops/stacks/cron/monitoring.cron
-COPY ops/stacks/cron/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
- # Logs internos y Permisos  explícitos fuera de /opt
+COPY ops/stacks/cron/monitoring.cron \
+     /opt/monitoring/ops/stacks/cron/monitoring.cron
+
+COPY ops/stacks/cron/docker-entrypoint.sh \
+     /usr/local/bin/docker-entrypoint.sh
+
+ # Logs internos y permisos runtime mínimos (build-time) fuera de /opt
  RUN chmod 755 /usr/local/bin/docker-entrypoint.sh \
  && chown appuser:appuser /usr/local/bin/docker-entrypoint.sh \
  && mkdir -p /opt/monitoring/logs \
  && chown appuser:appuser /opt/monitoring/logs \
- && chmod 755 /opt/monitoring \
- && chmod 755 /opt/monitoring/src /opt/monitoring/scripts \
  \
  # 🔑 CRÍTICO: logs escribibles
  && chmod 775 /opt/monitoring/logs \
+ \
+ && chmod 755 /opt/monitoring \
+ && chmod 755 /opt/monitoring/src \
+ && chmod 755 /opt/monitoring/scripts \
  \
  # Cron legible
  && chmod 644 /opt/monitoring/ops/stacks/cron/monitoring.cron \
@@ -62,7 +68,7 @@ COPY ops/stacks/cron/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
  # tmp necesario para runtime
  && chmod 1777 /tmp
 
-# Usuario no root
+# Usuario runtime no root
 USER appuser
 
 # Healthcheck para detectar fallos de cron
