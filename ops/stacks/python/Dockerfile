@@ -9,37 +9,39 @@ ENV PYTHONUNBUFFERED=1 \
 
 WORKDIR /opt/monitoring
 
-# Dependencias del sistema
+# Paquetes con dependencias mínimas del sistema
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
     bash \
     netcat-openbsd \
  && rm -rf /var/lib/apt/lists/*
 
-# Usuario estándar (no-root, pero simple)
+# Usuario estándar (no-root, pero simple con UID fijo)
 RUN groupadd -g 10001 appuser \
  && useradd -u 10001 -g appuser -ms /bin/bash appuser
 
-# Copiar requirements primero (cache)
+# Copiar requirements primero con las dependencias Python (cache)
 COPY requirements.txt .
 
 # Instalar dependencias Python
 RUN pip install --no-cache-dir --no-compile -r requirements.txt
 
-# Copiar SOLO lo necesario para el servicio
+# Copiar SOLO el código necesario para el servicio
 COPY src/ src/
 COPY scripts/ scripts/
 
 # Copiar entrypoint específico para la imagen Python
-COPY ops/stacks/python/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+COPY ops/stacks/python/docker-entrypoint.sh \
+    /usr/local/bin/docker-entrypoint.sh
 
-# Permisos: ⚠️ IMPORTANTE: crear dir para secrets runtime accesibles
+# Permisos: crear dir para logs y asegurar ejecutables (build-time)
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh \
  && chmod +x scripts/*.py || true \
  && mkdir -p /opt/monitoring/logs \
- && chown -R appuser:appuser /opt/monitoring
+ && chown appuser:appuser /opt/monitoring/logs \
+ && chown appuser:appuser /usr/local/bin/docker-entrypoint.sh || true
 
-# ⚠️ IMPORTANTE: mantener root para poder usar `su`
-USER appuser
+# Usuario runtime no root
+ USER appuser
 
 ENTRYPOINT ["docker-entrypoint.sh"]

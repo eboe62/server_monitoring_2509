@@ -240,7 +240,11 @@ echo ""
 info "Estado UFW"
 
 if command -v ufw >/dev/null 2>&1; then
-    sudo ufw status verbose
+    if [ "$EUID" -ne 0 ]; then
+        warn "UFW instalado — se requiere ejecutar como root para mostrar estado (omitido)"
+    else
+        ufw status verbose
+    fi
 else
     warn "UFW no instalado"
 fi
@@ -271,7 +275,11 @@ crontab -l 2>/dev/null || echo "Sin crontab"
 
 info "Cron root"
 
-sudo crontab -l 2>/dev/null || echo "Sin crontab root"
+if [ "$EUID" -ne 0 ]; then
+    warn "Comprobación de crontab root requiere privilegios de root (omitido)"
+else
+    crontab -l 2>/dev/null || echo "Sin crontab root"
+fi
 
 echo ""
 # ==========================================

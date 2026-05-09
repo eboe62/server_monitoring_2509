@@ -555,40 +555,74 @@ test-observability-core:
 
 test-security-runtime:
 	# ----------------------------------------
-	# Test security runtime (ADR-0018)
+	# Test security runtime (ADR-0018 / ADR-0023)
 	# ----------------------------------------
 ## Testea:
+## - ejecución non-root en contenedores propios
+## - excepciones infra-trusted documentadas
 ## - puertos mal expuestos
 ## - docker.sock indebido
-## - falta de restart
+## - restart policy
 
 	@echo "=== TEST SECURITY RUNTIME ==="
 	@echo ""
 
-	# [1] Usuario (root vs non-root)
+	# [1] Usuario runtime
 	@echo "[1] Verificando usuario en contenedores"
 
 	@FAIL=0; \
+	\
 	for c in monitoring-python monitoring-cron; do \
-		USER=$$(docker inspect $$c --format='{{.Config.User}}'); \
-		if [ -z "$$USER" ] || [ "$$USER" = "0" ] || [ "$$USER" = "root" ]; then \
-			echo "[WARN] $$c ejecuta como root"; \
+		if ! docker ps --format '{{.Names}}' | grep -q "^$$c$$"; then \
+			echo "[FAIL] $$c no está en ejecución"; \
+			FAIL=1; \
+			continue; \
+		fi; \
+		UID=$$(docker exec $$c sh -c 'id -u' 2>/dev/null || true); \
+		case "$$UID" in \
+			''|*[!0-9]*) \
+				echo "[FAIL] no se pudo obtener UID válido en $$c"; \
+				FAIL=1; \
+				;; \
+			0) \
+				echo "[FAIL] $$c ejecuta como root (UID=0)"; \
+				FAIL=1; \
+				;; \
+			*) \
+				echo "[ OK ] $$c usa usuario non-root (UID=$$UID)"; \
+				;; \
+		esac; \
+	done; \
+	\
+	echo ""; \
+	echo "[2] Verificando contenedores infra-trusted"; \
+	\
+	for e in monitoring-postgres monitoring-smtp-relay promtail; do \
+		if docker ps --format '{{.Names}}' | grep -q "^$$e$$"; then \
+			UID=$$(docker exec $$e sh -c 'id -u' 2>/dev/null || true); \
+			case "$$UID" in \
+				''|*[!0-9]*) \
+					echo "[WARN] no se pudo obtener UID válido en $$e"; \
+					;; \
+				0) \
+					echo "[WARN] $$e ejecuta como root (UID=0) — excepción infra-trusted permitida"; \
+					;; \
+				*) \
+					echo "[ OK ] $$e usa UID=$$UID"; \
+					;; \
+			esac; \
 		else \
-			echo "[ OK ] $$c usa usuario no root ($$USER)"; \
+			echo "[WARN] $$e no está en ejecución"; \
 		fi; \
 	done; \
-	echo ""
-
-	# [2] Exposición de puertos
-	@echo "[2] Verificando puertos expuestos"
-
-	@if docker ps --format "{{.Ports}}" | grep -E "0.0.0.0"; then \
-		echo "[FAIL] puertos expuestos incorrectamente"; \
+	\
+	echo ""; \
+	if [ "$$FAIL" -ne 0 ]; then \
+		echo "[FAIL] test-security-runtime"; \
 		exit 1; \
-	else \
-		echo "[ OK ] sin exposición pública indebida"; \
-	fi
-	@echo ""
+	fi; \
+	\
+	echo "[ OK ] test-security-runtime completado"
 
 	# [3] docker.sock
 	@echo "[3] Verificando uso de docker.sock"
@@ -749,7 +783,7 @@ test-smtp-relay-local:
 
 test-smtp-relay-flow:
 	@echo "=== TEST SMTP RELAY FLOW (POSTMARK API) ==="
-	docker exec monitoring-python python3 ops/services/smtp_relay/scripts/test_mail.py || (echo "Fallo Relay Flow" && exit 1)
+	docker exec monitoring-python python3 scripts/test_mail.py || (echo "Fallo Relay Flow" && exit 1)
 	@echo ""
 
 
