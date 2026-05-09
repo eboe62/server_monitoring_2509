@@ -33,13 +33,13 @@ COPY scripts/ scripts/
 # Copiar entrypoint específico para la imagen Python
 COPY ops/stacks/python/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
-# Permisos: ⚠️ IMPORTANTE: crear dir para secrets runtime accesibles
+# Permisos: crear dir para logs y asegurar ejecutables (build-time)
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh \
  && chmod +x scripts/*.py || true \
  && mkdir -p /opt/monitoring/logs \
- && chown -R appuser:appuser /opt/monitoring
+ && chown appuser:appuser /opt/monitoring/logs \
+ && chown appuser:appuser /usr/local/bin/docker-entrypoint.sh || true
 
-# ⚠️ IMPORTANTE: mantener root para poder usar `su`
 USER appuser
 
 ENTRYPOINT ["docker-entrypoint.sh"]

@@ -570,14 +570,37 @@ test-security-runtime:
 
 	@FAIL=0; \
 	for c in monitoring-python monitoring-cron; do \
-		USER=$$(docker inspect $$c --format='{{.Config.User}}'); \
-		if [ -z "$$USER" ] || [ "$$USER" = "0" ] || [ "$$USER" = "root" ]; then \
-			echo "[WARN] $$c ejecuta como root"; \
+		if ! docker ps --format '{{.Names}}' | grep -q "^$$c$$"; then \
+			echo "[WARN] $$c no está en ejecución"; \
+			FAIL=1; \
+			continue; \
+		fi; \
+		UID=$$(docker exec $$c sh -c 'id -u' 2>/dev/null || echo "ERR"); \
+		if [ "$$UID" = "ERR" ]; then \
+			echo "[FAIL] no se pudo ejecutar 'id' en $$c"; \
+			FAIL=1; \
+		elif [ "$$UID" -eq 0 ]; then \
+			echo "[FAIL] $$c ejecuta como root (UID=0)"; \
+			FAIL=1; \
 		else \
-			echo "[ OK ] $$c usa usuario no root ($$USER)"; \
+			echo "[ OK ] $$c usa usuario no root (UID=$$UID)"; \
 		fi; \
 	done; \
-	echo ""
+	# Comprobación para contenedores externos (solo WARN si son root) \
+	for e in monitoring-postgres monitoring-smtp-relay promtail; do \
+		if docker ps --format '{{.Names}}' | grep -q "^$$e$$"; then \
+			UID=$$(docker exec $$e sh -c 'id -u' 2>/dev/null || echo "ERR"); \
+			if [ "$$UID" = "ERR" ]; then \
+				echo "[WARN] no se pudo ejecutar 'id' en $$e"; \
+			elif [ "$$UID" -eq 0 ]; then \
+				echo "[WARN] $$e ejecuta como root (UID=0) — excepción permitida pero documentar"; \
+			else \
+				echo "[ OK ] $$e usa UID=$$UID"; \
+			fi; \
+		fi; \
+	done; \
+	echo ""; \
+	if [ "$$FAIL" -ne 0 ]; then exit 1; fi
 
 	# [2] Exposición de puertos
 	@echo "[2] Verificando puertos expuestos"
