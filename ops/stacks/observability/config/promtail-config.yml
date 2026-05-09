@@ -9,7 +9,7 @@ clients:
   - url: http://loki:3100/loki/api/v1/push
 
 positions:
-  filename: /var/log/promtail-positions.yml  # Archivo para rastrear las posiciones de lectura de logs
+  filename: /var/lib/promtail/promtail-positions.yml  # Archivo para rastrear las posiciones de lectura de logs
 
 scrape_configs:
 #   Logs de autenticación del sistema

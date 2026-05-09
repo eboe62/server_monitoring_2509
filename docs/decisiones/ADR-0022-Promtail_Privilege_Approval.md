@@ -23,7 +23,13 @@ Se aprueba (estado: Aprobado) permitir que Promtail monte los directorios necesa
 
 Recomendación aplicada (alcance limitado a Recomendación 1):
 
-- Mantener los mounts necesarios: `/var/log` y `/var/lib/docker/containers` (este último en modo `:ro` siempre que sea posible).
+- Mantener exclusivamente los mounts necesarios para observabilidad defensiva:
+  `/var/log` en modo solo lectura (`:ro`) para observación de eventos críticos del host
+  `/var/lib/docker/containers` en modo solo lectura (`:ro`) para ingestión de logs Docker
+El estado interno de Promtail (positions file) no debe persistirse sobre rutas del host y se almacena mediante volumen Docker explícito dedicado (`promtail-data`).
+La arquitectura adopta un modelo híbrido:
+  - observabilidad container-centric para servicios Docker
+  - observabilidad host-centric para eventos de seguridad del sistema anfitrión
 - Ejecutar Promtail en el stack de observabilidad (`observability-net`) como servicio de infraestructura (no como servicio de aplicación).
 - Garantizar imagen firmada/consistente y usar versiones fijas (no `:latest`).
 - Limitar recursos (CPU/mem) y ejecutar bajo cuentas kernel-namespaced y políticas de seccomp/APPArmor lo más restrictivas posibles.

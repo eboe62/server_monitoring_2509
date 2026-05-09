@@ -79,6 +79,11 @@ def parse_timestamp(log_line):
 
 # Función para obtener logs desde el último timestamp
 def get_log_lines():
+    # La ingestion de logs en el host está desactivada por defecto, para forzar el registro mediante contenedores.
+    if os.environ.get("ALLOW_HOST_LOGS", "false").lower() != "true":
+        log_info("[⚠️]: Ingestión desactivada en el host. Establece ALLOW_HOST_LOGS=true para activarla (no recomendado).")
+        return []
+
     if not os.path.exists(LOG_FILE):
         log_info(f"[❌]: El archivo de log {LOG_FILE} no existe.")
         return []
