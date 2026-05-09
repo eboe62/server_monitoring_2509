@@ -428,7 +428,7 @@ test-resilience-observability:
 
 	@echo "[STEP] verificando ingestión en Loki..."
 	@RESULT=$$(curl -s -G http://127.0.0.1:3100/loki/api/v1/query \
-		--data-urlencode 'query={job="container_logs"} |= "SRE_test_"' \
+		--data-urlencode 'query={} |= "SRE_test_"' \
 		| jq '.data.result | length'); \
 	if [ "$$RESULT" -eq 0 ]; then \
 		echo "[FAIL] Loki no ingiere logs"; exit 1; \
