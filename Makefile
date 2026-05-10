@@ -845,15 +845,25 @@ test-network:
 .PHONY: test-smtp-unitarios-integration
 
 test-smtp-unitarios-integration:
-	sudo apt update
-	sudo apt install -y python3.12-venv
-	rm -rf .venv-test
-	python3 -m venv .venv-test
-	./.venv-test/bin/pip install --upgrade pip
-	./.venv-test/bin/pip install -r requirements.txt pytest
-	PYTHONPATH=src ./.venv-test/bin/pytest tests/unit -q
-	PYTHONPATH=src ./.venv-test/bin/pytest tests/integration -q
-	rm -rf .venv-test
+	@echo "=== TEST SMTP UNIT & INTEGRATION ==="
+	@if command -v pytest >/dev/null 2>&1; then \
+		echo "Using system pytest"; \
+		PYTHONPATH=src pytest tests/unit -q || exit 1; \
+		PYTHONPATH=src pytest tests/integration -q || exit 1; \
+	else \
+		# Fallback: intentar crear venv si el sistema tiene el módulo venv
+		if command -v python3 >/dev/null 2>&1 && python3 -c "import venv" >/dev/null 2>&1; then \
+			rm -rf .venv-test; \
+			python3 -m venv .venv-test; \
+			./.venv-test/bin/python3 -m pip install --upgrade pip; \
+			./.venv-test/bin/python3 -m pip install --no-cache-dir -r requirements.txt pytest; \
+			PYTHONPATH=src ./.venv-test/bin/pytest tests/unit -q || exit 1; \
+			PYTHONPATH=src ./.venv-test/bin/pytest tests/integration -q || exit 1; \
+			rm -rf .venv-test; \
+		else \
+			echo "[ERROR] pytest no disponible y python3 venv no instalado"; exit 1; \
+		fi; \
+	fi
 
 # ------------------------------------------
 # DEBUG (troubleshooting)

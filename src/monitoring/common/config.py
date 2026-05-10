@@ -22,8 +22,24 @@ import html
 DEFAULT_ENV_PATH = os.getenv("SMTP_RELAY_ENV_PATH", "ops/services/smtp_relay/.env")
 DEFAULT_SECRETS_DIR = os.getenv("SMTP_RELAY_SECRETS_DIR", "ops/services/smtp_relay/secrets")
 
-# Modo SMTP: 'relay' (default, no creds required) o 'auth' (credenciales requeridas)
-SMTP_MODE = os.getenv("SMTP_MODE", "relay").lower()
+# NOTE: Do not cache SMTP_MODE at import-time. Use get_smtp_mode() to
+# determine mode dynamically at runtime to avoid import-time side-effects.
+
+def get_smtp_mode():
+    """Devuelve el modo SMTP válido: 'relay' o 'auth'.
+
+    Lee la variable de entorno `SMTP_MODE` en tiempo de ejecución, valida
+    valores permitidos y su comportamiento debe ser fail-fast ante valores
+    inválidos.
+    """
+    mode = os.getenv("SMTP_MODE", "relay")
+    if mode is None:
+        mode = "relay"
+    mode = mode.lower()
+    if mode not in ("relay", "auth"):
+        log_info(f"[❌]: SMTP_MODE inválido: {mode}. Valores permitidos: relay, auth")
+        raise RuntimeError(f"Invalid SMTP_MODE: {mode}")
+    return mode
 
 # ==========================================
 # CONFIGURACIÓN SMTP / EMAIL (valores iniciales desde el entorno)
@@ -77,7 +93,7 @@ def init_config(env_path: str = None, secrets_dir: str = None, secrets_required:
 
     # Determinar comportamiento sobre lectura de secrets:
     # precedence: explicit param > SMTP_MODE env
-    mode = os.getenv("SMTP_MODE", SMTP_MODE).lower()
+    mode = get_smtp_mode()
     if secrets_required is None:
         secrets_required = True if mode == "auth" else False
 
@@ -95,7 +111,7 @@ def init_config(env_path: str = None, secrets_dir: str = None, secrets_required:
     EMAIL_FROM = os.getenv("EMAIL_FROM")
     EMAIL_TO   = os.getenv("EMAIL_TO")
     CC_LIST    = os.getenv("CC_LIST", "").split(",") if os.getenv("CC_LIST") else []
-    SUBJECT    = os.getenv("📊 Informe")
+    SUBJECT    = os.getenv("SUBJECT", SUBJECT)
 
     # Actualizar DB desde entorno (posible cambio tras cargar .env)
     DB = {
@@ -258,14 +274,14 @@ def send_email(html_content: str = None, subject: str = None, email_to: str = No
 
                 log_info(f"[ℹ️ ]: Conexión TLS iniciada: Autenticando...")
 
-            # En modo 'auth' las credenciales son obligatorias y deben existir
-            mode = os.getenv("SMTP_MODE", SMTP_MODE).lower()
-            if mode == "auth":
-                if not SMTP_USER or not SMTP_PASS:
-                    log_info("[❌]: SMTP_MODE=auth pero faltan credenciales al intentar enviar correo")
-                    raise RuntimeError("SMTP credentials required for auth mode")
-                server.login(SMTP_USER, SMTP_PASS)
-                log_info(f"[ℹ️ ]: Autenticación SMTP exitosa.")
+                # En modo 'auth' las credenciales son obligatorias y deben existir
+                mode = get_smtp_mode()
+                if mode == "auth":
+                    if not SMTP_USER or not SMTP_PASS:
+                        log_info("[❌]: SMTP_MODE=auth pero faltan credenciales al intentar enviar correo")
+                        raise RuntimeError("SMTP credentials required for auth mode")
+                    server.login(SMTP_USER, SMTP_PASS)
+                    log_info(f"[ℹ️ ]: Autenticación SMTP exitosa.")
             else:
                 # relay-only: si hay credenciales, úsalas; si no, continúa sin autenticar
                 if SMTP_USER and SMTP_PASS:

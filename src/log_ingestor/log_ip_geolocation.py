@@ -77,6 +77,6 @@ def update_database():
 
 if __name__ == "__main__":
     # Inicializar configuración sensible en tiempo de ejecución (carga .env y secrets)
-        # Relay-only: este proceso no necesita credenciales SMTP
-        init_config(secrets_required=False)
+    # Relay-only: este proceso no necesita credenciales SMTP
+    init_config(secrets_required=False)
     update_database()

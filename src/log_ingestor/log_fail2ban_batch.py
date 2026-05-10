@@ -21,8 +21,6 @@ regex_patterns = [
     r"fail2ban\.actions\s+\[\d+\]: NOTICE\s+\[.*?\] Unban (?P<ip>[0-9.]+)",
 ]
 
-    # Relay-only: no se requieren credenciales SMTP para este batch
-    init_config(secrets_required=False)
 # Tipos de log según las expresiones regulares
 pattern_names = [
     "04_attempts_exceeded",
@@ -186,5 +184,6 @@ def process_logs():
 
 if __name__ == "__main__":
     # Inicializar configuración sensible en tiempo de ejecución (carga .env y secrets)
-    init_config()
+    # Relay-only: no se requieren credenciales SMTP para este batch
+    init_config(secrets_required=False)
     process_logs()
