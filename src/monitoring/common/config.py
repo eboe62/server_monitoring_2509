@@ -2,7 +2,6 @@
 # config.py
 import os
 import smtplib
-from dotenv import load_dotenv
 from email.mime.text import MIMEText
 from email.utils import formataddr
 from email.mime.multipart import MIMEMultipart
