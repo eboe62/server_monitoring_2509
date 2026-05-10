@@ -22,6 +22,9 @@ import html
 DEFAULT_ENV_PATH = os.getenv("SMTP_RELAY_ENV_PATH", "ops/services/smtp_relay/.env")
 DEFAULT_SECRETS_DIR = os.getenv("SMTP_RELAY_SECRETS_DIR", "ops/services/smtp_relay/secrets")
 
+# Modo SMTP: 'relay' (default, no creds required) o 'auth' (credenciales requeridas)
+SMTP_MODE = os.getenv("SMTP_MODE", "relay").lower()
+
 # ==========================================
 # CONFIGURACIÓN SMTP / EMAIL (valores iniciales desde el entorno)
 # ==========================================
@@ -52,7 +55,7 @@ DB = {
     "password": os.getenv("POSTGRES_PASSWORD"),
 }
 # INIT CONFIG (runtime explícito)
-def init_config(env_path: str = None, secrets_dir: str = None):
+def init_config(env_path: str = None, secrets_dir: str = None, secrets_required: bool = None):
     """
     Inicializa la configuración en tiempo de ejecución.
 
@@ -71,6 +74,12 @@ def init_config(env_path: str = None, secrets_dir: str = None):
 
     env_path = env_path or DEFAULT_ENV_PATH
     secrets_dir = secrets_dir or DEFAULT_SECRETS_DIR
+
+    # Determinar comportamiento sobre lectura de secrets:
+    # precedence: explicit param > SMTP_MODE env
+    mode = os.getenv("SMTP_MODE", SMTP_MODE).lower()
+    if secrets_required is None:
+        secrets_required = True if mode == "auth" else False
 
     # Cargar .env si existe
     if os.path.exists(env_path):
@@ -97,23 +106,47 @@ def init_config(env_path: str = None, secrets_dir: str = None):
         "password": os.getenv("POSTGRES_PASSWORD"),
     }
 
-    # Leer secrets SMTP del filesystem si están disponibles; fallback a variables de entorno
+    # Leer secrets SMTP del filesystem SOLO si el modo requiere secrets.
     user_path = os.path.join(secrets_dir, "smtp_user")
     pass_path = os.path.join(secrets_dir, "smtp_pass")
 
-    if os.path.exists(user_path):
-        SMTP_USER = open(user_path).read().strip()
-        log_info("[✅]: SMTP_USER cargado desde secrets")
-    else:
+    if not secrets_required:
+        # Relay-only mode: no se esperan credenciales. Solo usar variables de entorno si existen.
         SMTP_USER = os.getenv("SMTP_USER")
-        log_info("[⚠️]: SMTP_USER no encontrado en secrets")
-
-    if os.path.exists(pass_path):
-        SMTP_PASS = open(pass_path).read().strip()
-        log_info("[✅]: SMTP_PASS cargado desde secrets")
-    else:
         SMTP_PASS = os.getenv("SMTP_PASS")
-        log_info("[⚠️]: SMTP_PASS no encontrado en secrets")
+        log_info(f"[ℹ️]: SMTP_MODE=relay — no se esperan credenciales (secrets skipped). mode={mode}")
+    else:
+        # Auth-required: intentar cargar desde filesystem y fallar explícitamente si no existen
+        user_val = None
+        pass_val = None
+        if os.path.exists(user_path):
+            try:
+                with open(user_path) as f:
+                    user_val = f.read().strip()
+                log_info("[✅]: SMTP_USER cargado desde secrets")
+            except Exception as e:
+                log_info(f"[❌]: Error leyendo SMTP_USER desde {user_path}: {e}")
+        else:
+            log_info(f"[⚠️]: SMTP_USER no encontrado en secrets ({user_path})")
+
+        if os.path.exists(pass_path):
+            try:
+                with open(pass_path) as f:
+                    pass_val = f.read().strip()
+                log_info("[✅]: SMTP_PASS cargado desde secrets")
+            except Exception as e:
+                log_info(f"[❌]: Error leyendo SMTP_PASS desde {pass_path}: {e}")
+        else:
+            log_info(f"[⚠️]: SMTP_PASS no encontrado en secrets ({pass_path})")
+
+        # Fallback a variables de entorno si no se leyeron archivos
+        SMTP_USER = user_val or os.getenv("SMTP_USER")
+        SMTP_PASS = pass_val or os.getenv("SMTP_PASS")
+
+        # Hard-fail si el modo exige auth pero faltan credenciales
+        if not SMTP_USER or not SMTP_PASS:
+            log_info("[❌]: SMTP_MODE=auth — credenciales SMTP faltantes (se requieren smtp_user/smtp_pass)")
+            raise RuntimeError("SMTP credentials required but not provided")
 
     return {
         "SMTP_SERVER": SMTP_SERVER,
@@ -225,10 +258,19 @@ def send_email(html_content: str = None, subject: str = None, email_to: str = No
 
                 log_info(f"[ℹ️ ]: Conexión TLS iniciada: Autenticando...")
 
-            # Autenticación opcional
-            if SMTP_USER and SMTP_PASS:
+            # En modo 'auth' las credenciales son obligatorias y deben existir
+            mode = os.getenv("SMTP_MODE", SMTP_MODE).lower()
+            if mode == "auth":
+                if not SMTP_USER or not SMTP_PASS:
+                    log_info("[❌]: SMTP_MODE=auth pero faltan credenciales al intentar enviar correo")
+                    raise RuntimeError("SMTP credentials required for auth mode")
                 server.login(SMTP_USER, SMTP_PASS)
                 log_info(f"[ℹ️ ]: Autenticación SMTP exitosa.")
+            else:
+                # relay-only: si hay credenciales, úsalas; si no, continúa sin autenticar
+                if SMTP_USER and SMTP_PASS:
+                    server.login(SMTP_USER, SMTP_PASS)
+                    log_info(f"[ℹ️ ]: Autenticación SMTP exitosa (creds desde env/secrets).")
 
             # Enviar mensaje
             recipients = [email_to] + cc_list

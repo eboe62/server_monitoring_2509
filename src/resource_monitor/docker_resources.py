@@ -168,5 +168,6 @@ def main():
 
 if __name__ == "__main__":
     # Inicializar configuración sensible en tiempo de ejecución (carga .env y secrets)
-    init_config()
+    # Este entrypoint NO necesita credenciales SMTP; forzar relay-only
+    init_config(secrets_required=False)
     main()

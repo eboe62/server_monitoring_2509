@@ -111,5 +111,6 @@ def update_database():
 
 if __name__ == "__main__":
     # Inicializar configuración sensible en tiempo de ejecución (carga .env y secrets)
-    init_config()
+        # Relay-only: no credenciales necesarias para este proceso
+        init_config(secrets_required=False)
     update_database()

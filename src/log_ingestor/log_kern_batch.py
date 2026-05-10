@@ -202,6 +202,7 @@ def process_logs():
 
 if __name__ == "__main__":
     # Inicializar configuración sensible en tiempo de ejecución (carga .env y secrets)
-    init_config()
+        # Relay-only: no se requieren credenciales SMTP para estos batch jobs
+        init_config(secrets_required=False)
     process_logs()
 

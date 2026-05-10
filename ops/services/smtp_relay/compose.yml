@@ -19,6 +19,7 @@ services:
     environment:
       SMTP_SERVER: ${SMTP_SERVER}
       SMTP_PORT: ${SMTP_PORT}
+      SMTP_MODE: auth
       RELAYHOST: "[${SMTP_SERVER}]:${SMTP_PORT}"
       FROM_ADDRESS: ${EMAIL_FROM}
       MYNETWORKS: "127.0.0.0/8 172.16.0.0/12 [::1]/128"

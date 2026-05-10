@@ -21,7 +21,8 @@ regex_patterns = [
     r"\[(?P<log_ref>\d+)\]: (?P<reason>(Accepted publickey)) (?:for )?(?P<user>\S+) (?:with )?(?:from )?(?P<ip>[0-9.]+) port (?P<port>[0-9]+) ssh2: .+",
 ]
 # Nombres descriptivos para cada tipo de log
-pattern_names = [
+    # Relay-only: este entrypoint no requiere credenciales SMTP
+    init_config(secrets_required=False)
     "03_invalid_user",
     "08_connection_out",
     "02_no_negotiate",

@@ -36,6 +36,8 @@ services:
       - backend-net  # Red backend (DB + aplicaciones autorizadas)
       - observability-net # Acceso a la red de observabilidad (Loki)
       - restricted-net # Red restringida para servicios específicos (sin acceso a Docker ni logs host)
+    environment:
+      SMTP_MODE: relay
 
 networks:
   backend-net:

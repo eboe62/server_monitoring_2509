@@ -173,5 +173,6 @@ def process_alert():
 # ==========================================
 if __name__ == "__main__":
     # Inicializar configuración sensible en tiempo de ejecución (carga .env y secrets)
-    init_config()
+    # Este entrypoint no requiere credenciales SMTP; usar relay-only explícito
+    init_config(secrets_required=False)
     process_alert()
