@@ -67,9 +67,14 @@ jobs:
           # AUTH MODE
 
           os.environ["SMTP_MODE"] = "auth"
-          shutil.move(
-          shutil.move('ops/services/smtp_relay/secrets/smtp_user','ops/services/smtp_relay/secrets/smtp_user.bak')
-          shutil.move('ops/services/smtp_relay/secrets/smtp_pass','ops/services/smtp_relay/secrets/smtp_pass.bak')
+          smtp_user = "ops/services/smtp_relay/secrets/smtp_user"
+          smtp_pass = "ops/services/smtp_relay/secrets/smtp_pass"
+
+          smtp_user_bak = f"{smtp_user}.bak"
+          smtp_pass_bak = f"{smtp_pass}.bak"
+
+          shutil.move(smtp_user, smtp_user_bak)
+          shutil.move(smtp_pass, smtp_pass_bak)
           try:
             try:
               config.init_config()
