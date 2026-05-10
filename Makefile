@@ -847,11 +847,11 @@ test-network:
 test-smtp-unitarios-integration:
 	@echo "=== TEST SMTP UNIT & INTEGRATION ==="
 	@if command -v pytest >/dev/null 2>&1; then \
-		echo "Using system pytest"; \
+		echo "Utilizando system pytest"; \
 		PYTHONPATH=src pytest tests/unit -q || exit 1; \
 		PYTHONPATH=src pytest tests/integration -q || exit 1; \
 	else \
-		# Fallback: intentar crear venv si el sistema tiene el módulo venv
+		echo "⚠️ pytest no encontrado. Intentando entorno virtual temporal..."; \
 		if command -v python3 >/dev/null 2>&1 && python3 -c "import venv" >/dev/null 2>&1; then \
 			rm -rf .venv-test; \
 			python3 -m venv .venv-test; \
@@ -861,7 +861,8 @@ test-smtp-unitarios-integration:
 			PYTHONPATH=src ./.venv-test/bin/pytest tests/integration -q || exit 1; \
 			rm -rf .venv-test; \
 		else \
-			echo "[ERROR] pytest no disponible y python3 venv no instalado"; exit 1; \
+			echo "[ERROR] pytest no disponible y python3-venv no instalado"; \
+			exit 1; \
 		fi; \
 	fi
 

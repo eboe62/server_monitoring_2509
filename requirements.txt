@@ -13,3 +13,6 @@ geoip2>=4.8.0               # Geolocalización de IP's
 
 # Scheduling / misc
 schedule>=1.2.1             # Ejecución periódica dentro de scripts
+
+# testing
+PyYAML

@@ -47,7 +47,7 @@ jobs:
           echo "ci_user@test.com" > ops/services/smtp_relay/secrets/smtp_user
           echo "ci_pass" > ops/services/smtp_relay/secrets/smtp_pass
 
-        - name: Test init_config modes (relay/auth)
+      - name: Test init_config modes (relay/auth)
         run: |
           export PYTHONPATH=src
           python3 - <<'PY'
@@ -247,16 +247,23 @@ jobs:
         run: make test-smtp-ci
 
       # ------------------------------------------
-      # Run Python unit/integration tests
+      # SMTP unit + integration tests
       # ------------------------------------------
-      - name: Run Python tests (pytest)
+      - name: Test SMTP unit/integration
         run: |
           python3 -m pip install --upgrade pip
           python3 -m pip install -r requirements.txt
           python3 -m pip install pytest
+          make test-smtp-unitarios-integration
+
+      # ------------------------------------------
+      # Compose policy tests
+      # ------------------------------------------
+      - name: Test compose security policies
+        run: |
+          python3 -m pip install pyyaml pytest
           export PYTHONPATH=src
-          pytest tests/unit -q || (echo "Unit tests failed" && exit 1)
-          pytest tests/integration -q || (echo "Integration tests failed" && exit 1)
+          pytest tests/unit/test_compose_policy.py -q
 
       # ------------------------------------------
       # SECURITY RUNTIME (ADR-0018)
