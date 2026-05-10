@@ -840,6 +840,21 @@ test-network:
 	docker exec monitoring-python nc -z monitoring-postgres 5432
 	@echo ""
 
+# --- Unitarios + integración (Python)
+
+.PHONY: test-smtp-unitarios-integration
+
+test-smtp-unitarios-integration:
+	python3 -m venv .venv-test
+	./.venv-test/bin/pip install --upgrade pip
+	./.venv-test/bin/pip install -r requirements.txt pytest
+	./.venv-test/bin/python3
+	export PYTHONPATH=src
+	pytest tests/unit -q
+	pytest tests/integration -q
+	deactivate
+	rm -rf .venv-test
+
 # ------------------------------------------
 # DEBUG (troubleshooting)
 # debug = exploración manual (humano, ad-hoc, no determinista)
