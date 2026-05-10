@@ -845,14 +845,14 @@ test-network:
 .PHONY: test-smtp-unitarios-integration
 
 test-smtp-unitarios-integration:
+	sudo apt update
+	sudo apt install -y python3.12-venv
+	rm -rf .venv-test
 	python3 -m venv .venv-test
 	./.venv-test/bin/pip install --upgrade pip
 	./.venv-test/bin/pip install -r requirements.txt pytest
-	./.venv-test/bin/python3
-	export PYTHONPATH=src
-	pytest tests/unit -q
-	pytest tests/integration -q
-	deactivate
+	PYTHONPATH=src ./.venv-test/bin/pytest tests/unit -q
+	PYTHONPATH=src ./.venv-test/bin/pytest tests/integration -q
 	rm -rf .venv-test
 
 # ------------------------------------------
