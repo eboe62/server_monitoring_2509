@@ -1,12 +1,16 @@
-import os
 import smtplib
 from monitoring.common import config
 
 
 class DummySMTP:
+
+    last_instance = None
+
     def __init__(self, *a, **k):
         self.logged = None
         self.sent = False
+
+        DummySMTP.last_instance = self
 
     def __enter__(self):
         return self
@@ -42,7 +46,7 @@ def test_send_relay_no_login(monkeypatch):
     monkeypatch.setattr("socket.getaddrinfo", lambda *a, **k: [(None, None, None, None, ("127.0.0.1", 0))])
 
     monkeypatch.setattr(smtplib, "SMTP", DummySMTP)
-    config.init_config(secrets_required=False)
+    config.init_config()
     ok = config.send_email("hello", "subj", email_to="test@example.com")
     assert ok is True
 
