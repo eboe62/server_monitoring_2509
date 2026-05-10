@@ -152,8 +152,8 @@ def init_config(env_path: str = None, secrets_dir: str = None):
 
         if os.path.exists(user_path):
             try:
-        with open(user_path) as f:
-            user_val = f.read().strip()
+                with open(user_path) as f:
+                user_val = f.read().strip()
                 log_info("[✅]: SMTP_USER cargado desde secrets")
             except Exception as e:
                 log_info(f"[❌]: Error leyendo SMTP_USER desde {user_path}: {e}")
@@ -162,8 +162,8 @@ def init_config(env_path: str = None, secrets_dir: str = None):
 
         if os.path.exists(pass_path):
             try:
-        with open(pass_path) as f:
-            pass_val = f.read().strip()
+                with open(pass_path) as f:
+                pass_val = f.read().strip()
                 log_info("[✅]: SMTP_PASS cargado desde secrets")
             except Exception as e:
                 log_info(f"[❌]: Error leyendo SMTP_PASS desde {pass_path}: {e}")
