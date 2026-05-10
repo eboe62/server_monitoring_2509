@@ -4,6 +4,8 @@ ops/services/smtp_relay/secrets/*
 ops/services/smtp_relay/config/sasl_passwd
 ops/services/smtp_relay/config/sasl_passwd.db
 ops/services/**/secrets/*
+**/secrets/**
+!**/secrets/.gitkeep
 
 # === Entornos virtuales Python ===
 src/log_ingestor/venv/
@@ -41,3 +43,13 @@ docker-compose.override.yml
 # === Backups de base de datos ===
 /backups/
 /backups_old/
+*.backup
+*.bak
+*.dump
+*.sql
+
+# === Certificados ===
+*.pem
+*.key
+*.p12
+*.crt
