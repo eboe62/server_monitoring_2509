@@ -55,14 +55,19 @@ jobs:
           from monitoring.common import config
 
           # Ensure env-based relay mode works
+          # RELAY MODE
+
           os.environ.pop('SMTP_USER', None)
           os.environ.pop('SMTP_PASS', None)
           os.environ['SMTP_MODE'] = 'relay'
-          config.init_config(secrets_required=None)
+          config.init_config()
           print('OK: relay mode')
 
           # Simulate missing secrets for auth mode: move files temporarily
-          os.environ['SMTP_MODE'] = 'auth'
+          # AUTH MODE
+
+          os.environ["SMTP_MODE"] = "auth"
+          shutil.move(
           shutil.move('ops/services/smtp_relay/secrets/smtp_user','ops/services/smtp_relay/secrets/smtp_user.bak')
           shutil.move('ops/services/smtp_relay/secrets/smtp_pass','ops/services/smtp_relay/secrets/smtp_pass.bak')
           try:
