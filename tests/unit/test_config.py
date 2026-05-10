@@ -23,9 +23,12 @@ def test_auth_mode_with_files(tmp_path, monkeypatch):
     assert cfg["SMTP_PASS"] == "pass123"
 
 
-def test_auth_mode_missing_raises(monkeypatch):
+def test_auth_mode_missing_raises(tmp_path, monkeypatch):
     monkeypatch.setenv("SMTP_MODE", "auth")
     monkeypatch.delenv("SMTP_USER", raising=False)
     monkeypatch.delenv("SMTP_PASS", raising=False)
+    # use an empty tmp secrets dir to avoid existing workspace secrets
+    secrets_dir = tmp_path / "secrets"
+    secrets_dir.mkdir()
     with pytest.raises(RuntimeError):
-        config.init_config(secrets_required=None)
+        config.init_config(secrets_dir=str(secrets_dir), secrets_required=None)
