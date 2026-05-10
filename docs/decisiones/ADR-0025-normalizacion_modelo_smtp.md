@@ -29,8 +29,8 @@ Normalizar el modelo de configuración SMTP con las siguientes reglas:
    - `auth`: procesos en este modo requieren credenciales y, si `secrets` requeridos no están disponibles, deben fallar con un error claro en arranque (fail-fast).
 
 3. API runtime y librería de configuración (`monitoring.common.config`):
-   - Exponer `init_config(secrets_required: bool = True)` y respetar `SMTP_MODE`.
-   - Cuando `SMTP_MODE=relay`, callers deben invocar `init_config(secrets_required=False)` para evitar intentos de lectura de secrets.
+   - Exponer `init_config()` y respetar `SMTP_MODE`.
+   - Cuando `SMTP_MODE=relay`, callers deben invocar `init_config()` para evitar intentos de lectura de secrets.
    - Cuando `SMTP_MODE=auth`, `init_config()` valida la presencia de secrets y falla si faltan.
 
 4. Docker Compose / stacks:
@@ -60,7 +60,7 @@ Fail-fast en `auth` mejora observabilidad y evita procesos parcialmente iniciali
 
 ## Consecuencias
 
-- Cambios en la librería de configuración (`monitoring.common.config`) y en todos los entrypoints: se debe revisar que aquellos procesos que no requieren credenciales llamen `init_config(secrets_required=False)`.
+- Cambios en la librería de configuración (`monitoring.common.config`) y en todos los entrypoints: se debe revisar que aquellos procesos que no requieren credenciales llamen `init_config()`.
 - Actualización de los `compose.yml` de stacks para declarar `SMTP_MODE`.
 - Añadir documentación operativa sobre permisos de secrets y proceso de aprovisionamiento (host paths, permisos, owner/group, rotación).
 

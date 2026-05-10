@@ -119,7 +119,7 @@ def init_config(env_path: str = None, secrets_dir: str = None):
     EMAIL_FROM = os.getenv("EMAIL_FROM")
     EMAIL_TO   = os.getenv("EMAIL_TO")
     CC_LIST    = os.getenv("CC_LIST", "").split(",") if os.getenv("CC_LIST") else []
-    SUBJECT = os.getenv("SUBJECT", "📊 Informe")
+    SUBJECT    = os.getenv("📊 Informe")
 
     # Actualizar DB desde entorno (posible cambio tras cargar .env)
     DB = {
@@ -152,8 +152,7 @@ def init_config(env_path: str = None, secrets_dir: str = None):
 
         if os.path.exists(user_path):
             try:
-        with open(user_path) as f:
-            user_val = f.read().strip()
+                SMTP_USER = open(user_path).read().strip()
                 log_info("[✅]: SMTP_USER cargado desde secrets")
             except Exception as e:
                 log_info(f"[❌]: Error leyendo SMTP_USER desde {user_path}: {e}")
@@ -162,8 +161,7 @@ def init_config(env_path: str = None, secrets_dir: str = None):
 
         if os.path.exists(pass_path):
             try:
-        with open(pass_path) as f:
-            pass_val = f.read().strip()
+                SMTP_PASS = open(pass_path).read().strip()
                 log_info("[✅]: SMTP_PASS cargado desde secrets")
             except Exception as e:
                 log_info(f"[❌]: Error leyendo SMTP_PASS desde {pass_path}: {e}")

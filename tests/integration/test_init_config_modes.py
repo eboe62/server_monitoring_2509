@@ -8,7 +8,7 @@ def test_init_config_modes_ci(tmp_path):
     os.environ.pop("SMTP_USER", None)
     os.environ.pop("SMTP_PASS", None)
     os.environ["SMTP_MODE"] = "relay"
-    cfg = config.init_config(secrets_required=None)
+    cfg = config.init_config()
     assert cfg["SMTP_USER"] is None
 
     # Auth mode missing secrets: must raise
@@ -25,7 +25,7 @@ def test_init_config_modes_ci(tmp_path):
 
     try:
         try:
-            config.init_config(secrets_dir=str(secrets_dir), secrets_required=None)
+            config.init_config(secrets_dir=str(secrets_dir))
             raise AssertionError("Expected RuntimeError for missing auth secrets")
         except RuntimeError:
             pass

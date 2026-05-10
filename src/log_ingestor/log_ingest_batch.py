@@ -185,5 +185,5 @@ def process_logs():
 if __name__ == "__main__":
     # Inicializar configuración sensible en tiempo de ejecución (carga .env y secrets)
     # Relay-only: este entrypoint no requiere credenciales SMTP
-    init_config(secrets_required=False)
+    init_config()
     process_logs()

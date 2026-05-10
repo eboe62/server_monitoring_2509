@@ -1,3 +1,4 @@
+```python
 import smtplib
 from monitoring.common import config
 
@@ -42,17 +43,32 @@ def test_send_relay_no_login(monkeypatch):
       - no requiere auth
       - no debe ejecutar login()
     """
+
     monkeypatch.setenv("SMTP_MODE", "relay")
+
     monkeypatch.delenv("SMTP_USER", raising=False)
     monkeypatch.delenv("SMTP_PASS", raising=False)
+
     monkeypatch.setenv("EMAIL_FROM", "noreply@test.local")
 
     # evitar resolución DNS real
-    monkeypatch.setattr("socket.getaddrinfo", lambda *a, **k: [(None, None, None, None, ("127.0.0.1", 0))])
+    monkeypatch.setattr(
+        "socket.getaddrinfo",
+        lambda *a, **k: [
+            (None, None, None, None, ("127.0.0.1", 0))
+        ]
+    )
 
     monkeypatch.setattr(smtplib, "SMTP", DummySMTP)
+
     config.init_config()
-    ok = config.send_email("hello", "subj", email_to="test@example.com")
+
+    ok = config.send_email(
+        "hello",
+        "subj",
+        email_to="test@example.com"
+    )
+
     assert ok is True
 
     smtp_instance = DummySMTP.last_instance
@@ -61,22 +77,38 @@ def test_send_relay_no_login(monkeypatch):
     assert smtp_instance.sent is True
     assert smtp_instance.logged is None
 
+
 def test_send_auth_login(monkeypatch):
     """
     auth:
       - requiere auth SMTP
       - debe ejecutar login()
     """
+
     monkeypatch.setenv("SMTP_MODE", "auth")
+
     monkeypatch.setenv("SMTP_USER", "u123")
     monkeypatch.setenv("SMTP_PASS", "p123")
+
     monkeypatch.setenv("EMAIL_FROM", "noreply@test.local")
 
-    monkeypatch.setattr("socket.getaddrinfo", lambda *a, **k: [(None, None, None, None, ("127.0.0.1", 0))])
+    monkeypatch.setattr(
+        "socket.getaddrinfo",
+        lambda *a, **k: [
+            (None, None, None, None, ("127.0.0.1", 0))
+        ]
+    )
+
     monkeypatch.setattr(smtplib, "SMTP", DummySMTP)
 
     config.init_config()
-    ok = config.send_email("hello", "subj", email_to="test@example.com")
+
+    ok = config.send_email(
+        "hello",
+        "subj",
+        email_to="test@example.com"
+    )
+
     assert ok is True
 
     smtp_instance = DummySMTP.last_instance
@@ -84,3 +116,4 @@ def test_send_auth_login(monkeypatch):
     assert smtp_instance is not None
     assert smtp_instance.sent is True
     assert smtp_instance.logged == ("u123", "p123")
+```
