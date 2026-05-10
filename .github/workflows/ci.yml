@@ -47,8 +47,9 @@ jobs:
           echo "ci_user@test.com" > ops/services/smtp_relay/secrets/smtp_user
           echo "ci_pass" > ops/services/smtp_relay/secrets/smtp_pass
 
-      - name: Test init_config modes (relay/auth)
+        - name: Test init_config modes (relay/auth)
         run: |
+          export PYTHONPATH=src
           python3 - <<'PY'
           import os, sys, shutil
           from monitoring.common import config
@@ -65,15 +66,15 @@ jobs:
           shutil.move('ops/services/smtp_relay/secrets/smtp_user','ops/services/smtp_relay/secrets/smtp_user.bak')
           shutil.move('ops/services/smtp_relay/secrets/smtp_pass','ops/services/smtp_relay/secrets/smtp_pass.bak')
           try:
-              try:
-                  config.init_config()
-                  print('ERROR: auth mode did not fail as expected')
-                  sys.exit(1)
-              except Exception as e:
-                  print('OK: auth mode missing secrets failed as expected:', e)
+            try:
+              config.init_config()
+              print('ERROR: auth mode did not fail as expected')
+              sys.exit(1)
+            except Exception as e:
+              print('OK: auth mode missing secrets failed as expected:', e)
           finally:
-              shutil.move('ops/services/smtp_relay/secrets/smtp_user.bak','ops/services/smtp_relay/secrets/smtp_user')
-              shutil.move('ops/services/smtp_relay/secrets/smtp_pass.bak','ops/services/smtp_relay/secrets/smtp_pass')
+            shutil.move('ops/services/smtp_relay/secrets/smtp_user.bak','ops/services/smtp_relay/secrets/smtp_user')
+            shutil.move('ops/services/smtp_relay/secrets/smtp_pass.bak','ops/services/smtp_relay/secrets/smtp_pass')
           PY
 
       # ------------------------------------------
