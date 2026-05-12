@@ -1,7 +1,15 @@
 #!/usr/bin/env python3
 # alert_risk.py
-from monitoring.common.config import log_info, send_email, init_config, connect_db, close_db, build_html_table
 import html
+from monitoring.common.config import (
+    log_info,
+    send_email,
+    init_config,
+    connect_db,
+    close_db,
+    build_html_table,
+    get_month_gap,
+)
 
 # Las credenciales SMTP se gestionan exclusivamente desde
 # monitoring.common.config.init_config() en tiempo de ejecución.
@@ -76,7 +84,11 @@ def process_alert():
                 SELECT
                     alp.attacking_octets,
                     CASE
-                        WHEN BOOL_OR(alp.log_type = '06_login_accepted' OR alp.log_type = '05_connection_in') THEN 10
+                        WHEN BOOL_OR(
+                            alp.log_type = '06_login_accepted'
+                            OR alp.log_type = '05_connection_in'
+                        )
+                        THEN 10
                         ELSE LEAST(COUNT(DISTINCT alp.log_type), 108)
                     END AS log_type_category
                 FROM attacks_last_period alp
@@ -148,17 +160,22 @@ def process_alert():
 
         html_parts.append(
             build_html_table(
-                headers,
-                rows,
+                headers=headers,
+                rows=rows,
                 "Tabla: IP's que han conseguido entrar en el servidor",
-                MAX_ROWS_PER_TABLE
+                max_rows=MAX_ROWS_PER_TABLE
                 )
         )
 
         html_parts.append("<br>")
         html_parts.append(f"<p>{html.escape(reasons_text)}</p>")
         html_parts.append("<br>")
-        html_parts.append("<p>Un saludo<br>AppVisibility<br>http://www.appvisibility.es/</p>")
+        html_parts.append(
+            "<p>Un saludo<br>"
+            "AppVisibility<br>"
+            "http://www.appvisibility.es/"
+            "</p>"
+        )
         html_parts.append("</body></html>")
 
         html_body = "\n".join(html_parts)
@@ -188,10 +205,13 @@ def process_alert():
 # ==========================================
 # MAIN
 # ==========================================
+def main():
+    init_config()
+    process_alert()
+
 if __name__ == "__main__":
     # Inicializar configuración sensible en tiempo de ejecución
     # - carga .env
     # - carga secrets si SMTP_MODE=auth
     # - modo relay no no requiere credenciales SMTP; usar relay-only explícito
-    init_config()
-    process_alert()
+    main()

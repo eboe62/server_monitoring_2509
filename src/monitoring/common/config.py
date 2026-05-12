@@ -10,6 +10,12 @@ import re
 import socket
 import html
 
+# dotenv opcional (pipeline CI no tiene capacidad para importar load_dotenv lo que provoca error)
+try:
+    from dotenv import load_dotenv
+except ImportError:
+    load_dotenv = None
+
 # ==========================================
 # 🔧 RUTAS DE CONFIGURACIÓN (sobrescribibles por entorno)
 # ==========================================
@@ -108,8 +114,11 @@ def init_config(env_path: str = None, secrets_dir: str = None):
     # Cargar .env si existe
     if os.path.exists(env_path):
         try:
-            load_dotenv(env_path)
-            log_info(f"[ℹ️]: Se ha cargado .env desde {env_path}")
+            if load_dotenv:
+                load_dotenv(env_path)
+                log_info(f"[ℹ️]: Se ha cargado .env desde {env_path}")
+            else:
+                log_info("[⚠️]: python-dotenv no instalado; se omite carga .env")
         except Exception as e:
             log_info(f"[⚠️]: Error cargando .env ({env_path}): {e}")
     else:

@@ -62,7 +62,12 @@ def test_send_relay_no_login(monkeypatch):
 
     monkeypatch.setattr(smtplib, "SMTP", DummySMTP)
     config.init_config()
-    ok = config.send_email("hello", "subj", email_to="test@example.com")
+    ok = config.send_email(
+        html_content="hello",
+        subject="subj",
+        email_to="test@example.com",
+    )
+
     assert ok is True
 
     smtp_instance = DummySMTP.last_instance
@@ -97,15 +102,22 @@ def test_send_auth_login(monkeypatch):
     (secrets_dir / "smtp_user").write_text("u123")
     (secrets_dir / "smtp_pass").write_text("p123")
 
-    monkeypatch.setenv(
-        "SMTP_RELAY_SECRETS_DIR",
-        str(secrets_dir)
+    monkeypatch.setattr(
+        "socket.getaddrinfo",
+        lambda *a, **k: [
+            (None, None, None, None, ("127.0.0.1", 0))
+        ],
     )
-    monkeypatch.setattr("socket.getaddrinfo", lambda *a, **k: [(None, None, None, None, ("127.0.0.1", 0))])
+
     monkeypatch.setattr(smtplib, "SMTP", DummySMTP)
 
-    config.init_config()
-    ok = config.send_email("hello", "subj", email_to="test@example.com")
+    config.init_config(secrets_dir=str(secrets_dir))
+    ok = config.send_email(
+        html_content="hello",
+        subject="subj",
+        email_to="test@example.com",
+    )
+
     assert ok is True
 
     smtp_instance = DummySMTP.last_instance
