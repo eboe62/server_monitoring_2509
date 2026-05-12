@@ -164,7 +164,7 @@ def process_alert():
                 rows=rows,
                 "Tabla: IP's que han conseguido entrar en el servidor",
                 max_rows=MAX_ROWS_PER_TABLE
-                )
+            )
         )
 
         html_parts.append("<br>")
