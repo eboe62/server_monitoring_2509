@@ -13,10 +13,15 @@ import html
 
 # Configuramos un máximo de filas a mostrar por tabla (None = sin límite)
 MAX_ROWS_PER_TABLE = None
-# Configuramos un periodo de tiempo (meses)
+# Configuramos un periodo temporal (meses)
 MONTH_GAP = 4
 
 def process_alert():
+    """
+    Genera alerta de IPs que han conseguido acceder al servidor
+    y envía el resultado por correo.
+    """
+
     log_info(f"[📌]: INICIO TEST: Atacantes que han conseguido entrar en el servidor")
 
     # ==========================================
@@ -35,7 +40,9 @@ def process_alert():
 
         cursor = conn.cursor()
 
-        # Fechas de referencia (como strings ISO)
+        # ==========================================
+        # Cálculo de fechas (como strings ISO)
+        # ==========================================
         hoy, primer_dia_mes_actual, primer_dia_mes_inicio, fecha_anterior_str = get_month_gap(MONTH_GAP)
 
         log_info(f"[ℹ️ ]: Cálculo fechas: hoy={hoy}, desde={primer_dia_mes_inicio}")
@@ -99,6 +106,9 @@ def process_alert():
             ORDER BY risk_score DESC;
         """
 
+        # ==========================================
+        # Ejecutar query
+        # ==========================================
         cursor.execute(query)
         rows = cursor.fetchall()
 
@@ -136,7 +146,14 @@ def process_alert():
 
         headers = ["Fecha","Referencia","Tipo","Ataques","IP","Usuario","Puerto","País","Ciudad","Riesgo"]
 
-        html_parts.append(build_html_table(headers, rows, "Tabla: IP's que han conseguido entrar en el servidor", MAX_ROWS_PER_TABLE))
+        html_parts.append(
+            build_html_table(
+                headers,
+                rows,
+                "Tabla: IP's que han conseguido entrar en el servidor",
+                MAX_ROWS_PER_TABLE
+                )
+        )
 
         html_parts.append("<br>")
         html_parts.append(f"<p>{html.escape(reasons_text)}</p>")
@@ -172,7 +189,9 @@ def process_alert():
 # MAIN
 # ==========================================
 if __name__ == "__main__":
-    # Inicializar configuración sensible en tiempo de ejecución (carga .env y secrets)
-    # Este entrypoint no requiere credenciales SMTP; usar relay-only explícito
+    # Inicializar configuración sensible en tiempo de ejecución
+    # - carga .env
+    # - carga secrets si SMTP_MODE=auth
+    # - modo relay no no requiere credenciales SMTP; usar relay-only explícito
     init_config()
     process_alert()

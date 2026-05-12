@@ -42,10 +42,20 @@ def test_send_relay_no_login(monkeypatch):
       - no requiere auth
       - no debe ejecutar login()
     """
+
+    # limpiar estado previo global
+    DummySMTP.last_instance = None
+
     monkeypatch.setenv("SMTP_MODE", "relay")
+
+    # IMPORTANTE:
+    # limpiar variables para evitar contaminación CI/CD
     monkeypatch.delenv("SMTP_USER", raising=False)
     monkeypatch.delenv("SMTP_PASS", raising=False)
     monkeypatch.setenv("EMAIL_FROM", "noreply@test.local")
+
+    # evitar lectura accidental de secrets reales
+    monkeypatch.setenv("SMTP_RELAY_SECRETS_DIR", "/tmp/nonexistent-secrets")
 
     # evitar resolución DNS real
     monkeypatch.setattr("socket.getaddrinfo", lambda *a, **k: [(None, None, None, None, ("127.0.0.1", 0))])
@@ -59,6 +69,8 @@ def test_send_relay_no_login(monkeypatch):
 
     assert smtp_instance is not None
     assert smtp_instance.sent is True
+
+    # relay NO debe autenticarse
     assert smtp_instance.logged is None
 
 def test_send_auth_login(monkeypatch):
@@ -67,11 +79,28 @@ def test_send_auth_login(monkeypatch):
       - requiere auth SMTP
       - debe ejecutar login()
     """
+
+    # limpiar estado previo global
+    DummySMTP.last_instance = None
+
     monkeypatch.setenv("SMTP_MODE", "auth")
-    monkeypatch.setenv("SMTP_USER", "u123")
-    monkeypatch.setenv("SMTP_PASS", "p123")
     monkeypatch.setenv("EMAIL_FROM", "noreply@test.local")
 
+    # NO usar variables entorno para evitar contaminación
+    monkeypatch.delenv("SMTP_USER", raising=False)
+    monkeypatch.delenv("SMTP_PASS", raising=False)
+
+    # crear secrets temporales controlados
+    secrets_dir = tmp_path / "secrets"
+    secrets_dir.mkdir()
+
+    (secrets_dir / "smtp_user").write_text("u123")
+    (secrets_dir / "smtp_pass").write_text("p123")
+
+    monkeypatch.setenv(
+        "SMTP_RELAY_SECRETS_DIR",
+        str(secrets_dir)
+    )
     monkeypatch.setattr("socket.getaddrinfo", lambda *a, **k: [(None, None, None, None, ("127.0.0.1", 0))])
     monkeypatch.setattr(smtplib, "SMTP", DummySMTP)
 
@@ -83,4 +112,6 @@ def test_send_auth_login(monkeypatch):
 
     assert smtp_instance is not None
     assert smtp_instance.sent is True
+
+    # auth SÍ debe autenticarse
     assert smtp_instance.logged == ("u123", "p123")
