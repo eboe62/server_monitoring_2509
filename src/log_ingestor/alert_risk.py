@@ -162,8 +162,8 @@ def process_alert():
             build_html_table(
                 headers=headers,
                 rows=rows,
-                "Tabla: IP's que han conseguido entrar en el servidor",
-                max_rows=MAX_ROWS_PER_TABLE
+                title="Tabla: IP's que han conseguido entrar en el servidor",
+                max_rows=MAX_ROWS_PER_TABLE,
             )
         )
 
