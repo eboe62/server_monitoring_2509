@@ -55,10 +55,18 @@ def test_send_relay_no_login(monkeypatch):
     monkeypatch.setenv("EMAIL_FROM", "noreply@test.local")
 
     # evitar lectura accidental de secrets reales
-    monkeypatch.setenv("SMTP_RELAY_SECRETS_DIR", "/tmp/nonexistent-secrets")
+    monkeypatch.setenv(
+        "SMTP_RELAY_SECRETS_DIR",
+        "/tmp/nonexistent-secrets"
+    )
 
     # evitar resolución DNS real
-    monkeypatch.setattr("socket.getaddrinfo", lambda *a, **k: [(None, None, None, None, ("127.0.0.1", 0))])
+    monkeypatch.setattr(
+        "socket.getaddrinfo",
+        lambda *a, **k: [
+            (None, None, None, None, ("127.0.0.1", 0))
+        ],
+    )
 
     monkeypatch.setattr(smtplib, "SMTP", DummySMTP)
     config.init_config()
@@ -78,7 +86,7 @@ def test_send_relay_no_login(monkeypatch):
     # relay NO debe autenticarse
     assert smtp_instance.logged is None
 
-def test_send_auth_login(monkeypatch):
+def test_send_auth_login(monkeypatch, tmp_path):
     """
     auth:
       - requiere auth SMTP
