@@ -206,7 +206,6 @@ def process_alert():
 # MAIN
 # ==========================================
 def main():
-    init_config()
     process_alert()
 
 if __name__ == "__main__":
@@ -214,4 +213,5 @@ if __name__ == "__main__":
     # - carga .env
     # - carga secrets si SMTP_MODE=auth
     # - modo relay no no requiere credenciales SMTP; usar relay-only explícito
+    init_config()
     main()
