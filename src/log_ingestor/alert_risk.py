@@ -1,7 +1,15 @@
 #!/usr/bin/env python3
 # alert_risk.py
-from monitoring.common.config import log_info, send_email, init_config, connect_db, close_db, build_html_table
 import html
+from monitoring.common.config import (
+    log_info,
+    send_email,
+    init_config,
+    connect_db,
+    close_db,
+    build_html_table,
+    get_month_gap,
+)
 
 # Las credenciales SMTP se gestionan exclusivamente desde
 # monitoring.common.config.init_config() en tiempo de ejecución.
@@ -13,10 +21,15 @@ import html
 
 # Configuramos un máximo de filas a mostrar por tabla (None = sin límite)
 MAX_ROWS_PER_TABLE = None
-# Configuramos un periodo de tiempo (meses)
+# Configuramos un periodo temporal (meses)
 MONTH_GAP = 4
 
 def process_alert():
+    """
+    Genera alerta de IPs que han conseguido acceder al servidor
+    y envía el resultado por correo.
+    """
+
     log_info(f"[📌]: INICIO TEST: Atacantes que han conseguido entrar en el servidor")
 
     # ==========================================
@@ -35,7 +48,9 @@ def process_alert():
 
         cursor = conn.cursor()
 
-        # Fechas de referencia (como strings ISO)
+        # ==========================================
+        # Cálculo de fechas (como strings ISO)
+        # ==========================================
         hoy, primer_dia_mes_actual, primer_dia_mes_inicio, fecha_anterior_str = get_month_gap(MONTH_GAP)
 
         log_info(f"[ℹ️ ]: Cálculo fechas: hoy={hoy}, desde={primer_dia_mes_inicio}")
@@ -69,7 +84,11 @@ def process_alert():
                 SELECT
                     alp.attacking_octets,
                     CASE
-                        WHEN BOOL_OR(alp.log_type = '06_login_accepted' OR alp.log_type = '05_connection_in') THEN 10
+                        WHEN BOOL_OR(
+                            alp.log_type = '06_login_accepted'
+                            OR alp.log_type = '05_connection_in'
+                        )
+                        THEN 10
                         ELSE LEAST(COUNT(DISTINCT alp.log_type), 108)
                     END AS log_type_category
                 FROM attacks_last_period alp
@@ -99,6 +118,9 @@ def process_alert():
             ORDER BY risk_score DESC;
         """
 
+        # ==========================================
+        # Ejecutar query
+        # ==========================================
         cursor.execute(query)
         rows = cursor.fetchall()
 
@@ -136,12 +158,24 @@ def process_alert():
 
         headers = ["Fecha","Referencia","Tipo","Ataques","IP","Usuario","Puerto","País","Ciudad","Riesgo"]
 
-        html_parts.append(build_html_table(headers, rows, "Tabla: IP's que han conseguido entrar en el servidor", MAX_ROWS_PER_TABLE))
+        html_parts.append(
+            build_html_table(
+                headers=headers,
+                rows=rows,
+                title="Tabla: IP's que han conseguido entrar en el servidor",
+                max_rows=MAX_ROWS_PER_TABLE,
+            )
+        )
 
         html_parts.append("<br>")
         html_parts.append(f"<p>{html.escape(reasons_text)}</p>")
         html_parts.append("<br>")
-        html_parts.append("<p>Un saludo<br>AppVisibility<br>http://www.appvisibility.es/</p>")
+        html_parts.append(
+            "<p>Un saludo<br>"
+            "AppVisibility<br>"
+            "http://www.appvisibility.es/"
+            "</p>"
+        )
         html_parts.append("</body></html>")
 
         html_body = "\n".join(html_parts)
@@ -172,6 +206,9 @@ def process_alert():
 # MAIN
 # ==========================================
 if __name__ == "__main__":
-    # Inicializar configuración sensible en tiempo de ejecución (carga .env y secrets)
+    # Inicializar configuración sensible en tiempo de ejecución
+    # - carga .env
+    # - carga secrets si SMTP_MODE=auth
+    # - modo relay no no requiere credenciales SMTP; usar relay-only explícito
     init_config()
     process_alert()

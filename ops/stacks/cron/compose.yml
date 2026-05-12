@@ -34,6 +34,8 @@ services:
 
     networks:
       - backend-net  # Red backend (DB + aplicaciones autorizadas)
+    environment:
+      SMTP_MODE: relay
 
 networks:
   backend-net:
