@@ -1,97 +1,74 @@
-# ADR-0016 — Host Hardening Execution Policy
+# ADR-0016 — Política de aislamiento y segmentación de redes Docker
 
-Fecha: 2026-03-14
+Fecha: 2026-05-06
 Estado: Aprobado
-Ámbito: server_monitoring
+Ámbito: server_monitoring_2509
 
 ## Contexto
-El proyecto server_monitoring adopta una arquitectura container-first basada en Infraestructura como Código (IaC).
 
-Principios fundamentales del proyecto:
-  - El host no ejecuta lógica de aplicación
-  - Todo procesamiento funcional se ejecuta dentro de contenedores
-  - El comportamiento del sistema se define declarativamente mediante Docker Compose y el repositorio Git
+La plataforma está basada en múltiples stacks Docker desacoplados mediante Compose e infraestructura declarativa.
 
-Sin embargo, existen ciertas tareas que deben ejecutarse directamente en el host porque afectan a:
-  - configuración del kernel
-  - configuración del sistema operativo
-  - límites de recursos del runtime Docker
-  - políticas de seguridad del sistema
+Durante la evolución del sistema aparecieron varios riesgos:
+- comunicación excesivamente permisiva entre servicios,
+- exposición innecesaria de puertos,
+- acoplamiento entre stacks,
+- dificultad para delimitar dominios funcionales,
+- y propagación potencial de incidentes entre contenedores.
 
-Estas tareas no forman parte de la lógica de aplicación, sino del **endurecimiento y configuración del host**.
+Además, algunos servicios externos requieren exposición parcial controlada mientras que otros deben permanecer únicamente accesibles desde redes internas.
 
-Ejemplos presentes en el proyecto:
-  - configure_docker_limits.sh
-  - apply_ssh_ratelimit.sh
+## Problema
 
-Si no se define explícitamente este modelo, puede parecer que estas ejecuciones violan el principio de arquitectura container-first.
+El uso de redes Docker compartidas sin segmentación explícita:
+- dificulta aplicar el principio de mínimo privilegio,
+- incrementa superficie de ataque,
+- reduce trazabilidad de comunicaciones,
+- y complica la evolución segura de la arquitectura.
 
-Por ello se establece una política clara para la ejecución de scripts de hardening del host.
+Era necesario definir una política homogénea de segmentación de redes y exposición de servicios.
 
 ## Decisión
-Se distingue explícitamente entre dos tipos de ejecución:
-  - Lógica de aplicación
-  - Configuración y hardening del host
 
-### Lógica de aplicación
-La lógica de aplicación incluye:
-  - scripts Python
-  - ingesta de logs
-  - monitorización de recursos
-  - tareas programadas del sistema
-  - procesamiento de datos
+Se adopta una estrategia de segmentación explícita mediante redes Docker diferenciadas por dominio funcional.
 
-Estas tareas deben ejecutarse exclusivamente dentro de contenedores Docker.
+Principios generales:
 
-En este proyecto se ejecutan mediante:
-  - contenedor monitoring-python
-  - contenedor monitoring-cron
-  - scheduler Supercronic
+- Cada stack debe conectarse únicamente a las redes estrictamente necesarias.
+- La exposición de puertos debe minimizarse.
+- Los servicios internos no deben exponerse directamente al host salvo necesidad justificada.
+- Las comunicaciones entre dominios deben ser explícitas y auditables.
 
-El host no debe ejecutar directamente código de aplicación del proyecto.
+Clasificación de redes:
 
-### Hardening y configuración del host
-Algunas tareas afectan al sistema base y deben ejecutarse directamente en el host.
+- Redes internas de aplicación
+  Uso:
+  - comunicación privada entre servicios del mismo dominio funcional.
 
-Ejemplos:
-  - configuración de límites de Docker
-  - políticas de seguridad SSH
-  - parámetros del kernel
-  - limitación de recursos del sistema
-  - protección frente a ataques de fuerza bruta
+- Redes compartidas controladas
+  Uso:
+  - integración explícita entre stacks relacionados.
 
-Estas tareas se consideran **configuración de infraestructura** y están fuera del ámbito de ejecución de contenedores.
+- Redes restringidas
+  Uso:
+  - servicios sensibles,
+  - relay SMTP,
+  - observabilidad,
+  - componentes con requisitos especiales de endurecimiento.
 
-Por tanto pueden ejecutarse en el host.
+## Reglas operativas
 
-## Modelo operativo
-Las tareas de hardening del host deben cumplir las siguientes reglas.
+- Evitar el uso indiscriminado de:
+  network_mode: host
 
-Regla 1:
-Los scripts deben estar claramente identificados como scripts de infraestructura.
+- Evitar contenedores conectados a múltiples redes sin justificación funcional.
 
-Ejemplo de ubicación:
-    /opt/monitoring/scripts/
+- Priorizar:
+  internal: true
+  cuando el servicio no requiera acceso externo.
 
-Regla 2:
-Estos scripts no deben contener lógica de aplicación.
+- La pertenencia de un servicio a una red debe reflejar una necesidad funcional explícita.
 
-Su objetivo debe limitarse a:
-  - configuración del sistema
-  - seguridad del host
-  - políticas del runtime Docker
-
-Regla 3:
-Los scripts deben ser idempotentes siempre que sea posible, de forma que su ejecución repetida no produzca efectos no deseados.
-
-Regla 4:
-La ejecución puede realizarse mediante:
-  - systemd
-  - scripts de bootstrap del servidor
-  - ejecución manual controlada
-
-El proyecto evita utilizar cron del host para lógica de aplicación.
-
+- La infraestructura declarativa (Compose) debe representar de forma visible la política de segmentación.
 ## Ejemplos en el proyecto
 Scripts actuales que entran en esta categoría:
 configure_docker_limits.sh
@@ -102,23 +79,53 @@ apply_ssh_ratelimit.sh
   - configura limitación de conexiones SSH
   - protege frente a ataques masivos
 
-Estos scripts forman parte del hardening del host y no de la lógica funcional del sistema.
+## Razonamiento
+
+La segmentación reduce superficie de ataque y limita propagación lateral entre servicios.
+
+Separar dominios funcionales mejora:
+- auditabilidad,
+- aislamiento operativo,
+- trazabilidad de comunicaciones,
+- y capacidad de endurecimiento progresivo.
+
+La infraestructura declarativa permite revisar y validar la política de conectividad sin depender exclusivamente del runtime.
+
+Esta política complementa:
+- ADR-0005 para desacoplamiento runtime,
+- y ADR-0024 para endurecimiento contextual y principio de mínimo privilegio aplicado a contenedores.
 
 ## Consecuencias
-Positivas
-- clarificación del modelo container-first
-- separación explícita entre aplicación e infraestructura
-- reducción de ambigüedad arquitectónica
-- facilidad para auditar cumplimiento del modelo IaC
 
-Negativas
-- necesidad de documentar correctamente scripts del host
-- riesgo de confusión si se mezclan responsabilidades
+Positivas:
+- menor exposición innecesaria,
+- mejor aislamiento entre stacks,
+- mayor claridad arquitectónica,
+- reducción de acoplamiento,
+- mejora de auditabilidad.
 
-## Relación con otros ADR
-ADR-0014 — Docker Port Exposure Policy define la política de exposición de puertos.
-ADR-0015 — Docker Network Exposure Model define los niveles de accesibilidad de red de los contenedores.
-ADR-0016 — Host Hardening Execution Policy define qué tipo de tareas pueden ejecutarse directamente en el host sin violar el modelo container-first.
+Operativas:
+- nuevos servicios deben declarar explícitamente sus redes,
+- cambios de conectividad requieren actualización de Compose,
+- redes compartidas deben justificarse arquitectónicamente.
+
+Negativas:
+- incremento moderado de complejidad declarativa,
+- necesidad de mantenimiento explícito de topología de red.
+
+## Validación
+
+La validación debe realizarse mediante:
+- revisión de Compose,
+- inspección de redes Docker,
+- validaciones CI sobre exposición de puertos y redes compartidas,
+- revisión arquitectónica de nuevos stacks.
+
+## Referencias
+
+- ADR-0005 — Política de inicialización runtime e import-time.
+- ADR-0024 — Política de excepciones de privilegios en contenedores.
 
 ## Estado
+
 Aprobado.
