@@ -13,7 +13,7 @@ Existen dos tipos distintos de automatismos:
   - Automatismos del sistema operativo (mantenimiento del host)
   - Automatismos propios del runtime del proyecto
 
-Sin una separación explícita, las auditorías pueden interpretar incorrectamente que el host ejecuta lógica de aplicación.
+Sin una separación explícita, las auditorías pueden interpretar incorrectamente que el host ejecuta lógica de aplicación o asumir dependencias indebidas entre host y runtime Docker.
 
 ## Decision
 Se establece una separación explícita entre:
@@ -34,7 +34,7 @@ Se establece una separación explícita entre:
 
   monitoring-cron
 
-  Este contenedor ejecuta un cron interno (supercronic o equivalente) que lanza los módulos Python del proyecto.
+  Este contenedor ejecuta un cron interno (supercronic o equivalente) que invoca módulos Python del proyecto siguiendo el modelo oficial de ejecución definido en ADR-0011.
 
   Ejemplo de ejecución válida:
   python3 -m log_ingestor.log_fail2ban_batch
@@ -54,6 +54,11 @@ Ventajas
   - portabilidad del runtime
 
 Implicaciones
-  - el host nunca ejecuta módulos Python del proyecto
-  - toda la lógica de aplicación se ejecuta dentro de contenedores
-  - el contenedor monitoring-cron pasa a ser el scheduler oficial del runtime
+  - el host nunca ejecuta módulos Python del proyecto,
+  - toda la lógica de aplicación se ejecuta dentro de contenedores,
+  - monitoring-cron pasa a ser el scheduler oficial del runtime,
+  - se refuerza el desacoplamiento entre host y runtime definido en ADR-0005.
+
+## Referencias
+
+- ADR-0005 — Política de inicialización runtime e import-time.

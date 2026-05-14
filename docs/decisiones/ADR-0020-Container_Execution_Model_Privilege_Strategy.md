@@ -119,10 +119,10 @@ El test debe validar:
 
 3. Coherencia con IaC
 
-El comportamiento del sistema debe ser:
-- determinista
-- reproducible
-- independiente del host
+El comportamiento del sistema debe mantener:
+- reproducibilidad operativa,
+- independencia del host,
+- coherencia entre build y runtime.
 
 4. Seguridad contextual (no dogmática)
 
