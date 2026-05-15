@@ -1,4 +1,4 @@
-# ADR-0026 — Estrategia de validación y testing del modelo SMTP
+# ADR-0026 — Estrategia de validación y testing del modelo SMTP (Estrategia de validación multinivel)
 
 Fecha: 2026-05-13
 Estado: Propuesta
