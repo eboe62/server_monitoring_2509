@@ -1,4 +1,4 @@
-# ADR-0012 — Separation of Host Cron vs Monitoring Cron
+# ADR-0012 — Separation of Host Cron vs Monitoring Cron (Runtime reproducible)
 
 Fecha: 2026-03-12
 Estado: Propuesto

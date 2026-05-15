@@ -1,4 +1,4 @@
-# ADR-0011 - Python Runtime Execution Model
+# ADR-0011 - Python Runtime Execution Model (Determinismo)
 
 Fecha: 2026-03-05
 Estado: Propuesto
@@ -11,9 +11,10 @@ El sistema server_monitoring incluye scripts operativos escritos en Python para:
 - automatizaciones ejecutadas por cron
 
 En la arquitectura inicial del proyecto no estaba claramente definido:
-- dónde debía residir el runtime Python
-- cómo se debían ejecutar los scripts
-- qué relación tenían con los contenedores y con cron
+- dónde debía residir el runtime Python,
+- cómo debían ejecutarse los módulos del proyecto,
+- qué relación existía entre runtime Python, contenedores y cron,
+- ni cómo mantener coherencia operativa entre ejecución local, cron y contenedores.
 
 Esto generaba varias ambigüedades:
 - Posible instalación de Python en el host.

@@ -1,4 +1,4 @@
-# ADR-0025 — Modelo SMTP explícito y endurecimiento de configuración
+# ADR-0025 — Modelo SMTP explícito y endurecimiento de configuración (Endurecimiento SMTP)
 
 Fecha: 2026-05-13
 Estado: Aprobado

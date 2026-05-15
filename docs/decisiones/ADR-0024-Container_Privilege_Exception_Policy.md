@@ -1,4 +1,4 @@
-# ADR-0024 — Container Privilege Exception Policy
+# ADR-0024 — Container Privilege Exception Policy (Mínimo privilegio contextual)
 
 Fecha: 2026-05-09
 Estado: Aprobado

@@ -1,4 +1,4 @@
-# ADR-0005 – Desacoplamiento runtime y lazy imports en config.py
+# ADR-0005 – Desacoplamiento runtime y lazy imports en config (Runtime desacoplado)
 
 Fecha: 2026-01-27
 Estado: Aprobado
