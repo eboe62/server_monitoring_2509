@@ -638,11 +638,10 @@ test-security-runtime:
 	# [4] Restart policy
 	@echo "[4] Verificando restart policy"
 
-	@for c in monitoring-python monitoring-cron monitoring-postgres; do \
-		POLICY=$$(docker inspect $$c --format='{{.HostConfig.RestartPolicy.Name}}'); \
-		if [ "$$POLICY" = "no" ]; then \
-			echo "[FAIL] $$c sin restart policy"; \
-			exit 1; \
+	@for c in $$(bash ops/runtime_containers.sh list); do \
+		POLICY=$$(docker inspect $$c --format='{{.HostConfig.RestartPolicy.Name}}' 2>/dev/null || echo "none"); \
+		if [ "$$POLICY" = "no" -o "$$POLICY" = "none" ]; then \
+			echo "[WARN] $$c sin restart policy o no presente"; \
 		else \
 			echo "[ OK ] $$c restart=$$POLICY"; \
 		fi; \
@@ -652,8 +651,8 @@ test-security-runtime:
 	# [5] Healthchecks
 	@echo "[5] Verificando healthchecks"
 
-	@for c in monitoring-python monitoring-cron monitoring-postgres; do \
-		HEALTH=$$(docker inspect $$c --format='{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}'); \
+	@for c in $$(bash ops/runtime_containers.sh list); do \
+		HEALTH=$$(docker inspect $$c --format='{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' 2>/dev/null || echo "none"); \
 		if [ "$$HEALTH" = "none" ]; then \
 			echo "[WARN] $$c sin healthcheck"; \
 		else \

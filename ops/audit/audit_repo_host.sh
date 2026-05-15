@@ -103,6 +103,42 @@ done
 
 echo ""
 # ==========================================
+# A3.1 Healthcheck policy enforcement (runtime classification)
+# ==========================================
+
+if [ -f "ops/runtime_containers.sh" ]; then
+    info "Validando presencia de healthchecks según ops/runtime_containers.yml"
+    bash ops/runtime_containers.sh all | while IFS='|' read -r NAME TYPE POLICY ENFORCE; do
+        # try to locate a compose file referencing the service/container
+        FILE=$(grep -R -n "container_name: ${NAME}\b" ops 2>/dev/null | head -n1 | cut -d: -f1 || true)
+        if [ -z "$FILE" ]; then
+            # fallback: look for service name as a YAML key
+            FILE=$(grep -R -n "^[[:space:]]*${NAME}:" ops 2>/dev/null | head -n1 | cut -d: -f1 || true)
+        fi
+
+        if [ -z "$FILE" ]; then
+            warn "No se encontró referencia en compose para $NAME; omitiendo verificación"
+            continue
+        fi
+
+        if grep -q "^[[:space:]]*healthcheck:" "$FILE"; then
+            ok "$NAME: healthcheck detectado en $FILE"
+        else
+            if [ "$ENFORCE" = "fail" ]; then
+                fail "$NAME: healthcheck ausente en $FILE (enforcement=fail)"
+                exit 1
+            else
+                warn "$NAME: healthcheck ausente en $FILE (enforcement=$ENFORCE)"
+            fi
+        fi
+    done
+else
+    warn "ops/runtime_containers.sh no encontrado — omitiendo validación de policy runtime"
+fi
+
+
+echo ""
+# ==========================================
 echo "A4 Puertos declarados"
 # ==========================================
 echo ""
