@@ -103,23 +103,21 @@ jobs:
           if [ -f ops/runtime_containers.sh ]; then
             echo "Validating runtime containers healthcheck policy"
             bash ops/runtime_containers.sh all | while IFS='|' read -r NAME TYPE POLICY ENFORCE; do
-              FILE=$(grep -R -n "container_name: ${NAME}\b" ops 2>/dev/null | head -n1 | cut -d: -f1 || true)
-              if [ -z "$FILE" ]; then
-                FILE=$(grep -R -n "^[[:space:]]*${NAME}:" ops 2>/dev/null | head -n1 | cut -d: -f1 || true)
-              fi
-              if [ -z "$FILE" ]; then
-                echo "WARN: No compose reference found for $NAME; skipping"
-                continue
-              fi
-              if grep -q "^[[:space:]]*healthcheck:" "$FILE"; then
-                echo "OK: $NAME has healthcheck in $FILE"
-              else
-                if [ "$ENFORCE" = "fail" ]; then
-                  echo "ERROR: $NAME missing healthcheck in $FILE (enforcement=fail)"
-                  exit 1
+              RESULT=$(bash ops/runtime_containers.sh check-health "$NAME" 2>/dev/null || true)
+              IFS='|' read -r RNAME RSTATUS RFILE RSERVICE RHC <<< "$RESULT"
+              if [ "$RSTATUS" = "FOUND" ]; then
+                if [ "$RHC" = "healthcheck_present" ]; then
+                  echo "OK: $NAME has healthcheck for $RSERVICE in $RFILE"
                 else
-                  echo "WARN: $NAME missing healthcheck in $FILE (enforcement=$ENFORCE)"
+                  if [ "$ENFORCE" = "fail" ]; then
+                    echo "ERROR: $NAME missing healthcheck for $RSERVICE in $RFILE (enforcement=fail)"
+                    exit 1
+                  else
+                    echo "WARN: $NAME missing healthcheck for $RSERVICE in $RFILE (enforcement=$ENFORCE)"
+                  fi
                 fi
+              else
+                echo "WARN: $NAME service not found in compose files; skipping enforcement (enforcement=$ENFORCE)"
               fi
             done
           else

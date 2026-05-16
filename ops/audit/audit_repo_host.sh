@@ -109,27 +109,23 @@ echo ""
 if [ -f "ops/runtime_containers.sh" ]; then
     info "Validando presencia de healthchecks según ops/runtime_containers.yml"
     bash ops/runtime_containers.sh all | while IFS='|' read -r NAME TYPE POLICY ENFORCE; do
-        # try to locate a compose file referencing the service/container
-        FILE=$(grep -R -n "container_name: ${NAME}\b" ops 2>/dev/null | head -n1 | cut -d: -f1 || true)
-        if [ -z "$FILE" ]; then
-            # fallback: look for service name as a YAML key
-            FILE=$(grep -R -n "^[[:space:]]*${NAME}:" ops 2>/dev/null | head -n1 | cut -d: -f1 || true)
-        fi
-
-        if [ -z "$FILE" ]; then
-            warn "No se encontró referencia en compose para $NAME; omitiendo verificación"
-            continue
-        fi
-
-        if grep -q "^[[:space:]]*healthcheck:" "$FILE"; then
-            ok "$NAME: healthcheck detectado en $FILE"
-        else
-            if [ "$ENFORCE" = "fail" ]; then
-                fail "$NAME: healthcheck ausente en $FILE (enforcement=fail)"
-                exit 1
+        # Use structured check to find the service and healthcheck presence
+        RESULT=$(bash ops/runtime_containers.sh check-health "$NAME" 2>/dev/null || true)
+        # RESULT format: name|FOUND|compose_file|service_name|healthcheck_present| or name|NOT_FOUND|||
+        IFS='|' read -r RNAME RSTATUS RFILE RSERVICE RHC <<< "$RESULT"
+        if [ "$RSTATUS" = "FOUND" ]; then
+            if [ "$RHC" = "healthcheck_present" ]; then
+                ok "$NAME: healthcheck present for service $RSERVICE in $RFILE"
             else
-                warn "$NAME: healthcheck ausente en $FILE (enforcement=$ENFORCE)"
+                if [ "$ENFORCE" = "fail" ]; then
+                    fail "$NAME: healthcheck ABSENT for service $RSERVICE in $RFILE (enforcement=fail)"
+                    exit 1
+                else
+                    warn "$NAME: healthcheck ABSENT for service $RSERVICE in $RFILE (enforcement=$ENFORCE)"
+                fi
             fi
+        else
+            warn "$NAME: service not found in compose files; skipping enforcement (enforcement=$ENFORCE)"
         fi
     done
 else
