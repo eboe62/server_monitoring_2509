@@ -106,7 +106,7 @@ jobs:
               RESULT=$(bash ops/runtime_containers.sh check-health "$NAME" 2>/dev/null || true)
               IFS='|' read -r RNAME RSTATUS RFILE RSERVICE RHC <<< "$RESULT"
               if [ "$RSTATUS" = "FOUND" ]; then
-                if [ "$RHC" = "healthcheck_present" ]; then
+                if [ "$RHC" = "yes" ]; then
                   echo "OK: $NAME has healthcheck for $RSERVICE in $RFILE"
                 else
                   if [ "$ENFORCE" = "fail" ]; then

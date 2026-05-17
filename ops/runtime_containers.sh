@@ -30,89 +30,117 @@ parse_all() {
   ' "$YAML_FILE"
 }
 
-# find compose files under ops
+########################################################################
+# Deterministic compose resolution using `docker compose config`
+########################################################################
+
 find_compose_files() {
-  find ops -type f \( -name "compose*.yml" -o -name "compose*.yaml" \) 2>/dev/null || true
+  # Only consider explicit compose locations
+  files=""
+  for f in ops/stacks/*/compose.yml; do
+    [ -f "$f" ] && files="$files $f"
+  done
+  for f in ops/services/*/compose.yml; do
+    [ -f "$f" ] && files="$files $f"
+  done
+  echo "$files"
 }
 
-# Given a compose file, produce a canonical config via `docker compose config` into a temp file
 render_compose_config() {
   local file="$1"
   local out="$2"
-  if docker compose -f "$file" config >"$out" 2>/dev/null; then
-    return 0
-  else
-    return 1
-  fi
+  # Render compose into canonical YAML; caller handles return code
+  docker compose -f "$file" config >"$out" 2>/dev/null
 }
 
-# Extract service block for a given service name from a rendered compose config
-extract_service_block() {
-  local cfg="$1"; local svc="$2"
-  awk -v svc="$svc" '
-    BEGIN{in_services=0; in_svc=0; indent=0}
+parse_rendered_compose() {
+  # Output: service_name|container_name|has_healthcheck
+  local cfg="$1"
+  awk '
+    BEGIN{in_services=0; svc=""; c_name=""; hc=0}
     /^[[:space:]]*services:\s*$/ { in_services=1; next }
     in_services && /^[[:space:]]{2}[^[:space:]]+:\s*$/ {
-        cur = $1; sub(":","",cur);
-        gsub(/^[ ]+|[ ]+$/,"",cur);
-        if(cur==svc) { in_svc=1; indent=2; print; next } else { in_svc=0 }
+        if(svc!="") { print svc "|" c_name "|" (hc?"yes":"no") }
+        svc=$1; sub(":","",svc); gsub(/^[[:space:]]+|[[:space:]]+$/,"",svc);
+        c_name=""; hc=0; next
     }
-    in_svc { print }
+    in_services && /^[[:space:]]{4}container_name:\s*/ { $1=""; sub(/^[[:space:]]+/,"",$0); c_name=$0; next }
+    in_services && /^[[:space:]]{4}healthcheck:\s*/ { hc=1; next }
+    END{ if(svc!="") print svc "|" c_name "|" (hc?"yes":"no") }
   ' "$cfg"
 }
 
-# Check healthcheck presence for a given container name by scanning rendered compose files
 check_health_for_container() {
   local cname="$1"
-  local cf
-  local tmp
-  for cf in $(find_compose_files); do
+  local file tmp
+  local first_invalid=""
+  for file in $(find_compose_files); do
     tmp=$(mktemp)
-    if ! render_compose_config "$cf" "$tmp"; then
+    if ! render_compose_config "$file" "$tmp"; then
+      # record first invalid compose
+      if [ -z "$first_invalid" ]; then
+        first_invalid="$file"
+      fi
       rm -f "$tmp"
-      # skip files that cannot be rendered (missing envs etc.)
       continue
     fi
 
-    # First, try to find a service with the same name
-    svc_found=""
-    if awk -v n="$cname" 'BEGIN{FS=":"} /^[[:space:]]{2}[a-zA-Z0-9_\-]+:\s*$/ { s=$1; gsub(/^[[:space:]]+|[[:space:]]+$/,"",s); if(s==n){print s; exit 0}}' "$tmp" >/dev/null 2>&1; then
-      svc_found="$cname"
-    fi
-
-    # If not found by service name, search for a container_name match inside service blocks
-    if [ -z "$svc_found" ]; then
-      # iterate services
-      awk '/^[[:space:]]{2}[a-zA-Z0-9_\-]+:\s*$/ {svc=$1; sub(":","",svc); gsub(/^[ ]+|[ ]+$/,"",svc); in_svc=1; next} in_svc{ if($1~/container_name:/){ print svc ":" substr($0,index($0,$2)) ; exit 0 } }' "$tmp" | while IFS= read -r line; do
-        # line like: svc: monitoring-postgres
-        svcname=${line%%:*}
-        val=${line#*:}
-        val=$(echo "$val" | sed 's/^[[:space:]]*//')
-        # compare val to cname
-        if [ "$val" = "$cname" ]; then
-          svc_found="$svcname"
-        fi
-      done
-    fi
-
-    if [ -n "$svc_found" ]; then
-      # extract service block and check healthcheck presence
-      block=$(extract_service_block "$tmp" "$svc_found")
-      if echo "$block" | awk '/^[[:space:]]*healthcheck:\s*$/ {found=1} END{if(found) exit 0; else exit 1}'; then
-        echo "$cname|FOUND|$cf|$svc_found|healthcheck_present"
+    while IFS='|' read -r svc c_name has_hc; do
+      svc_trim=$(echo "$svc" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+      c_trim=$(echo "$c_name" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+      if [ "$svc_trim" = "$cname" ]; then
+        echo "$cname|FOUND|$file|$svc_trim|${has_hc}"
         rm -f "$tmp"
         return 0
-      else
-        echo "$cname|FOUND|$cf|$svc_found|healthcheck_absent"
-        rm -f "$tmp"
-        return 1
       fi
-    fi
+      if [ -n "$c_trim" ] && [ "$c_trim" = "$cname" ]; then
+        echo "$cname|FOUND|$file|$svc_trim|${has_hc}"
+        rm -f "$tmp"
+        return 0
+      fi
+    done < <(parse_rendered_compose "$tmp")
+
     rm -f "$tmp"
   done
+
+  if [ -n "$first_invalid" ]; then
+    echo "$cname|COMPOSE_INVALID|$first_invalid|||"
+    return 3
+  fi
+
   echo "$cname|NOT_FOUND|||"
   return 2
 }
+
+debug_check_health() {
+  local cname="$1"
+  local file tmp
+  echo "DEBUG: checking container '$cname'"
+  for file in $(find_compose_files); do
+    echo "- evaluating compose: $file"
+    tmp=$(mktemp)
+    if ! render_compose_config "$file" "$tmp"; then
+      echo "  -> compose render FAILED (missing .env or invalid)"
+      rm -f "$tmp"
+      continue
+    fi
+    echo "  -> services found:"
+    parse_rendered_compose "$tmp" | while IFS='|' read -r svc c_name has_hc; do
+      svc_trim=$(echo "$svc" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+      c_trim=$(echo "$c_name" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+      echo "     * service='$svc_trim' container_name='$c_trim' healthcheck=$has_hc"
+      if [ "$svc_trim" = "$cname" ]; then
+        echo "       => MATCH by service name"
+      elif [ -n "$c_trim" ] && [ "$c_trim" = "$cname" ]; then
+        echo "       => MATCH by container_name"
+      else
+        echo "       => no match"
+      fi
+    done
+    rm -f "$tmp"
+  done
+}
+
 
 case "$cmd" in
   list)
@@ -123,6 +151,12 @@ case "$cmd" in
     cname="$2"
     check_health_for_container "$cname"
     exit $?
+    ;;
+  debug)
+    if [ $# -lt 2 ]; then echo "Usage: $0 debug <container>" >&2; exit 2; fi
+    cname="$2"
+    debug_check_health "$cname"
+    exit 0
     ;;
   get)
     if [ $# -lt 2 ]; then echo "Usage: $0 get <container>" >&2; exit 2; fi

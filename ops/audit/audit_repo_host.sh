@@ -111,10 +111,10 @@ if [ -f "ops/runtime_containers.sh" ]; then
     bash ops/runtime_containers.sh all | while IFS='|' read -r NAME TYPE POLICY ENFORCE; do
         # Use structured check to find the service and healthcheck presence
         RESULT=$(bash ops/runtime_containers.sh check-health "$NAME" 2>/dev/null || true)
-        # RESULT format: name|FOUND|compose_file|service_name|healthcheck_present| or name|NOT_FOUND|||
+        # RESULT format: name|FOUND|compose_file|service_name|yes| or name|NOT_FOUND|||
         IFS='|' read -r RNAME RSTATUS RFILE RSERVICE RHC <<< "$RESULT"
-        if [ "$RSTATUS" = "FOUND" ]; then
-            if [ "$RHC" = "healthcheck_present" ]; then
+            if [ "$RSTATUS" = "FOUND" ]; then
+            if [ "$RHC" = "yes" ]; then
                 ok "$NAME: healthcheck present for service $RSERVICE in $RFILE"
             else
                 if [ "$ENFORCE" = "fail" ]; then
