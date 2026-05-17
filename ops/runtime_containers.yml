@@ -22,7 +22,7 @@ containers:
   promtail:
     type: INFRA_TRUSTED
     healthcheck_policy: readiness
-    enforcement_level: fail
+    enforcement_level: warn
 
   loki:
     type: SERVICE_RUNTIME

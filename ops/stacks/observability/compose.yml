@@ -19,11 +19,7 @@ services:
 
     restart: always
 
-    healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:9080/ready || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+    # Sin healthcheck: la imagen oficial (upstream) carece de wget/curl; los healthchecks que utilicen herramientas externas producirían falsos negativos.
 
     deploy:
       resources:

@@ -1,322 +1,366 @@
 # ADR-0027 — Tipología oficial de contenedores y política de healthchecks
 
-Fecha: 2026-05-15
+Fecha: 2026-05-17
 Estado: Aprobado
-Contexto: server_monitoring_2602 – Fase 5 Hardening y Certificación Runtime
+Contexto: server_monitoring_2509 — Hardening runtime, validación CI/CD y normalización de healthchecks
 
 ## Contexto
 
-Se ha detectado una ambigüedad arquitectónica relacionada con:
-- semántica runtime de contenedores
-- validación healthchecks
-- separación readiness/liveness
-- criterios de certificación operativa
+Durante la evolución del entorno server_monitoring se detectaron inconsistencias en:
+- validación de healthchecks
+- clasificación semántica de contenedores
+- criterios CI/CD
+- auditoría runtime
+- separación entre readiness y liveness
 
-El entorno utilizaba healthchecks heterogéneos:
-- readiness HTTP
-- validación de procesos
-- checks triviales
-- ausencia de healthchecks
+La validación original utilizaba:
+- grep textual sobre compose
+- detección heurística de healthchecks
+- correlación parcial entre service_name y container_name
 
-sin una clasificación formal de:
-- función runtime
-- comportamiento esperado
-- política operativa
-
-Esto generaba:
+Esto provocaba:
 - falsos positivos
 - falsos negativos
-- incoherencias CI
-- confusión durante auditoría
-- riesgo de hardening artificial
+- ambigüedad arquitectónica
+- drift entre ADR y runtime real
+- enforcement inconsistente
 
 Especialmente en:
 - monitoring-python
 - promtail
 - smtp-relay
+- monitoring-cron
 
-## Problema identificado
+Adicionalmente se detectó que algunos contenedores eran tratados como microservicios HTTP tradicionales cuando realmente representaban:
 
-Docker HEALTHCHECK estaba siendo utilizado con semánticas distintas
-según el tipo real de contenedor:
-
-- servicios funcionales
+- runtimes operativos
 - supervisores
-- runtimes toolbox
+- tooling persistente
 - componentes infraestructurales
 
-La arquitectura original asumía implícitamente:
-
-    "todo contenedor debe tener healthcheck equivalente"
+La validación anterior asumía implícitamente:
+    “todo contenedor debe tener un healthcheck homogéneo”
 
 Esta premisa resultó incorrecta.
 
-No todos los contenedores representan:
-- APIs
-- servicios HTTP
-- procesos funcionales persistentes
+No todos los contenedores:
+- exponen APIs
+- representan servicios funcionales
+- requieren readiness HTTP
+- participan en tráfico de negocio
 
-Algunos contenedores existen explícitamente como:
-- entornos operador
-- runtimes persistentes
-- targets controlados para docker exec
-- tooling operacional IaC
+## Problema identificado
 
-Forzar readiness clásico sobre estos runtimes implicaría:
-- complejidad artificial
-- falsas dependencias
-- semántica incorrecta
-- degradación del modelo IaC
+Los healthchecks estaban siendo utilizados con semánticas distintas según la naturaleza real del contenedor.
+
+Esto generaba:
+- checks artificiales
+- validaciones incorrectas
+- gates CI poco fiables
+- confusión operacional
+- auditorías ambiguas
+
+Se identificaron además limitaciones técnicas en:
+- parsing YAML manual
+- detección basada en grep
+- resolución indirecta de compose
+- correlación runtime ↔ compose
 
 ## Decisión
 
-Se adopta una tipología oficial de contenedores.
+Se adopta una clasificación oficial de contenedores y una política explícita de healthchecks.
 
-Cada contenedor del entorno PRO debe clasificarse explícitamente
-según su función arquitectónica real.
+Cada contenedor debe clasificarse según su función arquitectónica real.
 
-## Tipos oficiales
+La validación runtime debe utilizar:
+- docker compose config
+- parsing estructurado
+- correlación determinista service/container
 
-1. SERVICE_RUNTIME
+Se establece además un archivo centralizado:
+    ops/runtime_containers.yml
+
+como fuente única de verdad para:
+- clasificación runtime
+- política de healthchecks
+- enforcement CI
+- auditoría operacional
+
+## Tipología oficial de contenedores
+
+### 1. SERVICE_RUNTIME
 
 Contenedores que exponen funcionalidad activa consumible.
 
-Incluye:
-- APIs
-- interfaces web
-- servicios DB
-- observabilidad
-- almacenamiento
-
-Requieren:
-- readiness checks reales
-- validación funcional explícita
-
 Ejemplos:
+- postgres
 - grafana
 - loki
-- postgres
 
-------------------------------------------
+Requisitos:
+- readiness checks reales
+- validación funcional explícita
+- detección determinista de disponibilidad
 
-2. SUPERVISOR_RUNTIME
+Checks válidos:
+- pg_isready
+- HTTP /ready
+- HTTP /health
 
-Contenedores cuya función principal es mantener
-un supervisor o scheduler operativo.
+No se permiten:
+- exit 0 artificiales
+- keepalive falsos
+- checks semánticamente vacíos
 
-Requieren:
-- liveness checks de proceso
+---
+
+### 2. SUPERVISOR_RUNTIME
+
+Contenedores cuyo objetivo principal es mantener un scheduler o supervisor operativo.
 
 Ejemplo:
 - monitoring-cron
 
-------------------------------------------
+Requisitos:
+- liveness checks
+- validación del proceso supervisor
 
-3. TOOLBOX_RUNTIME
+Checks válidos:
+- pidof
+- pgrep
+
+Objetivo:
+- detectar caída del scheduler
+- detectar corrupción runtime
+
+---
+
+### 3. TOOLBOX_RUNTIME
 
 Contenedores persistentes utilizados como:
 - entorno operador
 - runtime controlado
-- punto de entrada operacional
-- runtime IaC
-
-NO representan servicios funcionales expuestos.
-
-Pueden:
-- mantener procesos keepalive
-- utilizar docker exec
-- ejecutar tooling interno
-- ejecutar scripts runtime
-
-NO requieren:
-- readiness HTTP
-- validación semántica de servicio
+- tooling operacional
+- punto de entrada IaC
 
 Ejemplo:
 - monitoring-python
 
-------------------------------------------
+Características:
+- pueden utilizar keepalive explícito
+- pueden ejecutarse mediante docker exec
+- no representan servicios funcionales externos
 
-4. INFRA_TRUSTED
+No requieren:
+- readiness HTTP
+- validación semántica de API
 
-Contenedores externos o upstream considerados
-dependencias infraestructurales confiables.
+Los healthchecks triviales son aceptables únicamente si:
+- están documentados
+- la clasificación TOOLBOX_RUNTIME es explícita
 
-Pueden requerir:
-- readiness
-- liveness
+---
 
-según su comportamiento real.
+### 4. INFRA_TRUSTED
+
+Contenedores upstream o infraestructurales considerados dependencias confiables.
 
 Ejemplos:
 - promtail
 - smtp-relay
 
-## Política oficial de healthchecks
-
-Los healthchecks deben alinearse con:
-- función arquitectónica
-- semántica runtime
-- comportamiento real del contenedor
-
-NO se asume arquitectura microservicio HTTP clásica
-para todos los runtimes.
-
-------------------------------------------
-SERVICE_RUNTIME
-------------------------------------------
-
-Requieren readiness checks reales.
-
-Los checks deben validar:
-- aceptación de conexiones
-- disponibilidad funcional
-- operatividad semántica
-
-Ejemplos válidos:
-- pg_isready
-- HTTP /ready
-- HTTP /api/health
-
-No se permiten:
-- checks artificiales
-- exit 0 permanentes
-- validaciones no deterministas
-
-------------------------------------------
-SUPERVISOR_RUNTIME
-------------------------------------------
-
-Requieren:
-- liveness checks de supervisor/proceso
-
-Ejemplos válidos:
-- pidof
-- pgrep
-
-El objetivo es detectar:
-- caída del scheduler
-- pérdida del supervisor
-- corrupción runtime
-
-------------------------------------------
-TOOLBOX_RUNTIME
-------------------------------------------
-
-Pueden:
-- no tener healthcheck
-- utilizar keepalive explícito
-- utilizar checks triviales documentados
-
-NO deben:
-- bloquear readiness gates
-- bloquear CI/CD
-- certificarse como microservicio funcional
-
-Un healthcheck trivial solo es válido
-cuando el contenedor esté explícitamente
-clasificado como TOOLBOX_RUNTIME.
-
-------------------------------------------
-INFRA_TRUSTED
-------------------------------------------
-
-Deben utilizar:
-- el mecanismo más apropiado
-- según capacidades upstream reales
+Los healthchecks deben alinearse con las capacidades reales del upstream.
 
 Debe evitarse:
 - hardening artificial
 - wrappers innecesarios
-- sidecars no justificados
+- sidecars sin justificación
 
-# Decisión específica monitoring-python
+## Política oficial de healthchecks
+
+Los healthchecks deben alinearse con:
+- semántica runtime
+- comportamiento real del contenedor
+- función arquitectónica
+
+No se asume un modelo homogéneo basado exclusivamente en microservicios HTTP.
+
+## Implementación adoptada
+
+Se introduce:
+- ops/runtime_containers.yml
+- ops/runtime_containers.sh
+- validación CI estructurada
+- enforcement runtime por clasificación
+- auditoría basada en docker compose config
+
+La validación ya no depende exclusivamente de:
+- grep textual
+- coincidencias heurísticas
+- comentarios YAML
+
+## Modelo de validación runtime
+
+El script:
+ops/runtime_containers.sh
+
+implementa:
+- parseo estructurado de runtime_containers.yml
+- resolución determinista compose
+- correlación entre:
+    service_name
+    container_name
+- detección explícita de healthchecks
+
+Se incorpora:
+    check-health <container>
+
+como mecanismo oficial de validación.
+
+Formato de salida:
+    container|FOUND|compose|service|healthcheck
+
+Estados soportados:
+- FOUND
+- NOT_FOUND
+- COMPOSE_INVALID
+
+## Decisión específica sobre promtail
+
+promtail queda clasificado como:
+
+INFRA_TRUSTED
+
+Se adopta readiness basado en:
+    [http://localhost:9080/ready](http://localhost:9080/ready)
+
+Healthcheck oficial:
+    wget -qO- [http://localhost:9080/ready](http://localhost:9080/ready) || exit 1
+
+Objetivo:
+- validar disponibilidad real del agente
+- evitar healthchecks artificiales
+- mantener coherencia upstream
+
+## Decisión específica sobre monitoring-python
 
 monitoring-python queda clasificado oficialmente como:
-    TOOLBOX_RUNTIME
 
-Su función oficial es:
-- entorno runtime persistente
-- ejecución controlada mediante docker exec
-- runtime operador IaC
+TOOLBOX_RUNTIME
+
+Su función es:
+- runtime persistente
 - tooling operacional
+- ejecución controlada mediante docker exec
+- entorno operador
 
 No representa:
 - API
-- servicio HTTP
-- daemon funcional persistente
+- microservicio HTTP
+- daemon funcional expuesto
 
 Por tanto:
 - no requiere readiness HTTP
-- puede utilizar keepalive explícito
-- puede utilizar healthcheck trivial documentado
+- puede utilizar keepalive documentado
+- puede tener enforcement warn
 
-Este comportamiento es:
-- intencional
-- coherente con IaC
-- arquitectónicamente válido
-
-No constituye:
-- desviación
-- workaround
+Esto NO constituye:
 - anti-pattern
+- workaround
+- desviación arquitectónica
 
 ## Consecuencias
 
-Se alinearán:
-- Docker Compose
-- Makefile
-- CI
-- scripts audit
-- validaciones runtime
+Positivas:
+- reducción de falsos positivos
+- validación CI más determinista
+- coherencia ADR ↔ runtime
+- mejor auditabilidad
+- separación formal readiness/liveness
+- enforcement centralizado
 
-con la tipología oficial.
+Operativas:
+- nuevos contenedores deben declararse en runtime_containers.yml
+- CI y Makefile dependen de la clasificación runtime
+- los tests deben respetar la semántica del contenedor
 
-Las validaciones futuras deberán:
-- diferenciar readiness y liveness
-- evitar falsas alarmas
-- evitar gates incorrectos
-- respetar TOOLBOX_RUNTIME
+## Limitaciones conocidas
 
-Se permitirá:
-- WARN controlado
-- excepciones documentadas
+La presencia de healthcheck NO garantiza por sí sola estado healthy.
 
-cuando estén justificadas mediante:
-- ADR
-- clasificación runtime
-- limitaciones upstream
+Durante la validación se observó:
+    promtail → unhealthy
+
+incluso existiendo healthcheck declarado.
+
+Esto implica que:
+- el endpoint /ready puede no estar respondiendo correctamente
+- puede existir dependencia runtime no satisfecha
+- el contenedor puede estar funcionalmente degradado
+
+Por tanto:
+- CI valida presencia y coherencia del healthcheck
+- la salud runtime real debe validarse adicionalmente mediante:
+    docker ps
+    docker inspect
+    logs runtime
 
 ## Restricciones
 
 No se permitirá:
-- introducir readiness artificial
-- convertir toolboxes en pseudo-servicios
-- crear endpoints fake
-- introducir sidecars innecesarios
+- readiness artificial
+- endpoints fake
+- sidecars innecesarios
+- checks semánticamente vacíos
 - degradar reproducibilidad IaC
 
 Los healthchecks:
-- no deben depender del host
-- deben ejecutarse dentro del runtime
+- deben ejecutarse dentro del contenedor
 - deben ser deterministas
 - deben devolver exit codes reales
+- no deben depender del host
+
+## Riesgos identificados
+
+Persisten riesgos asociados a:
+- parsing YAML manual mediante awk
+- dependencia de docker compose config
+- divergencias entre compose renderizado y runtime real
+- validación parcial de healthchecks upstream
+
+# ==========================================
 
 ## Validación futura
 
-Las siguientes herramientas deberán alinearse con esta decisión:
-
-- Makefile
+Las siguientes herramientas deben alinearse con esta decisión:
 - CI
+- Makefile
 - audit_repo_host.sh
-- runtime validations
-- security runtime tests
+- runtime tests
 - resiliency tests
+- policy checks
 
-Se establecerá una fuente única de verdad para clasificación runtime de contenedores.
+Las futuras validaciones deberán distinguir explícitamente:
+- smoke tests
+- policy checks
+- certification checks
+- runtime enforcement
+
+## Relación con otros ADR
+
+Este ADR complementa:
+- ADR-0008 — Servicios micro-stack vs infra-stack
+- ADR-0010 — Arquitectura runtime cron
+- ADR-0014 — Docker Port Exposure Policy
+- ADR-0015 — Docker Network Exposure Model
+- ADR-0017 — Resilience model at docker single-node
+- ADR-0018 — Docker security runtime and resilience requirements
+- ADR-0019 — Resilience Testing Strategy
+- ADR-0020 — Container Execution Model & Privilege Strategy
 
 ## Estado
 
 Aprobado.
-Arquitectura runtime oficialmente normalizada.
-Tipología y semántica healthchecks formalizadas.
+Arquitectura runtime normalizada.
+Clasificación de contenedores formalizada.
+Política de healthchecks alineada con semántica operacional real.
