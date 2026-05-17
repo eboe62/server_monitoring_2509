@@ -404,19 +404,17 @@ fi
 
 echo ""
 # ==========================================
-echo "C2 uso de :latest"
+echo "C2 Validación reproducibilidad de imágenes"
 # ==========================================
 echo ""
 
-info "Verificando uso de tags :latest (recomendación seguridad)"
+info "Ejecutando validaciones de reproducibilidad: ops/audit/validate_reproducibility.sh"
 
-LATEST=$(grep -R "image: .*:latest" -n ops 2>/dev/null || true)
-
-if [ -z "$LATEST" ]; then
-    ok "No se detectaron imágenes :latest"
+if bash ops/audit/validate_reproducibility.sh; then
+    ok "Validación reproducibilidad pasada"
 else
-    warn "Imágenes usando :latest:"
-    echo "$LATEST"
+    fail "Validación reproducibilidad falló — revisar salida anterior"
+    exit 1
 fi
 
 echo ""
