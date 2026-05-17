@@ -6,11 +6,7 @@ Contexto: server_monitoring_2602 – Fase 5 Hardening y Certificación Runtime
 
 ## Contexto
 
-Durante la ejecución de:
-- PRIORIDAD 4 – Seguridad Runtime
-- PRIORIDAD 6 – Acciones prioritarias
-
-se detectó una ambigüedad arquitectónica relacionada con:
+Se ha detectado una ambigüedad arquitectónica relacionada con:
 - semántica runtime de contenedores
 - validación healthchecks
 - separación readiness/liveness

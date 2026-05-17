@@ -30,9 +30,9 @@ parse_all() {
   ' "$YAML_FILE"
 }
 
-########################################################################
+==========================================
 # Deterministic compose resolution using `docker compose config`
-########################################################################
+==========================================
 
 find_compose_files() {
   # Only consider explicit compose locations
