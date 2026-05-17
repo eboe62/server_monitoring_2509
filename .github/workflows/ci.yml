@@ -98,6 +98,32 @@ jobs:
           docker compose -f ops/services/postgres/compose.yml config > /dev/null
           docker compose -f ops/services/smtp_relay/compose.yml config > /dev/null
 
+      - name: Validate healthchecks policy (runtime classification)
+        run: |
+          if [ -f ops/runtime_containers.sh ]; then
+            echo "Validating runtime containers healthcheck policy"
+            bash ops/runtime_containers.sh all | while IFS='|' read -r NAME TYPE POLICY ENFORCE; do
+              RESULT=$(bash ops/runtime_containers.sh check-health "$NAME" 2>/dev/null || true)
+              IFS='|' read -r RNAME RSTATUS RFILE RSERVICE RHC <<< "$RESULT"
+              if [ "$RSTATUS" = "FOUND" ]; then
+                if [ "$RHC" = "yes" ]; then
+                  echo "OK: $NAME has healthcheck for $RSERVICE in $RFILE"
+                else
+                  if [ "$ENFORCE" = "fail" ]; then
+                    echo "ERROR: $NAME missing healthcheck for $RSERVICE in $RFILE (enforcement=fail)"
+                    exit 1
+                  else
+                    echo "WARN: $NAME missing healthcheck for $RSERVICE in $RFILE (enforcement=$ENFORCE)"
+                  fi
+                fi
+              else
+                echo "WARN: $NAME service not found in compose files; skipping enforcement (enforcement=$ENFORCE)"
+              fi
+            done
+          else
+            echo "WARN: ops/runtime_containers.sh not present; skipping runtime healthcheck policy validation"
+          fi
+
       # ------------------------------------------
       # Check :latest forbidden
       # ------------------------------------------

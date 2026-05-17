@@ -1,0 +1,35 @@
+containers:
+  monitoring-python:
+    type: TOOLBOX_RUNTIME
+    healthcheck_policy: keepalive
+    enforcement_level: warn
+
+  monitoring-cron:
+    type: SUPERVISOR_RUNTIME
+    healthcheck_policy: liveness
+    enforcement_level: fail
+
+  monitoring-postgres:
+    type: SERVICE_RUNTIME
+    healthcheck_policy: readiness
+    enforcement_level: fail
+
+  smtp-relay:
+    type: INFRA_TRUSTED
+    healthcheck_policy: liveness
+    enforcement_level: warn
+
+  promtail:
+    type: INFRA_TRUSTED
+    healthcheck_policy: readiness
+    enforcement_level: warn
+
+  loki:
+    type: SERVICE_RUNTIME
+    healthcheck_policy: readiness
+    enforcement_level: fail
+
+  grafana:
+    type: SERVICE_RUNTIME
+    healthcheck_policy: readiness
+    enforcement_level: fail

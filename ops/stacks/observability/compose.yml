@@ -19,6 +19,8 @@ services:
 
     restart: always
 
+    # Sin healthcheck: la imagen oficial (upstream) carece de wget/curl; los healthchecks que utilicen herramientas externas producirían falsos negativos.
+
     deploy:
       resources:
         limits:
