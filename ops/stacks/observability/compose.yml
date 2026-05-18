@@ -69,7 +69,7 @@ services:
 # ------------------------------------------
 
   grafana:
-    image: grafana/grafana:10.4.2@sha256:eb92f1a439171542fd718f929fad38c917b3cad15ec830ba4742e2ba5ab03313
+    image: grafana/grafana:10.4.2@sha256:7d5faae481a4c6f436c99e98af11534f7fd5e8d3e35213552dd1dd02bc393d2e
     container_name: ${GRAFANA_CONTAINER_NAME}
 #    network_mode: host  # importante para acceso a localhost:2526 y 127.0.0.1 pero innecesario si accedemos por red Docker
     volumes:
