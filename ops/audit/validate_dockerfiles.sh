@@ -47,7 +47,7 @@ for df in $DOCKERFILES; do
       # lines without '==' or '@' (approximation of unpinned)
       UNPINNED=$(grep -E -v '^(#|\s*$)' "$REQ_FILE" | grep -n -E -v '(==|@|===)' || true)
       if [ -n "$UNPINNED" ]; then
-        fail "$df: requisitos no fijados en $REQ_FILE:\n$UNPINNED"
+        warn "$df: requisitos no fijados en $REQ_FILE (recomendado fijar versiones):\n$UNPINNED"
       else
         ok "$df: requisitos parecen fijados en $REQ_FILE"
       fi

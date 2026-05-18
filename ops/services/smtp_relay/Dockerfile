@@ -1,5 +1,5 @@
 # Dockerfile for smtp-relay
-ARG BASE_IMAGE="boky/postfix:latest"
+ARG BASE_IMAGE="boky/postfix:3.6.0"
 FROM ${BASE_IMAGE}
 
 ARG IMAGE_VERSION="v1.0.0"
@@ -13,6 +13,7 @@ LABEL org.opencontainers.image.created="${BUILD_DATE}"
 COPY config/patch-postfix.sh \
     /patch-postfix.sh
 
+# ⚠️ Asegurar directorios necesarios
 RUN chmod +x /patch-postfix.sh \
  && mkdir -p /var/log \
  && mkdir -p /run/secrets-copy

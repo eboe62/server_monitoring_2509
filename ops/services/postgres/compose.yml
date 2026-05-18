@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:14.3
+    image: postgres:14.3@sha256:2d1e636f07781d4799b3f2edbff78a0a5494f24c4512cb56a83ebfd0e04ec074
     container_name: ${POSTGRES_CONTAINER_NAME}
     restart: always
     env_file:
