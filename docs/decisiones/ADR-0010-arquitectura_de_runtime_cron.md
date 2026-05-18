@@ -2,8 +2,7 @@
 
 Fecha: 2026-03-05
 Estado: Propuesto
-Contexto: Arquitectura del servidor server_monitoring
-
+Contexto: server_monitoring_2509
 ## Contexto
 El sistema server_monitoring requiere ejecutar tareas periódicas para:
 - mantenimiento del sistema

@@ -2,8 +2,7 @@
 
 Fecha: 2026-02-17
 Estado: Propuesto
-Contexto: Migración PRO server_monitoring_2602 – Clarificación del modelo arquitectónico
-
+Contexto: server_monitoring_2509
 ## Contexto
 Durante la FASE 4 se adopta el modelo “micro-stack autónomo con red compartida”.
 Sin embargo, en la implementación actual coexisten dos tipos de despliegue:

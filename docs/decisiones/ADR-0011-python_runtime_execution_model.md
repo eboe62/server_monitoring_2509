@@ -2,7 +2,7 @@
 
 Fecha: 2026-03-05
 Estado: Propuesto
-Ámbito: server_monitoring
+Ámbito: server_monitoring_2509
 
 ## Contexto
 El sistema server_monitoring incluye scripts operativos escritos en Python para:

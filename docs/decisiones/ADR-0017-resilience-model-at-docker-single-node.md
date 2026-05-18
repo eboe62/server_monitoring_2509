@@ -2,7 +2,7 @@
 
 Fecha: 2026-04-01
 Estado: Aprobado
-Ámbito: server_monitoring
+Ámbito: server_monitoring_2509
 
 ## Contexto
 El sistema de monitorización se despliega en un entorno basado en Docker Compose sobre un único nodo (single-node), sin uso de orquestadores como Kubernetes o Docker Swarm.

@@ -2,7 +2,7 @@
 
 Fecha: 2026-03-14
 Estado: Aprobado
-Contexto: server_monitoring_2602 – Simplificación del modelo de gestión de credenciales
+Contexto: server_monitoring_2509
 
 ## Contexto
 Durante FASE 4 del proceso de implementación se evaluó el modelo de gestión de credenciales definido inicialmente en la arquitectura del proyecto.

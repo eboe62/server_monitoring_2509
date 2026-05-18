@@ -2,6 +2,7 @@
 
 Fecha: 2026-05-13
 Estado: Aprobado
+Ámbito: server_monitoring_2509
 
 ## Contexto
 

@@ -2,7 +2,7 @@
 
 Fecha: 2026-03-14
 Estado: Aprobado
-Ámbito: server_monitoring
+Ámbito: server_monitoring_2509
 
 ## Contexto
 El proyecto server_monitoring adopta una arquitectura container-first donde los servicios se ejecutan dentro de contenedores Docker y se comunican mediante redes internas.
