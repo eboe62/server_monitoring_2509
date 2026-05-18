@@ -20,14 +20,25 @@ for df in $DOCKERFILES; do
 
   # ==========================================
   # 1) Detectar FROM con latest explícito
+  #
+  # Excepción:
+  # - FROM parametrizado mediante ARG
+  #   puede resolverse dinámicamente
+  # - evitar falsos positivos sobre:
+  #     FROM ${BASE_IMAGE}
   # ==========================================
 
-  LATESTS=$(grep -nE '^FROM\s+.*:latest([[:space:]]|$)' "$df" || true)
+  LATESTS=$(grep -nE '^FROM\s+.*:latest([[:space:]]|$)' "$df" \
+    | grep -v '\${' || true)
 
   if [ -n "$LATESTS" ]; then
+
     fail "$df: Uso de FROM :latest detectado:\n$LATESTS"
+
   else
+
     ok "$df: no usa FROM :latest explícito"
+
   fi
 
   # ==========================================

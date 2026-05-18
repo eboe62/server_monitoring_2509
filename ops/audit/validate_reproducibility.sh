@@ -51,7 +51,7 @@ else
       if printf "%s" "$context" | grep -q "build:"; then
         # local build image — enforce explicit tag (no latest)
         if printf "%s" "$content" | grep -q ":latest"; then
-          fail "$f:$num: imagen local con tag :latest — evitar" 
+          fail "$f:$num: imagen local con tag :latest — evitar"
         else
           ok "$f:$num: imagen local con tag explícito"
         fi
@@ -65,22 +65,47 @@ else
   done
 fi
 
+# ==========================================
 # 4) Detectar imágenes dangling en runtime
+#
+# IMPORTANTE:
+# - dangling images pueden aparecer temporalmente
+#   durante builds legítimos de Docker/BuildKit
+# - no siempre representan problema real
+# - generar FAIL aquí introduce falsos positivos
+#
+# Política:
+# - WARN operacional
+# - nunca bloquear auditoría por dangling images
+# ==========================================
+
 if command -v docker >/dev/null 2>&1; then
+
   dangling=$(docker images -f "dangling=true" -q || true)
+
   if [ -n "$dangling" ]; then
-    fail "Imágenes dangling detectadas (IDs):\n$dangling"
+
+    warn "Imágenes dangling detectadas (IDs):\n$dangling"
+    warn "Sugerencia: ejecutar 'make clean-dangling' tras despliegues o builds"
+
   else
+
     ok "No hay imágenes dangling"
+
   fi
+
 else
+
   warn "docker no disponible — omitiendo detección dangling"
+
 fi
 
 if [ "$FAILED" -ne 0 ]; then
-  echo "\nVALIDACIÓN FALLIDA: problemas de reproducibilidad detectados"
+  echo ""
+  echo "VALIDACIÓN FALLIDA: problemas de reproducibilidad detectados"
   exit 1
 else
-  echo "\nVALIDACIÓN OK: reproducibilidad básica verificada"
+  echo ""
+  echo "VALIDACIÓN OK: reproducibilidad básica verificada"
   exit 0
 fi
