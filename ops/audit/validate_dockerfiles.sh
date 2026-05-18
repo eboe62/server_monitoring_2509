@@ -18,61 +18,122 @@ fi
 for df in $DOCKERFILES; do
   info "Analizando $df"
 
-  # 1) FROM implicit tag (no tag) -> implicit latest
-  if grep -E -n '^FROM\s+[^:]+(\s|$)' "$df" >/dev/null 2>&1; then
-    LINES=$(grep -nE '^FROM\s+[^:]+(\s|$)' "$df" || true)
-    fail "$df: Uso de FROM sin tag (implícito :latest):\n$LINES"
-  fi
+  # ==========================================
+  # 1) Detectar FROM con latest explícito
+  # ==========================================
 
-  # 2) FROM explicit :latest
-  LATESTS=$(grep -nE '^FROM\s+.*:latest' "$df" || true)
+  LATESTS=$(grep -nE '^FROM\s+.*:latest([[:space:]]|$)' "$df" || true)
+
   if [ -n "$LATESTS" ]; then
     fail "$df: Uso de FROM :latest detectado:\n$LATESTS"
   else
     ok "$df: no usa FROM :latest explícito"
   fi
 
-  # 3) Detectar pip requirements referenced and check unpinned entries
-  REQ_LINES=$(grep -n "COPY .*requirements.txt" -n "$df" || true)
+  # ==========================================
+  # 2) Detectar FROM sin tag real
+  #
+  # Excluir:
+  #   FROM ${BASE_IMAGE}
+  #   FROM ${BASE_IMAGE:-valor}
+  #
+  # porque pueden resolverse mediante ARG.
+  # ==========================================
+
+  FROM_LINES=$(grep -nE '^FROM\s+' "$df" || true)
+
+  if [ -n "$FROM_LINES" ]; then
+
+    while IFS= read -r entry; do
+
+      lineno=$(echo "$entry" | cut -d: -f1)
+      line=$(echo "$entry" | cut -d: -f2-)
+
+      image=$(echo "$line" | awk '{print $2}')
+
+      # Ignorar variables ARG (${...})
+      if echo "$image" | grep -qE '^\$\{.+\}$'; then
+        warn "$df:$lineno FROM parametrizado mediante ARG: $image"
+        continue
+      fi
+
+      # Si no contiene ":" ni "@sha256:"
+      # asumimos latest implícito
+      if ! echo "$image" | grep -q ":" \
+         && ! echo "$image" | grep -q "@sha256:"; then
+
+        fail "$df:$lineno FROM sin tag explícito (latest implícito): $image"
+
+      fi
+
+    done <<< "$FROM_LINES"
+
+  fi
+
+  # ==========================================
+  # 3) Detectar requirements no fijados
+  # (solo WARN)
+  # ==========================================
+
+  REQ_LINES=$(grep -n "COPY .*requirements.txt" "$df" || true)
+
   if [ -n "$REQ_LINES" ]; then
-    # try to locate requirements file path relative to Dockerfile
+
     REQ_FILE="requirements.txt"
+
     if [ -f "$(dirname "$df")/../requirements.txt" ]; then
       REQ_FILE="$(dirname "$df")/../requirements.txt"
+
     elif [ -f "requirements.txt" ]; then
       REQ_FILE="requirements.txt"
     fi
 
     if [ -f "$REQ_FILE" ]; then
-      # lines without '==' or '@' (approximation of unpinned)
-      UNPINNED=$(grep -E -v '^(#|\s*$)' "$REQ_FILE" | grep -n -E -v '(==|@|===)' || true)
+
+      UNPINNED=$(grep -E -v '^(#|\s*$)' "$REQ_FILE" \
+        | grep -n -E -v '(==|@|===)' || true)
+
       if [ -n "$UNPINNED" ]; then
         warn "$df: requisitos no fijados en $REQ_FILE (recomendado fijar versiones):\n$UNPINNED"
       else
         ok "$df: requisitos parecen fijados en $REQ_FILE"
       fi
+
     else
       warn "$df: no se encontró requirements para analizar ($REQ_FILE)"
     fi
   fi
 
-  # 4) Detectar apt-get install sin versiones (solo advertencia)
+  # ==========================================
+  # 4) apt-get install sin versiones
+  # (solo WARN)
+  # ==========================================
+
   APT_LINES=$(grep -n "apt-get install" "$df" || true)
+
   if [ -n "$APT_LINES" ]; then
-    for l in $(echo "$APT_LINES" | cut -d: -f1); do
-      line=$(sed -n "${l}p" "$df")
+
+    while IFS= read -r entry; do
+
+      lineno=$(echo "$entry" | cut -d: -f1)
+      line=$(echo "$entry" | cut -d: -f2-)
+
       if ! echo "$line" | grep -q "="; then
-        warn "$df:$l apt-get install sin versiones explícitas: $line"
+        warn "$df:$lineno apt-get install sin versiones explícitas: $line"
       fi
-    done
+
+    done <<< "$APT_LINES"
+
   fi
 
 done
 
 if [ "$FAILED" -ne 0 ]; then
-  echo "\nVALIDACIÓN DOCKERFILES: problemas detectados"
+  echo ""
+  echo "VALIDACIÓN DOCKERFILES: problemas detectados"
   exit 1
 else
-  echo "\nVALIDACIÓN DOCKERFILES: OK"
+  echo ""
+  echo "VALIDACIÓN DOCKERFILES: OK"
   exit 0
 fi
