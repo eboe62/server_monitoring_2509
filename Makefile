@@ -222,6 +222,16 @@ test:
 	@echo "make test-network"
 	@echo ""
 
+.PHONY: clean-dangling validate-dockerfiles
+
+clean-dangling:
+	@echo "Cleaning dangling images (docker image prune -f)"
+	@docker image prune -f || true
+
+validate-dockerfiles:
+	@chmod +x ops/audit/validate_dockerfiles.sh
+	@./ops/audit/validate_dockerfiles.sh
+
 # --- Resilience
 
 .PHONY: test-resilience-completo

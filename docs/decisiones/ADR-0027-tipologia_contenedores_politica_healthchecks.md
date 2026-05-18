@@ -169,12 +169,20 @@ Ejemplos:
 - promtail
 - smtp-relay
 
-Los healthchecks deben alinearse con las capacidades reales del upstream.
+Deben utilizar:
+- el mecanismo más apropiado según capacidades reales del upstream
+- minimizando modificaciones sobre imágenes oficiales
+
+Puede aceptarse ausencia de healthcheck cuando:
+- la imagen upstream no proporcione tooling adecuado
+- el coste de introducir tooling adicional no esté justificado
+- existan mecanismos alternativos de validación operacional
 
 Debe evitarse:
 - hardening artificial
 - wrappers innecesarios
-- sidecars sin justificación
+- sidecars no justificados
+- modificación innecesaria de imágenes oficiales
 
 ## Política oficial de healthchecks
 
@@ -221,9 +229,16 @@ Formato de salida:
     container|FOUND|compose|service|healthcheck
 
 Estados soportados:
-- FOUND
-- NOT_FOUND
-- COMPOSE_INVALID
+    FOUND
+    NOT_FOUND
+    COMPOSE_INVALID
+    WARN
+
+Donde:
+- WARN representa configuraciones explícitamente aceptadas por política runtime
+especialmente en contenedores:
+    INFRA_TRUSTED
+    TOOLBOX_RUNTIME
 
 ## Decisión específica sobre promtail
 
@@ -231,16 +246,32 @@ promtail queda clasificado como:
 
 INFRA_TRUSTED
 
-Se adopta readiness basado en:
-    [http://localhost:9080/ready](http://localhost:9080/ready)
+Se elimina el healthcheck runtime del contenedor.
 
-Healthcheck oficial:
-    wget -qO- [http://localhost:9080/ready](http://localhost:9080/ready) || exit 1
+Motivación:
+- la imagen oficial upstream no incorpora:
+    wget
+    curl
+    utilidades equivalentes de validación HTTP
+introducir tooling adicional únicamente para healthchecks:
+- rompería alineación upstream
+- aumentaría drift operacional
+- introduciría hardening artificial
+
+La validación operacional de promtail pasa a realizarse mediante:
+- validación CI estructural
+- verificación runtime con:
+- docker ps
+- docker logs
+- docker inspect
+
+El enforcement asociado queda configurado como:
+    enforcement_level: warn
 
 Objetivo:
-- validar disponibilidad real del agente
-- evitar healthchecks artificiales
-- mantener coherencia upstream
+- evitar falsos negativos
+- respetar capacidades reales del upstream
+- mantener coherencia IaC y reproducibilidad runtime
 
 ## Decisión específica sobre monitoring-python
 
@@ -286,24 +317,30 @@ Operativas:
 
 ## Limitaciones conocidas
 
-La presencia de healthcheck NO garantiza por sí sola estado healthy.
+La presencia de un healthcheck declarado NO garantiza por sí sola operatividad real.
 
-Durante la validación se observó:
-    promtail → unhealthy
+Durante la validación se detectó que:
+- algunos contenedores upstream minimalistas
+- pueden no incluir tooling HTTP básico
+- necesario para implementar healthchecks tradicionales
 
-incluso existiendo healthcheck declarado.
+Caso identificado:
+    promtail
 
-Esto implica que:
-- el endpoint /ready puede no estar respondiendo correctamente
-- puede existir dependencia runtime no satisfecha
-- el contenedor puede estar funcionalmente degradado
+La imagen oficial upstream carece de:
+    wget
+    curl
+    herramientas equivalentes
 
 Por tanto:
-- CI valida presencia y coherencia del healthcheck
-- la salud runtime real debe validarse adicionalmente mediante:
+- la validación CI distingue entre:
+    ausencia legítima de healthcheck
+    incumplimiento arquitectónico
+- algunos contenedores INFRA_TRUSTED pueden operar sin healthcheck runtime
+- la validación operacional real debe complementarse mediante:
     docker ps
     docker inspect
-    logs runtime
+    docker logs
 
 ## Restricciones
 
