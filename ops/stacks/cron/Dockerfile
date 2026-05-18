@@ -1,11 +1,19 @@
 # Imagen autónoma para ejecución de cronjobs
 FROM python:3.12-slim
 
+ARG IMAGE_VERSION="v1.0.0"
+ARG BUILD_DATE=""
+
+LABEL org.opencontainers.image.title="monitoring-cron"
+LABEL org.opencontainers.image.version="${IMAGE_VERSION}"
+LABEL org.opencontainers.image.created="${BUILD_DATE}"
+
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PIP_NO_CACHE_DIR=1 \
-    PYTHONPATH=/opt/monitoring/src
+    PYTHONPATH=/opt/monitoring/src \
+    DEBIAN_FRONTEND=noninteractive
 
 WORKDIR /opt/monitoring
 
@@ -26,7 +34,7 @@ RUN groupadd -g 10001 appuser \
 COPY requirements.txt .
 
 # Instalar dependencias Python
-RUN pip install --no-cache-dir --no-compile -r requirements.txt
+RUN pip install --no-cache-dir --disable-pip-version-check -r requirements.txt
 
 # Copiar SOLO el código necesario para el servicio
 COPY src/ src/
