@@ -141,11 +141,15 @@ echo ""
 
 info "Buscando puertos publicados en compose"
 
-# Prefer structured checks via Python module (uses `docker compose config` when available)
-if command -v python3 >/dev/null 2>&1; then
-    python3 -m monitoring.common.compose_policy_checks || true
+# Ejecutar validaciones estructuradas una sola vez dentro del contenedor monitoring-python
+STRUCTURED_OUTPUT=""
+if docker compose version >/dev/null 2>&1 && docker ps --format '{{.Names}}' | grep -q '^monitoring-python$'; then
+    STRUCTURED_OUTPUT=$(docker compose exec -T monitoring-python python -m ops.audit.compose_policy_checks 2>/dev/null || true)
+    if [ -z "$STRUCTURED_OUTPUT" ]; then
+        warn "Validación estructurada ejecutada pero sin salida (ver logs del contenedor)"
+    fi
 else
-    warn "python3 no disponible: no se pudieron ejecutar validaciones estructuradas"
+    warn "monitoring-python container no disponible: omitiendo validaciones estructuradas"
 fi
 
 echo ""
@@ -391,10 +395,9 @@ echo ""
 
 info "Verificando exposición de puertos Docker (ADR-0014 / ADR-0015)"
 
-# Use structured checks via Python module when available to determine ports exposure.
-if command -v python3 >/dev/null 2>&1; then
-    OUTPUT=$(python3 -m monitoring.common.compose_policy_checks 2>/dev/null || true)
-    PORT_SECTION=$(echo "$OUTPUT" | awk '/Servicios con puertos publicados \(structured\):/ {flag=1; next} /^$/ {if(flag){exit}} flag {print}')
+PORT_SECTION=""
+if [ -n "$STRUCTURED_OUTPUT" ]; then
+    PORT_SECTION=$(echo "$STRUCTURED_OUTPUT" | awk '/Servicios con puertos publicados \(structured\):/ {flag=1; next} /^$/ {if(flag){exit}} flag {print}')
     if [ -z "$PORT_SECTION" ]; then
         ok "No se detectaron puertos expuestos globalmente (estructura detectada)"
     else
@@ -402,7 +405,7 @@ if command -v python3 >/dev/null 2>&1; then
         echo "$PORT_SECTION"
     fi
 else
-    warn "python3 no disponible: no se pudo evaluar exposición de puertos de forma estructurada"
+    warn "No se ejecutaron validaciones estructuradas: no se pudo evaluar exposición de puertos"
 fi
 
 echo ""
@@ -428,9 +431,8 @@ echo ""
 
 info "Verificando montaje docker.sock (superficie de ataque)"
 
-if command -v python3 >/dev/null 2>&1; then
-    OUTPUT=$(python3 -m monitoring.common.compose_policy_checks 2>/dev/null || true)
-    SOCK_SECTION=$(echo "$OUTPUT" | awk '/docker.sock montado en contenedor \(structured\):/ {flag=1; next} /^$/ {if(flag){exit}} flag {print}')
+if [ -n "$STRUCTURED_OUTPUT" ]; then
+    SOCK_SECTION=$(echo "$STRUCTURED_OUTPUT" | awk '/docker.sock montado en contenedor \(structured\):/ {flag=1; next} /^$/ {if(flag){exit}} flag {print}')
     if [ -z "$SOCK_SECTION" ]; then
         ok "docker.sock no montado en contenedores (estructura detectada)"
     else

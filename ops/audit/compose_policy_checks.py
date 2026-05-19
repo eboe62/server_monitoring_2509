@@ -1,19 +1,30 @@
 #!/usr/bin/env python3
-"""Checks for Docker Compose policies using structured parsing.
+"""Structured Compose policy checks for audit.
 
-Designed to be imported or executed as a module:
-  python3 -m monitoring.common.compose_policy_checks
+This script is intended to be executed inside the monitoring-python container
+via: `python -m ops.audit.compose_policy_checks` so it uses the exact runtime
+environment the platform executes in.
 
-It tries to use `docker compose config` when available, falling back to
-reading compose files under `ops/`.
+It prefers `docker compose config` runtime-resolved output when available and
+falls back to merging compose files found under `ops/` (best-effort).
+
+Supports `--json` for machine-readable output and `--check` to run a
+subset of checks.
 """
 from __future__ import annotations
 
+import argparse
+import json
 import os
-import sys
 import subprocess
-import yaml
-from typing import Dict, Any, List, Tuple
+import sys
+from typing import Any, Dict, List, Tuple
+
+try:
+    import yaml
+except Exception:
+    print("[WARN] PyYAML no disponible dentro del contenedor; algunas comprobaciones pueden fallar", file=sys.stderr)
+    yaml = None
 
 
 def ok(msg: str):
@@ -31,22 +42,27 @@ def fail(msg: str):
 def load_compose_via_docker() -> Dict[str, Any] | None:
     try:
         out = subprocess.check_output(["docker", "compose", "config"], stderr=subprocess.DEVNULL)
+        if not yaml:
+            return None
         return yaml.safe_load(out)
     except Exception:
         return None
 
 
 def find_compose_files() -> List[str]:
-    files = []
+    candidates = []
+    names = ("docker-compose.yml", "docker-compose.yaml", "compose.yml", "compose.yaml", "compose.override.yml", "compose.override.yaml")
     for root, _, filenames in os.walk("ops"):
         for fn in filenames:
-            if fn.startswith("compose") and fn.endswith(('.yml', '.yaml')):
-                files.append(os.path.join(root, fn))
-    return files
+            if fn in names or fn.startswith("compose") and fn.endswith((".yml", ".yaml")):
+                candidates.append(os.path.join(root, fn))
+    return sorted(set(candidates))
 
 
 def load_compose_from_files(files: List[str]) -> Dict[str, Any] | None:
     merged: Dict[str, Any] = {"services": {}}
+    if not yaml:
+        return None
     for f in files:
         try:
             with open(f, "rb") as fh:
@@ -61,7 +77,6 @@ def load_compose_from_files(files: List[str]) -> Dict[str, Any] | None:
 
 
 def get_compose_dict() -> Dict[str, Any]:
-    # Prefer runtime-resolved compose
     d = load_compose_via_docker()
     if d:
         return d
@@ -70,6 +85,7 @@ def get_compose_dict() -> Dict[str, Any]:
     if files:
         loaded = load_compose_from_files(files)
         if loaded:
+            warn("Usando parseo estático de archivos Compose (mejor usar runtime `docker compose config`)")
             return loaded
 
     return {"services": {}}
@@ -77,21 +93,19 @@ def get_compose_dict() -> Dict[str, Any]:
 
 def _service_ports(svc: Dict[str, Any]) -> List[str]:
     ports = svc.get("ports") or []
-    # ports can be dicts in long syntax
-    out = []
+    out: List[str] = []
     for p in ports:
         if isinstance(p, str):
             out.append(p)
         elif isinstance(p, dict):
             target = p.get("target")
             published = p.get("published")
-            mode = p.get("mode")
-            out.append(f"{published}:{target}" if published and target else str(p))
+            out.append(f"{published}:{target}" if published and target else json.dumps(p))
     return out
 
 
 def detect_published_ports(compose: Dict[str, Any]) -> List[Tuple[str, str]]:
-    findings = []
+    findings: List[Tuple[str, str]] = []
     for name, svc in (compose.get("services") or {}).items():
         for p in _service_ports(svc):
             findings.append((name, p))
@@ -99,37 +113,42 @@ def detect_published_ports(compose: Dict[str, Any]) -> List[Tuple[str, str]]:
 
 
 def detect_docker_sock(compose: Dict[str, Any]) -> List[Tuple[str, str]]:
-    findings = []
+    findings: List[Tuple[str, str]] = []
     for name, svc in (compose.get("services") or {}).items():
         vols = svc.get("volumes") or []
         for v in vols:
-            # v can be string 'host:container:ro' or dict
-            if isinstance(v, str) and "docker.sock" in v:
-                findings.append((name, v))
+            # short syntax: 'host:container:ro'
+            if isinstance(v, str):
+                parts = v.split(":")
+                # check both source and target
+                if any("docker.sock" in part for part in parts):
+                    findings.append((name, v))
             elif isinstance(v, dict):
-                src = v.get("source") or v.get("type")
+                src = v.get("source") or v.get("bind") or v.get("type")
+                target = v.get("target") or v.get("destination")
                 if isinstance(src, str) and "docker.sock" in src:
-                    findings.append((name, str(v)))
+                    findings.append((name, json.dumps(v)))
+                elif isinstance(target, str) and "docker.sock" in target:
+                    findings.append((name, json.dumps(v)))
     return findings
 
 
 def detect_images_latest_and_no_digest(compose: Dict[str, Any]) -> Tuple[List[Tuple[str, str]], List[Tuple[str, str]]]:
-    latest = []
-    no_digest = []
+    latest: List[Tuple[str, str]] = []
+    no_digest: List[Tuple[str, str]] = []
     for name, svc in (compose.get("services") or {}).items():
         image = svc.get("image")
         if not image:
             continue
         if "@sha256:" not in image:
-            no_digest.append((name, image))
-        # explicit :latest
-        if image.endswith(":latest") or image.endswith(":latest\n"):
+            no_digest.append((name, str(image)))
+        if isinstance(image, str) and image.endswith(":latest"):
             latest.append((name, image))
     return latest, no_digest
 
 
 def detect_privileged(compose: Dict[str, Any]) -> List[Tuple[str, Any]]:
-    findings = []
+    findings: List[Tuple[str, Any]] = []
     for name, svc in (compose.get("services") or {}).items():
         if svc.get("privileged") is True:
             findings.append((name, True))
@@ -137,13 +156,12 @@ def detect_privileged(compose: Dict[str, Any]) -> List[Tuple[str, Any]]:
 
 
 def detect_mounts_rw_sensitive(compose: Dict[str, Any]) -> List[Tuple[str, str]]:
-    findings = []
+    findings: List[Tuple[str, str]] = []
     sensitive_paths = ("/etc/passwd", "/etc/shadow", "/var/run/docker.sock", "/root", "/var/lib/docker")
     for name, svc in (compose.get("services") or {}).items():
         vols = svc.get("volumes") or []
         for v in vols:
             if isinstance(v, str):
-                # host:container(:ro)?
                 parts = v.split(":")
                 if len(parts) >= 2:
                     host = parts[0]
@@ -158,12 +176,12 @@ def detect_mounts_rw_sensitive(compose: Dict[str, Any]) -> List[Tuple[str, str]]
                 for s in sensitive_paths:
                     if isinstance(src, str) and (src == s or src.startswith(s + "/")):
                         if not read_only:
-                            findings.append((name, str(v)))
+                            findings.append((name, json.dumps(v)))
     return findings
 
 
 def detect_cap_add(compose: Dict[str, Any]) -> List[Tuple[str, Any]]:
-    findings = []
+    findings: List[Tuple[str, Any]] = []
     for name, svc in (compose.get("services") or {}).items():
         caps = svc.get("cap_add") or svc.get("capabilities")
         if caps:
@@ -172,92 +190,128 @@ def detect_cap_add(compose: Dict[str, Any]) -> List[Tuple[str, Any]]:
 
 
 def detect_read_only_false(compose: Dict[str, Any]) -> List[str]:
-    findings = []
+    findings: List[str] = []
     for name, svc in (compose.get("services") or {}).items():
         if svc.get("read_only") is False:
             findings.append(name)
     return findings
 
 
-def run_all_checks() -> int:
+def run_all_checks(selected: List[str] | None = None) -> Dict[str, Any]:
     compose = get_compose_dict()
+    out: Dict[str, Any] = {}
 
-    had_fail = False
+    if selected is None or "ports" in selected:
+        ports = detect_published_ports(compose)
+        out["ports"] = ports
 
+    if selected is None or "docker_sock" in selected:
+        ds = detect_docker_sock(compose)
+        out["docker_sock"] = ds
+
+    if selected is None or "images" in selected:
+        latest, no_digest = detect_images_latest_and_no_digest(compose)
+        out["images_latest"] = latest
+        out["images_no_digest"] = no_digest
+
+    if selected is None or "privileged" in selected:
+        out["privileged"] = detect_privileged(compose)
+
+    if selected is None or "sensitive_mounts" in selected:
+        out["sensitive_mounts"] = detect_mounts_rw_sensitive(compose)
+
+    if selected is None or "cap_add" in selected:
+        out["cap_add"] = detect_cap_add(compose)
+
+    if selected is None or "read_only_false" in selected:
+        out["read_only_false"] = detect_read_only_false(compose)
+
+    return out
+
+
+def pretty_print(results: Dict[str, Any]):
     # Ports
-    ports = detect_published_ports(compose)
-    if not ports:
+    if not results.get("ports"):
         ok("No hay puertos publicados en compose (estructura detectada)")
     else:
         warn("Servicios con puertos publicados (structured):")
-        for svc, p in ports:
+        for svc, p in results.get("ports", []):
             print(f"  - {svc}: {p}")
 
     # docker.sock
-    ds = detect_docker_sock(compose)
-    if not ds:
+    if not results.get("docker_sock"):
         ok("docker.sock no usado (estructura detectada)")
     else:
         warn("docker.sock montado en contenedor (structured):")
-        for svc, v in ds:
+        for svc, v in results.get("docker_sock", []):
             print(f"  - {svc}: {v}")
 
     # images
-    latest, no_digest = detect_images_latest_and_no_digest(compose)
-    if latest:
+    if results.get("images_latest"):
         warn("Imágenes con tag :latest detectadas:")
-        for svc, img in latest:
+        for svc, img in results.get("images_latest", []):
             print(f"  - {svc}: {img}")
     else:
         ok("No se detectaron imágenes con tag :latest (estructura detectada)")
 
-    if no_digest:
+    if results.get("images_no_digest"):
         warn("Imágenes sin digest (recomendado fijar digest):")
-        for svc, img in no_digest:
+        for svc, img in results.get("images_no_digest", []):
             print(f"  - {svc}: {img}")
     else:
         ok("Todas las imágenes contienen digest o no se detectaron imágenes")
 
     # privileged
-    priv = detect_privileged(compose)
-    if priv:
+    if results.get("privileged"):
         fail("Servicios con privileged=true detectados:")
-        had_fail = True
-        for svc, _ in priv:
+        for svc, _ in results.get("privileged", []):
             print(f"  - {svc}")
     else:
         ok("No se detectó privileged=true en servicios")
 
-    # mounts rw sensitive
-    sensitive = detect_mounts_rw_sensitive(compose)
-    if sensitive:
+    # sensitive mounts
+    if results.get("sensitive_mounts"):
         warn("Mounts sensibles en modo RW detectados:")
-        for svc, v in sensitive:
+        for svc, v in results.get("sensitive_mounts", []):
             print(f"  - {svc}: {v}")
     else:
         ok("No se detectaron mounts sensibles en modo RW")
 
     # cap_add
-    caps = detect_cap_add(compose)
-    if caps:
+    if results.get("cap_add"):
         warn("Servicios con cap_add/capabilities:")
-        for svc, c in caps:
+        for svc, c in results.get("cap_add", []):
             print(f"  - {svc}: {c}")
     else:
         ok("No se detectaron cap_add/capabilities")
 
     # read_only false
-    ro_false = detect_read_only_false(compose)
-    if ro_false:
+    if results.get("read_only_false"):
         warn("Servicios con read_only=false detectados:")
-        for svc in ro_false:
+        for svc in results.get("read_only_false", []):
             print(f"  - {svc}")
     else:
         ok("No se detectaron servicios con read_only=false")
 
-    return 1 if had_fail else 0
+
+def main(argv: List[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description="Compose structured policy checks")
+    parser.add_argument("--json", dest="json", action="store_true", help="Emitir salida JSON machine-readable")
+    parser.add_argument("--check", dest="check", action="append", help="Ejecutar solo comprobaciónes específicas (ports,docker_sock,images,privileged,sensitive_mounts,cap_add,read_only_false)")
+    args = parser.parse_args(argv)
+
+    results = run_all_checks(args.check)
+
+    if args.json:
+        # Convert tuples to lists for JSON serializable output
+        serializable = {k: [list(x) for x in v] if isinstance(v, list) else v for k, v in results.items()}
+        print(json.dumps(serializable, indent=2, ensure_ascii=False))
+        return 0
+
+    pretty_print(results)
+    return 0
 
 
 if __name__ == "__main__":
-    rc = run_all_checks()
+    rc = main()
     sys.exit(rc)
