@@ -232,6 +232,12 @@ validate-dockerfiles:
 	@chmod +x ops/audit/validate_dockerfiles.sh
 	@./ops/audit/validate_dockerfiles.sh
 
+.PHONY: test-policy-structured
+
+test-policy-structured:
+	@echo "=== TEST POLICY STRUCTURED (compose checks) ==="
+	@python3 -m monitoring.common.compose_policy_checks
+
 # --- Resilience
 
 .PHONY: test-resilience-completo

@@ -141,13 +141,11 @@ echo ""
 
 info "Buscando puertos publicados en compose"
 
-PORTS=$(grep -R "ports:" -n ops || true)
-
-if [ -z "$PORTS" ]; then
-    ok "No hay puertos publicados en compose"
+# Prefer structured checks via Python module (uses `docker compose config` when available)
+if command -v python3 >/dev/null 2>&1; then
+    python3 -m monitoring.common.compose_policy_checks || true
 else
-    warn "Servicios con puertos publicados:"
-    echo "$PORTS"
+    warn "python3 no disponible: no se pudieron ejecutar validaciones estructuradas"
 fi
 
 echo ""
@@ -393,13 +391,18 @@ echo ""
 
 info "Verificando exposición de puertos Docker (ADR-0014 / ADR-0015)"
 
-BAD_PORTS=$(grep -R 'ports:' -n ops 2>/dev/null | grep -v "127.0.0.1" || true)
-
-if [ -z "$BAD_PORTS" ]; then
-    ok "No se detectaron puertos expuestos globalmente"
+# Use structured checks via Python module when available to determine ports exposure.
+if command -v python3 >/dev/null 2>&1; then
+    OUTPUT=$(python3 -m monitoring.common.compose_policy_checks 2>/dev/null || true)
+    PORT_SECTION=$(echo "$OUTPUT" | awk '/Servicios con puertos publicados \(structured\):/ {flag=1; next} /^$/ {if(flag){exit}} flag {print}')
+    if [ -z "$PORT_SECTION" ]; then
+        ok "No se detectaron puertos expuestos globalmente (estructura detectada)"
+    else
+        warn "Puertos potencialmente expuestos (structured):"
+        echo "$PORT_SECTION"
+    fi
 else
-    warn "Puertos potencialmente expuestos:"
-    echo "$BAD_PORTS"
+    warn "python3 no disponible: no se pudo evaluar exposición de puertos de forma estructurada"
 fi
 
 echo ""
@@ -425,13 +428,23 @@ echo ""
 
 info "Verificando montaje docker.sock (superficie de ataque)"
 
-SOCK=$(grep -R "docker.sock" -n ops 2>/dev/null || true)
-
-if [ -z "$SOCK" ]; then
-    ok "docker.sock no montado en contenedores"
+if command -v python3 >/dev/null 2>&1; then
+    OUTPUT=$(python3 -m monitoring.common.compose_policy_checks 2>/dev/null || true)
+    SOCK_SECTION=$(echo "$OUTPUT" | awk '/docker.sock montado en contenedor \(structured\):/ {flag=1; next} /^$/ {if(flag){exit}} flag {print}')
+    if [ -z "$SOCK_SECTION" ]; then
+        ok "docker.sock no montado en contenedores (estructura detectada)"
+    else
+        warn "docker.sock detectado (structured):"
+        echo "$SOCK_SECTION"
+    fi
 else
-    warn "docker.sock detectado:"
-    echo "$SOCK"
+    SOCK=$(grep -R "docker.sock" -n ops 2>/dev/null || true)
+    if [ -z "$SOCK" ]; then
+        ok "docker.sock no montado en contenedores"
+    else
+        warn "docker.sock detectado:"
+        echo "$SOCK"
+    fi
 fi
 
 echo ""
