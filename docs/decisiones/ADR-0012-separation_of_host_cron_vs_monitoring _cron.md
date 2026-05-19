@@ -2,7 +2,7 @@
 
 Fecha: 2026-03-12
 Estado: Propuesto
-Ámbito: server_monitoring
+Ámbito: server_monitoring_2509
 
 ## Contexto
 El sistema server_monitoring se despliega en un servidor VPS bajo una arquitectura basada en Infrastructure as Code y contenedores Docker.

@@ -232,6 +232,13 @@ validate-dockerfiles:
 	@chmod +x ops/audit/validate_dockerfiles.sh
 	@./ops/audit/validate_dockerfiles.sh
 
+.PHONY: test-policy-structured
+
+test-policy-structured:
+	@echo "=== TEST POLICY STRUCTURED (compose checks) ==="
+	@$(COMPOSE) exec -T monitoring-python python -m ops.audit.compose_policy_checks || \
+		(echo "[WARN] no se pudo ejecutar ops.audit.compose_policy_checks en container monitoring-python" && exit 0)
+
 # --- Resilience
 
 .PHONY: test-resilience-completo

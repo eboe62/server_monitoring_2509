@@ -141,13 +141,33 @@ echo ""
 
 info "Buscando puertos publicados en compose"
 
-PORTS=$(grep -R "ports:" -n ops || true)
+# Ejecutar validaciones estructuradas una sola vez dentro del contenedor monitoring-python
+# Nota operativa:
+# - La lógica principal de validación se ejecuta exclusivamente dentro del
+#   contenedor `monitoring-python` para garantizar paridad runtime. El host
+#   solo orquesta la ejecución y consume salida JSON (no debe parsear salida
+#   humana).
+# - Cuando `docker compose config` no esté disponible en runtime, el
+#   módulo emitirá WARN y se usará un parseo estático best-effort sobre los
+#   archivos en `ops/`.
+# - Para parsear JSON en host el script usa `jq` si está disponible o el
+#   helper `ops/audit/parse_compose_json.py` (ligero). No se usan bloques
+#   Python inline para mantener claridad operacional.
+STRUCTURED_FILE=""
+STRUCTURED_ERR=""
+if docker compose version >/dev/null 2>&1 && docker ps --format '{{.Names}}' | grep -q '^monitoring-python$'; then
+    STRUCTURED_FILE=$(mktemp)
+    STRUCTURED_ERR=$(mktemp)
+    # Cleanup temp files on exit
+    trap 'rm -f "${STRUCTURED_FILE:-}" "${STRUCTURED_ERR:-}"' EXIT
 
-if [ -z "$PORTS" ]; then
-    ok "No hay puertos publicados en compose"
+    if docker compose exec -T monitoring-python python -m ops.audit.compose_policy_checks --json > "$STRUCTURED_FILE" 2>"$STRUCTURED_ERR"; then
+        :
+    else
+        warn "Validación estructurada falló dentro del contenedor (ver $STRUCTURED_ERR)"
+    fi
 else
-    warn "Servicios con puertos publicados:"
-    echo "$PORTS"
+    warn "monitoring-python container no disponible: omitiendo validaciones estructuradas"
 fi
 
 echo ""
@@ -393,13 +413,35 @@ echo ""
 
 info "Verificando exposición de puertos Docker (ADR-0014 / ADR-0015)"
 
-BAD_PORTS=$(grep -R 'ports:' -n ops 2>/dev/null | grep -v "127.0.0.1" || true)
-
-if [ -z "$BAD_PORTS" ]; then
-    ok "No se detectaron puertos expuestos globalmente"
+if [ -n "$STRUCTURED_FILE" ] && [ -s "$STRUCTURED_FILE" ]; then
+    if command -v jq >/dev/null 2>&1; then
+        PORTS_OUTPUT=$(jq -r '.ports // [] | if (.|length)==0 then empty else .[] | "  - " + (.[0]) + ": " + (.[1]) end' "$STRUCTURED_FILE" || true)
+        if [ -z "$PORTS_OUTPUT" ]; then
+            ok "No se detectaron puertos expuestos globalmente (estructura detectada)"
+        else
+            warn "Puertos potencialmente expuestos (structured):"
+            echo "$PORTS_OUTPUT"
+        fi
+    else
+        # Use lightweight helper script to parse JSON
+        if command -v python3 >/dev/null 2>&1; then
+            PARSER=ops/audit/parse_compose_json.py
+            PORTS_OUTPUT=$("$PARSER" "$STRUCTURED_FILE" ports 2>/dev/null || true)
+            RC=$?
+            if [ $RC -eq 2 ]; then
+                ok "No se detectaron puertos expuestos globalmente (estructura detectada)"
+            elif [ $RC -eq 3 ]; then
+                warn "No se pudo parsear salida JSON de validación estructurada"
+            else
+                warn "Puertos potencialmente expuestos (structured):"
+                echo "$PORTS_OUTPUT"
+            fi
+        else
+            warn "Ni 'jq' ni 'python3' disponibles en host: no se puede parsear salida JSON estructurada"
+        fi
+    fi
 else
-    warn "Puertos potencialmente expuestos:"
-    echo "$BAD_PORTS"
+    warn "No se ejecutaron validaciones estructuradas: no se pudo evaluar exposición de puertos"
 fi
 
 echo ""
@@ -425,13 +467,40 @@ echo ""
 
 info "Verificando montaje docker.sock (superficie de ataque)"
 
-SOCK=$(grep -R "docker.sock" -n ops 2>/dev/null || true)
-
-if [ -z "$SOCK" ]; then
-    ok "docker.sock no montado en contenedores"
+if [ -n "$STRUCTURED_FILE" ] && [ -s "$STRUCTURED_FILE" ]; then
+    if command -v jq >/dev/null 2>&1; then
+        SOCK_OUTPUT=$(jq -r '.docker_sock // [] | if (.|length)==0 then empty else .[] | "  - " + (.[0]) + ": " + (.[1]) end' "$STRUCTURED_FILE" || true)
+        if [ -z "$SOCK_OUTPUT" ]; then
+            ok "docker.sock no montado en contenedores (estructura detectada)"
+        else
+            warn "docker.sock detectado (structured):"
+            echo "$SOCK_OUTPUT"
+        fi
+    else
+        if command -v python3 >/dev/null 2>&1; then
+            PARSER=ops/audit/parse_compose_json.py
+            SOCK_OUTPUT=$("$PARSER" "$STRUCTURED_FILE" docker_sock 2>/dev/null || true)
+            RC=$?
+            if [ $RC -eq 2 ]; then
+                ok "docker.sock no montado en contenedores (estructura detectada)"
+            elif [ $RC -eq 3 ]; then
+                warn "No se pudo parsear salida JSON de validación estructurada"
+            else
+                warn "docker.sock detectado (structured):"
+                echo "$SOCK_OUTPUT"
+            fi
+        else
+            warn "Ni 'jq' ni 'python3' disponibles en host: no se puede parsear salida JSON estructurada"
+        fi
+    fi
 else
-    warn "docker.sock detectado:"
-    echo "$SOCK"
+    SOCK=$(grep -R "docker.sock" -n ops 2>/dev/null || true)
+    if [ -z "$SOCK" ]; then
+        ok "docker.sock no montado en contenedores"
+    else
+        warn "docker.sock detectado:"
+        echo "$SOCK"
+    fi
 fi
 
 echo ""
