@@ -49,12 +49,51 @@ def load_compose_via_docker() -> Dict[str, Any] | None:
         return None
 
 
+def check_docker_runtime() -> Dict[str, bool]:
+    """Check availability of docker CLI and compose inside the runtime container."""
+    status = {"docker_cli": False, "docker_compose": False, "compose_config": False, "docker_sock": False}
+    try:
+        subprocess.check_output(["docker", "--version"], stderr=subprocess.DEVNULL)
+        status["docker_cli"] = True
+    except Exception:
+        return status
+
+    try:
+        subprocess.check_output(["docker", "compose", "version"], stderr=subprocess.DEVNULL)
+        status["docker_compose"] = True
+    except Exception:
+        pass
+
+    try:
+        # Try a harmless compose config to validate connectivity
+        subprocess.check_output(["docker", "compose", "config"], stderr=subprocess.DEVNULL, timeout=10)
+        status["compose_config"] = True
+    except Exception:
+        pass
+
+    # Check docker.sock accessibility by trying to list containers
+    try:
+        subprocess.check_output(["docker", "ps", "-q"], stderr=subprocess.DEVNULL, timeout=10)
+        status["docker_sock"] = True
+    except Exception:
+        pass
+
+    return status
+
+
 def find_compose_files() -> List[str]:
     candidates = []
-    names = ("docker-compose.yml", "docker-compose.yaml", "compose.yml", "compose.yaml", "compose.override.yml", "compose.override.yaml")
+    names = (
+        "docker-compose.yml",
+        "docker-compose.yaml",
+        "compose.yml",
+        "compose.yaml",
+        "compose.override.yml",
+        "compose.override.yaml",
+    )
     for root, _, filenames in os.walk("ops"):
         for fn in filenames:
-            if fn in names or fn.startswith("compose") and fn.endswith((".yml", ".yaml")):
+            if (fn in names) or (fn.startswith("compose") and fn.endswith((".yml", ".yaml"))):
                 candidates.append(os.path.join(root, fn))
     return sorted(set(candidates))
 
@@ -197,9 +236,24 @@ def detect_read_only_false(compose: Dict[str, Any]) -> List[str]:
     return findings
 
 
+POLICY_SEVERITY = {
+    "privileged": "FAIL",
+    "docker_sock": "WARN",
+    "ports": "WARN",
+    "sensitive_mounts": "WARN",
+    "images_no_digest": "WARN",
+    "images_latest": "WARN",
+    "cap_add": "WARN",
+    "read_only_false": "WARN",
+}
+
+
 def run_all_checks(selected: List[str] | None = None) -> Dict[str, Any]:
     compose = get_compose_dict()
     out: Dict[str, Any] = {}
+
+    # runtime-status
+    out["runtime_checks"] = check_docker_runtime()
 
     if selected is None or "ports" in selected:
         ports = detect_published_ports(compose)
@@ -293,23 +347,86 @@ def pretty_print(results: Dict[str, Any]):
     else:
         ok("No se detectaron servicios con read_only=false")
 
+    # runtime checks
+    rt = results.get("runtime_checks") or {}
+    if rt:
+        print("")
+        print("[INFO] Runtime checks:")
+        if rt.get("docker_cli"):
+            ok("docker CLI disponible")
+        else:
+            warn("docker CLI no disponible")
+        if rt.get("docker_compose"):
+            ok("docker compose disponible")
+        else:
+            warn("docker compose no disponible")
+        if rt.get("compose_config"):
+            ok("docker compose config operativo")
+        else:
+            warn("docker compose config no operativo dentro del runtime")
+        if rt.get("docker_sock"):
+            ok("Acceso a docker.sock operativo")
+        else:
+            warn("Acceso a docker.sock NO operativo (el contenedor puede no tener acceso al control plane)")
+
 
 def main(argv: List[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Compose structured policy checks")
     parser.add_argument("--json", dest="json", action="store_true", help="Emitir salida JSON machine-readable")
     parser.add_argument("--check", dest="check", action="append", help="Ejecutar solo comprobaciónes específicas (ports,docker_sock,images,privileged,sensitive_mounts,cap_add,read_only_false)")
+    parser.add_argument("--self-test", dest="self_test", action="store_true", help="Ejecutar autotest runtime (docker CLI/compose/compose config/docker.sock)")
     args = parser.parse_args(argv)
 
     results = run_all_checks(args.check)
 
+    if args.self_test:
+        rt = results.get("runtime_checks") or {}
+        # Emit JSON if requested
+        if args.json:
+            print(json.dumps({"runtime_checks": rt}, indent=2, ensure_ascii=False))
+            # rc: fail if docker_cli missing
+            return 1 if not rt.get("docker_cli") else 0
+        # Human readable
+        if rt.get("docker_cli"):
+            ok("docker CLI disponible")
+        else:
+            fail("docker CLI no disponible")
+        if rt.get("docker_compose"):
+            ok("docker compose disponible")
+        else:
+            warn("docker compose no disponible")
+        if rt.get("compose_config"):
+            ok("docker compose config operativo")
+        else:
+            warn("docker compose config no operativo dentro del runtime")
+        if rt.get("docker_sock"):
+            ok("Acceso a docker.sock operativo")
+        else:
+            warn("Acceso a docker.sock NO operativo (el contenedor puede no tener acceso al control plane)")
+        return 0 if rt.get("docker_cli") else 1
+
+    # Normalize for JSON: tuples -> lists
+    serializable = {}
+    for k, v in results.items():
+        if isinstance(v, list):
+            serializable[k] = [list(x) if isinstance(x, tuple) else x for x in v]
+        else:
+            serializable[k] = v
+
+    # Determine exit code based on policy severity
+    rc = 0
+    for policy, severity in POLICY_SEVERITY.items():
+        items = results.get(policy)
+        if items:
+            if severity == "FAIL":
+                rc = 1
+
     if args.json:
-        # Convert tuples to lists for JSON serializable output
-        serializable = {k: [list(x) for x in v] if isinstance(v, list) else v for k, v in results.items()}
         print(json.dumps(serializable, indent=2, ensure_ascii=False))
-        return 0
+        return rc
 
     pretty_print(results)
-    return 0
+    return rc
 
 
 if __name__ == "__main__":
