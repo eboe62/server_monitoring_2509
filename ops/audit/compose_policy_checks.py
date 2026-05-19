@@ -1,15 +1,14 @@
 #!/usr/bin/env python3
 """Structured Compose policy checks for audit.
 
-This script is intended to be executed inside the monitoring-python container
-via: `python -m ops.audit.compose_policy_checks` so it uses the exact runtime
-environment the platform executes in.
+Modelo de ejecución (importante):
 
-It prefers `docker compose config` runtime-resolved output when available and
-falls back to merging compose files found under `ops/` (best-effort).
+- Este módulo está diseñado para ejecutarse dentro del contenedor monitoring-python para garantizar la paridad con el tiempo de ejecución (aceso al CLI de docker / docker.sock cuando el contenedor tiene permisos).
+- El script de orquestación del host (ops/audit/audit_repo_host.sh) llama a este módulo dentro del contenedor y solo se encarga de coordinar y recoger su salida en formato JSON
+- Fallback (Respaldo): cuando el comando docker compose config (que resuelve el estado real en runtime) no está disponible, el módulo hará un intento de parseo de los archivos YAML de compose bajo la carpeta ops/. Este respaldo es explícitamente no determinista comparado con docker compose y emitirá un aviso (WARN) para informar a los operadores.
+Prefiere la salida resuelta de docker compose config cuando está disponible y recurre a la fusión de archivos compose encontrados bajo ops/ como último recurso.
 
-Supports `--json` for machine-readable output and `--check` to run a
-subset of checks.
+Soporta --json para salida procesable por máquinas, --self-test para comprobaciones del entorno de ejecución y --check para ejecutar un subconjunto específico de comprobaciones.
 """
 from __future__ import annotations
 
@@ -28,15 +27,15 @@ except Exception:
 
 
 def ok(msg: str):
-    print(f"[ OK ] {msg}")
+    print(f"[ OK ] {msg}", file=sys.stderr)
 
 
 def warn(msg: str):
-    print(f"[WARN] {msg}")
+    print(f"[WARN] {msg}", file=sys.stderr)
 
 
 def fail(msg: str):
-    print(f"[FAIL] {msg}")
+    print(f"[FAIL] {msg}", file=sys.stderr)
 
 
 def load_compose_via_docker() -> Dict[str, Any] | None:
