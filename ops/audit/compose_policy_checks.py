@@ -40,7 +40,16 @@ def fail(msg: str):
 
 def load_compose_via_docker() -> Dict[str, Any] | None:
     try:
-        out = subprocess.check_output(["docker", "compose", "config"], stderr=subprocess.DEVNULL)
+        out = subprocess.check_output(
+            [
+                "docker",
+                "compose",
+                "--project-directory",
+                "/opt/monitoring",
+                "config",
+            ],
+            stderr=subprocess.DEVNULL,
+        )
         if not yaml:
             return None
         return yaml.safe_load(out)
@@ -64,8 +73,18 @@ def check_docker_runtime() -> Dict[str, bool]:
         pass
 
     try:
-        # Try a harmless compose config to validate connectivity
-        subprocess.check_output(["docker", "compose", "config"], stderr=subprocess.DEVNULL, timeout=10)
+        # Validate compose runtime resolution
+        subprocess.check_output(
+            [
+                "docker",
+                "compose",
+                "--project-directory",
+                "/opt/monitoring",
+                "config",
+            ],
+            stderr=subprocess.DEVNULL,
+            timeout=10,
+        )
         status["compose_config"] = True
     except Exception:
         pass
