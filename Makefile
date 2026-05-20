@@ -236,8 +236,13 @@ validate-dockerfiles:
 
 test-policy-structured:
 	@echo "=== TEST POLICY STRUCTURED (compose checks) ==="
-	@$(COMPOSE) exec -T monitoring-python python -m ops.audit.compose_policy_checks || \
-		(echo "[WARN] no se pudo ejecutar ops.audit.compose_policy_checks en container monitoring-python" && exit 0)
+	@$(COMPOSE) exec -T monitoring-python \
+		python -m ops.audit.compose_policy_checks ; \
+	RC=$$? ; \
+	if [ $$RC -ne 0 ]; then \
+		echo "[WARN] compose_policy_checks finalizó con código $$RC" ; \
+	fi ; \
+	exit 0
 
 # --- Resilience
 
