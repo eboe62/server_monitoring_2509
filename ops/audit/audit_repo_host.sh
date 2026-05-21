@@ -141,33 +141,32 @@ echo ""
 
 info "Buscando puertos publicados en compose"
 
-# Ejecutar validaciones estructuradas una sola vez dentro del contenedor monitoring-python
+# Ejecutar validaciones estructuradas una sola vez desde el HOST
 # Nota operativa:
-# - La lógica principal de validación se ejecuta exclusivamente dentro del
-#   contenedor `monitoring-python` para garantizar paridad runtime. El host
-#   solo orquesta la ejecución y consume salida JSON (no debe parsear salida
-#   humana).
-# - Cuando `docker compose config` no esté disponible en runtime, el
-#   módulo emitirá WARN y se usará un parseo estático best-effort sobre los
-#   archivos en `ops/`.
-# - Para parsear JSON en host el script usa `jq` si está disponible o el
-#   helper `ops/audit/parse_compose_json.py` (ligero). No se usan bloques
-#   Python inline para mantener claridad operacional.
+# - Por decisión arquitectónica el checker se ejecuta en el HOST.
+# - `monitoring-python` no debe considerarse toolbox de Docker ni requerir
+#   docker/compose/docker.sock. Cualquier chequeo sobre docker/compose se
+#   interpreta como verificación en el host.
+# - Cuando `docker compose config` no esté disponible en el host, el módulo
+#   usará un parseo estático best-effort sobre los archivos en `ops/` y
+#   emitirá WARNs (modo operativo esperado).
+# - Para parsear JSON en host se usa `jq` si está disponible o el helper
+#   `ops/audit/parse_compose_json.py`.
 STRUCTURED_FILE=""
 STRUCTURED_ERR=""
-if docker compose version >/dev/null 2>&1 && docker ps --format '{{.Names}}' | grep -q '^monitoring-python$'; then
+if command -v python3 >/dev/null 2>&1; then
     STRUCTURED_FILE=$(mktemp)
     STRUCTURED_ERR=$(mktemp)
     # Cleanup temp files on exit
     trap 'rm -f "${STRUCTURED_FILE:-}" "${STRUCTURED_ERR:-}"' EXIT
 
-    if docker compose exec -T monitoring-python python -m ops.audit.compose_policy_checks --json > "$STRUCTURED_FILE" 2>"$STRUCTURED_ERR"; then
+    if python3 -m ops.audit.compose_policy_checks --json >"$STRUCTURED_FILE" 2>"$STRUCTURED_ERR"; then
         :
     else
-        warn "Validación estructurada falló dentro del contenedor (ver $STRUCTURED_ERR)"
+        warn "Validación estructurada falló en host (ver $STRUCTURED_ERR)"
     fi
 else
-    warn "monitoring-python container no disponible: omitiendo validaciones estructuradas"
+    warn "python3 no disponible en host: omitiendo validaciones estructuradas"
 fi
 
 echo ""
