@@ -39,69 +39,23 @@ def fail(msg: str):
 
 
 def load_compose_via_docker() -> Dict[str, Any] | None:
-    """
-    Resolve compose model using docker compose config.
-    Requiere compose files accesibles desde el contenedor runtime.
-    """
-    compose_files = resolve_compose_files()
-    if not compose_files:
-        warn(
-            "No se encontraron compose files accesibles "
-            "dentro del contenedor runtime"
-        )
-        return None
-    cmd = ["docker", "compose"]
-    for f in compose_files:
-        cmd.extend(["-f", f])
-    cmd.append("config")
     try:
         out = subprocess.check_output(
-            cmd,
+            [
+                "docker",
+                "compose",
+                "--project-directory",
+                "/opt/monitoring",
+                "config",
+            ],
             stderr=subprocess.DEVNULL,
-            timeout=20,
         )
         if not yaml:
-            warn("PyYAML no disponible")
             return None
         return yaml.safe_load(out)
-    except Exception as exc:
-        warn(
-            f"docker compose config no operativo "
-            f"({type(exc).__name__})"
-        )
+    except Exception:
         return None
 
-def resolve_compose_files() -> List[str]:
-    """
-    Resolve compose files from common runtime locations.
-    Orden de prioridad:
-    1. Variable MONITORING_COMPOSE_FILE
-    2. Compose files estándar bajo /opt/monitoring
-    3. Compose files estándar bajo cwd actual
-    """
-    explicit = os.environ.get("MONITORING_COMPOSE_FILE")
-    if explicit:
-        files = [x.strip() for x in explicit.split(":") if x.strip()]
-        existing = [x for x in files if os.path.exists(x)]
-        if existing:
-            return existing
-    search_roots = [
-        "/opt/monitoring",
-        os.getcwd(),
-    ]
-    candidate_names = (
-        "docker-compose.yml",
-        "docker-compose.yaml",
-        "compose.yml",
-        "compose.yaml",
-    )
-    found: List[str] = []
-    for root in search_roots:
-        for name in candidate_names:
-            candidate = os.path.join(root, name)
-            if os.path.exists(candidate):
-                found.append(candidate)
-    return sorted(set(found))
 
 def check_docker_runtime() -> Dict[str, bool]:
     """Check availability of docker CLI and compose inside the runtime container."""
@@ -146,55 +100,51 @@ def check_docker_runtime() -> Dict[str, bool]:
 
 
 def find_compose_files() -> List[str]:
-    """
-    Fallback estático de búsqueda YAML.
-    Solo usado cuando docker compose config falla.
-    """
-    compose_files = resolve_compose_files()
-    if compose_files:
-        return compose_files
-    candidates: List[str] = []
-    search_roots = [
-        "/opt/monitoring",
-        os.getcwd(),
-    ]
-    for base in search_roots:
-        if not os.path.exists(base):
-            continue
-        for root, _, filenames in os.walk(base):
-            for fn in filenames:
-                if (
-                    fn.startswith("compose")
-                    or fn.startswith("docker-compose")
-                ) and fn.endswith((".yml", ".yaml")):
-                    candidates.append(os.path.join(root, fn))
+    candidates = []
+    names = (
+        "docker-compose.yml",
+        "docker-compose.yaml",
+        "compose.yml",
+        "compose.yaml",
+        "compose.override.yml",
+        "compose.override.yaml",
+    )
+    for root, _, filenames in os.walk("ops"):
+        for fn in filenames:
+            if (fn in names) or (fn.startswith("compose") and fn.endswith((".yml", ".yaml"))):
+                candidates.append(os.path.join(root, fn))
     return sorted(set(candidates))
 
 
+def load_compose_from_files(files: List[str]) -> Dict[str, Any] | None:
+    merged: Dict[str, Any] = {"services": {}}
+    if not yaml:
+        return None
+    for f in files:
+        try:
+            with open(f, "rb") as fh:
+                data = yaml.safe_load(fh)
+                if not data:
+                    continue
+                services = data.get("services") or {}
+                merged["services"].update(services)
+        except Exception:
+            continue
+    return merged if merged["services"] else None
+
+
 def get_compose_dict() -> Dict[str, Any]:
-    """
-    Obtener modelo compose.
-    Prioridad:
-    1. docker compose config
-    2. parseo YAML estático
-    3. estructura vacía con WARN explícito
-    """
     d = load_compose_via_docker()
     if d:
         return d
+
     files = find_compose_files()
     if files:
         loaded = load_compose_from_files(files)
         if loaded:
-            warn(
-                "Usando parseo estático de archivos Compose "
-                "(fallback no determinista)"
-            )
+            warn("Usando parseo estático de archivos Compose (mejor usar runtime `docker compose config`)")
             return loaded
-    warn(
-        "No fue posible resolver configuración Compose "
-        "desde runtime ni desde YAML estático"
-    )
+
     return {"services": {}}
 
 

@@ -151,6 +151,16 @@ Negativas
 
 Ambos son independientes a nivel de runtime
 
+El runtime Python containerizado NO debe asumir acceso al control-plane Docker del host.
+
+La ejecución de:
+- docker compose
+- docker inspect
+- docker ps
+- docker compose config
+
+queda fuera del alcance operacional garantizado del runtime Python salvo excepción explícitamente documentada.
+
 ## Relación con otros ADR
 Este ADR complementa:
   ADR-0010 — arquitectura del runtime cron

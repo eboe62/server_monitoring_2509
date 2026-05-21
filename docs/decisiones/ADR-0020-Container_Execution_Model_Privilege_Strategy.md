@@ -50,6 +50,23 @@ Motivo:
 - reducción de superficie de ataque
 - coherencia con modelo IaC
 
+El runtime:
+    monitoring-python
+
+NO debe considerarse un toolbox Docker completo.
+
+Por defecto:
+- no incorpora docker CLI
+- no incorpora docker compose
+- no monta docker.sock
+
+Las operaciones Docker host-level deben ejecutarse desde:
+- host control-plane
+- scripts operacionales externos
+- pipelines CI/CD autorizados
+
+Cualquier excepción deberá documentarse explícitamente mediante ADR adicional.
+
 ### 2. Contenedores de servicio (micro-stacks)
 
 Ejemplos:

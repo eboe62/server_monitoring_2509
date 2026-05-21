@@ -48,6 +48,7 @@ El proyecto mantiene actualmente:
 
 Durante la implantación también se detectó una limitación operacional adicional:
     docker compose config
+
 requiere contexto Compose válido.
 
 Cuando el comando se ejecuta dentro del contenedor:
@@ -61,26 +62,26 @@ si el runtime no dispone del directorio Compose correcto o no existe:
 - working directory válido
 - bind mount consistente
 
+Posteriormente se verificó además que el runtime actual:
+- no incorpora docker CLI
+- no incorpora docker compose
+- no expone docker.sock
+- no actúa como toolbox Docker host-level
+
 Por tanto:
 - la validación runtime debe degradar correctamente
 - los fallos de resolución Compose no deben romper auditorías completas
 - el sistema debe soportar fallback explícito
+- el fallback YAML estático debe considerarse comportamiento operativo válido
 
 ## Problema identificado
+
 Las validaciones heurísticas basadas en shell no proporcionaban suficiente robustez para:
 - auditoría reproducible
 - enforcement progresivo
 - validación estructurada real
 - integración CI/CD
-- reducción fiable de falsos positivos
-- reducción fiable de falsos negativos
-- correlación runtime ↔ compose
-
-Adicionalmente:
-- ejecutar lógica Python desde host rompía parcialmente el modelo container-first
-- parsear salida humana impedía automatización fiable
-- docker compose config puede no resolverse correctamente dentro del runtime
-- algunas validaciones dependían implícitamente del directorio actual
+- el runtime Python no garantiza capacidades Docker host-level
 
 ## Decisión
 
@@ -89,16 +90,34 @@ Se adopta un modelo de auditoría estructurada basado en parsing Compose mediant
 Se establece como motor oficial:
     ops/audit/compose_policy_checks.py
 
-La validación principal debe ejecutarse preferiblemente dentro del contenedor:
-    monitoring-python
-
-mediante:
+La validación estructurada se ejecuta preferiblemente desde el host mediante:
     docker compose exec -T monitoring-python ...
 
-La validación utiliza prioritariamente:
+El contenedor:
+    monitoring-python
+
+actúa como runtime Python aislado y NO se considera un toolbox Docker completo.
+
+El runtime actual NO garantiza:
+- disponibilidad docker CLI
+- disponibilidad docker compose
+- acceso operativo a docker.sock
+- resolución compose runtime-resolved
+
+Por tanto:
+- docker compose config puede no estar disponible dentro del runtime
+- el fallback YAML estático debe considerarse comportamiento operativo válido
+- las validaciones deben degradar explícitamente sin romper auditorías
+
+Cuando exista tooling Docker operativo dentro del runtime, podrá utilizarse:
     docker compose config
 
 como representación runtime-resolved del estado Compose efectivo.
+
+En ausencia de dichas capacidades:
+- el sistema degradará explícitamente
+- el fallback YAML estático será comportamiento válido
+- las auditorías no deberán fallar completamente
 
 La salida soporta:
 - modo humano
@@ -114,6 +133,7 @@ El host:
 - recopila resultados
 - consume JSON estructurado
 - evita parsear salida humana
+- mantiene las operaciones Docker host-level
 
 ## Fallback estructurado
 
@@ -146,6 +166,7 @@ Sin embargo:
 - preserva auditabilidad mínima
 - evita fallo completo del pipeline
 - mantiene comportamiento determinista suficiente para auditoría defensiva
+- reduce dependencia operacional del control-plane Docker
 
 ## Runtime Model
 
@@ -159,6 +180,7 @@ El host:
 - invoca runtime
 - consume JSON
 - presenta resultados
+- mantiene control-plane Docker
 
 No debe ejecutar:
 - validaciones principales
@@ -169,11 +191,19 @@ No debe ejecutar:
 El runtime principal válido es:
     monitoring-python
 
-Este runtime puede:
-- acceder al tooling Docker
-- ejecutar docker compose config
-- realizar validaciones estructuradas
-- operar como toolbox operacional
+Este runtime:
+- ejecuta lógica Python versionada
+- realiza validaciones estructuradas best-effort
+- consume configuraciones runtime del proyecto
+- opera como runtime operacional de aplicación
+
+El runtime NO garantiza:
+- acceso Docker CLI
+- acceso docker compose
+- acceso docker.sock
+- capacidades completas de toolbox Docker
+
+Las operaciones Docker host-level permanecen fuera del contenedor.
 
 3 — Parsing estructurado
 Las validaciones utilizan:
@@ -203,20 +233,28 @@ Las validaciones operan sobre:
 services:
     resueltos mediante Compose.
 
+Cuando la resolución runtime no esté disponible:
+- se utilizará fallback YAML
+- se emitirá warning explícito
+- la validación continuará en modo best-effort
+
 ## Runtime checks
 
 Se añade:
     --self-test
 
 para validar:
-- disponibilidad docker CLI
-- disponibilidad docker compose
-- operatividad docker compose config
-- acceso docker.sock
+- disponibilidad opcional docker CLI
+- disponibilidad opcional docker compose
+- operatividad opcional docker compose config
+- acceso opcional docker.sock
+- degradación fallback correctamente gestionada
+
+La ausencia de capacidades Docker dentro del runtime NO constituye necesariamente fallo arquitectónico.
 
 Objetivo:
 - detectar degradaciones runtime
-- validar capacidad operacional del toolbox
+- validar capacidad operacional disponible
 - identificar problemas de control-plane
 - mejorar observabilidad de auditoría
 
@@ -265,8 +303,8 @@ No se permitirá:
 Las validaciones:
 - deben ser deterministas
 - deben soportar salida machine-readable
-- deben ejecutarse preferiblemente dentro del runtime
 - deben degradar explícitamente cuando el runtime Compose no pueda resolverse
+- no deben asumir capacidades Docker dentro del runtime Python
 
 ## Tradeoffs
 
@@ -278,36 +316,53 @@ Las validaciones:
 - integración CI/CD más fiable
 - enforcement progresivo
 - menor deuda técnica shell-based
-- mejor correlación runtime ↔ compose
+- mejor correlación YAML ↔ auditoría
 - alineación con arquitectura container-first
+- reducción de superficie de ataque del runtime Python
 
 ### Inconvenientes
 - mayor complejidad respecto a shell puro
-- dependencia parcial del runtime Docker
-- posible dependencia de docker.sock
-- necesidad de contexto Compose válido
-- mayor acoplamiento al runtime operacional
+- dependencia parcial del fallback YAML
+- pérdida parcial de correlación runtime ↔ compose
+- necesidad de contexto Compose detectable
+- mayor complejidad de degradación operacional
 
 ## Riesgos identificados
 
 Persisten riesgos asociados a:
-- dependencia de docker compose config
-- acceso parcial a docker.sock
 - divergencias entre runtime y YAML estático
 - degradación best-effort del fallback
-- dependencia del directorio Compose activo
+- resolución Compose parcial
+- dependencia de rutas Compose detectables
+- pérdida de correlación runtime ↔ compose cuando docker compose config no está disponible
 
-Especialmente:
+En el runtime actual:
     monitoring-python
 
-puede requerir acceso parcial a:
+NO dispone de:
+- docker CLI
+- compose plugin
+- acceso docker.sock
+
+Esto reduce superficie de ataque respecto al diseño inicial, pero incrementa dependencia del fallback YAML estático.
+
+Históricamente se contempló que:
+    monitoring-python
+
+pudiese requerir acceso parcial a:
     docker.sock
 
-para:
+Sin embargo, el runtime actual en producción NO expone:
+- docker.sock
+- docker CLI
+- docker compose
 
-- inspección runtime
-- compose config
-- validaciones operacionales
+Las validaciones estructuradas operan actualmente mediante:
+- parsing YAML estático
+- degradación explícita
+- validación best-effort
+
+La resolución Compose runtime-resolved queda limitada a entornos donde el tooling Docker exista explícitamente.
 
 Esto incrementa superficie de ataque respecto a un contenedor completamente aislado.
 
@@ -325,20 +380,25 @@ Mitigaciones obligatorias:
 1 — Restricción de exposición
 - monitoring-python no debe exponer puertos públicos
 - acceso exclusivamente interno
+- no montar docker.sock salvo excepción explícitamente documentada
+- no introducir docker CLI dentro del runtime salvo necesidad operacional justificada
 
 2 — Auditoría
 - uso de docker.sock auditado automáticamente
 - policy checks obligatorios
+- degradación runtime auditada mediante warnings explícitos
 
 3 — Runtime controlado
 - scripts versionados
 - ejecución auditada
 - tooling conocido
+- fallback deterministicamente gestionado
 
 4 — Fallback explícito
 - degradación controlada
 - warnings visibles
 - no ocultar fallo de docker compose config
+- continuidad operacional best-effort
 
 ## Compatibilidad
 
@@ -367,13 +427,15 @@ Positivas
 - reducción de deuda técnica shell-based
 - mejor integración futura con CI/CD
 - separación más clara host/runtime
+- reducción de superficie de ataque del runtime Python
 - enforcement progresivo viable
-- mayor coherencia ADR ↔ runtime
+- mayor coherencia ADR ↔ runtime real
 
 Negativas
-- dependencia operacional del runtime Compose
+- dependencia operacional del fallback YAML
 - necesidad de mantener tooling Python adicional
 - posibilidad de degradación fallback parcial
+- pérdida parcial de resolución runtime efectiva
 - complejidad superior respecto a grep simple
 
 ## Validación futura
@@ -393,6 +455,7 @@ Las futuras validaciones deberán distinguir explícitamente:
 - runtime validation
 - certification checks
 - enforcement checks
+- fallback checks
 
 ## Relación con otros ADR
 
@@ -406,11 +469,13 @@ Este ADR complementa:
 - ADR-0018 — Docker security runtime and resilience requirements
 - ADR-0019 — Resilience Testing Strategy
 - ADR-0020 — Container Execution Model & Privilege Strategy
+- ADR-0024 — Container Privilege Exception Policy
 - ADR-0027 — Tipología oficial de contenedores y política de healthchecks
 
 ## Estado
 Aprobado.
 Auditoría Compose estructurada normalizada.
-Modelo runtime-aligned formalizado.
-Fallback Compose explícitamente documentado.
+Modelo runtime-aligned corregido respecto al runtime real.
+Fallback Compose explícitamente formalizado.
 Validación machine-readable establecida.
+Degradación best-effort documentada oficialmente.
