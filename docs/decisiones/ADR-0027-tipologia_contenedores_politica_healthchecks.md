@@ -73,9 +73,27 @@ Se adopta una clasificación oficial de contenedores y una política explícita 
 Cada contenedor debe clasificarse según su función arquitectónica real.
 
 La validación runtime debe utilizar:
-- docker compose config
+- docker compose config ejecutado exclusivamente desde el host
 - parsing estructurado
 - correlación determinista service/container
+
+La validación NO debe asumir:
+- acceso a docker.sock desde contenedores
+- disponibilidad de Docker CLI dentro de runtimes operativos
+- capacidades de control plane en TOOLBOX_RUNTIME o INFRA_TRUSTED
+
+Toda validación relacionada con:
+- docker compose
+- docker inspect
+- docker ps
+- docker.sock
+
+debe ejecutarse explícitamente desde el host o CI runner autorizado.
+
+Los contenedores operativos:
+- no constituyen tooling Docker implícito
+- no deben montar docker.sock salvo excepción ADR explícita
+- no deben utilizarse como punto de ejecución de auditoría runtime
 
 Se establece además un archivo centralizado:
     ops/runtime_containers.yml

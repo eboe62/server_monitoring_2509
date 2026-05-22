@@ -84,7 +84,7 @@ echo ""
 
 info "Buscando docker-compose"
 
-COMPOSE_FILES=$(find ops -name "compose*.yml" -o -name "compose*.yml")
+COMPOSE_FILES=$(find ops \( -name "compose*.yml" -o -name "compose*.yaml" \))
 
 if [ -z "$COMPOSE_FILES" ]; then
     warn "No se encontraron docker-compose"
@@ -106,32 +106,63 @@ echo ""
 # A3.1 Healthcheck policy enforcement (runtime classification)
 # ==========================================
 
+# ADR-0027 / ADR-0029
+#
+# Política:
+# - La validación runtime se ejecuta exclusivamente desde el HOST.
+# - TOOLBOX_RUNTIME e INFRA_TRUSTED NO implican acceso a docker.sock.
+# - No se asume Docker CLI dentro de contenedores operativos.
+# - runtime_containers.sh actúa como fuente oficial de clasificación runtime.
+#
+# Objetivo:
+# - evitar falsos positivos
+# - eliminar dependencia implícita de docker.sock
+# - desacoplar auditoría host ↔ runtime container
+# - mantener enforcement coherente con ADR-0027/0029
+
 if [ -f "ops/runtime_containers.sh" ]; then
-    info "Validando presencia de healthchecks según ops/runtime_containers.yml"
+    info "Validando presencia de healthchecks según ops/runtime_containers.yml (host-side enforcement)"
     bash ops/runtime_containers.sh all | while IFS='|' read -r NAME TYPE POLICY ENFORCE; do
-        # Use structured check to find the service and healthcheck presence
+        # Resolución estructurada host-side
+        # Formato esperado:
+        #   name|FOUND|compose_file|service_name|yes
+        #   name|FOUND|compose_file|service_name|no
+        #   name|NOT_FOUND|||
+        #   name|WARN|||
+        #   name|COMPOSE_INVALID|||
         RESULT=$(bash ops/runtime_containers.sh check-health "$NAME" 2>/dev/null || true)
-        # RESULT format: name|FOUND|compose_file|service_name|yes| or name|NOT_FOUND|||
         IFS='|' read -r RNAME RSTATUS RFILE RSERVICE RHC <<< "$RESULT"
-            if [ "$RSTATUS" = "FOUND" ]; then
-            if [ "$RHC" = "yes" ]; then
-                ok "$NAME: healthcheck present for service $RSERVICE in $RFILE"
-            else
-                if [ "$ENFORCE" = "fail" ]; then
-                    fail "$NAME: healthcheck ABSENT for service $RSERVICE in $RFILE (enforcement=fail)"
-                    exit 1
+        case "$RSTATUS" in
+            FOUND)
+                if [ "$RHC" = "yes" ]; then
+                    ok "$NAME: healthcheck present for service $RSERVICE in $RFILE"
                 else
-                    warn "$NAME: healthcheck ABSENT for service $RSERVICE in $RFILE (enforcement=$ENFORCE)"
+                    if [ "$ENFORCE" = "fail" ]; then
+                        fail "$NAME: healthcheck ABSENT for service $RSERVICE in $RFILE (enforcement=fail)"
+                        exit 1
+                    else
+                        warn "$NAME: healthcheck ABSENT for service $RSERVICE in $RFILE (enforcement=$ENFORCE)"
+                    fi
                 fi
-            fi
-        else
-            warn "$NAME: service not found in compose files; skipping enforcement (enforcement=$ENFORCE)"
-        fi
+                ;;
+            WARN)
+                warn "$NAME: runtime policy returned WARN status (classification-driven allowance)"
+                ;;
+            COMPOSE_INVALID)
+                fail "$NAME: compose resolution invalid"
+                exit 1
+                ;;
+            NOT_FOUND)
+                warn "$NAME: service not found in compose files; skipping enforcement (enforcement=$ENFORCE)"
+                ;;
+            *)
+                warn "$NAME: unknown runtime classification result: $RSTATUS"
+                ;;
+        esac
     done
 else
     warn "ops/runtime_containers.sh no encontrado — omitiendo validación de policy runtime"
 fi
-
 
 echo ""
 # ==========================================
@@ -141,33 +172,32 @@ echo ""
 
 info "Buscando puertos publicados en compose"
 
-# Ejecutar validaciones estructuradas una sola vez dentro del contenedor monitoring-python
+# Ejecutar validaciones estructuradas una sola vez desde el HOST
 # Nota operativa:
-# - La lógica principal de validación se ejecuta exclusivamente dentro del
-#   contenedor `monitoring-python` para garantizar paridad runtime. El host
-#   solo orquesta la ejecución y consume salida JSON (no debe parsear salida
-#   humana).
-# - Cuando `docker compose config` no esté disponible en runtime, el
-#   módulo emitirá WARN y se usará un parseo estático best-effort sobre los
-#   archivos en `ops/`.
-# - Para parsear JSON en host el script usa `jq` si está disponible o el
-#   helper `ops/audit/parse_compose_json.py` (ligero). No se usan bloques
-#   Python inline para mantener claridad operacional.
+# - Por decisión arquitectónica el checker se ejecuta en el HOST.
+# - `monitoring-python` no debe considerarse toolbox de Docker ni requerir
+#   docker/compose/docker.sock. Cualquier chequeo sobre docker/compose se
+#   interpreta como verificación en el host.
+# - Cuando `docker compose config` no esté disponible en el host, el módulo
+#   usará un parseo estático best-effort sobre los archivos en `ops/` y
+#   emitirá WARNs (modo operativo esperado).
+# - Para parsear JSON en host se usa `jq` si está disponible o el helper
+#   `ops/audit/parse_compose_json.py`.
 STRUCTURED_FILE=""
 STRUCTURED_ERR=""
-if docker compose version >/dev/null 2>&1 && docker ps --format '{{.Names}}' | grep -q '^monitoring-python$'; then
+if command -v python3 >/dev/null 2>&1; then
     STRUCTURED_FILE=$(mktemp)
     STRUCTURED_ERR=$(mktemp)
     # Cleanup temp files on exit
     trap 'rm -f "${STRUCTURED_FILE:-}" "${STRUCTURED_ERR:-}"' EXIT
 
-    if docker compose exec -T monitoring-python python -m ops.audit.compose_policy_checks --json > "$STRUCTURED_FILE" 2>"$STRUCTURED_ERR"; then
+    if python3 -m ops.audit.compose_policy_checks --json >"$STRUCTURED_FILE" 2>"$STRUCTURED_ERR"; then
         :
     else
-        warn "Validación estructurada falló dentro del contenedor (ver $STRUCTURED_ERR)"
+        warn "Validación estructurada falló en host (ver $STRUCTURED_ERR)"
     fi
 else
-    warn "monitoring-python container no disponible: omitiendo validaciones estructuradas"
+    warn "python3 no disponible en host: omitiendo validaciones estructuradas"
 fi
 
 echo ""
@@ -528,7 +558,12 @@ echo ""
 
 info "Buscando ejecución de scripts del proyecto en cron del host"
 
-HOST_CRON=$(sudo crontab -l 2>/dev/null | grep "/opt/monitoring" || true)
+if [ "$EUID" -ne 0 ]; then
+    warn "Comprobación de cron root requiere privilegios de root (omitido)"
+    HOST_CRON=""
+else
+    HOST_CRON=$(crontab -l 2>/dev/null | grep "/opt/monitoring" || true)
+fi
 
 if [ -z "$HOST_CRON" ]; then
     ok "Cron del host no ejecuta lógica del proyecto"

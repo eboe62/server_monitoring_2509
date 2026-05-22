@@ -59,6 +59,18 @@ Reglas obligatorias:
 - ejecución reproducible mediante:
   python3 -m <modulo>
 
+La ausencia de:
+- docker.sock
+- docker CLI
+- docker compose
+
+en:
+    monitoring-python
+
+se considera medida de hardening válida y alineada con minimización de privilegios.
+
+Las validaciones estructuradas deberán soportar degradación explícita cuando el runtime no disponga de capacidades Docker host-level.
+
 ### 2. Contenedores externos / infra-trusted
 
 Ejemplos:

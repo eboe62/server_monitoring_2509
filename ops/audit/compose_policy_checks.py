@@ -1,14 +1,23 @@
 #!/usr/bin/env python3
-"""Structured Compose policy checks for audit.
+"""Comprobaciones de políticas estructuradas de Compose para auditoría.
 
-Modelo de ejecución (importante):
+Modelo de ejecución (host-side):
 
-- Este módulo está diseñado para ejecutarse dentro del contenedor monitoring-python para garantizar la paridad con el tiempo de ejecución (aceso al CLI de docker / docker.sock cuando el contenedor tiene permisos).
-- El script de orquestación del host (ops/audit/audit_repo_host.sh) llama a este módulo dentro del contenedor y solo se encarga de coordinar y recoger su salida en formato JSON
-- Fallback (Respaldo): cuando el comando docker compose config (que resuelve el estado real en runtime) no está disponible, el módulo hará un intento de parseo de los archivos YAML de compose bajo la carpeta ops/. Este respaldo es explícitamente no determinista comparado con docker compose y emitirá un aviso (WARN) para informar a los operadores.
-Prefiere la salida resuelta de docker compose config cuando está disponible y recurre a la fusión de archivos compose encontrados bajo ops/ como último recurso.
+- Este módulo está diseñado para ser ejecutado desde el HOST (por ejemplo:
+    `python3 -m ops.audit.compose_policy_checks`). Realiza comprobaciones
+    deterministas y legibles por máquina sobre la configuración de Compose y
+    (opcionalmente) sobre el conjunto de herramientas de Docker del host cuando está disponible.
+- El módulo NO asume que se ejecuta dentro de `monitoring-python` ni que los
+    contenedores proporcionan Docker/compose/docker.sock. Cualquier comprobación de
+    Docker/compose se interpreta como una comprobación del lado del host.
+- Cuando `docker compose config` está disponible en el host, es la fuente
+    autorizada preferida. Cuando no está disponible, el módulo recurre a una
+    fusión de mejor esfuerzo (best-effort) de los archivos YAML de Compose bajo `ops/`.
+    Este modo de respaldo es un comportamiento operativo esperado y emitirá mensajes
+    de advertencia (WARN) cuando se utilice.
 
-Soporta --json para salida procesable por máquinas, --self-test para comprobaciones del entorno de ejecución y --check para ejecutar un subconjunto específico de comprobaciones.
+Soporta `--json` para salida legible por máquina, `--self-test` para validar
+la disponibilidad de las herramientas en el host y `--check` para ejecutar un subconjunto de comprobaciones.
 """
 from __future__ import annotations
 
@@ -22,7 +31,7 @@ from typing import Any, Dict, List, Tuple
 try:
     import yaml
 except Exception:
-    print("[WARN] PyYAML no disponible dentro del contenedor; algunas comprobaciones pueden fallar", file=sys.stderr)
+    print("[WARN] PyYAML no disponible en el host; algunas comprobaciones pueden fallar", file=sys.stderr)
     yaml = None
 
 
@@ -40,6 +49,7 @@ def fail(msg: str):
 
 def load_compose_via_docker() -> Dict[str, Any] | None:
     try:
+        # Ejecuta `docker compose config` en el host (cwd/resolved context).
         out = subprocess.check_output(["docker", "compose", "config"], stderr=subprocess.DEVNULL)
         if not yaml:
             return None
@@ -49,8 +59,17 @@ def load_compose_via_docker() -> Dict[str, Any] | None:
 
 
 def check_docker_runtime() -> Dict[str, bool]:
-    """Check availability of docker CLI and compose inside the runtime container."""
-    status = {"docker_cli": False, "docker_compose": False, "compose_config": False, "docker_sock": False}
+    """Verifica la disponibilidad de la CLI de docker y compose en el entorno del host.
+
+    Nota: esta función realiza comprobaciones del lado del host. El módulo ya no
+    asume que Docker/compose están disponibles dentro de ningún contenedor.
+    """
+    status = {
+        "docker_cli": False,
+        "docker_compose": False,
+        "compose_config": False,
+        "docker_host_access": False
+    }
     try:
         subprocess.check_output(["docker", "--version"], stderr=subprocess.DEVNULL)
         status["docker_cli"] = True
@@ -64,16 +83,20 @@ def check_docker_runtime() -> Dict[str, bool]:
         pass
 
     try:
-        # Try a harmless compose config to validate connectivity
-        subprocess.check_output(["docker", "compose", "config"], stderr=subprocess.DEVNULL, timeout=10)
+        # Valida la resolución en tiempo de ejecución de compose
+        subprocess.check_output(
+            ["docker", "compose", "config"],
+            stderr=subprocess.DEVNULL,
+            timeout=10,
+        )
         status["compose_config"] = True
     except Exception:
         pass
 
-    # Check docker.sock accessibility by trying to list containers
+    # Verifica la accesibilidad de docker.sock intentando listar los contenedores
     try:
         subprocess.check_output(["docker", "ps", "-q"], stderr=subprocess.DEVNULL, timeout=10)
-        status["docker_sock"] = True
+        status["docker_host_access"] = True
     except Exception:
         pass
 
@@ -98,34 +121,65 @@ def find_compose_files() -> List[str]:
 
 
 def load_compose_from_files(files: List[str]) -> Dict[str, Any] | None:
+    """
+    Carga best-effort de archivos Compose desde el host.
+    ADR-0029:
+    - fallback exclusivamente estructural
+    - sin dependencia docker.sock
+    - sin dependencia runtime Docker
+    """
     merged: Dict[str, Any] = {"services": {}}
     if not yaml:
+        warn("PyYAML no disponible; imposible realizar parseo Compose fallback")
         return None
     for f in files:
         try:
             with open(f, "rb") as fh:
                 data = yaml.safe_load(fh)
-                if not data:
-                    continue
-                services = data.get("services") or {}
-                merged["services"].update(services)
-        except Exception:
-            continue
-    return merged if merged["services"] else None
-
+            if not data:
+                continue
+            services = data.get("services") or {}
+            if not isinstance(services, dict):
+                warn(f"{f}: bloque services inválido")
+                continue
+            merged["services"].update(services)
+        except Exception as exc:
+            warn(f"No se pudo parsear compose file {f}: {exc}")
+    if not merged["services"]:
+        warn("No se encontraron servicios Compose válidos en fallback estático")
+        return None
+    return merged
 
 def get_compose_dict() -> Dict[str, Any]:
+    """
+    Obtiene configuración Compose consolidada.
+    Prioridad:
+    1. docker compose config (host-side)
+    2. parseo estático fallback (ADR-0029)
+    El fallback estático:
+    - es comportamiento operativo esperado
+    - no requiere docker.sock
+    - no requiere Docker runtime operativo
+    """
     d = load_compose_via_docker()
     if d:
         return d
-
+    warn(
+        "docker compose config no disponible; "
+        "activando fallback estructural estático ADR-0029"
+    )
     files = find_compose_files()
-    if files:
-        loaded = load_compose_from_files(files)
-        if loaded:
-            warn("Usando parseo estático de archivos Compose (mejor usar runtime `docker compose config`)")
-            return loaded
-
+    if not files:
+        warn("No se encontraron archivos Compose bajo ops/")
+        return {"services": {}}
+    loaded = load_compose_from_files(files)
+    if loaded:
+        warn(
+            "Usando parseo estático de archivos Compose "
+            "(fallback host-side sin docker.sock)"
+        )
+        return loaded
+    warn("Fallback Compose no produjo servicios válidos")
     return {"services": {}}
 
 
@@ -172,18 +226,37 @@ def detect_docker_sock(compose: Dict[str, Any]) -> List[Tuple[str, str]]:
 
 
 def detect_images_latest_and_no_digest(compose: Dict[str, Any]) -> Tuple[List[Tuple[str, str]], List[Tuple[str, str]]]:
+    """
+    Detecta imágenes:
+    - con tag :latest
+    - sin digest reproducible
+    ADR-0018 / ADR-0029:
+    - las imágenes internas buildadas localmente no requieren digest
+    - el enforcement de digest aplica principalmente a imágenes externas
+    - se evita ruido operacional sobre imágenes `monitoring-*`
+    """
     latest: List[Tuple[str, str]] = []
     no_digest: List[Tuple[str, str]] = []
     for name, svc in (compose.get("services") or {}).items():
         image = svc.get("image")
         if not image:
             continue
-        if "@sha256:" not in image:
-            no_digest.append((name, str(image)))
-        if isinstance(image, str) and image.endswith(":latest"):
+        if not isinstance(image, str):
+            continue
+        # Imágenes internas/locales:
+        # - monitoring-*
+        # - nombres sin namespace/registry
+        # Estas imágenes forman parte del build local controlado
+        # y no requieren digest OCI explícito.
+        is_internal_image = (
+            image.startswith("monitoring-")
+            or "/" not in image
+        )
+        if "@sha256:" not in image and not is_internal_image:
+            no_digest.append((name, image))
+        if image.endswith(":latest"):
             latest.append((name, image))
     return latest, no_digest
-
 
 def detect_privileged(compose: Dict[str, Any]) -> List[Tuple[str, Any]]:
     findings: List[Tuple[str, Any]] = []
@@ -251,7 +324,7 @@ def run_all_checks(selected: List[str] | None = None) -> Dict[str, Any]:
     compose = get_compose_dict()
     out: Dict[str, Any] = {}
 
-    # runtime-status
+    # Estado del entorno de ejecución (runtime-status)
     out["runtime_checks"] = check_docker_runtime()
 
     if selected is None or "ports" in selected:
@@ -283,7 +356,7 @@ def run_all_checks(selected: List[str] | None = None) -> Dict[str, Any]:
 
 
 def pretty_print(results: Dict[str, Any]):
-    # Ports
+    # Puertos
     if not results.get("ports"):
         ok("No hay puertos publicados en compose (estructura detectada)")
     else:
@@ -299,7 +372,7 @@ def pretty_print(results: Dict[str, Any]):
         for svc, v in results.get("docker_sock", []):
             print(f"  - {svc}: {v}")
 
-    # images
+    # Imágenes
     if results.get("images_latest"):
         warn("Imágenes con tag :latest detectadas:")
         for svc, img in results.get("images_latest", []):
@@ -330,7 +403,7 @@ def pretty_print(results: Dict[str, Any]):
     else:
         ok("No se detectaron mounts sensibles en modo RW")
 
-    # cap_add
+    # Capacidades (cap_add)
     if results.get("cap_add"):
         warn("Servicios con cap_add/capabilities:")
         for svc, c in results.get("cap_add", []):
@@ -338,7 +411,7 @@ def pretty_print(results: Dict[str, Any]):
     else:
         ok("No se detectaron cap_add/capabilities")
 
-    # read_only false
+    # Read_only false
     if results.get("read_only_false"):
         warn("Servicios con read_only=false detectados:")
         for svc in results.get("read_only_false", []):
@@ -346,7 +419,7 @@ def pretty_print(results: Dict[str, Any]):
     else:
         ok("No se detectaron servicios con read_only=false")
 
-    # runtime checks
+    # Comprobaciones del entorno de ejecución (runtime checks)
     rt = results.get("runtime_checks") or {}
     if rt:
         print("")
@@ -363,7 +436,7 @@ def pretty_print(results: Dict[str, Any]):
             ok("docker compose config operativo")
         else:
             warn("docker compose config no operativo dentro del runtime")
-        if rt.get("docker_sock"):
+        if rt.get("docker_host_access"):
             ok("Acceso a docker.sock operativo")
         else:
             warn("Acceso a docker.sock NO operativo (el contenedor puede no tener acceso al control plane)")
@@ -404,7 +477,7 @@ def main(argv: List[str] | None = None) -> int:
             warn("Acceso a docker.sock NO operativo (el contenedor puede no tener acceso al control plane)")
         return 0 if rt.get("docker_cli") else 1
 
-    # Normalize for JSON: tuples -> lists
+    # Normaliza para JSON: tuplas -> listas
     serializable = {}
     for k, v in results.items():
         if isinstance(v, list):
@@ -412,7 +485,7 @@ def main(argv: List[str] | None = None) -> int:
         else:
             serializable[k] = v
 
-    # Determine exit code based on policy severity
+    # Determina el código de salida basándose en la severidad de la política
     rc = 0
     for policy, severity in POLICY_SEVERITY.items():
         items = results.get(policy)

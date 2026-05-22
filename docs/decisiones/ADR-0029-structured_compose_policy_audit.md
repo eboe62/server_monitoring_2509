@@ -1,78 +1,125 @@
 # ADR-0029 — Structured Compose Policy Audit
 
-Fecha: 2026-05-19
-Estado: Accepted
-Contexto: server_monitoring_2509
+Fecha: 2026-05-20
+Estado: Aprobado
+Contexto: server_monitoring_2509 — Hardening de auditoría Compose y validación estructurada runtime
 
 ## Contexto
 
-El proyecto utilizaba validaciones heurísticas basadas principalmente en:
+Durante la evolución del entorno server_monitoring se detectaron limitaciones importantes en las validaciones de seguridad y compliance aplicadas sobre Docker Compose.
+
+La validación original utilizaba principalmente:
 - grep
 - awk
-- búsquedas textuales sobre YAML
-- parsing shell no estructurado
+- búsquedas textuales
+- parsing shell heurístico
+- correlación parcial entre runtime y compose
 
 Especialmente en:
+- ops/audit/audit_repo_host.sh
+- Makefile
+- validaciones runtime
+- policy checks
 
-ops/audit/audit_repo_host.sh
-
-Este enfoque presentaba múltiples problemas:
+Este enfoque provocaba:
 - falsos positivos
 - falsos negativos
-- fuerte dependencia del formato textual
-- dificultad de evolución
-- escasa reutilización
-- difícil integración futura con CI/CD
-- baja robustez ante Compose complejos
+- dependencia excesiva del formato YAML
+- fragilidad ante cambios de indentación o estructura
+- dificultad para evolucionar políticas
+- baja mantenibilidad
+- difícil integración CI/CD
+- auditorías parcialmente no deterministas
 
-El proyecto utiliza actualmente:
+Adicionalmente se identificaron inconsistencias arquitectónicas:
+- parte de la lógica Python se ejecutaba desde el host
+- algunas validaciones parseaban salida humana
+- las severidades no estaban centralizadas
+- no existía salida machine-readable estable
+- la correlación runtime ↔ compose no era determinista
+
+El proyecto mantiene actualmente:
 - Docker Compose standalone
 - arquitectura single-node
-- runtime containerizado
-- contenedor principal `monitoring-python`
-- modelo IaC pragmático
-- ADR de hardening progresivo
+- modelo container-first
+- runtime operacional basado en infra-stacks
+- validaciones pragmáticas alineadas con ADR-0017
+- separación explícita host/runtime definida en ADR-0011
 
-Se identificó además la necesidad de:
-- mantener reproducibilidad runtime
-- evitar dependencia Python host
-- permitir validaciones machine-readable
-- reducir deuda técnica shell-based
+Durante la implantación también se detectó una limitación operacional adicional:
+    docker compose config
 
-## Problema
+requiere contexto Compose válido.
 
-Las validaciones heurísticas basadas en grep y parsing textual no proporcionaban suficiente robustez para:
+Cuando el comando se ejecuta dentro del contenedor:
+    monitoring-python
+
+puede producir:
+    no configuration file provided: not found
+
+si el runtime no dispone del directorio Compose correcto o no existe:
+- COMPOSE_FILE
+- working directory válido
+- bind mount consistente
+
+Posteriormente se verificó además que el runtime actual:
+- no incorpora docker CLI
+- no incorpora docker compose
+- no expone docker.sock
+- no actúa como toolbox Docker host-level
+
+Por tanto:
+- la validación runtime debe degradar correctamente
+- los fallos de resolución Compose no deben romper auditorías completas
+- el sistema debe soportar fallback explícito
+- el fallback YAML estático debe considerarse comportamiento operativo válido
+
+## Problema identificado
+
+Las validaciones heurísticas basadas en shell no proporcionaban suficiente robustez para:
 - auditoría reproducible
-- enforcement futuro
+- enforcement progresivo
 - validación estructurada real
 - integración CI/CD
-- reducción fiable de falsos positivos/negativos
-
-Adicionalmente:
-- parte del tooling Python estaba ejecutándose desde host
-- existía incoherencia con el modelo containerizado del proyecto
-- la salida no era machine-readable
-- las severidades no estaban centralizadas
+- el runtime Python no garantiza capacidades Docker host-level
 
 ## Decisión
 
 Se adopta un modelo de auditoría estructurada basado en parsing Compose mediante Python.
 
-Se introduce:
+Se establece como motor oficial:
     ops/audit/compose_policy_checks.py
 
-como motor estructurado de validación.
+La validación estructurada se ejecuta preferiblemente desde el host mediante:
+    python3 -m ops.audit.compose_policy_checks
 
-La ejecución principal se realiza exclusivamente dentro del contenedor:
+sin depender del runtime containerizado monitoring-python.
+
+El contenedor:
     monitoring-python
 
-mediante:
-    docker compose exec -T monitoring-python ...
+actúa como runtime Python aislado y NO se considera un toolbox Docker completo.
 
-El sistema prioriza:
+El runtime actual NO garantiza:
+- disponibilidad docker CLI
+- disponibilidad docker compose
+- acceso operativo a docker.sock
+- resolución compose runtime-resolved
+
+Por tanto:
+- docker compose config puede no estar disponible dentro del runtime
+- el fallback YAML estático debe considerarse comportamiento operativo válido
+- las validaciones deben degradar explícitamente sin romper auditorías
+
+Cuando exista tooling Docker operativo dentro del runtime, podrá utilizarse:
     docker compose config
 
-como fuente runtime-resolved efectiva.
+como representación runtime-resolved del estado Compose efectivo.
+
+En ausencia de dichas capacidades:
+- el sistema degradará explícitamente
+- el fallback YAML estático será comportamiento válido
+- las auditorías no deberán fallar completamente
 
 La salida soporta:
 - modo humano
@@ -80,150 +127,357 @@ La salida soporta:
 - checks parciales mediante --check
 - runtime validation mediante --self-test
 
-## Validaciones implementadas
+La severidad se centraliza mediante:
+POLICY_SEVERITY
+
+El host:
+- coordina ejecución
+- recopila resultados
+- consume JSON estructurado
+- evita parsear salida humana
+- mantiene las operaciones Docker host-level
+
+## Fallback estructurado
+
+Cuando:
+    docker compose config
+
+no puede resolverse correctamente dentro del runtime, el sistema degrada explícitamente a:
+- parsing YAML estático
+- merge best-effort
+- validación parcial
+
+mediante:
+    load_compose_from_files()
+
+sobre archivos detectados bajo:
+    ops/
+
+El sistema debe emitir warning explícito cuando ocurra degradación runtime.
+
+Ejemplo esperado:
+    [WARN] Usando parseo estático de archivos Compose
+
+Este fallback:
+- NO garantiza resolución completa Compose
+- NO resuelve merges complejos de forma idéntica
+- NO reproduce profiles avanzados
+- NO sustituye completamente docker compose config
+
+Sin embargo:
+- preserva auditabilidad mínima
+- evita fallo completo del pipeline
+- mantiene comportamiento determinista suficiente para auditoría defensiva
+- reduce dependencia operacional del control-plane Docker
+
+## Runtime Model
+
+La lógica principal de validación se ejecuta dentro del runtime containerizado del proyecto.
+
+Principios adoptados:
+
+1 — El host no ejecuta lógica core de validación
+El host:
+- orquesta
+- invoca runtime
+- consume JSON
+- presenta resultados
+- mantiene control-plane Docker
+
+No debe ejecutar:
+- validaciones principales
+- lógica policy core
+- parsing Compose complejo
+
+2 — Runtime operacional centralizado
+El runtime principal válido es:
+    monitoring-python
+
+Este runtime:
+- ejecuta lógica Python versionada
+- realiza validaciones estructuradas best-effort
+- consume configuraciones runtime del proyecto
+- opera como runtime operacional de aplicación
+
+El runtime NO garantiza:
+- acceso Docker CLI
+- acceso docker compose
+- acceso docker.sock
+- capacidades completas de toolbox Docker
+
+Las operaciones Docker host-level permanecen fuera del contenedor.
+
+3 — Parsing estructurado
+Las validaciones utilizan:
+- parsing YAML real
+- estructuras Python
+- JSON machine-readable
+
+No se considera válido:
+- parsear salida humana con awk
+- correlación basada únicamente en grep
+- enforcement basado exclusivamente en texto plano
+
+## Validaciones estructuradas implementadas
 
 Se implementan validaciones estructuradas para:
 - puertos publicados
 - docker.sock
-- imágenes :latest
+- imágenes con :latest
 - imágenes sin digest
 - privileged=true
 - mounts sensibles RW
 - cap_add
 - read_only=false
 
-## Severidades
+Las validaciones operan sobre:
 
-Se centraliza la severidad mediante:
+services:
+    resueltos mediante Compose.
 
-POLICY_SEVERITY
+Cuando la resolución runtime no esté disponible:
+- se utilizará fallback YAML
+- se emitirá warning explícito
+- la validación continuará en modo best-effort
 
-Inicialmente:
-- privileged=true → FAIL
-- resto → WARN
-
-Las severidades podrán evolucionar posteriormente según madurez operacional.
-
-## Runtime Model
-
-La lógica principal de validación se ejecuta dentro del runtime containerizado del proyecto.
-
-El host:
-- orquesta ejecución
-- recopila resultados
-- realiza parse JSON ligero
-
-El runtime principal válido es:
-    monitoring-python
-
-No se considera válido depender del Python instalado en host para ejecutar lógica core del proyecto.
-
-## Runtime Checks
+## Runtime checks
 
 Se añade:
     --self-test
 
 para validar:
-- disponibilidad docker CLI
-- disponibilidad docker compose
-- funcionamiento compose config
-- acceso docker.sock
+- disponibilidad opcional docker CLI
+- disponibilidad opcional docker compose
+- operatividad opcional docker compose config
+- acceso opcional docker.sock
+- degradación fallback correctamente gestionada
 
-Esto permite detectar degradaciones runtime explícitamente.
+La ausencia de capacidades Docker dentro del runtime NO constituye necesariamente fallo arquitectónico.
 
-## Fallback YAML
+Objetivo:
+- detectar degradaciones runtime
+- validar capacidad operacional disponible
+- identificar problemas de control-plane
+- mejorar observabilidad de auditoría
 
-Cuando:
+## Severidades
 
-docker compose config
+Las severidades se centralizan mediante:
+POLICY_SEVERITY
 
-no está disponible, el sistema degrada a parsing YAML estático best-effort.
+Clasificación inicial:
+- privileged=true → FAIL
+- resto → WARN
 
-Este fallback:
-- no garantiza resolución completa Compose
-- puede no reproducir merges complejos
-- puede no resolver profiles/overrides avanzados
+El exit code queda alineado con la severidad.
 
-El sistema debe emitir warning explícito cuando esto ocurra.
+Consecuencia:
+- violaciones FAIL devuelven rc != 0
+- warnings permanecen auditables sin romper ejecución
+
+## Herramientas auxiliares
+
+Se introduce:
+    ops/audit/parse_compose_json.py
+
+como helper ligero para:
+- parse JSON desde shell
+- evitar Python inline en bash
+- simplificar mantenimiento operacional
+
+El host puede utilizar prioritariamente:
+- jq
+- parse_compose_json.py
+
+para consumir JSON estructurado.
+
+## Restricciones
+
+No se permitirá:
+- enforcement basado exclusivamente en grep
+- parsear salida humana como fuente principal
+- ejecutar lógica policy core desde host
+- introducir dependencias Kubernetes
+- introducir OPA/Rego
+- introducir policy-as-code complejo
+- degradar reproducibilidad runtime
+
+Las validaciones:
+- deben ser deterministas
+- deben soportar salida machine-readable
+- deben degradar explícitamente cuando el runtime Compose no pueda resolverse
+- no deben asumir capacidades Docker dentro del runtime Python
 
 ## Tradeoffs
 
 ### Ventajas
-
-- reducción de falsos positivos
-- reducción de falsos negativos
+- reducción significativa de falsos positivos
+- reducción significativa de falsos negativos
 - validación estructurada real
-- machine-readable
-- mejor integración futura CI/CD
-- menor dependencia grep/awk
 - mejor mantenibilidad
-- mejor separación responsabilidades
+- integración CI/CD más fiable
+- enforcement progresivo
+- menor deuda técnica shell-based
+- mejor correlación YAML ↔ auditoría
+- alineación con arquitectura container-first
+- reducción de superficie de ataque del runtime Python
 
 ### Inconvenientes
+- mayor complejidad respecto a shell puro
+- dependencia parcial del fallback YAML
+- pérdida parcial de correlación runtime ↔ compose
+- necesidad de contexto Compose detectable
+- mayor complejidad de degradación operacional
 
-- mayor complejidad que shell puro
-- dependencia parcial runtime Docker
-- posible necesidad control-plane Docker
-- aumento moderado superficie de ataque
+## Riesgos identificados
 
-## Riesgos Residuales
+Persisten riesgos asociados a:
+- divergencias entre runtime y YAML estático
+- degradación best-effort del fallback
+- resolución Compose parcial
+- dependencia de rutas Compose detectables
+- pérdida de correlación runtime ↔ compose cuando docker compose config no está disponible
 
-El contenedor:
+En el runtime actual:
     monitoring-python
 
-puede requerir acceso parcial a:
+NO dispone de:
+- docker CLI
+- compose plugin
+- acceso docker.sock
+
+Esto reduce superficie de ataque respecto al diseño inicial, pero incrementa dependencia del fallback YAML estático.
+
+Históricamente se contempló que:
+    monitoring-python
+
+pudiese requerir acceso parcial a:
     docker.sock
 
-para ejecutar:
-    docker compose config
+Sin embargo, el runtime actual en producción NO expone:
+- docker.sock
+- docker CLI
+- docker compose
 
-Esto aumenta superficie de ataque respecto a un contenedor completamente aislado.
+Las validaciones estructuradas operan actualmente mediante:
+- parsing YAML estático
+- degradación explícita
+- validación best-effort
+
+La resolución Compose runtime-resolved queda limitada a entornos donde el tooling Docker exista explícitamente.
+
+Esto incrementa superficie de ataque respecto a un contenedor completamente aislado.
 
 Actualmente se considera aceptable debido a:
-- entorno single-node controlado
-- despliegue Compose standalone
-- hardening progresivo
+- arquitectura single-node
+- entorno controlado
 - ausencia de multitenancy
-- política pragmática ADR existentes
+- modelo infra-stack documentado
+- mitigaciones existentes en ADR-0008 y ADR-0018
+
+## Mitigaciones operativas
+
+Mitigaciones obligatorias:
+
+1 — Restricción de exposición
+- monitoring-python no debe exponer puertos públicos
+- acceso exclusivamente interno
+- no montar docker.sock salvo excepción explícitamente documentada
+- no introducir docker CLI dentro del runtime salvo necesidad operacional justificada
+
+2 — Auditoría
+- uso de docker.sock auditado automáticamente
+- policy checks obligatorios
+- degradación runtime auditada mediante warnings explícitos
+
+3 — Runtime controlado
+- scripts versionados
+- ejecución auditada
+- tooling conocido
+- fallback deterministicamente gestionado
+
+4 — Fallback explícito
+- degradación controlada
+- warnings visibles
+- no ocultar fallo de docker compose config
+- continuidad operacional best-effort
 
 ## Compatibilidad
 
 La decisión mantiene compatibilidad con:
 - Docker Compose standalone
 - arquitectura single-node
-- Makefile actual
-- auditorías existentes
 - runtime actual
+- Makefile existente
+- audit_repo_host.sh
+- CI actual
 - ADR previos
 - modelo IaC actual
 
 No se introduce:
 - Kubernetes
+- Docker Swarm
 - OPA/Rego
-- policy-as-code pesado
-- orquestación distribuida
+- policy engines externos
+- reconciliación distribuida
 
 ## Consecuencias
 
-El proyecto dispone ahora de:
+Positivas
 - auditoría estructurada reproducible
 - validación machine-readable
-- base compatible con enforcement futuro
-- menor deuda técnica shell-based
-- mejor alineación runtime/IaC
+- reducción de deuda técnica shell-based
+- mejor integración futura con CI/CD
+- separación más clara host/runtime
+- reducción de superficie de ataque del runtime Python
+- enforcement progresivo viable
+- mayor coherencia ADR ↔ runtime real
 
-## Evolución Futura
+Negativas
+- dependencia operacional del fallback YAML
+- necesidad de mantener tooling Python adicional
+- posibilidad de degradación fallback parcial
+- pérdida parcial de resolución runtime efectiva
+- complejidad superior respecto a grep simple
 
-Posibles evoluciones futuras:
-- enforcement CI/CD
-- severidades configurables
-- perfiles de policy
-- export estable JSON
-- validaciones más estrictas
-- integración jq opcional
-- validaciones Compose avanzadas
+## Validación futura
 
-Sin introducir:
-- Kubernetes
-- OPA/Rego
-- frameworks policy-as-code complejos
+Las siguientes herramientas deberán alinearse con esta decisión:
+- CI
+- Makefile
+- audit_repo_host.sh
+- runtime tests
+- resiliency tests
+- policy checks
+
+Las futuras validaciones deberán distinguir explícitamente:
+
+- smoke tests
+- policy checks
+- runtime validation
+- certification checks
+- enforcement checks
+- fallback checks
+
+## Relación con otros ADR
+
+Este ADR complementa:
+
+- ADR-0008 — Servicios micro-stack vs infra-stack
+- ADR-0011 — Python Runtime Execution Model
+- ADR-0014 — Docker Port Exposure Policy
+- ADR-0015 — Docker Network Exposure Model
+- ADR-0017 — Resilience model at docker single-node
+- ADR-0018 — Docker security runtime and resilience requirements
+- ADR-0019 — Resilience Testing Strategy
+- ADR-0020 — Container Execution Model & Privilege Strategy
+- ADR-0024 — Container Privilege Exception Policy
+- ADR-0027 — Tipología oficial de contenedores y política de healthchecks
+
+## Estado
+Aprobado.
+Auditoría Compose estructurada normalizada.
+Modelo runtime-aligned corregido respecto al runtime real.
+Fallback Compose explícitamente formalizado.
+Validación machine-readable establecida.
+Degradación best-effort documentada oficialmente.
