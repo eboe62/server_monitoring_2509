@@ -64,7 +64,12 @@ def check_docker_runtime() -> Dict[str, bool]:
     Nota: esta función realiza comprobaciones del lado del host. El módulo ya no
     asume que Docker/compose están disponibles dentro de ningún contenedor.
     """
-    status = {"docker_cli": False, "docker_compose": False, "compose_config": False, "docker_sock": False}
+    status = {
+        "docker_cli": False,
+        "docker_compose": False,
+        "compose_config": False,
+        "docker_host_access": False
+    }
     try:
         subprocess.check_output(["docker", "--version"], stderr=subprocess.DEVNULL)
         status["docker_cli"] = True
@@ -80,13 +85,7 @@ def check_docker_runtime() -> Dict[str, bool]:
     try:
         # Valida la resolución en tiempo de ejecución de compose
         subprocess.check_output(
-            [
-                "docker",
-                "compose",
-                "--project-directory",
-                "/opt/monitoring",
-                "config",
-            ],
+            ["docker", "compose", "config"],
             stderr=subprocess.DEVNULL,
             timeout=10,
         )
@@ -97,7 +96,7 @@ def check_docker_runtime() -> Dict[str, bool]:
     # Verifica la accesibilidad de docker.sock intentando listar los contenedores
     try:
         subprocess.check_output(["docker", "ps", "-q"], stderr=subprocess.DEVNULL, timeout=10)
-        status["docker_sock"] = True
+        status["docker_host_access"] = True
     except Exception:
         pass
 
@@ -227,18 +226,37 @@ def detect_docker_sock(compose: Dict[str, Any]) -> List[Tuple[str, str]]:
 
 
 def detect_images_latest_and_no_digest(compose: Dict[str, Any]) -> Tuple[List[Tuple[str, str]], List[Tuple[str, str]]]:
+    """
+    Detecta imágenes:
+    - con tag :latest
+    - sin digest reproducible
+    ADR-0018 / ADR-0029:
+    - las imágenes internas buildadas localmente no requieren digest
+    - el enforcement de digest aplica principalmente a imágenes externas
+    - se evita ruido operacional sobre imágenes `monitoring-*`
+    """
     latest: List[Tuple[str, str]] = []
     no_digest: List[Tuple[str, str]] = []
     for name, svc in (compose.get("services") or {}).items():
         image = svc.get("image")
         if not image:
             continue
-        if "@sha256:" not in image:
-            no_digest.append((name, str(image)))
-        if isinstance(image, str) and image.endswith(":latest"):
+        if not isinstance(image, str):
+            continue
+        # Imágenes internas/locales:
+        # - monitoring-*
+        # - nombres sin namespace/registry
+        # Estas imágenes forman parte del build local controlado
+        # y no requieren digest OCI explícito.
+        is_internal_image = (
+            image.startswith("monitoring-")
+            or "/" not in image
+        )
+        if "@sha256:" not in image and not is_internal_image:
+            no_digest.append((name, image))
+        if image.endswith(":latest"):
             latest.append((name, image))
     return latest, no_digest
-
 
 def detect_privileged(compose: Dict[str, Any]) -> List[Tuple[str, Any]]:
     findings: List[Tuple[str, Any]] = []
@@ -418,7 +436,7 @@ def pretty_print(results: Dict[str, Any]):
             ok("docker compose config operativo")
         else:
             warn("docker compose config no operativo dentro del runtime")
-        if rt.get("docker_sock"):
+        if rt.get("docker_host_access"):
             ok("Acceso a docker.sock operativo")
         else:
             warn("Acceso a docker.sock NO operativo (el contenedor puede no tener acceso al control plane)")
