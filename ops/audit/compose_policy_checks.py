@@ -49,7 +49,7 @@ def fail(msg: str):
 
 def load_compose_via_docker() -> Dict[str, Any] | None:
     try:
-        # Ejecuta `docker compose config` en el hostt (cwd/resolved context).
+        # Ejecuta `docker compose config` en el host (cwd/resolved context).
         out = subprocess.check_output(["docker", "compose", "config"], stderr=subprocess.DEVNULL)
         if not yaml:
             return None
@@ -125,18 +125,20 @@ def load_compose_from_files(files: List[str]) -> Dict[str, Any] | None:
     merged: Dict[str, Any] = {"services": {}}
     if not yaml:
         return None
-    for f in files:
-        try:
-            with open(f, "rb") as fh:
-                data = yaml.safe_load(fh)
-                if not data:
-                    continue
-                services = data.get("services") or {}
-                merged["services"].update(services)
-        except Exception:
-            continue
-    return merged if merged["services"] else None
-
+        for v in vols:
+            # Sintaxis corta: 'host:container:ro'
+            if isinstance(v, str):
+                parts = v.split(":")
+                # Comprueba tanto el origen como el destino
+                if any("docker.sock" in part for part in parts):
+                    findings.append((name, v))
+            elif isinstance(v, dict):
+                src = v.get("source") or v.get("bind") or v.get("type")
+                target = v.get("target") or v.get("destination")
+                if isinstance(src, str) and "docker.sock" in src:
+                    findings.append((name, json.dumps(v)))
+                elif isinstance(target, str) and "docker.sock" in target:
+                    findings.append((name, json.dumps(v)))
 
 def get_compose_dict() -> Dict[str, Any]:
     d = load_compose_via_docker()
@@ -149,7 +151,6 @@ def get_compose_dict() -> Dict[str, Any]:
         if loaded:
             warn("Usando parseo estático de archivos Compose (mejor usar runtime `docker compose config`)")
             return loaded
-
     return {"services": {}}
 
 
@@ -179,9 +180,10 @@ def detect_docker_sock(compose: Dict[str, Any]) -> List[Tuple[str, str]]:
     for name, svc in (compose.get("services") or {}).items():
         vols = svc.get("volumes") or []
         for v in vols:
-            # Sintaxis corta:, str):
+            # short syntax: 'host:container:ro'
+            if isinstance(v, str):
                 parts = v.split(":")
-                # Comprueba tanto el origen como el destino
+                # check both source and target
                 if any("docker.sock" in part for part in parts):
                     findings.append((name, v))
             elif isinstance(v, dict):

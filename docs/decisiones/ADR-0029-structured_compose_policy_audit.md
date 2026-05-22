@@ -91,7 +91,9 @@ Se establece como motor oficial:
     ops/audit/compose_policy_checks.py
 
 La validación estructurada se ejecuta preferiblemente desde el host mediante:
-    docker compose exec -T monitoring-python ...
+    python3 -m ops.audit.compose_policy_checks
+
+sin depender del runtime containerizado monitoring-python.
 
 El contenedor:
     monitoring-python
