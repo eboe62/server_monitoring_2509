@@ -86,10 +86,19 @@ Control:
 
 ## 1.6 Uso de docker.sock
 Regla:
-- Permitido SOLO en infra-stacks (ops/docker/)
+- Permitido SOLO bajo excepción ADR explícita y documentada
+- El uso de docker.sock debe considerarse privilegio equivalente a root host
 
 Prohibido:
 - En micro-stacks (ops/services/)
+- En TOOLBOX_RUNTIME
+- En runtimes operativos persistentes utilizados únicamente para tooling
+- Como dependencia implícita de validaciones CI/runtime
+
+El acceso a docker.sock:
+- no puede asumirse como capacidad base del sistema
+- debe minimizarse progresivamente
+- debe sustituirse por validaciones host-side estructuradas cuando sea viable
 
 Riesgo:
 - Equivalente a acceso root sobre el host Docker

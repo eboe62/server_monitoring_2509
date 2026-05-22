@@ -122,35 +122,65 @@ def find_compose_files() -> List[str]:
 
 
 def load_compose_from_files(files: List[str]) -> Dict[str, Any] | None:
+    """
+    Carga best-effort de archivos Compose desde el host.
+    ADR-0029:
+    - fallback exclusivamente estructural
+    - sin dependencia docker.sock
+    - sin dependencia runtime Docker
+    """
     merged: Dict[str, Any] = {"services": {}}
     if not yaml:
+        warn("PyYAML no disponible; imposible realizar parseo Compose fallback")
         return None
-        for v in vols:
-            # Sintaxis corta: 'host:container:ro'
-            if isinstance(v, str):
-                parts = v.split(":")
-                # Comprueba tanto el origen como el destino
-                if any("docker.sock" in part for part in parts):
-                    findings.append((name, v))
-            elif isinstance(v, dict):
-                src = v.get("source") or v.get("bind") or v.get("type")
-                target = v.get("target") or v.get("destination")
-                if isinstance(src, str) and "docker.sock" in src:
-                    findings.append((name, json.dumps(v)))
-                elif isinstance(target, str) and "docker.sock" in target:
-                    findings.append((name, json.dumps(v)))
+    for f in files:
+        try:
+            with open(f, "rb") as fh:
+                data = yaml.safe_load(fh)
+            if not data:
+                continue
+            services = data.get("services") or {}
+            if not isinstance(services, dict):
+                warn(f"{f}: bloque services inválido")
+                continue
+            merged["services"].update(services)
+        except Exception as exc:
+            warn(f"No se pudo parsear compose file {f}: {exc}")
+    if not merged["services"]:
+        warn("No se encontraron servicios Compose válidos en fallback estático")
+        return None
+    return merged
 
 def get_compose_dict() -> Dict[str, Any]:
+    """
+    Obtiene configuración Compose consolidada.
+    Prioridad:
+    1. docker compose config (host-side)
+    2. parseo estático fallback (ADR-0029)
+    El fallback estático:
+    - es comportamiento operativo esperado
+    - no requiere docker.sock
+    - no requiere Docker runtime operativo
+    """
     d = load_compose_via_docker()
     if d:
         return d
-
+    warn(
+        "docker compose config no disponible; "
+        "activando fallback estructural estático ADR-0029"
+    )
     files = find_compose_files()
-    if files:
-        loaded = load_compose_from_files(files)
-        if loaded:
-            warn("Usando parseo estático de archivos Compose (mejor usar runtime `docker compose config`)")
-            return loaded
+    if not files:
+        warn("No se encontraron archivos Compose bajo ops/")
+        return {"services": {}}
+    loaded = load_compose_from_files(files)
+    if loaded:
+        warn(
+            "Usando parseo estático de archivos Compose "
+            "(fallback host-side sin docker.sock)"
+        )
+        return loaded
+    warn("Fallback Compose no produjo servicios válidos")
     return {"services": {}}
 
 
