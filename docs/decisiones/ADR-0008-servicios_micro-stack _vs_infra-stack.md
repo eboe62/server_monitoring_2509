@@ -94,6 +94,12 @@ Los infra-stacks pueden montar:
 
 Únicamente cuando sea estrictamente necesario para capacidades de infraestructura (inspección, control del runtime o automatización declarativa).
 
+MONITORING-CRON: Documentación Operativa de Infra-Stack:
+
+Uso de docker.sock: Requerido exclusivamente para que el script nativo de telemetría e inspección resource_monitor.docker_resources pueda evaluar el consumo de recursos en tiempo real de los contenedores del host.
+
+Mitigación aplicada: Montado estrictamente como read-only. El contenedor se ejecuta con un usuario sin privilegios root (appuser:10001) mapeado al GID del grupo docker, carece de exposición de puertos al exterior (ports: omitido), y todas sus ejecuciones periódicas quedan registradas directamente en los logs estructurados de supercronic (Trazabilidad).
+
 RIESGO:
 El acceso a docker.sock concede privilegios equivalentes a root sobre el host Docker, permitiendo:
 - creación/eliminación de contenedores
