@@ -269,7 +269,7 @@ echo ""
 # A7.1 Runtime HostConfig summary (visibility only)
 # -----------------------------------------
 info "Resumiendo HostConfig/runtime (solo visibilidad, no modifica nada)"
-if command -v docker >/dev/null 2>&1 && docker ps -q >/dev/null 2>&1; then
+if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
     for c in $(bash ops/runtime_containers.sh list); do
         if docker ps --format '{{.Names}}' | grep -q "^$c$$"; then
             echo "[INFO] Inspecting container: $c"
