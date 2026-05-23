@@ -683,6 +683,17 @@ test-security-runtime:
 	done
 	@echo ""
 
+	@echo "[6] Runtime HostConfig summary (visibility only)"
+	@for c in $$(bash ops/runtime_containers.sh list); do \
+		if docker ps --format '{{.Names}}' | grep -q "^$$c$$"; then \
+			echo "[INFO] Inspecting container: $$c"; \
+			docker inspect --format 'Name={{.Name}} Privileged={{.HostConfig.Privileged}} CapAdd={{json .HostConfig.CapAdd}} CapDrop={{json .HostConfig.CapDrop}} SecurityOpt={{json .HostConfig.SecurityOpt}} ReadonlyRootfs={{.HostConfig.ReadonlyRootfs}} AppArmor={{.AppArmorProfile}}' $$c 2>/dev/null || echo "  -> inspect failed for $$c"; \
+		else \
+			echo "[WARN] $$c not running; skipping"; \
+		fi; \
+	done; \
+	@echo ""
+
 	@echo "=== FIN TEST SECURITY RUNTIME ==="
 
 # ------------------------------------------

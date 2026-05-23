@@ -300,6 +300,78 @@ def detect_cap_add(compose: Dict[str, Any]) -> List[Tuple[str, Any]]:
     return findings
 
 
+def detect_runtime_hostconfig(compose: Dict[str, Any]) -> List[Tuple[str, str, Dict[str, Any]]]:
+    """
+    When docker CLI and host access are available, inspect running containers
+    corresponding to compose services and collect HostConfig/security fields.
+
+    Returns list of tuples: (service_name, container_name, fields_dict)
+    fields_dict contains keys: Privileged, CapAdd, CapDrop, SecurityOpt,
+    ReadonlyRootfs, AppArmorProfile
+    """
+    findings: List[Tuple[str, str, Dict[str, Any]]] = []
+    # Early exit when docker CLI unavailable
+    try:
+        subprocess.check_output(["docker", "--version"], stderr=subprocess.DEVNULL)
+    except Exception:
+        return findings
+
+    for svc_name, svc in (compose.get("services") or {}).items():
+        # Prefer explicit container_name when present
+        c_name = svc.get("container_name") if isinstance(svc.get("container_name"), str) else None
+        candidates = []
+        if c_name:
+            candidates.append(c_name)
+        # also try service name as fallback
+        candidates.append(svc_name)
+
+        matched = None
+        try:
+            ps_out = subprocess.check_output(["docker", "ps", "--format", "{{.Names}}"], text=True)
+            running = [x.strip() for x in ps_out.splitlines() if x.strip()]
+        except Exception:
+            running = []
+
+        for cand in candidates:
+            for r in running:
+                # match exact or contains (project prefixes may apply)
+                if r == cand or r.endswith("_" + cand) or cand in r:
+                    matched = r
+                    break
+            if matched:
+                break
+
+        if not matched:
+            # not running or not found
+            findings.append((svc_name, "NOT_RUNNING", {}))
+            continue
+
+        # Inspect the matched container
+        try:
+            out = subprocess.check_output(["docker", "inspect", matched], text=True)
+            data = json.loads(out)[0]
+            hostcfg = data.get("HostConfig") or {}
+            secopt = hostcfg.get("SecurityOpt") or []
+            fields = {
+                "Privileged": bool(hostcfg.get("Privileged")),
+                "CapAdd": hostcfg.get("CapAdd") or [],
+                "CapDrop": hostcfg.get("CapDrop") or [],
+                "SecurityOpt": secopt,
+                "ReadonlyRootfs": bool(hostcfg.get("ReadonlyRootfs")),
+                "Tmpfs": hostcfg.get("Tmpfs") or {},
+                "Devices": hostcfg.get("Devices") or [],
+                "AppArmorProfile": data.get("AppArmorProfile") or "",
+            }
+            # Detect no-new-privileges in SecurityOpt entries if present
+            nnpr = any("no-new-privileges" in str(s) for s in secopt)
+            fields["NoNewPrivileges"] = nnpr
+            findings.append((svc_name, matched, fields))
+        except Exception:
+            findings.append((svc_name, matched, {"error": "inspect_failed"}))
+
+    return findings
+
+
 def detect_read_only_false(compose: Dict[str, Any]) -> List[str]:
     findings: List[str] = []
     for name, svc in (compose.get("services") or {}).items():
@@ -326,6 +398,15 @@ def run_all_checks(selected: List[str] | None = None) -> Dict[str, Any]:
 
     # Estado del entorno de ejecución (runtime-status)
     out["runtime_checks"] = check_docker_runtime()
+
+    # Runtime HostConfig inspections (host-side only)
+    try:
+        if out["runtime_checks"].get("docker_host_access"):
+            out["runtime_hostconfig"] = detect_runtime_hostconfig(compose)
+        else:
+            out["runtime_hostconfig"] = []
+    except Exception:
+        out["runtime_hostconfig"] = []
 
     if selected is None or "ports" in selected:
         ports = detect_published_ports(compose)
@@ -440,6 +521,41 @@ def pretty_print(results: Dict[str, Any]):
             ok("Acceso a docker.sock operativo")
         else:
             warn("Acceso a docker.sock NO operativo (el contenedor puede no tener acceso al control plane)")
+
+        # Runtime HostConfig summary (if available)
+        rh = results.get("runtime_hostconfig") or []
+        if rh:
+            print("")
+            warn("Runtime HostConfig findings (host-side inspect):")
+            for svc, cname, fields in rh:
+                if not fields:
+                    print(f"  - {svc}: {cname} (no data)")
+                    continue
+                if isinstance(fields, dict) and fields.get("error"):
+                    print(f"  - {svc}: {cname} -> inspect_failed")
+                    continue
+                capdrop = fields.get("CapDrop")
+                no_new = fields.get("NoNewPrivileges")
+                ro = fields.get("ReadonlyRootfs")
+                privileged = fields.get("Privileged")
+                apparmor = fields.get("AppArmorProfile")
+                secopt = fields.get("SecurityOpt")
+                # Evaluate basic policy expectations
+                notes = []
+                if privileged:
+                    notes.append("Privileged=true")
+                if not capdrop:
+                    notes.append("CapDrop not set")
+                if not no_new:
+                    notes.append("NoNewPrivileges not set")
+                if not ro:
+                    notes.append("ReadonlyRootfs=false")
+                if not apparmor and not secopt:
+                    notes.append("No AppArmor/SecurityOpt")
+                if notes:
+                    print(f"  - {svc}: {cname} -> WARN: {'; '.join(notes)}")
+                else:
+                    print(f"  - {svc}: {cname} -> OK (host-side)")
 
 
 def main(argv: List[str] | None = None) -> int:
