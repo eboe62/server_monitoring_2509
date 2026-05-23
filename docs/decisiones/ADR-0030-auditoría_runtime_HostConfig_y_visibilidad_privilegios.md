@@ -62,7 +62,7 @@ La auditoría runtime:
 - NO bloqueará pipelines inicialmente
 - NO impondrá hardening masivo automático
 
-La información runtime recopilada incluirá:
+La información runtime recopilada incluirá visibilidad estructurada sobre:
 - Privileged
 - CapAdd
 - CapDrop
@@ -72,29 +72,34 @@ La información runtime recopilada incluirá:
 - tmpfs
 - devices runtime
 
-Las validaciones se ejecutarán exclusivamente desde el host
-mediante tooling estructurado existente.
+La fase actual tendrá carácter exclusivamente observacional (runtime visibility baseline), sin interpretar todavía los resultados como enforcement definitivo.
+
+Las validaciones se ejecutarán exclusivamente desde el host mediante tooling estructurado existente.
 
 ## Consecuencias
 
 ### Positivas
 - Mayor visibilidad runtime real
-- Reducción de drift Compose ↔ runtime
+- Reducción parcial de drift Compose ↔ runtime
 - Menor dependencia de parsing heurístico
 - Auditoría más determinista
 - Mejor alineación con ADR-0018 y ADR-0029
+- Baseline reproducible de evidencia runtime
 - Base futura para hardening incremental
 
 ### Negativas
 - Incremento moderado de complejidad de auditoría
 - Dependencia parcial de docker inspect host-side
 - Posible aparición inicial de ruido operacional
-- Necesidad futura de clasificación runtime más precisa
+- Ausencia todavía de clasificación runtime contextual
+- Necesidad futura de baseline de excepciones runtime
 
 ## Limitaciones
-
 Esta fase NO garantiza todavía:
 - enforcement completo de mínimo privilegio
+- diff estructurado Compose ↔ runtime
+- clasificación runtime contextual
+- baseline formal de excepciones runtime
 - seccomp obligatorio
 - AppArmor obligatorio
 - cap_drop universal
@@ -106,11 +111,12 @@ Tampoco sustituye:
 - validación operacional progresiva
 
 ## Estado futuro esperado
-
-La auditoría runtime servirá como base para futuras fases de:
+La auditoría runtime servirá como baseline inicial para futuras fases de:
+- diff Compose ↔ runtime estructurado
+- clasificación runtime contextual
+- baseline de excepciones runtime
 - hardening incremental
 - enforcement selectivo
-- clasificación runtime estructurada
 - validación CI más precisa
 
 manteniendo siempre compatibilidad con:
