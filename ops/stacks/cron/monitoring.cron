@@ -3,7 +3,7 @@
 
 # Recursos Docker cada hora
 # */10 * * * * python3 -m resource_monitor.docker_resources PRE-MIGRACION (BORRAR)
-*/10 * * * * echo "[CRON][docker_resources][START]" && python3 -m resource_monitor.docker_resources
+* 22 * * * echo "[CRON][docker_resources][START]" && python3 -m resource_monitor.docker_resources
 
 # Jobs de log_ingestor (cada 10 min)
 */10 * * * * python3 -m log_ingestor.log_ingest_batch
