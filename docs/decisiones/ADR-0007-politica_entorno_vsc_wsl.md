@@ -111,7 +111,7 @@ Limitaciones aceptadas:
 - Necesidad de workspace multi-root en algunos casos.
 - Mayor disciplina operativa.
 
-## Riesgos controlado
+## Riesgos controlados
 - Uso accidental de Git Windows.
 - Apertura del proyecto sin Remote-WSL.
 - Duplicación de extensiones.

@@ -129,7 +129,8 @@ Objetivo:
 - Facilitar revisión y auditoría de seguridad.
 
 6. Gestión de credenciales SMTP
-as credenciales SMTP pasan a considerarse recursos restringidos conforme al principio de mínimo privilegio definido en ADR-0024..
+Las credenciales SMTP pasan a considerarse recursos restringidos conforme al principio de mínimo privilegio definido en ADR-0024.
+
 Recomendaciones:
 - Permisos host:
    0400

@@ -32,7 +32,7 @@ Debe cumplir obligatoriamente:
 - no montar rutas absolutas del host como dependencia estructural
 - no versionar secrets
 - no incluir secrets ni .env en la imagen
-- declarar la red apropiada como external: true (p. ej. `backend-net` para micro-stacks)
+- declarar la red apropiada como external: true (p.e. `backend-net` para micro-stacks)
 
 Objetivo:
 Permitir que el servicio pueda copiarse a otro repositorio y desplegarse de forma independiente.
