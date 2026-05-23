@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Structured Compose policy checks para auditoría.
+"""Comprobaciones de políticas estructuradas de Compose para auditoría.
 
 Modelo de ejecución (host-side):
 
@@ -334,8 +334,8 @@ def detect_runtime_hostconfig(compose: Dict[str, Any]) -> List[Tuple[str, str, D
 
         for cand in candidates:
             for r in running:
-                # match exact or contains (project prefixes may apply)
-                if r == cand or r.endswith("_" + cand) or cand in r:
+                # match exact or project-prefixed names (project_service)
+                if r == cand or r.endswith("_" + cand):
                     matched = r
                     break
             if matched:
@@ -363,7 +363,7 @@ def detect_runtime_hostconfig(compose: Dict[str, Any]) -> List[Tuple[str, str, D
                 "AppArmorProfile": data.get("AppArmorProfile") or "",
             }
             # Detect no-new-privileges in SecurityOpt entries if present
-            nnpr = any("no-new-privileges" in str(s) for s in secopt)
+            nnpr = any(str(s).startswith("no-new-privileges") for s in secopt)
             fields["NoNewPrivileges"] = nnpr
             findings.append((svc_name, matched, fields))
         except Exception:
@@ -526,36 +526,38 @@ def pretty_print(results: Dict[str, Any]):
         rh = results.get("runtime_hostconfig") or []
         if rh:
             print("")
-            warn("Runtime HostConfig findings (host-side inspect):")
+            print("[INFO] Runtime HostConfig (host-side inspect) — visibility only:")
             for svc, cname, fields in rh:
+                print(f"  [INFO] {svc}")
                 if not fields:
-                    print(f"  - {svc}: {cname} (no data)")
+                    print(f"    container: {cname}")
+                    print(f"    data: null or not available")
                     continue
                 if isinstance(fields, dict) and fields.get("error"):
-                    print(f"  - {svc}: {cname} -> inspect_failed")
+                    print(f"    container: {cname}")
+                    print(f"    inspect: failed")
                     continue
-                capdrop = fields.get("CapDrop")
-                no_new = fields.get("NoNewPrivileges")
-                ro = fields.get("ReadonlyRootfs")
-                privileged = fields.get("Privileged")
-                apparmor = fields.get("AppArmorProfile")
-                secopt = fields.get("SecurityOpt")
-                # Evaluate basic policy expectations
-                notes = []
-                if privileged:
-                    notes.append("Privileged=true")
-                if not capdrop:
-                    notes.append("CapDrop not set")
-                if not no_new:
-                    notes.append("NoNewPrivileges not set")
-                if not ro:
-                    notes.append("ReadonlyRootfs=false")
-                if not apparmor and not secopt:
-                    notes.append("No AppArmor/SecurityOpt")
-                if notes:
-                    print(f"  - {svc}: {cname} -> WARN: {'; '.join(notes)}")
-                else:
-                    print(f"  - {svc}: {cname} -> OK (host-side)")
+                # Normalize nulls into user-friendly defaults
+                capadd = fields.get("CapAdd") or []
+                capdrop = fields.get("CapDrop") or []
+                secopt = fields.get("SecurityOpt") or []
+                ro = bool(fields.get("ReadonlyRootfs"))
+                privileged = bool(fields.get("Privileged"))
+                apparmor = fields.get("AppArmorProfile") or ""
+                tmpfs = fields.get("Tmpfs") or {}
+                devices = fields.get("Devices") or []
+                nnpr = bool(fields.get("NoNewPrivileges"))
+
+                print(f"    container: {cname}")
+                print(f"    Privileged={str(privileged).lower()}")
+                print(f"    CapAdd={capadd}")
+                print(f"    CapDrop={capdrop}")
+                print(f"    SecurityOpt={secopt}")
+                print(f"    NoNewPrivileges={str(nnpr).lower()}")
+                print(f"    ReadonlyRootfs={str(ro).lower()}")
+                print(f"    AppArmor={apparmor}")
+                print(f"    Tmpfs={tmpfs}")
+                print(f"    Devices={devices}")
 
 
 def main(argv: List[str] | None = None) -> int:
