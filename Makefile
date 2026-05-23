@@ -88,6 +88,10 @@ audit:
 	@echo "=== Ejecutando auditoría (estructura / ADR) ==="
 	chmod +x $(AUDIT_SCRIPT)
 	./$(AUDIT_SCRIPT)
+	@echo ""
+	@echo "=== TEST POLICY STRUCTURED (compose checks / host-side) ==="
+	$(MAKE) test-policy-structured
+	@echo ""
 
 # ------------------------------------------
 # STATUS (snapshot)

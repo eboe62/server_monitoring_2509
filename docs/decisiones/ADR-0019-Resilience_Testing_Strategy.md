@@ -23,7 +23,11 @@ Adicionalmente, se detectó acoplamiento indebido entre:
 - permisos de contenedores (USER no root)
 - rutas de logs dependientes del host (/var/log montado desde host)
 
-Esto rompía el principio de aislamiento del modelo IaC.
+Esto rompía el principio de separación entre:
+- runtime funcional containerizado
+- control-plane operacional host-side
+
+definido por el modelo IaC actual.
 
 ## Decisión
 Se separa la estrategia de testing en dos niveles:
@@ -68,10 +72,10 @@ Se adopta:
     /opt/monitoring/logs
 
 Motivo:
-- coherencia con modelo IaC
-- aislamiento completo
-- independencia del host
-- reproducibilidad total
+- coherencia con el modelo IaC híbrido actual
+- separación funcional host/runtime
+- reducción de dependencias host-side funcionales
+- reproducibilidad operacional razonable
 
 ## Consecuencias
 - CI más estable y determinista
