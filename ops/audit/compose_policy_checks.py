@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Comprobaciones de políticas estructuradas de Compose para auditoría.
+"""Structured Compose policy checks para auditoría.
 
 Modelo de ejecución (host-side):
 

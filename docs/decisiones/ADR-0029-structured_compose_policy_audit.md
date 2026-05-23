@@ -32,7 +32,7 @@ Este enfoque provocaba:
 - auditorías parcialmente no deterministas
 
 Adicionalmente se identificaron inconsistencias arquitectónicas:
-- parte de la lógica Python se ejecutaba desde el host
+- parte del tooling operacional Python debía ejecutarse desde host-side
 - algunas validaciones parseaban salida humana
 - las severidades no estaban centralizadas
 - no existía salida machine-readable estable
@@ -41,10 +41,13 @@ Adicionalmente se identificaron inconsistencias arquitectónicas:
 El proyecto mantiene actualmente:
 - Docker Compose standalone
 - arquitectura single-node
-- modelo container-first
+- modelo híbrido Host-Controlled Docker Compose IaC
 - runtime operacional basado en infra-stacks
 - validaciones pragmáticas alineadas con ADR-0017
-- separación explícita host/runtime definida en ADR-0011
+- separación explícita entre:
+    - runtime funcional containerizado
+    - control-plane operacional host-side
+  definida en ADR-0011
 
 Durante la implantación también se detectó una limitación operacional adicional:
     docker compose config
@@ -81,7 +84,7 @@ Las validaciones heurísticas basadas en shell no proporcionaban suficiente robu
 - enforcement progresivo
 - validación estructurada real
 - integración CI/CD
-- el runtime Python no garantiza capacidades Docker host-level
+- los runtimes funcionales containerizados no deben asumir capacidades Docker host-level
 
 ## Decisión
 
@@ -319,8 +322,12 @@ Las validaciones:
 - enforcement progresivo
 - menor deuda técnica shell-based
 - mejor correlación YAML ↔ auditoría
-- alineación con arquitectura container-first
+- alineación con el modelo Host-Controlled Docker Compose IaC
+- separación más clara entre:
+    - runtime funcional containerizado
+    - tooling operacional host-side
 - reducción de superficie de ataque del runtime Python
+- eliminación de dependencia de docker.sock dentro de runtimes funcionales
 
 ### Inconvenientes
 - mayor complejidad respecto a shell puro
@@ -428,8 +435,12 @@ Positivas
 - validación machine-readable
 - reducción de deuda técnica shell-based
 - mejor integración futura con CI/CD
-- separación más clara host/runtime
+- separación más clara entre:
+    - runtime funcional containerizado
+    - control-plane operacional host-side
 - reducción de superficie de ataque del runtime Python
+- eliminación de dependencia estructural de docker.sock en monitoring-python
+- alineación entre arquitectura declarada y runtime real observado
 - enforcement progresivo viable
 - mayor coherencia ADR ↔ runtime real
 
