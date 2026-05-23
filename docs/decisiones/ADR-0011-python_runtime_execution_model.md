@@ -22,19 +22,42 @@ Esto generaba varias ambigüedades:
 - Dependencias Python distribuidas en distintos lugares.
 - Falta de aislamiento del entorno de ejecución.
 
-Dado que el proyecto está evolucionando hacia una arquitectura container-first, es necesario definir un modelo explícito para la ejecución de código Python.
+Dado que el proyecto evoluciona hacia un modelo híbrido Host-Controlled Docker Compose IaC con runtime funcional containerizado, es necesario definir un modelo explícito para la ejecución de código Python.
 
 ## Decisión
-El runtime Python se ejecutará exclusivamente dentro de contenedores Docker, nunca en el host.
+La lógica funcional Python del proyecto se ejecutará exclusivamente dentro de contenedores Docker.
+
+El host podrá ejecutar tooling operacional asociado a:
+- auditoría IaC
+- validaciones Compose
+- parsing estructural
+- orquestación Docker Compose
+- verificaciones CI/runtime
+- automatismos declarativos host-side
+
+Estas excepciones no deben contener lógica funcional de negocio.
+
 Los scripts Python se ejecutarán desde contenedores pertenecientes al Infra-Stack, principalmente el contenedor monitoring-cron.
 
 Principios adoptados:
 
-1 — Python no se instala en el host
-  El host se mantiene como:
-  - runtime Docker
-  - base del sistema
-  No se utiliza como entorno de ejecución de aplicaciones.
+1 — Separación entre runtime funcional y control-plane operacional
+
+El host se mantiene como:
+- runtime Docker Compose standalone
+- control-plane operacional
+- entorno IaC declarativo
+- plataforma de validación y auditoría
+
+El host no debe utilizarse como:
+- runtime funcional de negocio
+- entorno persistente de ejecución de aplicación
+
+Sin embargo, sí puede ejecutar:
+- tooling operacional
+- validaciones estructurales
+- automatismos declarativos
+- wrappers CI/runtime
 
 2 — Runtime Python contenido en contenedores
   Los scripts Python se ejecutan desde contenedores que incluyen:
@@ -93,10 +116,14 @@ Opción A — Python instalado en el host
 
   Ventajas:
   - simplicidad inicial
+
   Inconvenientes:
-  - rompe el modelo container-first
-  - dependencias fuera de control
-  - difícil reproducibilidad
+  - rompe la separación entre:
+      - runtime funcional containerizado
+      - control-plane operacional host-side
+  - incrementa dependencias funcionales fuera del runtime controlado
+  - degrada reproducibilidad operacional
+  - dificulta trazabilidad IaC
 
   Resultado: rechazada
 
@@ -151,7 +178,19 @@ Negativas
 
 Ambos son independientes a nivel de runtime
 
-El runtime Python containerizado NO debe asumir acceso al control-plane Docker del host.
+El runtime Python containerizado NO debe asumir acceso obligatorio al control-plane Docker del host.
+
+Las operaciones de:
+- docker compose
+- docker inspect
+- docker ps
+- docker compose config
+
+pueden ejecutarse desde tooling operacional host-side cuando:
+- el runtime containerizado no disponga de Docker CLI
+- no exista acceso a docker.sock
+- el modelo operacional priorice reducción de superficie de ataque
+- el fallback host-side esté explícitamente documentado mediante ADR
 
 La ejecución de:
 - docker compose

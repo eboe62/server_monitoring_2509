@@ -5,9 +5,20 @@ Estado: Aprobado
 Ámbito: server_monitoring_2509
 
 ## Contexto
-El proyecto server_monitoring adopta una arquitectura container-first donde todos los servicios de aplicación se ejecutan dentro de contenedores Docker.
+El proyecto server_monitoring adopta un modelo Host-Controlled Docker Compose IaC donde:
+- los servicios funcionales se ejecutan dentro de contenedores Docker
+- el control-plane operacional permanece parcialmente host-side
+- la orquestación y auditoría Compose pueden ejecutarse desde el host
 
-La comunicación entre servicios se realiza principalmente mediante redes Docker internas. Sin embargo, algunos servicios requieren diferentes niveles de accesibilidad:
+La comunicación funcional entre servicios se realiza principalmente mediante redes Docker internas.
+
+Adicionalmente:
+- ciertos mecanismos operacionales
+- auditorías estructurales
+- tooling de validación
+- verificaciones Compose
+
+pueden ejecutarse desde el host como parte del plano operacional IaC. Sin embargo, algunos servicios requieren diferentes niveles de accesibilidad:
   - acceso interno entre contenedores
   - acceso administrativo desde el host
   - acceso público controlado desde Internet
