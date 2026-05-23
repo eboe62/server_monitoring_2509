@@ -181,9 +181,9 @@ Validación:
   make test-python-health
 
 R3 – Recuperación ante crash
-El sistema debe reiniciarse y volver a healthy:
-  - Reiniciar contenedores automáticamente
-  - Recuperar estado healthy
+El sistema debe reiniciarse y volver a un estado healthy:
+- Reiniciar contenedores automáticamente
+- Recuperar estado healthy
 
   Validación:
     make test-resilience-restart

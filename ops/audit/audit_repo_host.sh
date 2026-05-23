@@ -265,6 +265,24 @@ else
 fi
 
 echo ""
+# -----------------------------------------
+# A7.1 Runtime HostConfig summary (visibility only)
+# -----------------------------------------
+info "Resumiendo HostConfig/runtime (solo visibilidad, no modifica nada)"
+if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
+    for c in $(bash ops/runtime_containers.sh list); do
+        if docker ps --format '{{.Names}}' | grep -q "^$c$$"; then
+            echo "[INFO] Inspecting container: $c"
+            docker inspect --format 'Name={{.Name}} Privileged={{.HostConfig.Privileged}} CapAdd={{json .HostConfig.CapAdd}} CapDrop={{json .HostConfig.CapDrop}} SecurityOpt={{json .HostConfig.SecurityOpt}} ReadonlyRootfs={{.HostConfig.ReadonlyRootfs}} AppArmor={{.AppArmorProfile}}' $c 2>/dev/null || echo "  -> inspect failed for $c"
+        else
+            echo "[WARN] $c no está en ejecución; omitiendo inspección host-side"
+        fi
+    done
+else
+    warn "docker CLI o runtime no disponible en host; omitido HostConfig summary"
+fi
+
+echo ""
 # ==========================================
 echo "A8 Secrets"
 # ==========================================

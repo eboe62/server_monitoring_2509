@@ -68,6 +68,16 @@ FORMATO DE RESPUESTA ESPERADO
 - Sin texto superfluo
 
 ==========================================
+FORMATO DE ADR (Architecture Decision Record)
+==========================================
+Los ADR's no son pseudo-documentos estratégicos
+No deben mezclar decisión + roadmap + threat model + implementación
+Deben tener:
+- legibilidad rápida
+- foco arquitectónico
+- persistencia temporal
+
+==========================================
 MODELO DE INTERACCIÓN (OBLIGATORIO):
 ==========================================
 - Nivel 1: Documento de referencia:

@@ -63,9 +63,7 @@ Se acepta explícitamente la pérdida de las siguientes ventajas:
 - Menor reutilización de capas Docker
 - Posible incremento del tamaño total de imágenes
 
-Estas desventajas se consideran asumibles en favor de:
-
-aislamiento, reproducibilidad y coherencia con el modelo IaC PRO
+Estas desventajas se consideran asumibles en favor de: aislamiento, reproducibilidad y coherencia con el modelo IaC PRO.
 
 ## Riesgos
 Se identifican como riesgos estructurales:

@@ -15,7 +15,7 @@ Existen dos tipos distintos de automatismos:
 
 Sin una separación explícita, las auditorías pueden interpretar incorrectamente que el host ejecuta lógica de aplicación o asumir dependencias indebidas entre host y runtime Docker.
 
-## Decision
+## Decisión
 Se establece una separación explícita entre:
 - Host Cron:
   El crontab del host se utiliza exclusivamente para tareas de mantenimiento del sistema operativo.
