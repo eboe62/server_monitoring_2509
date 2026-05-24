@@ -54,14 +54,14 @@ services:
   #      Sin exposición de puertos (solo red interna observability-net)
       - "127.0.0.1:${LOKI_PORT}:3100"  # API de Loki accesible desde el host
     restart: always
-    # Hardening incremental: drop caps + seccomp (por defecto) + readonly rootfs (data on volume)
+    # Hardening incremental: drop de capabilities y enforcement de no-new-privileges.
+    # NOTA: Se eliminó 'read_only' rootfs porque Loki requiere rutas de runtime con permisos de escritura más allá de su volumen de datos. Los datos persistidos residen en el volumen nombrado `loki-data`. Hardening futuro:
+    # - Identificar rutas de escritura adicionales en runtime y migrarlas a volúmenes
+    # - Añadir montajes tmpfs para directorios efímeros donde aplique
     security_opt:
       - no-new-privileges:true
     cap_drop:
       - ALL
-    read_only: true
-    tmpfs:
-      - /tmp:size=64m
 
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:3100/ready || exit 1"]
@@ -93,14 +93,14 @@ services:
     ports:
       - "127.0.0.1:${GRAFANA_PORT}:3001"
 
-    # Hardening incremental: drop caps + seccomp (por defecto) + readonly rootfs (data on volume)
+  # Hardening incremental: drop de capabilities y enforcement de no-new-privileges.
+    # NOTA: Se eliminó 'read_only' rootfs porque Grafana escribe en varias rutas de runtime (dashboards, DB sqlite, caché de plugins) que deben mantener permisos de escritura al arrancar. Los datos persistidos residen en el volumen nombrado `grafana-data`. Hardening futuro:
+    # - Externalizar directorios de plugins/caché a volúmenes dedicados
+    # - Añadir tmpfs para /tmp y otros directorios efímeros donde sea seguro
     security_opt:
       - no-new-privileges:true
     cap_drop:
       - ALL
-    read_only: true
-    tmpfs:
-      - /tmp:size=64m
 
     environment:
 
