@@ -3,7 +3,7 @@
 
 # Recursos Docker cada hora
 # */10 * * * * python3 -m resource_monitor.docker_resources PRE-MIGRACION (BORRAR)
-*/10 * * * * echo "[CRON][docker_resources][START]" && python3 -m resource_monitor.docker_resources
+* 22 * * * echo "[CRON][docker_resources][START]" && python3 -m resource_monitor.docker_resources
 
 # Jobs de log_ingestor (cada 10 min)
 */10 * * * * python3 -m log_ingestor.log_ingest_batch
@@ -20,5 +20,6 @@
 # * * * * * python3 -m resource_monitor.docker_resources >> /var/log/docker_resources.log 2>&1
 # * * * * * python3 -m log_ingestor.log_ingest_batch
 
-# Backup de BBDD monitoring-postgres
-5 22 * * * python3 ops/services/postgres/scripts/backup_postgres.py
+# Backup de BBDD monitoring-postgres (ejecutado dentro del contenedor monitoring-cron)
+# Se ejecuta el script incorporado en la imagen: scripts/backup_postgres.py
+5 22 * * * python3 scripts/backup_postgres.py
