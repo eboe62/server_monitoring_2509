@@ -23,8 +23,9 @@ services:
       # ❌ ELIMINADO → rompe seguridad y permisos
       # - /var/log:/var/log
 
-      # Acceso al socket de Docker para los scripts de docker_resources.sh y .py - SE INHABILITA POR SEGURIDAD EN LOS MICRO-STACKS
-      # - /var/run/docker.sock:/var/run/docker.sock
+      # Acceso al socket de Docker para los scripts de docker_resources.sh y .py - DEBERÍA ESTAR INHABILITADO POR SEGURIDAD EN LOS MICRO-STACKS PERO SE HABILITA DEJANDO DOCUMENTADAS LAS RAZONES EN ADR-0008
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
       # Volumen para backups: comparte la misma named volume usada por postgres
       - postgres-backups:/backups:rw
 
