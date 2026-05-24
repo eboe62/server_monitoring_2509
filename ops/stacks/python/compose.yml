@@ -41,7 +41,6 @@ services:
     # Hardening incremental: security options
     security_opt:
       - no-new-privileges:true
-      - seccomp=default
     cap_drop:
       - ALL
 

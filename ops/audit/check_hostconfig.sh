@@ -107,11 +107,17 @@ for c in $list; do
     echo "${inspect_json}" \
       | jq -r '.[0].HostConfig.SecurityOpt // [] | join(",")'
   )
+
+  # no-new-privileges
   if ! echo "${security_opt}" | grep -q "no-new-privileges"; then
     warn "${c} missing no-new-privileges"
   fi
-  if ! echo "${security_opt}" | grep -q "seccomp"; then
-    warn "${c} missing explicit seccomp profile"
+
+  # seccomp validation
+  # Docker aplica seccomp default implícitamente cuando SecurityOpt es null/vacío.
+  # Solo advertimos si seccomp está explícitamente deshabilitado.
+  if echo "${security_opt}" | grep -q "seccomp=unconfined"; then
+    warn "${c} has seccomp explicitly disabled"
   fi
 
   # =======================================================
