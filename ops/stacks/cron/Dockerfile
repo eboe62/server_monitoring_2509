@@ -27,6 +27,10 @@ RUN apt-get update \
     postgresql-client \
  && rm -rf /var/lib/apt/lists/*
 
+RUN curl -fsSL https://download.docker.com/linux/static/stable/x86_64/docker-26.1.3.tgz | tar -xz -C /tmp \
+ && mv /tmp/docker/docker /usr/local/bin/docker \
+ && rm -rf /tmp/docker
+
 # Usuario estándar (no-root, pero simple con UID fijo)
 RUN groupadd -g 10001 appuser \
  && useradd -u 10001 -g appuser -ms /bin/bash appuser

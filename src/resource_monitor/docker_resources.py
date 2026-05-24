@@ -11,7 +11,7 @@ THRESHOLD_MEM = 80.0  # %
 THRESHOLD_CPU = 80.0  # %
 HYSTERESIS_COUNT = 2  # número de muestreos consecutivos requeridos
 STATE_FILE = "/tmp/docker_resources_state.pkl"
-LOG_FILE = "/var/log/docker_resources_history.log"
+LOG_FILE = "/opt/monitoring/logs/docker_resources_history.log"
 
 def get_docker_stats():
     """Obtiene estadísticas de Docker en formato JSON."""
