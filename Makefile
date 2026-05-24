@@ -92,6 +92,9 @@ audit:
 	@echo "=== TEST POLICY STRUCTURED (compose checks / host-side) ==="
 	$(MAKE) test-policy-structured
 	@echo ""
+	@echo "=== TEST SECURITY RUNTIME  (ADR-0018 / ADR-0023) ==="
+	$(MAKE) test-security-runtime
+	@echo ""
 
 # ------------------------------------------
 # STATUS (snapshot)
@@ -696,6 +699,10 @@ test-security-runtime:
 			echo "[WARN] $$c not running; skipping"; \
 		fi; \
 	done
+	@echo ""
+
+	@echo "[7] Ejecutando checks estructurales HostConfig (ops/audit/check_hostconfig.sh)"
+	@bash ops/audit/check_hostconfig.sh || (echo "[FAIL] HostConfig checks detectaron violaciones" && exit 1)
 	@echo ""
 
 	@echo "=== FIN TEST SECURITY RUNTIME ==="

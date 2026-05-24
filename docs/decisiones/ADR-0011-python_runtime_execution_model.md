@@ -142,26 +142,20 @@ Opción B — Python distribuido en varios contenedores
   Resultado: rechazada
 
 Opción C — Runtime Python centralizado en contenedor infra
-Resultado: rechazada
+Resultado: RECHAZADA de forma definitiva.
 Motivo:
-- introduce acoplamiento entre servicios
-- dificulta la validación en CI/CD
-- rompe el principio de autonomía de stacks
+- Introduce acoplamiento innecesario entre servicios independientes.
+- Dificulta la validación aislada y paralela en pipelines de CI/CD.
+- Rompe el principio de autonomía e independencia de stacks operativos.
 
-  Ventajas:
-  - arquitectura simple
-  - entorno reproducible
-  - integración directa con cron
-  - dependencias centralizadas
+Opción D — Runtime Python autónomo por stack (Seleccionada)
+Cada stack (p.e. monitoring-python, monitoring-cron) se rige bajo las siguientes directrices:
+- Define su propio runtime Python aislado.
+- Instala exclusivamente sus dependencias en build-time (requirements.txt).
+- Es completamente independiente tanto en fase de build como en ejecución runntime, garantizando la resiliencia aislada del entorno.
 
-  Resultado: aceptada
+Resultado: aceptada.
 
-Opción D — Runtime Python autónomo por stack
-Cada stack (ej. monitoring-python, monitoring-cron):
-- define su propio runtime Python
-- instala sus dependencias
-- es completamente independiente en build y ejecución
-Resultado: aceptada
 
 ## Consecuencias
 Positivas

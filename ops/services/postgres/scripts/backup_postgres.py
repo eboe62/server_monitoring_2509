@@ -25,39 +25,42 @@ POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD")
 POSTGRES_NAME = os.getenv("POSTGRES_NAME")
 POSTGRES_CONTAINER_NAME = os.getenv("POSTGRES_CONTAINER_NAME")
 
-# Ruta en host y contenedor
-BACKUP_DIR_HOST = os.getenv("BACKUP_DIR_HOST", "ops/backups")
-BACKUP_DIR_CONTAINER = "/backups"
+# Ruta en contenedor donde se depositarán los backups (debe mapearse a un volume)
+BACKUP_DIR_CONTAINER = os.getenv("BACKUP_DIR_CONTAINER", "/backups")
 
 timestamp = datetime.now().strftime("%Y%m%d%H%M")
-# Nombre del archivo
 BACKUP_FILE_NAME = f"{POSTGRES_NAME}-{timestamp}.backup"
-
-# Archivos finales
-BACKUP_FILE_HOST = f"{BACKUP_DIR_HOST}/{BACKUP_FILE_NAME}"
 BACKUP_FILE_CONTAINER = f"{BACKUP_DIR_CONTAINER}/{BACKUP_FILE_NAME}"
 
-os.makedirs(BACKUP_DIR_HOST, exist_ok=True)
-log_info(f"[🚀]: Iniciando backup de {POSTGRES_NAME}...")
+log_info(f"[🚀]: Iniciando backup de {POSTGRES_NAME} (destino: {BACKUP_FILE_CONTAINER})...")
+
+# Determinar host/puerto para conectar a Postgres por TCP
+PG_HOST = os.getenv("POSTGRES_HOST") or os.getenv("POSTGRES_CONTAINER_NAME") or "postgres"
+PG_PORT = os.getenv("POSTGRES_PORT", "5432")
 
 env = os.environ.copy()
-env["POSTGRES_USER"] = POSTGRES_USER
-env["POSTGRES_PASSWORD"] = POSTGRES_PASSWORD
+if POSTGRES_USER:
+    env["PGUSER"] = POSTGRES_USER
+if POSTGRES_PASSWORD:
+    env["PGPASSWORD"] = POSTGRES_PASSWORD
 
-# ------------------------------------------------------------
-# Proceso principal
-# ------------------------------------------------------------
+os.makedirs(BACKUP_DIR_CONTAINER, exist_ok=True)
+
 try:
-    subprocess.run(
-        [
-            "docker", "exec", "-i", POSTGRES_CONTAINER_NAME,
-            "pg_dump", "-U", POSTGRES_USER, "-F", "c", "-b",
-            "-v", "-f", BACKUP_FILE_CONTAINER, POSTGRES_NAME
-        ],
-        check=True,
-        env=env
-    )
-    log_info(f"[✅]: Backup realizado con éxito: {BACKUP_FILE_HOST}")
+    cmd = [
+        "pg_dump",
+        "-h", PG_HOST,
+        "-p", str(PG_PORT),
+        "-U", POSTGRES_USER,
+        "-F", "c",
+        "-b",
+        "-v",
+        "-f", BACKUP_FILE_CONTAINER,
+        POSTGRES_NAME,
+    ]
+
+    subprocess.run(cmd, check=True, env=env)
+    log_info(f"[✅]: Backup realizado con éxito: {BACKUP_FILE_CONTAINER}")
 
 # ------------------------------------------------------------
 # Notificar por mail

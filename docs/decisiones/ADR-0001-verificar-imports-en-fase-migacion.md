@@ -79,9 +79,8 @@ La verificación del refactor de imports se realizó en dos niveles:
 
 2. Verificación por compilación:
    - Ejecución de:
-     python3 -m compileall src/
-   - Realizada en entorno Linux (WSL), equivalente al entorno objetivo
-     de producción.
+     docker run --rm -v $(pwd)/src:/app/src -w /app python:3.12-slim python3 -m compileall src/
+   - Realizada mediante un contenedor de usar y tirar (ephemeral container) aislado, asegurando que el host de producción jamás ejecute ni compile módulos de Python del proyecto de forma nativa, quedando en estricto cumplimiento con la gobernanza runtime.
 
 El resultado fue satisfactorio, sin errores de compilación ni resolución
 de imports en:

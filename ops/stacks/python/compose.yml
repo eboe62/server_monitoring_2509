@@ -38,6 +38,11 @@ services:
       - restricted-net # Red restringida para servicios específicos (sin acceso a Docker ni logs host)
     environment:
       SMTP_MODE: relay
+    # Hardening incremental: security options
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
 
 networks:
   backend-net:

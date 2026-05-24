@@ -24,6 +24,7 @@ RUN apt-get update \
     bc \
     bash \
     coreutils \
+    postgresql-client \
  && rm -rf /var/lib/apt/lists/*
 
 # Usuario estándar (no-root, pero simple con UID fijo)
@@ -39,6 +40,8 @@ RUN pip install --no-cache-dir --disable-pip-version-check -r requirements.txt
 # Copiar SOLO el código necesario para el servicio
 COPY src/ src/
 COPY scripts/ scripts/
+# Copiar script de backup de Postgres para ejecución dentro del contenedor (sin docker exec)
+COPY ops/services/postgres/scripts/backup_postgres.py scripts/backup_postgres.py
 
  # Supercronic (vendor + checksum)
 COPY ops/vendor/supercronic /tmp/supercronic
