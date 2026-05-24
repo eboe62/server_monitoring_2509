@@ -92,6 +92,9 @@ audit:
 	@echo "=== TEST POLICY STRUCTURED (compose checks / host-side) ==="
 	$(MAKE) test-policy-structured
 	@echo ""
+	@echo "=== TEST SECURITY RUNTIME  (ADR-0018 / ADR-0023) ==="
+	$(MAKE) test-security-runtime
+	@echo ""
 
 # ------------------------------------------
 # STATUS (snapshot)
