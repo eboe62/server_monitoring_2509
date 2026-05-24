@@ -54,10 +54,9 @@ services:
   #      Sin exposición de puertos (solo red interna observability-net)
       - "127.0.0.1:${LOKI_PORT}:3100"  # API de Loki accesible desde el host
     restart: always
-    # Hardening incremental: drop caps + seccomp + readonly rootfs (data on volume)
+    # Hardening incremental: drop caps + seccomp (por defecto) + readonly rootfs (data on volume)
     security_opt:
       - no-new-privileges:true
-      - seccomp=default
     cap_drop:
       - ALL
     read_only: true
@@ -94,10 +93,9 @@ services:
     ports:
       - "127.0.0.1:${GRAFANA_PORT}:3001"
 
-    # Hardening incremental: drop caps + seccomp + readonly rootfs (data on volume)
+    # Hardening incremental: drop caps + seccomp (por defecto) + readonly rootfs (data on volume)
     security_opt:
       - no-new-privileges:true
-      - seccomp=default
     cap_drop:
       - ALL
     read_only: true
