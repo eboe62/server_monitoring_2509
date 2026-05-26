@@ -1,0 +1,24 @@
+name: Runtime Governance Audit
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  audit-runtime:
+    name: Audit Runtime (host-side)
+    runs-on: [self-hosted, linux]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Ensure Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Run runtime governance audit (CI mode)
+        run: |
+          python3 -m ops.audit.runtime_governance_audit --output-json artifacts/runtime_audit.json --output-md artifacts/runtime_audit.md --ci

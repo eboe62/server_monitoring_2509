@@ -1075,7 +1075,7 @@ stack-status:  ## Estado de un stack
 
 stack-logs:
 	$(call validate_stack)
-	@echo "=== Mostrando las últimas 20 líneas de la stack ==="
+	@echo "=== Mostrando últimos 20 registros ==="
 	@DIR=$$( $(call stack_path) ); \
 	cd $$DIR && $(COMPOSE) logs --no-color 2>/dev/null | tail -n 20
 	@echo ""
@@ -1417,17 +1417,16 @@ rebuild-all:
 # Logs
 # ------------------------------------------
 
-## Muestra últimos registros del sistema y de los contenedores de la stack
+## Muestra últimos registros del sistema y de TODOS los contenedores activos
 logs:
-	$(call validate_stack)
-	@echo "=== Mostrando últimos 20 registros del sistema ==="
+	@echo "=== Mostrando últimos 20 registros ==="
 	@sleep 40  # Latencia para dar tiempo a que arranquen los contenedores
 	@tail -n 20 /var/log/*.log 2>/dev/null || echo "⚠️  No se pudieron leer los logs de /var/log/"
 	@echo "\n=== Logs de todos los contenedores activos ==="
-	@DIR=$$( $(call stack_path) ); \
-	cd $$DIR; \
-	for c in $$($(COMPOSE) ps --format '{{.Name}}'); do \
-		echo "\n===== 📦 $$c ====="; \
-		$(COMPOSE) logs --tail=20 $$c 2>/dev/null || echo "⚠️  No se pudo obtener logs de $$c"; \
-	done
+	@IDS=$$(docker ps -q); \
+	if [ -z "$$IDS" ]; then \
+		echo "⚠️  No hay contenedores activos en este momento."; \
+	else \
+		$(COMPOSE) -p monitoring logs --tail=20 $$IDS 2>&1 | tail -n 20; \
+	fi
 	@echo ""
