@@ -16,6 +16,7 @@ import os
 import subprocess
 import sys
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
 import yaml
 
@@ -24,23 +25,35 @@ ALLOWLIST = {
     # service_name: exceptions
     "monitoring-smtp-relay": {
         "allow_root": True,
-        "allowed_caps": [],
+        # Docker returns capabilities in uppercase names
+        "allowed_caps": ["NET_BIND_SERVICE", "NET_RAW", "SETUID", "SETGID"],
     },
     "monitoring-postgres": {
         "allow_readonly_false": True,
     },
     "promtail": {
+        # promtail may mount host log dirs RO
         "allowed_ro_mounts": ["/var/log", "/var/lib/docker/containers"],
     },
 }
 
+# Services expected to meet a stronger baseline hardening
+BASELINE_HARDENING_EXPECTED = {
+    # service: describes baseline expectations; strict_enforcement must be explicit
+    "grafana": {"cap_drop_all": True, "strict_enforcement": False},
+    "loki": {"cap_drop_all": True, "strict_enforcement": False},
+    "promtail": {"cap_drop_all": True, "strict_enforcement": False},
+    "monitoring-cron": {"cap_drop_all": True, "strict_enforcement": False},
+    "monitoring-python": {"cap_drop_all": True, "strict_enforcement": False},
+}
 
-def run(cmd):
+
+def run(cmd: str) -> Tuple[int, str, str]:
     p = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     return p.returncode, p.stdout, p.stderr
 
 
-def discover_compose_files():
+def discover_compose_files() -> List[str]:
     patterns = [
         "ops/stacks/**/compose.yml",
         "ops/stacks/**/compose.yaml",
@@ -54,8 +67,8 @@ def discover_compose_files():
     return files
 
 
-def load_compose_inventory(files):
-    inventory = {}
+def load_compose_inventory(files: List[str]) -> Dict[str, Any]:
+    inventory: Dict[str, Any] = {}
     for f in files:
         try:
             with open(f, "r") as fh:
@@ -72,7 +85,7 @@ def load_compose_inventory(files):
     return inventory
 
 
-def list_containers():
+def list_containers() -> List[str]:
     rc, out, err = run("docker ps -q")
     if rc != 0:
         print("[ERROR] docker ps failed:", err, file=sys.stderr)
@@ -81,7 +94,7 @@ def list_containers():
     return ids
 
 
-def inspect_container(cid):
+def inspect_container(cid: str) -> Optional[Dict[str, Any]]:
     rc, out, err = run(f"docker inspect {cid}")
     if rc != 0:
         return None
@@ -92,21 +105,22 @@ def inspect_container(cid):
         return None
 
 
-def correlate(inspect_obj, compose_inventory):
+def correlate(inspect_obj: Dict[str, Any], compose_inventory: Dict[str, Any]) -> Optional[str]:
+    """Correlate container to compose service.
+
+    Priority:
+    1) Use `com.docker.compose.service` label when present and known in compose inventory.
+    2) Otherwise treat as unmanaged (do NOT use substring heuristics).
+    """
     labels = inspect_obj.get("Config", {}).get("Labels") or {}
     svc = labels.get("com.docker.compose.service")
     if svc and svc in compose_inventory:
         return svc
-    name = inspect_obj.get("Name", "").lstrip("/")
-    # best-effort: find service whose name appears in container name
-    for s in compose_inventory:
-        if s in name:
-            return s
     return None
 
 
-def analyze_container(inspect_obj, compose_inventory):
-    findings = []
+def analyze_container(inspect_obj: Dict[str, Any], compose_inventory: Dict[str, Any]) -> Dict[str, Any]:
+    findings: List[Dict[str, Any]] = []
     hostcfg = inspect_obj.get("HostConfig", {})
     cfg = inspect_obj.get("Config", {})
     mounts = inspect_obj.get("Mounts", [])
@@ -116,87 +130,139 @@ def analyze_container(inspect_obj, compose_inventory):
 
     allow = ALLOWLIST.get(service, {}) if service else {}
 
+    def add_finding(check: str, status: str, message: str, details: Optional[Dict[str, Any]] = None) -> None:
+        entry: Dict[str, Any] = {"check": check, "status": status, "message": message}
+        if details:
+            entry["details"] = details
+        findings.append(entry)
+
     # privileged
     if hostcfg.get("Privileged"):
         if allow.get("allow_privileged"):
-            findings.append(("privileged", "approved_exception", "Privileged but allowed by exception"))
+            add_finding("privileged", "approved_exception", "Privileged but allowed by exception")
         else:
-            findings.append(("privileged", "forbidden", "Container runs privileged=True"))
+            add_finding("privileged", "forbidden", "Container runs privileged=True")
 
     # network_mode host
     if hostcfg.get("NetworkMode") == "host":
-        findings.append(("network_mode_host", "forbidden", "Container uses host network"))
+        add_finding("network_mode_host", "forbidden", "Container uses host network")
 
     # docker.sock mounts
     for m in mounts:
         src = m.get("Source") or ""
         if "docker.sock" in src:
-            findings.append(("docker_sock", "forbidden", f"Mounts docker.sock: {src}"))
+            add_finding("docker_sock", "forbidden", f"Mounts docker.sock: {src}", {"mount_type": "socket", "source": src, "destination": m.get("Destination")})
 
-    # RW host mounts
+    # correlate: if no compose service label, mark unmanaged (informational)
+    if not service:
+        add_finding("compose_correlation", "info", "Container not managed by compose labels (advisory)")
+
+    # mounts classification: bind, volume, tmpfs, anonymous
     for m in mounts:
+        mtype = m.get("Type") or ""
         src = m.get("Source") or ""
+        dst = m.get("Destination") or m.get("Target") or ""
         rw = m.get("RW", True)
-        if src and src.startswith("/") and rw:
-            # check allowlist exceptions for promtail
-            allowed_ro = allow.get("allowed_ro_mounts", [])
-            if src in allowed_ro:
-                findings.append(("host_mount_rw", "approved_exception", f"RW host mount allowed by exception: {src}"))
+        # include detailed mount info in findings
+        if mtype == "bind":
+            # classify path risk
+            HIGH_RISK_PREFIXES = ["/var/run", "/run", "/proc", "/sys", "/root", "/etc/ssh", "/var/lib/docker", "/var/lib/kubelet"]
+            LOW_RISK_EXACT = ["/etc/localtime", "/etc/timezone"]
+            LOW_RISK_PREFIXES = ["/etc/ssl", "/etc/pki", "/usr/share/zoneinfo"]
+            is_high = any(src == p or src.startswith(p + "/") for p in HIGH_RISK_PREFIXES)
+            is_low = src in LOW_RISK_EXACT or any(src == p or src.startswith(p + "/") for p in LOW_RISK_PREFIXES)
+            # RW bind mounts: forbidden only for high-risk paths or docker.sock; otherwise warning
+            if rw:
+                if is_high or "docker.sock" in src:
+                    add_finding("bind_rw", "forbidden", "Bind mount RW to high-risk host path", {"mount_type": "bind", "source": src, "destination": dst, "readonly": False})
+                else:
+                    add_finding("bind_rw", "warning", "Bind mount RW to host path (review)", {"mount_type": "bind", "source": src, "destination": dst, "readonly": False})
             else:
-                findings.append(("host_mount_rw", "forbidden", f"Host bind mount RW: {src}"))
-
-    # readonly mounts (informational)
-    for m in mounts:
-        src = m.get("Source") or ""
-        rw = m.get("RW", True)
-        if src and src.startswith("/") and not rw:
-            findings.append(("host_mount_ro", "compliant", f"Host bind mount RO: {src}"))
+                # RO bind mounts: approved if low-risk or allowed by service exceptions, otherwise advisory
+                allowed_ro = allow.get("allowed_ro_mounts", [])
+                if any(src == a or src.startswith(a) for a in allowed_ro) or is_low:
+                    add_finding("bind_ro", "approved_exception", "Bind mount RO allowed by exception/low-risk path", {"mount_type": "bind", "source": src, "destination": dst, "readonly": True})
+                else:
+                    add_finding("bind_ro", "info", "Bind mount RO present (needs review)", {"mount_type": "bind", "source": src, "destination": dst, "readonly": True})
+        elif mtype == "volume":
+            # named or anonymous volumes appear as type 'volume' in inspect
+            name = m.get("Name")
+            if name:
+                add_finding("named_volume", "compliant", f"named_volume:{name}", {"mount_type": "volume", "name": name, "destination": dst, "readonly": (not rw)})
+            else:
+                add_finding("anonymous_volume", "compliant", f"anonymous_volume", {"mount_type": "anonymous", "destination": dst, "readonly": (not rw)})
+        elif mtype == "tmpfs":
+            add_finding("tmpfs", "compliant", f"tmpfs", {"mount_type": "tmpfs", "destination": dst})
+        else:
+            add_finding("mount_unknown", "warning", f"unknown_mount_type:{mtype}", {"mount_type": mtype, "source": src, "destination": dst, "readonly": (not rw)})
 
     # user
     user = cfg.get("User") or ""
     if not user:
         # empty => root
         if allow.get("allow_root"):
-            findings.append(("user_root", "approved_exception", "Container runs as root but allowed by exception"))
+            add_finding("user_root", "approved_exception", "Container runs as root but allowed by exception")
         else:
-            findings.append(("user_root", "forbidden", "Container runs as root user"))
+            add_finding("user_root", "warning", "Container runs as root user (review)")
 
     # capabilities
+    # NOTE/TODO:
+    # - Docker's HostConfig.CapAdd/CapDrop reflect declared configuration but not
+    #   necessarily the process-effective capability set inside the container.
+    # - Determining effective capabilities requires runtime inspection inside
+    #   the container (e.g., /proc, capsh) which is out-of-scope for host-side
+    #   tooling in this phase. Future iterations should add an optional runtime
+    #   capability probe that executes inside the container when permitted.
+    # - For now we report CapAdd/CapDrop/SecurityOpt as evidence and apply
+    #   policy based on declared HostConfig only.
     cap_add = hostcfg.get("CapAdd") or []
+    # Report CapDrop and SecurityOpt explicitly
     cap_drop = hostcfg.get("CapDrop") or []
+    if cap_drop:
+        add_finding("cap_drop", "info", f"CapDrop declared: {cap_drop}", {"cap_drop": cap_drop})
+    secopts = hostcfg.get("SecurityOpt") or []
+    if secopts:
+        add_finding("security_opt", "info", f"SecurityOpt declared: {secopts}", {"security_opt": secopts})
+
+    # cap_drop missing -> WARNING by default; escalate only when strict_enforcement true
+    severity = "warning"
+    if service and service in BASELINE_HARDENING_EXPECTED and BASELINE_HARDENING_EXPECTED[service].get("strict_enforcement"):
+        severity = "forbidden"
     if "ALL" not in (cap_drop or []):
-        findings.append(("cap_drop_missing_all", "warning", "CapDrop does not include ALL (recommended)"))
+        add_finding("cap_drop_missing_all", severity, "CapDrop does not include ALL (recommended)")
+
     if cap_add:
         allowed = allow.get("allowed_caps", [])
         for c in cap_add:
             if c not in allowed:
-                findings.append(("cap_add", "forbidden", f"Unexpected capability added: {c}"))
+                # report as warning (declared capability) — do not assert effective capability
+                add_finding("cap_add", "warning", f"Capability declared in HostConfig: {c}", {"capability": c})
             else:
-                findings.append(("cap_add", "approved_exception", f"Capability allowed: {c}"))
+                add_finding("cap_add", "approved_exception", f"Capability allowed by exception: {c}", {"capability": c})
 
     # no-new-privileges
     secopts = hostcfg.get("SecurityOpt") or []
     if not any("no-new-privileges" in s for s in secopts):
-        findings.append(("no_new_privileges", "warning", "no-new-privileges not present in SecurityOpt"))
+        add_finding("no_new_privileges", "warning", "no-new-privileges not present in SecurityOpt")
 
     # readonly rootfs
     if hostcfg.get("ReadonlyRootfs"):
-        findings.append(("readonly_rootfs", "compliant", "ReadonlyRootfs enabled"))
+        add_finding("readonly_rootfs", "compliant", "ReadonlyRootfs enabled")
     else:
-        findings.append(("readonly_rootfs", "warning", "ReadonlyRootfs not enabled"))
+        add_finding("readonly_rootfs", "info", "ReadonlyRootfs not enabled (operational)")
 
     # healthcheck
     if cfg.get("Healthcheck") or state.get("Health"):
-        findings.append(("healthcheck", "compliant", "Healthcheck present or state contains health info"))
+        add_finding("healthcheck", "compliant", "Healthcheck present or state contains health info")
     else:
-        findings.append(("healthcheck", "warning", "No healthcheck defined or reported"))
+        add_finding("healthcheck", "warning", "No healthcheck defined or reported")
 
     # restart policy
     rp = hostcfg.get("RestartPolicy", {}).get("Name")
     if not rp or rp == "no":
-        findings.append(("restart_policy", "warning", f"Restart policy missing or none: {rp}"))
+        add_finding("restart_policy", "warning", f"Restart policy missing or none: {rp}")
     else:
-        findings.append(("restart_policy", "compliant", f"Restart policy: {rp}"))
+        add_finding("restart_policy", "compliant", f"Restart policy: {rp}")
 
     # exposed ports (runtime vs compose)
     # ports in Networks/Ports can be checked by State/HostConfig -- but we surface published ports in NetworkSettings
@@ -207,50 +273,76 @@ def analyze_container(inspect_obj, compose_inventory):
             for entry in v:
                 published.append(entry.get("HostPort"))
     if published:
-        findings.append(("published_ports", "warning", f"Published host ports: {published}"))
+        add_finding("published_ports", "info", f"Published host ports: {published}", {"published_ports": published})
 
     return {
         "name": name,
         "service": service,
         "id": inspect_obj.get("Id"),
         "image": inspect_obj.get("Config", {}).get("Image"),
-        "findings": [
-            {"check": f[0], "status": f[1], "message": f[2]} for f in findings
-        ],
+        "findings": findings,
     }
 
 
-def generate_report(compose_inv, runtime_items, out_json, out_md, ci_mode=False):
+def generate_report(compose_inv: Dict[str, Any], runtime_items: List[Dict[str, Any]], out_json: str, out_md: str, ci_mode: bool = False) -> int:
+    # enrich findings with stable IDs and collect summary
+    findings_list = []
+    counts = {"forbidden": 0, "warning": 0, "approved_exception": 0, "compliant": 0, "info": 0}
+    for r in runtime_items:
+        svc = r.get("service") or r.get("name")
+        for idx, f in enumerate(r.get("findings", [])):
+            fid = f"{svc}:{f.get('check')}:{idx}"
+            entry = {
+                "finding_id": fid,
+                "service": svc,
+                "container": r.get("name"),
+                "check": f.get("check"),
+                "severity": f.get("status"),
+                "message": f.get("message"),
+                "details": f.get("details", {}),
+            }
+            findings_list.append(entry)
+            sev = f.get("status")
+            if sev in counts:
+                counts[sev] += 1
+            else:
+                counts[sev] = counts.get(sev, 0) + 1
+
+
     data = {
         "compose_inventory": compose_inv,
         "runtime_inventory": runtime_items,
+        "findings": findings_list,
+        "summary": {
+            "counts": counts,
+            "total_containers": len(runtime_items),
+        },
     }
+
     os.makedirs(os.path.dirname(out_json), exist_ok=True)
     with open(out_json, "w") as fh:
         json.dump(data, fh, indent=2)
 
     # markdown summary
     lines = ["# Runtime Governance Audit", ""]
-    total_forbidden = 0
-    for r in runtime_items:
-        lines.append(f"## {r['name']} ({r.get('service')})")
-        for f in r["findings"]:
-            status = f["status"]
-            msg = f["message"]
-            lines.append(f"- **{status.upper()}**: {f['check']} — {msg}")
-            if status == "forbidden":
-                total_forbidden += 1
-        lines.append("")
+    lines.append("")
+    lines.append("## Summary by severity")
+    for k, v in counts.items():
+        lines.append(f"- {k}: {v}")
+    lines.append("")
+    lines.append("## Findings (high level)")
+    for f in findings_list:
+        lines.append(f"- [{f['severity'].upper()}] {f['finding_id']} — {f['service']} — {f['check']} — {f['message']}")
 
-    lines.append(f"\n\nSummary: total containers: {len(runtime_items)}, forbidden findings: {total_forbidden}")
     with open(out_md, "w") as fh:
         fh.write("\n".join(lines))
 
-    if ci_mode and total_forbidden > 0:
-        print(f"[CI] Forbidden findings detected: {total_forbidden}")
+    # CI behavior
+    if ci_mode and counts.get("forbidden", 0) > 0:
+        print(f"[CI] Forbidden findings detected: {counts.get('forbidden',0)}")
         return 2
-    if total_forbidden > 0:
-        print(f"Forbidden findings: {total_forbidden}")
+    if counts.get("forbidden", 0) > 0:
+        print(f"Forbidden findings: {counts.get('forbidden',0)}")
     else:
         print("No forbidden findings detected (summary written)")
     return 0

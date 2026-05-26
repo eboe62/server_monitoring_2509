@@ -346,4 +346,17 @@ La prioridad arquitectónica oficial pasa a ser:
 
 ## Relación con otros ADR
 
+- ADR-0016 — Segmentación de redes: refuerza el requisito de aislamiento por redes (`backend-net`, `observability-net`, `restricted-net`) y condiciona las excepciones de exposición.
+- ADR-0018 — Seguridad runtime y resiliencia: dicta controles de `privileged`, `capabilities`, `restart` y healthchecks que esta gobernanza materializa en validaciones HostConfig.
+- ADR-0021 — Network Segmentation Strategy: la taxonomía de mounts y excepciones favorece observability-host mounts sin romper segmentación backend.
+- ADR-0028 — Reproducibilidad: la auditoría conserva pragmatismo sobre imágenes y reproducibilidad, relegando bloqueo estricto y priorizando evidencia operativa.
+- ADR-0029 — Structured Compose Policy Audit: obliga a discovery multi-compose y correlación runtime vs compose; este ADR implementa la fase runtime de esa estrategia.
+- ADR-0030 — Auditoría HostConfig y visibilidad: complementa la fase observacional con un enforcement incremental y clasificación de excepciones.
+
 ## Estado
+
+- Estado: Aprobado.
+- Enforcement: Parcial operativo. Las validaciones host-side se ejecutan periódicamente y en CI en modo `audit-runtime-ci`. Violaciones `forbidden` fallan pipelines; `warning` se registran para corrección progresiva.
+- Hardening: Incremental — algunas reglas (cap_drop ALL) son recomendaciones generales y se aplican como `warning` salvo servicios con baseline hardening esperado.
+- Observabilidad: Integrada — la taxonomía de mounts y la allowlist permiten mantener observability funcional sin romper aislamiento de red.
+

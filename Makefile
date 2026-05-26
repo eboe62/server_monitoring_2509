@@ -95,6 +95,13 @@ audit:
 	@echo "=== TEST SECURITY RUNTIME  (ADR-0018 / ADR-0023) ==="
 	$(MAKE) test-security-runtime
 	@echo ""
+	@echo "=== RUNTIME GOVERNANCE AUDITS ==="
+	$(MAKE) audit-runtime
+	@echo ""
+	$(MAKE) audit-runtime-json
+	@echo ""
+	$(MAKE) audit-runtime-ci
+	@echo ""
 
 # ------------------------------------------
 # STATUS (snapshot)
@@ -1437,14 +1444,14 @@ rebuild-all:
 
 ## Muestra últimos registros del sistema y de TODOS los contenedores activos
 logs:
-	@echo "=== Mostrando últimos 20 registros ==="
-	@sleep 40  # Latencia para dar tiempo a que arranquen los contenedores
-	@tail -n 20 /var/log/*.log 2>/dev/null || echo "⚠️  No se pudieron leer los logs de /var/log/"
-	@echo "\n=== Logs de todos los contenedores activos ==="
-	@IDS=$$(docker ps -q); \
-	if [ -z "$$IDS" ]; then \
-		echo "⚠️  No hay contenedores activos en este momento."; \
-	else \
-		$(COMPOSE) -p monitoring logs --tail=20 $$IDS 2>&1 | tail -n 20; \
-	fi
+	@echo "=== Mostrando últimos 20 registros por stack (multi-compose) ==="
+	@echo "[INFO] Recorriendo ops/stacks y ops/services";
+	@for d in ops/stacks/* ops/services/*; do \
+		# Ensure directory exists AND has a compose file (POSIX-safe grouping)
+		if [ -d "$$d" ] && { [ -f "$$d/compose.yml" ] || [ -f "$$d/compose.yaml" ]; }; then \
+			printf "\n--- Stack: %s ---\n" "$$d"; \
+			if [ -f "$$d/compose.yml" ]; then COMPOSE_FILE="$$d/compose.yml"; else COMPOSE_FILE="$$d/compose.yaml"; fi; \
+			( cd "$$d" && $(COMPOSE) -f $$COMPOSE_FILE logs --no-color --tail=20 ) || true; \
+		fi; \
+	done
 	@echo ""
