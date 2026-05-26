@@ -251,6 +251,24 @@ test-policy-structured:
 	fi ; \
 	exit 0
 
+# ------------------------------------------
+# RUNTIME Governance Audit
+# ------------------------------------------
+.PHONY: audit-runtime audit-runtime-json audit-runtime-ci
+
+audit-runtime:
+	@echo "=== RUNTIME GOVERNANCE AUDIT (human) ==="
+	python3 -m ops.audit.runtime_governance_audit --output-md artifacts/runtime_audit.md || true
+
+audit-runtime-json:
+	@echo "=== RUNTIME GOVERNANCE AUDIT (json) ==="
+	python3 -m ops.audit.runtime_governance_audit --output-json artifacts/runtime_audit.json --output-md artifacts/runtime_audit.md || true
+
+audit-runtime-ci:
+	@echo "=== RUNTIME GOVERNANCE AUDIT (CI mode - fail on forbidden) ==="
+	python3 -m ops.audit.runtime_governance_audit --output-json artifacts/runtime_audit.json --output-md artifacts/runtime_audit.md --ci ; RC=$$? ; \
+	if [ $$RC -ne 0 ]; then echo "[ERROR] Runtime governance audit FAILED (forbidden findings)" ; exit $$RC ; fi
+
 # --- Resilience
 
 .PHONY: test-resilience-completo
@@ -1075,8 +1093,9 @@ stack-status:  ## Estado de un stack
 
 stack-logs:
 	$(call validate_stack)
+	@echo "=== Mostrando últimos 20 registros ==="
 	@DIR=$$( $(call stack_path) ); \
-	cd $$DIR && $(COMPOSE) logs -f
+	cd $$DIR && $(COMPOSE) logs --no-color 2>/dev/null | tail -n 20
 	@echo ""
 
 # ------------------------------------------
@@ -1416,12 +1435,16 @@ rebuild-all:
 # Logs
 # ------------------------------------------
 
-logs:  ## Muestra logs recientes del sistema y contenedores
-	@echo "=== Logs del sistema ==="
-	@echo ""
-	@echo "=== Logs de todos los contenedores activos ==="
-	@for c in $$(docker ps --format '{{.Names}}'); do \
-		echo "===== $$c ====="; \
-		docker logs $$c --tail=20 2>/dev/null || echo "⚠️  No se pudo obtener logs de $$c"; \
-	done
+## Muestra últimos registros del sistema y de TODOS los contenedores activos
+logs:
+	@echo "=== Mostrando últimos 20 registros ==="
+	@sleep 40  # Latencia para dar tiempo a que arranquen los contenedores
+	@tail -n 20 /var/log/*.log 2>/dev/null || echo "⚠️  No se pudieron leer los logs de /var/log/"
+	@echo "\n=== Logs de todos los contenedores activos ==="
+	@IDS=$$(docker ps -q); \
+	if [ -z "$$IDS" ]; then \
+		echo "⚠️  No hay contenedores activos en este momento."; \
+	else \
+		$(COMPOSE) -p monitoring logs --tail=20 $$IDS 2>&1 | tail -n 20; \
+	fi
 	@echo ""
