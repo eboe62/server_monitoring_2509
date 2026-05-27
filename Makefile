@@ -265,11 +265,17 @@ test-policy-structured:
 
 audit-runtime:
 	@echo "=== RUNTIME GOVERNANCE AUDIT (human) ==="
-	python3 -m ops.audit.runtime_governance_audit --output-md artifacts/runtime_audit.md || true
+	python3 -m ops.audit.runtime_governance_audit --output-md artifacts/runtime_audit.md ; RC=$$? ; \
+	if [ $$RC -ne 0 ]; then \
+		echo "[WARNING] Runtime governance audit returned RC=$$RC"; \
+	fi
 
 audit-runtime-json:
 	@echo "=== RUNTIME GOVERNANCE AUDIT (json) ==="
-	python3 -m ops.audit.runtime_governance_audit --output-json artifacts/runtime_audit.json --output-md artifacts/runtime_audit.md || true
+	python3 -m ops.audit.runtime_governance_audit --output-json artifacts/runtime_audit.json --output-md artifacts/runtime_audit.md ; RC=$$? ; \
+	if [ $$RC -ne 0 ]; then \
+		echo "[WARNING] Runtime governance audit (json) returned RC=$$RC"; \
+	fi
 
 audit-runtime-ci:
 	@echo "=== RUNTIME GOVERNANCE AUDIT (CI mode - fail on forbidden) ==="

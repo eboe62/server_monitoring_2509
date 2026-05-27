@@ -161,40 +161,46 @@ def analyze_container(inspect_obj: Dict[str, Any], compose_inventory: Dict[str, 
     for m in mounts:
         mtype = m.get("Type") or ""
         src = m.get("Source") or ""
+        # normalize source path to reduce path-comparison false negatives
+        try:
+            src_norm = os.path.normpath(src) if src else ""
+        except Exception:
+            src_norm = src
         dst = m.get("Destination") or m.get("Target") or ""
-        rw = m.get("RW", True)
+        # prefer explicit RW flag; default to False when missing to avoid false forbidden
+        rw = m.get("RW") if ("RW" in m) else False
         # include detailed mount info in findings
         if mtype == "bind":
             # classify path risk
             HIGH_RISK_PREFIXES = ["/var/run", "/run", "/proc", "/sys", "/root", "/etc/ssh", "/var/lib/docker", "/var/lib/kubelet"]
             LOW_RISK_EXACT = ["/etc/localtime", "/etc/timezone"]
             LOW_RISK_PREFIXES = ["/etc/ssl", "/etc/pki", "/usr/share/zoneinfo"]
-            is_high = any(src == p or src.startswith(p + "/") for p in HIGH_RISK_PREFIXES)
-            is_low = src in LOW_RISK_EXACT or any(src == p or src.startswith(p + "/") for p in LOW_RISK_PREFIXES)
+            is_high = any(src_norm == p or src_norm.startswith(p + "/") for p in HIGH_RISK_PREFIXES)
+            is_low = src_norm in LOW_RISK_EXACT or any(src_norm == p or src_norm.startswith(p + "/") for p in LOW_RISK_PREFIXES)
             # RW bind mounts: forbidden only for high-risk paths or docker.sock; otherwise warning
             if rw:
-                if is_high or "docker.sock" in src:
-                    add_finding("bind_rw", "forbidden", "Bind mount RW to high-risk host path", {"mount_type": "bind", "source": src, "destination": dst, "readonly": False})
+                if is_high or "docker.sock" in src_norm:
+                    add_finding("bind_rw", "forbidden", "Bind mount RW to high-risk host path", {"mount_type": "bind", "source": src_norm, "destination": dst, "readonly": False})
                 else:
-                    add_finding("bind_rw", "warning", "Bind mount RW to host path (review)", {"mount_type": "bind", "source": src, "destination": dst, "readonly": False})
+                    add_finding("bind_rw", "warning", "Bind mount RW to host path (review)", {"mount_type": "bind", "source": src_norm, "destination": dst, "readonly": False})
             else:
                 # RO bind mounts: approved if low-risk or allowed by service exceptions, otherwise advisory
                 allowed_ro = allow.get("allowed_ro_mounts", [])
-                if any(src == a or src.startswith(a) for a in allowed_ro) or is_low:
-                    add_finding("bind_ro", "approved_exception", "Bind mount RO allowed by exception/low-risk path", {"mount_type": "bind", "source": src, "destination": dst, "readonly": True})
+                if any(src_norm == a or src_norm.startswith(a) for a in allowed_ro) or is_low:
+                    add_finding("bind_ro", "approved_exception", "Bind mount RO allowed by exception/low-risk path", {"mount_type": "bind", "source": src_norm, "destination": dst, "readonly": True})
                 else:
-                    add_finding("bind_ro", "info", "Bind mount RO present (needs review)", {"mount_type": "bind", "source": src, "destination": dst, "readonly": True})
+                    add_finding("bind_ro", "info", "Bind mount RO present (needs review)", {"mount_type": "bind", "source": src_norm, "destination": dst, "readonly": True})
         elif mtype == "volume":
             # named or anonymous volumes appear as type 'volume' in inspect
-            name = m.get("Name")
-            if name:
-                add_finding("named_volume", "compliant", f"named_volume:{name}", {"mount_type": "volume", "name": name, "destination": dst, "readonly": (not rw)})
+            vol_name = m.get("Name")
+            if vol_name:
+                add_finding("named_volume", "compliant", f"named_volume:{vol_name}", {"mount_type": "volume", "name": vol_name, "destination": dst, "readonly": (not rw)})
             else:
                 add_finding("anonymous_volume", "compliant", f"anonymous_volume", {"mount_type": "anonymous", "destination": dst, "readonly": (not rw)})
         elif mtype == "tmpfs":
             add_finding("tmpfs", "compliant", f"tmpfs", {"mount_type": "tmpfs", "destination": dst})
         else:
-            add_finding("mount_unknown", "warning", f"unknown_mount_type:{mtype}", {"mount_type": mtype, "source": src, "destination": dst, "readonly": (not rw)})
+            add_finding("mount_unknown", "warning", f"unknown_mount_type:{mtype}", {"mount_type": mtype, "source": src_norm, "destination": dst, "readonly": (not rw)})
 
     # user
     user = cfg.get("User") or ""
@@ -290,12 +296,16 @@ def generate_report(compose_inv: Dict[str, Any], runtime_items: List[Dict[str, A
     counts = {"forbidden": 0, "warning": 0, "approved_exception": 0, "compliant": 0, "info": 0}
     for r in runtime_items:
         svc = r.get("service") or r.get("name")
+        container_name = r.get("name")
+        container_id = (r.get("id") or "")[:12]
         for idx, f in enumerate(r.get("findings", [])):
-            fid = f"{svc}:{f.get('check')}:{idx}"
+            # include container id/name in finding_id to avoid collisions when multiple containers share service name
+            fid = f"{svc}:{container_name}:{container_id}:{f.get('check')}:{idx}"
             entry = {
                 "finding_id": fid,
                 "service": svc,
-                "container": r.get("name"),
+                "container": container_name,
+                "container_id": container_id,
                 "check": f.get("check"),
                 "severity": f.get("status"),
                 "message": f.get("message"),
@@ -319,9 +329,13 @@ def generate_report(compose_inv: Dict[str, Any], runtime_items: List[Dict[str, A
         },
     }
 
+    # sort findings for deterministic output between runs
+    findings_list = sorted(findings_list, key=lambda x: x.get("finding_id"))
+    data["findings"] = findings_list
+
     os.makedirs(os.path.dirname(out_json), exist_ok=True)
     with open(out_json, "w") as fh:
-        json.dump(data, fh, indent=2)
+        json.dump(data, fh, indent=2, sort_keys=False)
 
     # markdown summary
     lines = ["# Runtime Governance Audit", ""]
