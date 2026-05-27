@@ -3,16 +3,21 @@ services:
     image: postgres:14.3@sha256:2d1e636f07781d4799b3f2edbff78a0a5494f24c4512cb56a83ebfd0e04ec074
     container_name: ${POSTGRES_CONTAINER_NAME}
     restart: always
+    # Carga variables no sensibles desde .env (NO incluir POSTGRES_PASSWORD aquí)
     env_file:
       - .env
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      # Se migró la contraseña a un fichero en runtime para evitar exposición en `docker inspect`.
+      # El entrypoint wrapper lee /run/secrets/postgres_password y la exporta a POSTGRES_PASSWORD
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
       POSTGRES_DB: ${POSTGRES_NAME}
     volumes:
       - postgres-data:/var/lib/postgresql/data  # Persistencia de la BBDD de monitorización
       - postgres-backups:/backups               # Persistencia de backups (named volume en lugar de bind host)
       - ./init:/docker-entrypoint-initdb.d:ro
+      # Secret file mounted read-only. Use ops/services/postgres/secrets/postgres_password on the host.
+      - ./secrets/postgres_password:/run/secrets/postgres_password:ro
     networks:
       - backend-net # Red backend (DB + aplicaciones autorizadas)
     # Añadido healthcheck para detectar cuando la BBDD no está operativa
@@ -22,6 +27,8 @@ services:
       timeout: 10s                # cuánto espera la prueba
       retries: 5                  # cuántos fallos consecutivos para marcar unhealthy
       start_period: 30s           # tiempo inicial de gracia tras arrancar el contenedor
+    # Entrypoint wrapper: si existe el fichero POSTGRES_PASSWORD_FILE, lo leerá y exportará
+    entrypoint: ["/bin/sh", "-c", "if [ -f /run/secrets/postgres_password ]; then export POSTGRES_PASSWORD=$(cat /run/secrets/postgres_password); fi; exec docker-entrypoint.sh postgres"]
     deploy:
       resources:
         limits:

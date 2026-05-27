@@ -76,7 +76,8 @@ DB = {
     "port": int(os.getenv("POSTGRES_PORT", 5432)),
     "name": os.getenv("POSTGRES_NAME"),
     "user": os.getenv("POSTGRES_USER"),
-    "password": os.getenv("POSTGRES_PASSWORD"),
+    # Support secrets as files: prefer POSTGRES_PASSWORD_FILE, fallback to POSTGRES_PASSWORD
+    "password": None,
 }
 # INIT CONFIG (runtime explícito)
 def init_config(env_path: str = None, secrets_dir: str = None):
@@ -136,8 +137,21 @@ def init_config(env_path: str = None, secrets_dir: str = None):
         "port": int(os.getenv("POSTGRES_PORT", 5432)),
         "name": os.getenv("POSTGRES_NAME"),
         "user": os.getenv("POSTGRES_USER"),
-        "password": os.getenv("POSTGRES_PASSWORD"),
+        "password": None,
     }
+
+    # Password may be provided via file-based secret pattern: POSTGRES_PASSWORD_FILE
+    pg_pass_file = os.getenv("POSTGRES_PASSWORD_FILE")
+    if pg_pass_file and os.path.exists(pg_pass_file):
+        try:
+            with open(pg_pass_file) as f:
+                DB["password"] = f.read().strip()
+                log_info("[✅]: POSTGRES password loaded from file")
+        except Exception as e:
+            log_info(f"[⚠️]: Error leyendo POSTGRES_PASSWORD_FILE ({pg_pass_file}): {e}")
+    else:
+        # Fallback to env var if file not present
+        DB["password"] = os.getenv("POSTGRES_PASSWORD")
 
     # Leer secrets SMTP del filesystem si están disponibles; fallback a variables de entorno
     user_path = os.path.join(secrets_dir, "smtp_user")
