@@ -1,294 +1,363 @@
-# ADR-0031 – Gobernanza Runtime Docker y Clasificación de Dependencias Host
+    # ADR-0031 – Gobernanza Runtime Docker y Clasificación de Dependencias Host
 
-Fecha: 2026-05-24
-Estado: Aprobado
-Contexto: server_monitoring_2509
+    Fecha: 2026-05-26
+    Estado: Aprobado
+    Contexto: server_monitoring_2509
 
-## Contexto
+    ## Contexto
 
-Tras completar las fases iniciales de:
+    Tras completar las fases de:
+    - reproducibilidad
+    - segmentación de red
+    - endurecimiento runtime inicial
+    - normalización de secretos
+    - separación host/runtime
+    - auditoría HostConfig
 
-- reproducibilidad
-- aislamiento
-- hardening runtime
-- normalización de secretos
+    se ejecutó una validación operacional completa del runtime Docker en entorno PRO DigitalOcean.
 
-se realizó una auditoría estructural del runtime Docker del entorno PRO.
+La auditoría se realizó utilizando:
+    - docker inspect
+    - HostConfig runtime
+    - validación declarativa de capabilities Linux vía HostConfig
+    - correlación runtime vs compose labels
+    - clasificación runtime de mounts y aislamiento
+    - análisis de mounts
+    - validación de puertos publicados
+    - comprobaciones UFW
+    - healthchecks runtime
+    - validación compose discovery
+    - revisión de usuarios runtime
 
-La auditoría identificó una situación intermedia:
-- El entorno ya no depende estructuralmente del host para ejecutar aplicaciones.
-- Persistían todavía:
-    excepciones runtime no clasificadas
-    mounts host funcionales sin gobernanza formal
-    validaciones parciales HostConfig
-    ejecuciones operativas históricas fuera del modelo declarativo
+    La evidencia operacional confirmó:
+    Estado actual confirmado
+    - Aislamiento y privilegios
+        No existe docker.sock montado en ningún contenedor.
+        No existe privileged=true.
+        No existe network_mode=host.
+        monitoring-python y monitoring-cron ejecutan como appuser.
+        grafana y loki ejecutan con usuarios no-root explícitos.
+        cap_drop: ALL se aplica correctamente en:
+            grafana
+            loki
+            promtail
+            monitoring-cron
+            monitoring-python
 
-Especialmente:
-- cronjobs host-side ejecutando Python del proyecto
-- mounts observabilidad host-centric no formalizados
-- ausencia de taxonomía oficial de mounts permitidos/prohibidos
-- control incompleto de privilegios runtime
-- ausencia de matriz explícita de excepciones arquitectónicas
-- persistencia de hardening no validado operacionalmente
+    - Red y exposición
+        PostgreSQL NO expone puertos al exterior.
+        Loki y Grafana publican únicamente sobre 127.0.0.1.
+        UFW aplica:
+            deny incoming por defecto
+            allow únicamente 22/80/443
+        No existen puertos de BBDD expuestos públicamente.
 
-La evolución reciente del entorno confirmó además:
-- la necesidad de distinguir entre hardening teórico y hardening operacionalmente compatible
-- la aparición de incompatibilidades runtime reales al aplicar políticas readonly sobre determinados servicios upstream
-- la necesidad de adoptar un modelo de hardening incremental y service-aware
+    - Observabilidad
+        monitoring-python posee healthcheck operativo.
+        promtail utiliza mounts readonly explícitos.
+        observability stack permanece desacoplado de backend-net.
 
-# Problema
+    - Persistencia
+        PostgreSQL utiliza volúmenes Docker nombrados.
+        No se detectó persistencia crítica en bind mounts arbitrarios.
 
-La ausencia de una política runtime centralizada generaba:
-- ambigüedad arquitectónica
-- deuda técnica operativa
-- validaciones inconsistentes
-- dificultad de auditoría
-- riesgo de regresión futura
-- confusión entre:
-    excepción legítima
-    dependencia inválida
-    hardening requerido
+    Hallazgos relevantes
 
-Además:
-- determinados servicios upstream requerían permisos runtime adicionales no documentados
-- algunas medidas de hardening podían romper compatibilidad CI/CD o disponibilidad operacional
-- no existía una taxonomía formal para distinguir:
-    hardening obligatorio
-    hardening recomendado
-    hardening avanzado diferido
-    incompatibilidad runtime aceptada
+    La auditoría también confirmó:
 
-# Decisión
+    - Hardening parcial
+        ReadonlyRootfs=false permanece en todos los servicios.
+        Esto confirma:
+            el entorno NO está aún en modo immutable runtime
+            existe compatibilidad operacional priorizada sobre hardening agresivo
+            el proyecto adopta un enfoque service-aware incremental
 
-Se adopta un modelo formal de:
-“Gobernanza declarativa del runtime Docker”.
+    - Servicios con privilegios superiores al baseline ideal
+        monitoring-smtp-relay:
+            - ejecuta como root
+            - mantiene capabilities Linux activas:
+                cap_net_bind_service
+                cap_net_raw
+                cap_setuid
+                cap_setgid
+                otras capabilities baseline Docker
 
-El entorno PRO pasa a regirse mediante:
-- clasificación explícita de mounts
-- política HostConfig auditada
-- taxonomía de dependencias host
-- validaciones runtime automáticas
-- excepciones formalizadas mediante ADR
-- hardening incremental validado operacionalmente
+    PostgreSQL:
+        no define usuario explícito
+        mantiene modelo upstream por defecto
+        no utiliza cap_drop explícito
 
-La gobernanza runtime pasa a priorizar:
-- reproducibilidad
-- auditabilidad
-- estabilidad operacional
-- enforcement CI/CD
-- endurecimiento progresivo compatible con upstream
+    promtail:
+        requiere acceso readonly host-centric:
+            /var/log
+            /var/lib/docker/containers
 
-# Política Runtime Oficial
+    - Descubrimiento Compose
+    No existe:
+        compose raíz unificado
 
-## 1. Prohibiciones estructurales
+    La arquitectura Compose actual está segmentada:
+        ops/stacks/python
+        ops/stacks/cron
+        ops/stacks/observability
+        ops/services/postgres
+        ops/services/smtp_relay
 
-Queda prohibido en entorno PRO:
-- privileged: true
-- network_mode: host
-- bind mounts de código runtime
-- docker.sock
-- ejecución host-side de Python del proyecto
-- estado runtime crítico fuera de Docker
+    Esto invalida parcialmente:
+        tooling legacy que asume compose monolítico
 
-Toda excepción deberá:
-- documentarse explícitamente
-- justificarse técnicamente
-- validarse mediante ADR
-- mantenerse auditada automáticamente
+    y obliga a:
+        descubrimiento multi-compose
+        auditoría runtime federada
 
-## 2. Dependencias host permitidas únicamente como excepción aprobada
+    # Problema
 
-Se permiten exclusivamente:
-- /var/log:ro
-- /var/lib/docker/containers:ro
+    La ausencia de una política runtime consolidada generaba:
+    - ambigüedad operacional
+    - deuda técnica de hardening
+    - validaciones inconsistentes
+    - falta de taxonomía de excepciones
+    - incompatibilidad entre hardening teórico y runtime real
+    - tooling legacy incompatible con arquitectura Compose distribuida
 
-cuando:
-- exista justificación funcional
-- estén asociadas a observabilidad host-centric
-- sean readonly
-- tengan ADR asociado
+    Además:
+    - algunos servicios upstream requieren privilegios reales
+    - readonly rootfs completo rompe compatibilidad operacional
+    - observabilidad host-centric necesita mounts readonly del host
+    - SMTP relay requiere capacidades Linux específicas
 
-Quedan prohibidos:
-- mounts RW sobre paths sensibles del host
-- mounts runtime arbitrarios
-- exposición del control plane Docker
-- dependencias implícitas no auditadas
+    # Decisión
 
-## 3. Configuración runtime
+    Se adopta un modelo oficial de:
+    “Gobernanza Runtime Declarativa Basada en Evidencia Operacional”.
 
-La configuración runtime debe ser:
-- declarativa
-- versionable
-- reproducible
-- desacoplada del estado mutable
+    El hardening deja de basarse exclusivamente en:
+    - teoría
+    - benchmarks genéricos
+    - enforcement absoluto
 
-Se consideran medidas baseline de hardening:
-- cap_drop: ALL
-- no-new-privileges:true
-- eliminación de docker.sock
-- prohibición de privileged=true
-- prohibición de network_mode=host
+    y pasa a priorizar:
+    - compatibilidad operacional
+    - auditabilidad
+    - reproducibilidad
+    - enforcement incremental
+    - validación runtime real
+    - clasificación explícita de excepciones
 
-Las políticas readonly deberán aplicarse únicamente:
-- cuando el servicio sea compatible operacionalmente
-- tras validar runtime completo
-- tras identificar correctamente:
-    caches
-    tmpfs
-    runtime dirs
-    WAL
-    plugins
-    sockets
-    directorios efímeros
+    # Política Runtime Oficial
 
-No se aceptará hardening puramente teórico que:
-- rompa disponibilidad
-- invalide CI/CD
-- introduzca falsos positivos operacionales
-- genere degradación funcional no controlada
+    ## 1. Prohibiciones estructurales
 
-## 4. Estado mutable
+    Queda prohibido:
+    - privileged=true
+    - network_mode=host
+    - docker.sock
+    - bind mounts RW sensibles host-side
+    - ejecución host-side de Python aplicativo
+    - publicación externa de PostgreSQL
+    - lógica runtime fuera de contenedores gobernados
 
-Todo estado mutable debe residir en:
-- volúmenes Docker nombrados
-  o
-- sistemas externos explícitamente aprobados
+    Toda excepción requiere:
+    - ADR explícito
+    - justificación técnica
+    - evidencia operacional
+    - validación CI
+    - revisión arquitectónica
 
-Queda prohibido:
-- persistir estado aplicativo crítico en bind mounts host-side
-- depender de directorios runtime no gobernados
-- utilizar almacenamiento mutable no versionado ni auditado
+    ## 2. Clasificación oficial de mounts
+    Permitidos baseline
+    - volúmenes Docker nombrados
+    - mounts readonly de configuración
+    - secrets readonly
 
-## 5. Ejecución operativa
+    Permitidos por excepción auditada
+        /var/log:ro
+        /var/lib/docker/containers:ro
 
-Toda ejecución de lógica del proyecto debe ocurrir únicamente dentro de:
-- monitoring-python
-- monitoring-cron
-- u otros contenedores explícitamente aprobados
+    únicamente para:
+    - observabilidad
+    - log shipping
+    - correlación runtime
 
-El host no ejecuta:
-- módulos Python del proyecto
-- cronjobs aplicativos
-- lógica operacional runtime
-- compilación nativa de componentes Python del proyecto
+    Prohibidos
+    - docker.sock
+    - mounts RW sobre host crítico
+    - mounts arbitrarios no documentados
+    - bind mounts de código runtime
 
-Las tareas operativas deberán ejecutarse mediante:
-- contenedores efímeros
-- stacks declarativos
-- pipelines CI/CD
-- servicios Docker gobernados
+    ## 3. Hardening baseline obligatorio
 
-## 6. Modelo de hardening incremental
-
-El proyecto adopta un modelo de hardening progresivo basado en:
-- compatibilidad operacional
-- validación CI/CD
-- reducción incremental de superficie de ataque
-- clasificación explícita de excepciones
-
-Se distinguen:
-
-### Hardening obligatorio
-
-Incluye:
-- eliminación de docker.sock
-- cap_drop
-- no-new-privileges
+    Obligatorio:
 - prohibición privileged
-- control de mounts
-- enforcement CI
+- prohibición host network
+- aislamiento de redes
+- validación HostConfig automática
+- clasificación explícita de excepciones runtime
 
-### Hardening recomendado
+    ## 4. Hardening incremental service-aware
 
-Incluye:
-- readonly rootfs compatible
-- tmpfs específicos
-- separación estricta de runtime writable paths
-- usuarios non-root cuando upstream lo permita
+    Readonly rootfs:
+    - NO será obligatorio globalmente
+    - se aplicará únicamente tras validación operacional
 
-### Hardening avanzado diferido
+    Servicios upstream compatibles podrán migrarse progresivamente a:
+    - readonly rootfs
+    - tmpfs específicos
+    - runtime writable isolation
 
-Incluye:
-- seccomp custom
-- AppArmor explícito
-- rootless containers
-- syscall filtering avanzado
-- immutable runtime
-- readonly service-aware completo
+    La ausencia temporal de readonly rootfs:
+    - NO constituye incumplimiento crítico
+    - NO invalida la gobernanza runtime incremental
+    - sí representa deuda técnica de hardening pendiente
 
-La ausencia de medidas avanzadas diferidas:
-- no invalida la gobernanza runtime
-- no implica incumplimiento arquitectónico
-- no constituye regresión mientras:
-    exista trazabilidad
-    exista justificación técnica
-    permanezcan activas las medidas baseline
+    mientras permanezcan activos:
+    - cap_drop
+    - no-new-privileges
+    - aislamiento runtime
+    - validación CI
+    - control de mounts
 
-# Consecuencias
+    ## 5. Servicios con excepciones explícitas
 
-## Positivas
-- Reducción de ambigüedad operacional
-- Mayor auditabilidad
-- Menor riesgo de regresiones
-- Hardening consistente
-- Compatibilidad reforzada con modelo IaC
-- Validaciones CI más fiables
-- Separación clara entre:
-    excepción operacional
-    deuda técnica
-    violación arquitectónica
-- Mayor estabilidad entre CI y PRO
-- Reducción de hardening incompatible con upstream
-- Mejor trazabilidad de excepciones runtime
+    monitoring-smtp-relay
+        Excepción aprobada:
+            ejecución como root
+            capabilities Linux declaradas específicas
 
-## Negativas
-- Mayor carga documental
-- Necesidad de mantener ADR de excepciones
-- Endurecimiento operativo de debugging ad-hoc
-- Mayor disciplina de despliegue
-- Necesidad de validar hardening por servicio
-- Mayor complejidad operacional en observabilidad
+        Justificación:
+            compatibilidad upstream SMTP relay
+            binding/red/network stack requerido
 
-# Validación
+        Restricciones:
+            red restringida
+            mounts limitados
+            sin docker.sock
+            sin privileged
+            revisión periódica obligatoria
 
-La política se validará mediante:
-- Makefile
-- CI
-- auditorías runtime
-- inspección automática HostConfig
-- validaciones Docker inspect
-- revisión de mounts y privilegios
-- validación healthchecks
-- auditoría de runtime writable paths
-- comprobaciones automáticas de gobernanza runtime
+    PostgreSQL
+        Excepción aprobada:
+            readonly rootfs deshabilitado
+            usuario upstream implícito
 
-Las validaciones deberán detectar:
-- privileged=true
-- network_mode=host
-- docker.sock
-- mounts RW peligrosos
-- dependencias host ambiguas
-- privilegios runtime indebidos
-- regresiones de gobernanza
+        Justificación:
+            WAL
+            runtime mutable legítimo
+            compatibilidad upstream oficial
 
-# Estado final esperado
+        Restricciones:
+            sin publicación externa
+            backend-net únicamente
+            persistencia gobernada
+            límites CPU/memoria activos
 
-El entorno PRO deberá quedar:
-- completamente gobernado
-- reproducible
-- auditable
-- sin privilegios implícitos
-- sin dependencias host ambiguas
-- con excepciones runtime explícitas y justificadas
-- con enforcement CI/CD operativo
-- con separación explícita entre:
-    hardening baseline
-    hardening recomendado
-    hardening avanzado diferido
+    promtail
+        Excepción aprobada:
+            acceso readonly host-centric
 
-El modelo objetivo prioriza:
-- estabilidad operacional
-- trazabilidad arquitectónica
-- seguridad incremental
-- enforcement automatizado
-- compatibilidad controlada con upstream
+        Justificación:
+            shipping logs Docker
+            observabilidad operacional
+
+        Restricciones:
+            readonly estricto
+            sin control plane Docker
+            sin docker.sock
+
+    6. Arquitectura Compose
+    La plataforma adopta oficialmente:
+        arquitectura Compose distribuida
+
+    No existe obligación de:
+        compose raíz único
+
+    El tooling deberá:
+        soportar multi-compose discovery
+        descubrir stacks automáticamente
+        correlacionar runtime federado mediante labels compose oficiales
+        evitar heurísticas substring sobre nombres de contenedor
+
+    Quedan prohibidas:
+        suposiciones hardcoded sobre compose monolítico
+
+    # Consecuencias
+
+    Positivas
+    - reducción de ambigüedad operacional
+    - hardening compatible con upstream
+    - menor riesgo de regresiones
+    - enforcement CI realista
+    - mayor auditabilidad
+    - reducción de drift runtime
+    - separación clara entre:
+        baseline obligatorio
+        excepción válida
+        deuda técnica
+        hardening diferido
+
+    Negativas
+    - mayor complejidad documental
+    - necesidad de mantener excepciones explícitas
+    - auditorías runtime más sofisticadas
+    - necesidad de tooling multi-compose
+
+    # Validación
+
+    Las auditorías deberán validar automáticamente:
+        Seguridad
+            privileged=true
+            docker.sock
+            network_mode=host
+            mounts RW peligrosos
+            publicación externa indebida
+            capabilities declaradas no justificadas vía HostConfig
+
+        Runtime
+            usuarios runtime
+            SecurityOpt
+            healthchecks
+            restart policies
+            segmentación de redes
+            readonly compatibility
+
+        Arquitectura
+            descubrimiento compose distribuido
+            coherencia HostConfig
+            correlación runtime vs compose
+            clasificación de excepciones
+
+    # Estado objetivo
+
+    El entorno PRO deberá permanecer:
+        gobernado
+        auditable
+        reproducible
+        sin privilegios implícitos
+        sin exposición externa indebida
+        compatible operacionalmente
+        endurecido progresivamente
+        validado automáticamente
+
+    La prioridad arquitectónica oficial pasa a ser:
+        estabilidad operacional
+        enforcement incremental
+        auditabilidad
+        compatibilidad upstream
+        reducción progresiva de superficie de ataque
+
+    ## Relación con otros ADR
+
+    - ADR-0016 — Segmentación de redes: refuerza el requisito de aislamiento por redes (`backend-net`, `observability-net`, `restricted-net`) y condiciona las excepciones de exposición.
+    - ADR-0018 — Seguridad runtime y resiliencia: dicta controles de `privileged`, `capabilities`, `restart` y healthchecks que esta gobernanza materializa en validaciones HostConfig.
+    - ADR-0021 — Network Segmentation Strategy: la taxonomía de mounts y excepciones favorece observability-host mounts sin romper segmentación backend.
+    - ADR-0028 — Reproducibilidad: la auditoría conserva pragmatismo sobre imágenes y reproducibilidad, relegando bloqueo estricto y priorizando evidencia operativa.
+    - ADR-0029 — Structured Compose Policy Audit: obliga a discovery multi-compose y correlación runtime vs compose; este ADR implementa la fase runtime de esa estrategia.
+    - ADR-0030 — Auditoría HostConfig y visibilidad: complementa la fase observacional con un enforcement incremental y clasificación de excepciones.
+
+    ## Estado
+
+    - Estado: Aprobado.
+    - Enforcement: Parcial operativo. Las validaciones host-side se ejecutan periódicamente y en CI en modo `audit-runtime-ci`. Violaciones `forbidden` fallan pipelines; `warning` se registran para corrección progresiva.
+    - Hardening: Incremental — el enforcement runtime actual prioriza compatibilidad operacional y clasificación explícita de excepciones. Algunas recomendaciones baseline (cap_drop ALL, ReadonlyRootfs, no-new-privileges) permanecen parcialmente desplegadas.
+    - Observabilidad: Integrada — la taxonomía de mounts y la allowlist permiten mantener observability funcional sin romper aislamiento de red.
+

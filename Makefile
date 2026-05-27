@@ -95,6 +95,13 @@ audit:
 	@echo "=== TEST SECURITY RUNTIME  (ADR-0018 / ADR-0023) ==="
 	$(MAKE) test-security-runtime
 	@echo ""
+	@echo "=== RUNTIME GOVERNANCE AUDITS ==="
+	$(MAKE) audit-runtime
+	@echo ""
+	$(MAKE) audit-runtime-json
+	@echo ""
+	$(MAKE) audit-runtime-ci
+	@echo ""
 
 # ------------------------------------------
 # STATUS (snapshot)
@@ -250,6 +257,30 @@ test-policy-structured:
 		echo "[WARN] revisar findings estructurados y enforcement ADR-0029" ; \
 	fi ; \
 	exit 0
+
+# ------------------------------------------
+# RUNTIME Governance Audit
+# ------------------------------------------
+.PHONY: audit-runtime audit-runtime-json audit-runtime-ci
+
+audit-runtime:
+	@echo "=== RUNTIME GOVERNANCE AUDIT (human) ==="
+	python3 -m ops.audit.runtime_governance_audit --output-md artifacts/runtime_audit.md ; RC=$$? ; \
+	if [ $$RC -ne 0 ]; then \
+		echo "[WARNING] Runtime governance audit returned RC=$$RC"; \
+	fi
+
+audit-runtime-json:
+	@echo "=== RUNTIME GOVERNANCE AUDIT (json) ==="
+	python3 -m ops.audit.runtime_governance_audit --output-json artifacts/runtime_audit.json --output-md artifacts/runtime_audit.md ; RC=$$? ; \
+	if [ $$RC -ne 0 ]; then \
+		echo "[WARNING] Runtime governance audit (json) returned RC=$$RC"; \
+	fi
+
+audit-runtime-ci:
+	@echo "=== RUNTIME GOVERNANCE AUDIT (CI mode - fail on forbidden) ==="
+	python3 -m ops.audit.runtime_governance_audit --output-json artifacts/runtime_audit.json --output-md artifacts/runtime_audit.md --ci ; RC=$$? ; \
+	if [ $$RC -ne 0 ]; then echo "[ERROR] Runtime governance audit FAILED (forbidden findings)" ; exit $$RC ; fi
 
 # --- Resilience
 
@@ -1075,8 +1106,9 @@ stack-status:  ## Estado de un stack
 
 stack-logs:
 	$(call validate_stack)
+	@echo "=== Mostrando últimos 20 registros ==="
 	@DIR=$$( $(call stack_path) ); \
-	cd $$DIR && $(COMPOSE) logs -f
+	cd $$DIR && $(COMPOSE) logs --no-color 2>/dev/null | tail -n 20
 	@echo ""
 
 # ------------------------------------------
@@ -1416,12 +1448,16 @@ rebuild-all:
 # Logs
 # ------------------------------------------
 
-logs:  ## Muestra logs recientes del sistema y contenedores
-	@echo "=== Logs del sistema ==="
-	@echo ""
-	@echo "=== Logs de todos los contenedores activos ==="
-	@for c in $$(docker ps --format '{{.Names}}'); do \
-		echo "===== $$c ====="; \
-		docker logs $$c --tail=20 2>/dev/null || echo "⚠️  No se pudo obtener logs de $$c"; \
+## Muestra últimos registros del sistema y de TODOS los contenedores activos
+logs:
+	@echo "=== Mostrando últimos 20 registros por stack (multi-compose) ==="
+	@echo "[INFO] Recorriendo ops/stacks y ops/services";
+	@for d in ops/stacks/* ops/services/*; do \
+		# Ensure directory exists AND has a compose file (POSIX-safe grouping)
+		if [ -d "$$d" ] && { [ -f "$$d/compose.yml" ] || [ -f "$$d/compose.yaml" ]; }; then \
+			printf "\n--- Stack: %s ---\n" "$$d"; \
+			if [ -f "$$d/compose.yml" ]; then COMPOSE_FILE="$$d/compose.yml"; else COMPOSE_FILE="$$d/compose.yaml"; fi; \
+			( cd "$$d" && $(COMPOSE) -f $$COMPOSE_FILE logs --no-color --tail=20 ) || true; \
+		fi; \
 	done
 	@echo ""
