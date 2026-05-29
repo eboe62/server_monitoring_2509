@@ -109,7 +109,7 @@ def init_config(env_path: str = None, secrets_dir: str = None):
         Gestiona FileNotFoundError de forma controlada y registra mensajes
         mediante `log_info()` para diagnóstico.
         """
-    global SMTP_USER, SMTP_PASS, EMAIL_FROM, EMAIL_TO, CC_LIST, SUBJECT, DB, IPINFO_TOKEN
+        global SMTP_USER, SMTP_PASS, EMAIL_FROM, EMAIL_TO, CC_LIST, SUBJECT, DB, IPINFO_TOKEN
 
     env_path = env_path or DEFAULT_ENV_PATH
     secrets_dir = secrets_dir or DEFAULT_SECRETS_DIR
