@@ -301,6 +301,11 @@ jobs:
       - name: Prueba de salud de Python
         run: make test-python-health
 
+      - name: Comprobar compilación Python
+        run: |
+          export PYTHONPATH=src
+          python3 -m compileall src
+
       - name: Prueba SMTP (CI segura)
         run: make test-smtp-ci
 

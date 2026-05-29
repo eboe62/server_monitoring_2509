@@ -84,32 +84,13 @@ DB = {
 }
 # INIT CONFIG (runtime explícito)
 def init_config(env_path: str = None, secrets_dir: str = None):
-        """
-        Inicializa la configuración en tiempo de ejecución.
+    """Inicializa y devuelve la configuración en tiempo de ejecución.
 
-        El valor de `SMTP_MODE` define el comportamiento:
-
-        relay:
-            - No requiere secrets.
-            - No requiere autenticación.
-            - Ignora secrets ausentes.
-
-        auth:
-            - Requiere credenciales SMTP.
-            - Carga variables desde .env si existen.
-            - Lee secrets SMTP desde el sistema de ficheros si están disponibles.
-
-        Carga la contraseña de la BBDD usando el helper centralizado `load_secret`.
-        En producción, la política de fallback puede impedir el uso de variables
-        de entorno como secretos.
-
-        Esta función debe invocarse desde los entrypoints antes de realizar
-        operaciones que dependan de estas credenciales.
-
-        Gestiona FileNotFoundError de forma controlada y registra mensajes
-        mediante `log_info()` para diagnóstico.
-        """
-        global SMTP_USER, SMTP_PASS, EMAIL_FROM, EMAIL_TO, CC_LIST, SUBJECT, DB, IPINFO_TOKEN
+    - Carga opcional de `.env` si existe (usa `python-dotenv` cuando está disponible).
+    - Lee secrets desde `secrets_dir` o mediante la convención `*_FILE`.
+    - En `SMTP_MODE=auth` exige credenciales y fallará si no existen.
+    """
+    global SMTP_USER, SMTP_PASS, EMAIL_FROM, EMAIL_TO, CC_LIST, SUBJECT, DB, IPINFO_TOKEN
 
     env_path = env_path or DEFAULT_ENV_PATH
     secrets_dir = secrets_dir or DEFAULT_SECRETS_DIR
@@ -131,8 +112,8 @@ def init_config(env_path: str = None, secrets_dir: str = None):
 
     # Re-lectura de variables que podrían haber cambiado al cargar .env
     EMAIL_FROM = os.getenv("EMAIL_FROM")
-    EMAIL_TO   = os.getenv("EMAIL_TO")
-    CC_LIST    = os.getenv("CC_LIST", "").split(",") if os.getenv("CC_LIST") else []
+    EMAIL_TO = os.getenv("EMAIL_TO")
+    CC_LIST = os.getenv("CC_LIST", "").split(",") if os.getenv("CC_LIST") else []
     SUBJECT = os.getenv("SUBJECT", "📊 Informe")
 
     # Actualizar DB desde entorno (posible cambio tras cargar .env)
@@ -154,44 +135,38 @@ def init_config(env_path: str = None, secrets_dir: str = None):
     SMTP_USER = None
     SMTP_PASS = None
 
-    # RELAY MODE
-    # Relay-only mode: no se esperan credenciales. Solo usar variables de entorno si existen.
+    # RELAY MODE: no se esperan credenciales
     if mode == "relay":
         SMTP_USER = os.getenv("SMTP_USER")
         SMTP_PASS = os.getenv("SMTP_PASS")
         log_info(f"[INFO] SMTP_MODE={mode} sin autenticación SMTP")
 
-    # AUTH MODE
+    # AUTH MODE: exigir credenciales
     elif mode == "auth":
-        # Auth-required: intentar cargar desde filesystem y fallar explícitamente si no existen
-        # Primero, intentar cargar por convención *_FILE (ej: SMTP_USER_FILE)
         SMTP_USER = load_secret('SMTP_USER_FILE', 'SMTP_USER')
         SMTP_PASS = load_secret('SMTP_PASS_FILE', 'SMTP_PASS')
 
-        # Si no encontramos mediante *_FILE, intentar secrets_dir tradicional
-        if not SMTP_USER:
-            if os.path.exists(user_path):
-                try:
-                    with open(user_path) as f:
-                        SMTP_USER = f.read().strip()
-                        log_info("[OK] SMTP_USER cargado desde secrets_dir")
-                except Exception as e:
-                    log_info(f"[ERROR] Error leyendo SMTP_USER desde {user_path}: {e}")
-            else:
-                log_info(f"[WARN] SMTP_USER no encontrado en secrets ({user_path})")
+        # Si no están via *_FILE, intentar secrets_dir tradicional
+        if not SMTP_USER and os.path.exists(user_path):
+            try:
+                with open(user_path) as f:
+                    SMTP_USER = f.read().strip()
+                    log_info("[OK] SMTP_USER cargado desde secrets_dir")
+            except Exception as e:
+                log_info(f"[ERROR] Error leyendo SMTP_USER desde {user_path}: {e}")
+        elif not SMTP_USER:
+            log_info(f"[WARN] SMTP_USER no encontrado en secrets ({user_path})")
 
-        if not SMTP_PASS:
-            if os.path.exists(pass_path):
-                try:
-                    with open(pass_path) as f:
-                        SMTP_PASS = f.read().strip()
-                        log_info("[OK] SMTP_PASS cargado desde secrets_dir")
-                except Exception as e:
-                    log_info(f"[ERROR] Error leyendo SMTP_PASS desde {pass_path}: {e}")
-            else:
-                log_info(f"[WARN] SMTP_PASS no encontrado en secrets ({pass_path})")
+        if not SMTP_PASS and os.path.exists(pass_path):
+            try:
+                with open(pass_path) as f:
+                    SMTP_PASS = f.read().strip()
+                    log_info("[OK] SMTP_PASS cargado desde secrets_dir")
+            except Exception as e:
+                log_info(f"[ERROR] Error leyendo SMTP_PASS desde {pass_path}: {e}")
+        elif not SMTP_PASS:
+            log_info(f"[WARN] SMTP_PASS no encontrado en secrets ({pass_path})")
 
-        # Hard-fail si el modo exige auth pero faltan credenciales
         if not SMTP_USER or not SMTP_PASS:
             log_info(f"[ERROR] SMTP_MODE=auth pero faltan credenciales (se requieren smtp_user/smtp_pass)")
             raise RuntimeError("SMTP_MODE=auth requiere credenciales SMTP")
