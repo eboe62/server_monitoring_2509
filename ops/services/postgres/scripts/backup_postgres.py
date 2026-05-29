@@ -7,8 +7,18 @@ y envía notificación por correo usando smtp_relay.
 """
 
 import sys, os, subprocess
-MONITORING_ROOT = os.getenv("MONITORING_ROOT", os.getcwd())
-sys.path.append(MONITORING_ROOT)
+
+# Ensure `src` is on sys.path so `from monitoring...` imports work whether the
+# script runs in a container, via cron, or on the host. Honor MONITORING_ROOT
+# env var if provided; otherwise compute project root relative to this file.
+MONITORING_ROOT = os.getenv("MONITORING_ROOT")
+if not MONITORING_ROOT:
+    SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+    # ops/services/postgres/scripts -> project root is three levels up
+    MONITORING_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, "..", "..", ".."))
+SRC_PATH = os.path.join(MONITORING_ROOT, "src")
+if SRC_PATH not in sys.path:
+    sys.path.insert(0, SRC_PATH)
 
 from datetime import datetime
 from monitoring.common.config import send_email

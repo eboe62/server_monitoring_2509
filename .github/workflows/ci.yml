@@ -58,6 +58,24 @@ jobs:
           chmod +x ops/services/postgres/scripts/check_postgres_secret.sh || true
           bash ops/services/postgres/scripts/check_postgres_secret.sh
 
+      - name: Runtime smoke tests (imports + init_config)
+        run: |
+          export PYTHONPATH=src
+          export SMTP_MODE=relay
+          python3 - <<'PY'
+import sys
+try:
+    import monitoring.common.config as cfg
+    import monitoring.common.secrets as sec
+    import monitoring.common.utils as u
+    print('OK: imports')
+    cfg.init_config()
+    print('OK: init_config')
+except Exception as e:
+    print('SMOKE_FAIL', e)
+    sys.exit(1)
+PY
+
       - name: Probar modos init_config (relay/auth)
         run: |
           export PYTHONPATH=src
