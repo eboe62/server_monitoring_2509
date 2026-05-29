@@ -4,7 +4,8 @@ import json
 import os
 import pickle
 from datetime import datetime
-from monitoring.common.config import log_info, send_email, init_config
+from monitoring.common.config import send_email, init_config
+from monitoring.common.utils import log_info
 
 # Configuración
 THRESHOLD_MEM = 80.0  # %
@@ -158,11 +159,11 @@ def main():
 
     # Solo enviar email si hay contenedores en riesgo
     if alerts:
-        log_info("⚠ Se han detectado contenedores en riesgo, enviando email...")
+        log_info("[WARN] Se han detectado contenedores en riesgo; enviando email...")
         html_report = build_html_report(alerts)
-        send_email("🚨 Alerta: Recursos Docker al límite", html_report)
+        send_email("Alerta: Recursos Docker al límite", html_report)
     else:
-        log_info("No se han detectado contenedores en riesgo.")
+        log_info("[INFO] No se han detectado contenedores en riesgo.")
 
     log_info("===== Fin de ejecución =====")
 

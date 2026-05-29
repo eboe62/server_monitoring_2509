@@ -4,7 +4,8 @@ import re
 import subprocess
 import os
 from datetime import datetime
-from monitoring.common.config import log_info, connect_db, close_db, init_config
+from monitoring.common.config import connect_db, close_db, init_config
+from monitoring.common.utils import log_info
 
 LOG_FILE = "/var/log/auth.log"
 
@@ -35,13 +36,13 @@ def update_attacking_no():
     try:
         conn = connect_db()
         if not conn:
-            log_info("[❌]:  No se pudo establecer conexión a la base de datos.")
+            log_info("[ERROR] No se pudo establecer conexión a la base de datos.")
             return
 
         cursor = conn.cursor()
         cursor.execute("SELECT update_attacking_no();")
         conn.commit()
-        log_info(f"[✅]: attacking_no actualizado correctamente.")
+        log_info(f"[OK] attacking_no actualizado correctamente.")
     except Exception as e:
         log_info(f"[❌]: Error actualizando attacking_no: {e}")
     finally:
@@ -75,7 +76,7 @@ def parse_timestamp(log_line):
 
             return datetime.fromisoformat(match.group(1))  # Convierte la fecha ISO directamente
     except ValueError as e:
-        log_info(f"[⚠️]: Error al parsear timestamp: {e}")
+        log_info(f"[WARN] Error al parsear timestamp: {e}")
     return None
 
 # Función para obtener logs desde el último timestamp
@@ -103,18 +104,18 @@ def get_log_lines():
             return []
 
         log_lines = result.stdout.strip().split("\n") if result.stdout else []
-        log_info(f"[📜]: Líneas obtenidas del log: {len(log_lines)}")
+        log_info(f"[INFO] Líneas obtenidas del log: {len(log_lines)}")
 
         if last_timestamp:
             filtered_lines = [
                 line for line in log_lines if parse_timestamp(line) and parse_timestamp(line) > last_timestamp
             ]
-            log_info(f"[⚡]: Líneas después del filtrado: {len(filtered_lines)}")
+            log_info(f"[INFO] Líneas después del filtrado: {len(filtered_lines)}")
             return filtered_lines
 
         return log_lines
     except subprocess.CalledProcessError as e:
-        log_info(f"[❌]: Error al ejecutar el comando grep: {e}")
+        log_info(f"[ERROR] Error al ejecutar el comando grep: {e}")
         return []
 
 # Función para insertar registros en la base de datos
@@ -123,7 +124,7 @@ def insert_into_db(entries):
     try:
         conn = connect_db()
         if not conn:
-            log_info("[❌]:  No se pudo establecer conexión a la base de datos.")
+            log_info("[ERROR] No se pudo establecer conexión a la base de datos.")
             return
 
         cursor = conn.cursor()
@@ -134,21 +135,21 @@ def insert_into_db(entries):
         """
         cursor.executemany(query, entries)
         conn.commit()
-        log_info(f"[✅]: {len(entries)} registros insertados en la base de datos.")
+        log_info(f"[OK] {len(entries)} registros insertados en la base de datos.")
         update_attacking_no()
 
     except Exception as e:
-        log_info(f"[❌]: Error al insertar en la base de datos: {e}")
+        log_info(f"[ERROR] Error al insertar en la base de datos: {e}")
     finally:
         close_db(cursor, conn)
 
 # Función para procesar los logs y extraer información
 def process_logs():
-    log_info("[🚀]: Iniciando procesamiento de logs...")
+    log_info("[INFO] Iniciando procesamiento de logs...")
     log_lines = get_log_lines()
-    log_info(f"[📜]: Total de líneas obtenidas del log: {len(log_lines)}")
+    log_info(f"[INFO] Total de líneas obtenidas del log: {len(log_lines)}")
     if not log_lines:
-        log_info("[🔍]: No hay nuevas líneas en el log.")
+        log_info("[INFO] No hay nuevas líneas en el log.")
         return
 
     batch_data = []

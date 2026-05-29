@@ -1,17 +1,18 @@
 #!/usr/bin/env python3
 # log_ip_geolocation.py
 import time
-from monitoring.common.config import log_info, connect_db, close_db, get_ip_info, init_config
+from monitoring.common.config import connect_db, close_db, get_ip_info, init_config
+from monitoring.common.utils import log_info
 
 def extract_ips_from_bbdd():
     """Lee BBDD y extrae IPs sin datos de geolocalización."""
-    log_info(f"[✅] Extrayendo IPs de tabla attacking_logs ...")
+    log_info(f"[OK] Extrayendo IPs de tabla attacking_logs ...")
     conn, cursor = None, None
     ips = []
     try:
         conn = connect_db()
         if not conn:
-            log_info(f"[❌]: No se pudo establecer conexión a la base de datos.")
+            log_info(f"[ERROR] No se pudo establecer conexión a la base de datos.")
             return ips
 
         cursor = conn.cursor()
@@ -23,12 +24,12 @@ def extract_ips_from_bbdd():
             WHERE attacking_country IS NULL OR attacking_country = '';
         """)
         ips = [row[0] for row in cursor.fetchall()]
-        log_info(f"[ℹ️]: Se encontraron {len(ips)} IPs sin geolocalización.")
+        log_info(f"[INFO] Se encontraron {len(ips)} IPs sin geolocalización.")
 
         cursor.close()
-        log_info(f"[✅]: ... finalizada extracción de IPs de BBDD")
+        log_info(f"[OK] ... finalizada extracción de IPs de BBDD")
     except Exception as e:
-        log_info(f"[❌] Error al extraer IPs: {e}")
+        log_info(f"[ERROR] Error al extraer IPs: {e}")
     finally:
         close_db(cursor, conn)
     return ips
@@ -36,17 +37,17 @@ def extract_ips_from_bbdd():
 # Función para actualizar la base de datos
 def update_database():
     """Actualiza IPs de attacking_logs con información geográfica."""
-    log_info(f"[✅]: Iniciando geolocalización de IPs...")
+    log_info(f"[OK] Iniciando geolocalización de IPs...")
     ips = extract_ips_from_bbdd()
     if not ips:
-        log_info("[ℹ️]: No hay IPs pendientes de geolocalizar.")
+        log_info("[INFO] No hay IPs pendientes de geolocalizar.")
         return
 
     conn, cursor = None, None
     try:
         conn = connect_db()
         if not conn:
-            log_info(f"[❌]: No se pudo establecer conexión a la base de datos.")
+            log_info(f"[ERROR] No se pudo establecer conexión a la base de datos.")
             return
 
         cursor = conn.cursor()
@@ -70,10 +71,10 @@ def update_database():
 
         cursor.close()
     except Exception as e:
-        log_info(f"[❌]: Error durante la geolocalización: {e}")
+        log_info(f"[ERROR] Error durante la geolocalización: {e}")
     finally:
         close_db(cursor, conn)
-        log_info(f"[✅]: ... finalizada geolocalización")
+        log_info(f"[OK] ... finalizada geolocalización")
 
 if __name__ == "__main__":
     # Inicializar configuración sensible en tiempo de ejecución (carga .env y secrets)

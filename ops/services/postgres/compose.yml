@@ -9,14 +9,13 @@ services:
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       # Se migró la contraseña a un fichero en runtime para evitar exposición en `docker inspect`.
-      # El entrypoint wrapper lee /run/secrets/postgres_password y la exporta a POSTGRES_PASSWORD
       POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
       POSTGRES_DB: ${POSTGRES_NAME}
     volumes:
       - postgres-data:/var/lib/postgresql/data  # Persistencia de la BBDD de monitorización
       - postgres-backups:/backups               # Persistencia de backups (named volume en lugar de bind host)
       - ./init:/docker-entrypoint-initdb.d:ro
-      # Secret file mounted read-only. Use ops/services/postgres/secrets/postgres_password on the host.
+      # Fichero secreto montado en modo solo-lectura. Usar ops/services/postgres/secrets/postgres_password en el host.
       - ./secrets/postgres_password:/run/secrets/postgres_password:ro
     networks:
       - backend-net # Red backend (DB + aplicaciones autorizadas)
@@ -27,8 +26,6 @@ services:
       timeout: 10s                # cuánto espera la prueba
       retries: 5                  # cuántos fallos consecutivos para marcar unhealthy
       start_period: 30s           # tiempo inicial de gracia tras arrancar el contenedor
-    # Entrypoint wrapper: si existe el fichero POSTGRES_PASSWORD_FILE, lo leerá y exportará
-    entrypoint: ["/bin/sh", "-c", "if [ -f /run/secrets/postgres_password ]; then export POSTGRES_PASSWORD=$(cat /run/secrets/postgres_password); fi; exec docker-entrypoint.sh postgres"]
     deploy:
       resources:
         limits:

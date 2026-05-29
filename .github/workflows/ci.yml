@@ -15,13 +15,13 @@ jobs:
     steps:
 
       # ------------------------------------------
-      # Checkout
+      # Obtener código
       # ------------------------------------------
       - name: Checkout repository
         uses: actions/checkout@v4
 
       # ------------------------------------------
-      # Setup Docker
+      # Preparar Docker
       # ------------------------------------------
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -30,7 +30,7 @@ jobs:
         run: docker version
 
       # ------------------------------------------
-      # Create .env (NECESARIO antes de compose)
+      # Crear .env (NECESARIO antes de compose)
       # ------------------------------------------
       - name: Create .env files from templates
         run: |
@@ -39,7 +39,7 @@ jobs:
           cp ops/stacks/observability/.env.template ops/stacks/observability/.env || true
 
       # ------------------------------------------
-      # Secrets for SMTP (CI)
+      # Secrets SMTP (CI)
       # ------------------------------------------
       - name: Create SMTP secrets (CI)
         run: |
@@ -47,15 +47,26 @@ jobs:
           echo "ci_user@test.com" > ops/services/smtp_relay/secrets/smtp_user
           echo "ci_pass" > ops/services/smtp_relay/secrets/smtp_pass
 
-      - name: Test init_config modes (relay/auth)
+      - name: Create Postgres secret (CI)
+        run: |
+          mkdir -p ops/services/postgres/secrets
+          echo "ci_postgres_pass" > ops/services/postgres/secrets/postgres_password
+          chmod 600 ops/services/postgres/secrets/postgres_password
+
+      - name: Comprobar fichero secreto Postgres (CI)
+        run: |
+          chmod +x ops/services/postgres/scripts/check_postgres_secret.sh || true
+          bash ops/services/postgres/scripts/check_postgres_secret.sh
+
+      - name: Probar modos init_config (relay/auth)
         run: |
           export PYTHONPATH=src
           python3 - <<'PY'
           import os, sys, shutil
           from monitoring.common import config
 
-          # Ensure env-based relay mode works
-          # RELAY MODE
+          # Asegurar que el modo relay basado en variables funciona
+          # MODO RELAY
 
           os.environ.pop('SMTP_USER', None)
           os.environ.pop('SMTP_PASS', None)
@@ -63,8 +74,8 @@ jobs:
           config.init_config()
           print('OK: relay mode')
 
-          # Simulate missing secrets for auth mode: move files temporarily
-          # AUTH MODE
+          # Simular ausencia de secrets para modo auth: mover archivos temporalmente
+          # MODO AUTH
 
           os.environ["SMTP_MODE"] = "auth"
           smtp_user = "ops/services/smtp_relay/secrets/smtp_user"
@@ -88,7 +99,7 @@ jobs:
           PY
 
       # ------------------------------------------
-      # Lint docker-compose
+      # Validar docker-compose
       # ------------------------------------------
       - name: Validate docker-compose files
         run: |
@@ -98,7 +109,18 @@ jobs:
           docker compose -f ops/services/postgres/compose.yml config > /dev/null
           docker compose -f ops/services/smtp_relay/compose.yml config > /dev/null
 
-      - name: Validate healthchecks policy (runtime classification)
+      - name: Validar enlaces de secrets en Postgres compose
+        run: |
+          docker compose -f ops/services/postgres/compose.yml config > /tmp/postgres_config.yml
+          if ! grep -q "POSTGRES_PASSWORD_FILE" /tmp/postgres_config.yml; then
+            echo "[ERROR] POSTGRES_PASSWORD_FILE not present in resolved compose config"; exit 1; fi
+          if grep -q "POSTGRES_PASSWORD:" /tmp/postgres_config.yml; then
+            echo "[ERROR] POSTGRES_PASSWORD exposed in resolved compose config"; exit 1; fi
+          if ! grep -q "./secrets/postgres_password" /tmp/postgres_config.yml || ! grep -q "/run/secrets/postgres_password" /tmp/postgres_config.yml; then
+            echo "[ERROR] Secret mount mapping not present in resolved compose config"; exit 1; fi
+          echo "[OK] Postgres compose secret bindings validated"
+
+      - name: Validar política de healthchecks (clasificación runtime)
         run: |
           if [ -f ops/runtime_containers.sh ]; then
             echo "Validating runtime containers healthcheck policy"
@@ -125,7 +147,7 @@ jobs:
           fi
 
       # ------------------------------------------
-      # Check :latest forbidden
+      # Comprobar uso prohibido de :latest
       # ------------------------------------------
       - name: Check forbidden :latest tag (compose only)
         run: |
@@ -141,14 +163,14 @@ jobs:
           echo "✔ No se usa :latest en compose"
 
       # ------------------------------------------
-      # Build containers
+      # Construir contenedores
       # ------------------------------------------
       - name: Build containers
         run: |
           docker compose -f ops/stacks/python/compose.yml build --no-cache
           docker compose -f ops/stacks/cron/compose.yml build --no-cache
       # ------------------------------------------
-      # Network
+      # Red
       # ------------------------------------------
       - name: Create monitoring networks
         run: |
@@ -157,7 +179,7 @@ jobs:
           docker network create restricted-net || true
 
       # ------------------------------------------
-      # Start stack
+      # Iniciar stack
       # ------------------------------------------
       - name: Start stack
         run: |
@@ -168,13 +190,13 @@ jobs:
           docker compose -f ops/services/smtp_relay/compose.yml up -d
 
       # ------------------------------------------
-      # Debug user python
+      # Depuración usuario python
       # ------------------------------------------
       - name: Debug user
         run: docker exec monitoring-python id
 
       # ------------------------------------------
-      # Wait for PostgreSQL (dependency readiness)
+      # Esperar a PostgreSQL (readiness de dependencia)
       # ------------------------------------------
       - name: Wait for PostgreSQL ready
         run: |
@@ -186,13 +208,13 @@ jobs:
           '
 
       # ------------------------------------------
-      # Wait for containers stabilization
+      # Esperar estabilización de contenedores
       # ------------------------------------------
       - name: Wait for containers
         run: sleep 10
 
       # ------------------------------------------
-      # Network connectivity test (robusto)
+      # Prueba de conectividad de red (robusta)
       # ------------------------------------------
       - name: Test network (debug container)
         run: |
@@ -213,7 +235,7 @@ jobs:
 
           echo "✔ Network test OK"
 
-      - name: Test service connectivity
+      - name: Probar conectividad de servicios
         run: |
           echo "=== TEST CONNECTIVITY ==="
 
@@ -238,9 +260,9 @@ jobs:
           echo "✔ Conectividad OK"
 
       # ------------------------------------------
-      # SECURITY CHECKS
+      # COMPROBACIONES DE SEGURIDAD
       # ------------------------------------------
-      - name: Check exposed ports
+      - name: Comprobar puertos expuestos
         run: |
           docker ps --format "{{.Names}} {{.Ports}}"
           if docker ps --format "{{.Ports}}" | grep -E "0.0.0.0"; then
@@ -250,7 +272,7 @@ jobs:
             echo "✔ Puertos correctamente restringidos"
           fi
 
-      - name: Check docker.sock usage
+      - name: Comprobar uso de docker.sock
         run: |
           if grep -R "docker.sock" ops; then
             echo "⚠ docker.sock detectado (ver ADR-0008)"
@@ -259,31 +281,31 @@ jobs:
           fi
 
       # ------------------------------------------
-      # TESTS
+      # PRUEBAS
       # ------------------------------------------
-      - name: Test network
+      - name: Pruebas de red
         run: make test-network
 
-      - name: Test security runtime (ADR-0018)
+      - name: Prueba de seguridad runtime (ADR-0018)
         run: make test-security-runtime
 
-      - name: Test resilience
+      - name: Prueba de resiliencia
         run: make test-resilience-completo
 
-      - name: Test observability
+      - name: Prueba de observabilidad
         run: make test-observability-core
 
 #      - name: Test cron
 #        run: make test-cron-execution
 
-      - name: Test python health
+      - name: Prueba de salud de Python
         run: make test-python-health
 
-      - name: Test SMTP (CI safe)
+      - name: Prueba SMTP (CI segura)
         run: make test-smtp-ci
 
       # ------------------------------------------
-      # SMTP unit + integration tests
+      # Tests unitarios/ integración SMTP
       # ------------------------------------------
       - name: Test SMTP unit/integration
         run: |
@@ -293,7 +315,7 @@ jobs:
           make test-smtp-unitarios-integration
 
       # ------------------------------------------
-      # Compose policy tests
+      # Pruebas de políticas de compose
       # ------------------------------------------
       - name: Test compose security policies
         run: |
@@ -302,13 +324,13 @@ jobs:
           pytest tests/unit/test_compose_policy.py -q
 
       # ------------------------------------------
-      # SECURITY RUNTIME (ADR-0018)
+      # SEGURIDAD EN RUNTIME (ADR-0018)
       # ------------------------------------------
       - name: Test security runtime
         run: make test-security-runtime
 
       # ------------------------------------------
-      # Logs on failure
+      # Extracción de logs en caso de fallo
       # ------------------------------------------
       - name: Dump logs on failure
         if: failure()
@@ -322,7 +344,7 @@ jobs:
           docker logs monitoring-smtp-relay || true
 
       # ------------------------------------------
-      # Cleanup
+      # Limpieza
       # ------------------------------------------
       - name: Cleanup
         if: always()

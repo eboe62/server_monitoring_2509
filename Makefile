@@ -246,6 +246,11 @@ validate-dockerfiles:
 	@chmod +x ops/audit/validate_dockerfiles.sh
 	@./ops/audit/validate_dockerfiles.sh
 
+.PHONY: verify-security
+verify-security:
+	@echo "=== VERIFY SECURITY CHECKS ==="
+	@bash ops/services/postgres/scripts/check_postgres_secret.sh
+
 .PHONY: test-policy-structured
 
 test-policy-structured:

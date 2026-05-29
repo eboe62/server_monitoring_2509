@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 # log_honeypot_geolocation.py
 import time
-from monitoring.common.config import log_info, connect_db, close_db, get_ip_info, init_config
+from monitoring.common.config import connect_db, close_db, get_ip_info, init_config
+from monitoring.common.utils import log_info
 import re
 import requests
 from datetime import datetime, timezone, timedelta
@@ -15,7 +16,7 @@ TIME_RANGE_MINUTES = 30  # rango de búsqueda en minutos hacia atrás
 # Extraer de los logs las IPs
 def extract_ips_from_loki():
     """Lee logs de Loki (nginx) y extrae IPs únicas del label honeypot=true."""
-    log_info(f"[✅]: Extrayendo IPs de Loki ...")
+    log_info(f"[OK] Extrayendo IPs de Loki ...")
 
     # Calcula rango de tiempo en nanosegundos (UTC)
     end = int(datetime.now(timezone.utc).timestamp() * 1e9)
@@ -36,10 +37,9 @@ def extract_ips_from_loki():
 
         streams = data.get("data", {}).get("result", [])
         if not streams:
-            log_info(f"[ℹ️]: No se encontraron logs con honeypot=true.")
+            log_info(f"[INFO] No se encontraron logs con honeypot=true.")
             return []
-
-        log_info(f"[ℹ️]: {len(streams)} streams de logs encontrados.")
+        log_info(f"[INFO] {len(streams)} streams de logs encontrados.")
         for stream in streams:
             values = stream.get("values", [])
             for _, line in values:
@@ -47,27 +47,27 @@ def extract_ips_from_loki():
                 if match:
                     ips.add(match.group(1))
 
-        log_info(f"[ℹ️]: Se encontraron {len(ips)} IPs únicas en Loki.")
+        log_info(f"[INFO] Se encontraron {len(ips)} IPs únicas en Loki.")
     except Exception as e:
-        log_info(f"[❌]: Error consultando Loki: {e}")
+        log_info(f"[ERROR] Error consultando Loki: {e}")
 
     return list(ips)
 
 # Función para actualizar la base de datos
 def update_database():
     """Inserta o actualiza IPs del honeypot_logs con información geográfica."""
-    log_info(f"[✅]: Iniciando geolocalización de IPs...")
+    log_info(f"[OK] Iniciando geolocalización de IPs...")
     ips = extract_ips_from_loki()
 
     if not ips:
-        log_info("[ℹ️]: No hay IPs pendientes de geolocalizar.")
+        log_info("[INFO] No hay IPs pendientes de geolocalizar.")
         return
 
     conn, cursor = None, None
     try:
         conn = connect_db()
         if not conn:
-            log_info(f"[❌]: No se pudo establecer conexión a la base de datos.")
+            log_info(f"[ERROR] No se pudo establecer conexión a la base de datos.")
             return
 
         cursor = conn.cursor()
@@ -102,12 +102,12 @@ def update_database():
             time.sleep(1)  # evita rate-limiting
 
         cursor.close()
-        log_info(f"[✅]: {len(ips)} IPs procesadas correctamente.")
+        log_info(f"[OK] {len(ips)} IPs procesadas correctamente.")
     except Exception as e:
-        log_info(f"[❌]: Error durante la geolocalización: {e}")
+        log_info(f"[ERROR] Error durante la geolocalización: {e}")
     finally:
         close_db(cursor, conn)
-        log_info(f"[✅]: ... finalizada geolocalización")
+        log_info(f"[OK] ... finalizada geolocalización")
 
 if __name__ == "__main__":
     # Inicializar configuración sensible en tiempo de ejecución (carga .env y secrets)
