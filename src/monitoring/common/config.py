@@ -5,6 +5,7 @@ import smtplib
 from email.mime.text import MIMEText
 from email.utils import formataddr
 from email.mime.multipart import MIMEMultipart
+from .utils import log_info
 from .secrets import load_secret
 import datetime
 import re
@@ -382,7 +383,7 @@ def get_month_gap(month_gap):
 # ==========================================
 # CONFIG LOGS
 # ==========================================
-def log_info(msg: str) -> None:
+def log_info(msg: str):
     """Logger simple con fecha ISO y prefijo."""
     print(f"mnt-info: {datetime.datetime.now().isoformat()} - {msg}")
 
