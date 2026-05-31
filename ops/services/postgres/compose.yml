@@ -3,16 +3,21 @@ services:
     image: postgres:14.3@sha256:2d1e636f07781d4799b3f2edbff78a0a5494f24c4512cb56a83ebfd0e04ec074
     container_name: ${POSTGRES_CONTAINER_NAME}
     restart: always
+    # Carga variables no sensibles desde .env (NO incluir POSTGRES_PASSWORD aquí)
     env_file:
       - .env
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+#      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      # Se migra la contraseña a un fichero en runtime para evitar exposición en `docker inspect`.
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
       POSTGRES_DB: ${POSTGRES_NAME}
     volumes:
       - postgres-data:/var/lib/postgresql/data  # Persistencia de la BBDD de monitorización
       - postgres-backups:/backups               # Persistencia de backups (named volume en lugar de bind host)
       - ./init:/docker-entrypoint-initdb.d:ro
+      # Fichero secreto montado en modo solo-lectura. Usar ops/services/postgres/secrets/postgres_password en el host.
+      - ./secrets/postgres_password:/run/secrets/postgres_password:ro
     networks:
       - backend-net # Red backend (DB + aplicaciones autorizadas)
     # Añadido healthcheck para detectar cuando la BBDD no está operativa

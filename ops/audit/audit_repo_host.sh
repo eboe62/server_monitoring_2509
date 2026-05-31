@@ -16,7 +16,7 @@ echo "Host:  $(hostname)"
 echo "=========================================="
 
 # helpers
-ok()   { echo "[ OK ] $1"; }
+ok()   { echo "[OK] $1"; }
 warn() { echo "[WARN] $1"; }
 fail() { echo "[FAIL] $1"; }
 info() { echo "[INFO] $1"; }

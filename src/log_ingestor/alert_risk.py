@@ -43,7 +43,7 @@ def process_alert():
     try:
         conn = connect_db()
         if not conn:
-            log_info(f"[❌]: No se pudo establecer conexión a la base de datos.")
+            log_info(f"[ERROR] No se pudo establecer conexión a la base de datos.")
             return
 
         cursor = conn.cursor()
@@ -125,10 +125,10 @@ def process_alert():
         rows = cursor.fetchall()
 
         if not rows:
-            log_info(f"[ℹ️]: No se ha completado el reporte de amenazas con riesgo > 6")
+            log_info(f"[INFO] No se ha completado el reporte de amenazas con riesgo > 6")
             return
 
-        log_info(f"[✅]: Se detectaron {len(rows)} amenazas con riesgo > 6.")
+        log_info(f"[OK] Se detectaron {len(rows)} amenazas con riesgo > 6.")
 
         # ==========================================
         # Construimos las filas omitiendo los id
@@ -195,10 +195,10 @@ def process_alert():
             )
             log_info(f"[📧]: Enviado a ...{email_to} con CC a ...")
         except Exception as e:
-            log_info(f"[❌]: El envío ha fallado: {e}")
+            log_info(f"[ERROR] El envío ha fallado: {e}")
 
     except Exception as e:
-        log_info(f"[❌]: Error en la consulta o procesamiento del mail de alerta: {e}")
+        log_info(f"[ERROR] Error en la consulta o procesamiento del mail de alerta: {e}")
     finally:
         close_db(cursor, conn)
 

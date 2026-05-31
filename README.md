@@ -282,7 +282,7 @@ Dar permisos a los scripts:
 chmod +x ./scripts/*.sh
 
 
-## 🚀 Despliegue completo por stacks
+## Despliegue completo por stacks
 
 ```bash
 cd /opt/monitoring/
@@ -341,7 +341,7 @@ make stack-status STACK=xxx
 
 ---
 
-## 🚀 Uso
+## Uso
 
 El proyecto incorpora un **Makefile global** que permite construir, desplegar y gestionar los contenedores principales sin necesidad de recordar comandos largos de Docker.
 Basta con anteponer la palabra `make` al comando correspondiente.

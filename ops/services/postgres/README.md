@@ -45,6 +45,30 @@ Notas
 Nota: Históricamente este proyecto referenciaba una red global `monitoring-net`. Tras la adopción de ADR-0021, la plataforma usa redes segmentadas: `backend-net`, `observability-net` y `restricted-net` según el propósito del servicio.
 - Secretos: no versionar ficheros sensibles. Usa `.env` (ignorado) o un directorio `secrets/` montado fuera del repo.
 
+Secretos y flujo recomendado
+--------------------------
+- El password de Postgres se gestiona como fichero en `ops/services/postgres/secrets/postgres_password`.
+- No incluiremos `POSTGRES_PASSWORD` en `.env` ni en plantillas. En su lugar, el `compose.yml` monta el fichero en
+	`/run/secrets/postgres_password` y exporta `POSTGRES_PASSWORD_FILE=/run/secrets/postgres_password`.
+- Ejemplo de creación segura en host:
+
+```sh
+mkdir -p ops/services/postgres/secrets
+chmod 700 ops/services/postgres/secrets
+printf '%s' 'PASSWORD' > ops/services/postgres/secrets/postgres_password
+chmod 600 ops/services/postgres/secrets/postgres_password
+```
+
+Verificaciones rápidas
+----------------------
+- Ejecutar validación local antes de arrancar el stack:
+
+```sh
+bash ops/services/postgres/scripts/check_postgres_secret.sh
+```
+
+Esto evita que el contenedor entre en restart loop por credenciales inexistentes. No use wrappers de entrypoint: la imagen oficial de Postgres reconoce `POSTGRES_PASSWORD_FILE`.
+
 Migración y checklist
 ---------------------
 Ver la documentación principal del proyecto para pasos de dump/restore y ventana de corte. Mantener backup completo antes de cualquier operación.

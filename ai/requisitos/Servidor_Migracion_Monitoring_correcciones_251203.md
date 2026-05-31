@@ -187,10 +187,10 @@ def connect_db():
             connect_timeout=5,
             keepalives=1,
         )
-        log_info(f"[✅]: Conexión a la base de datos exitosa.")
+        log_info(f"[OK] Conexión a la base de datos exitosa.")
         return conn
     except Exception as e:
-        log_info(f"[❌]: Error conectando a la base de datos: {e}")
+        log_info(f"[ERROR] Error conectando a la base de datos: {e}")
         return None
 
 
@@ -199,14 +199,14 @@ def close_db(cursor=None, conn=None):
         try:
             cursor.close()
         except Exception as e:
-            log_info(f"[⚠️]: Error cerrando cursor: {e}")
+            log_info(f"[WARN] Error cerrando cursor: {e}")
 
     if conn:
         try:
             conn.close()
-            log_info("[✅]: Conexión a la base de datos cerrada.")
+            log_info("[OK] Conexión a la base de datos cerrada.")
         except Exception as e:
-            log_info(f"[⚠️]: Error cerrando conexión: {e}")
+            log_info(f"[WARN] Error cerrando conexión: {e}")
 
 
 def send_email(subject: str, html_content: str, email_to: str = None, cc_list: list = None):
@@ -255,7 +255,7 @@ def send_email(subject: str, html_content: str, email_to: str = None, cc_list: l
         return True
 
     except Exception as e:
-        log_info(f"[❌]: Error enviando correo: {e}")
+        log_info(f"[ERROR] Error enviando correo: {e}")
         return False
 
 
@@ -369,7 +369,7 @@ def process_alert():
     try:
         conn = connect_db()
         if not conn:
-            log_info("[❌]: No se pudo establecer conexión a la base de datos.")
+            log_info("[ERROR] No se pudo establecer conexión a la base de datos.")
             return
 
         cursor = conn.cursor()
@@ -432,7 +432,7 @@ def process_alert():
             log_info("[ℹ️]: No se ha completado el reporte de amenazas con riesgo > 6")
             return
 
-        log_info(f"[✅]: Se detectaron {len(rows)} amenazas con riesgo > 6.")
+        log_info(f"[OK] Se detectaron {len(rows)} amenazas con riesgo > 6.")
 
         html_parts.append("<html><body><br>")
         html_parts.append("<h3>Se han detectado las siguientes amenazas de alto riesgo:</h3><br>")
@@ -450,7 +450,7 @@ def process_alert():
         send_email(subject, html_body)
 
     except Exception as e:
-        log_info(f"[❌]: Error en la consulta o procesamiento del mail de alerta: {e}")
+        log_info(f"[ERROR] Error en la consulta o procesamiento del mail de alerta: {e}")
     finally:
         close_db(cursor, conn)
 

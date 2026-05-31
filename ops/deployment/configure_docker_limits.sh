@@ -26,11 +26,11 @@ log_message "[INFO] Memoria total: ${TOTAL_MEM}MB → límite por contenedor: ${
 log_message "[INFO] CPUs totales: ${TOTAL_CPU} → límite por contenedor: ${LIMIT_CPU}"
 
 # Esperar a que Docker esté en ejecución
-log_message "[🚀]: Esperando a que Docker se inicie..."
+log_message "[INFO]: Esperando a que Docker se inicie..."
 until docker info >/dev/null 2>&1; do
     sleep 30
 done
-log_message "[✅]: Docker está en ejecución."
+log_message "[OK] Docker está en ejecución."
 
 # Obtener contenedores gestionados
 CONTAINERS=$(docker ps --filter "label=$LABEL_FILTER" -q)
@@ -45,7 +45,7 @@ for container_id in $CONTAINERS; do
 
     NAME=$(docker inspect --format='{{.Name}}' "$container_id" | sed 's/\///')
 
-    log_message "[🔍] Revisando $NAME ($container_id)"
+    log_message "[INFO] Revisando $NAME ($container_id)"
 
     CURRENT_MEMORY=$(docker inspect --format='{{.HostConfig.Memory}}' "$container_id")
     CURRENT_CPUS=$(docker inspect --format='{{.HostConfig.NanoCpus}}' "$container_id")
@@ -60,10 +60,10 @@ for container_id in $CONTAINERS; do
             --cpus="$LIMIT_CPU" \
             "$container_id" >/dev/null; then
 
-            log_message "[✅] Límites aplicados a $NAME"
+            log_message "[OK] Límites aplicados a $NAME"
 
         else
-            log_message "[❌] Error aplicando límites a $NAME"
+            log_message "[ERROR] Error aplicando límites a $NAME"
         fi
 
     else

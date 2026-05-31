@@ -17,14 +17,19 @@ sys.path.append(MONITORING_ROOT)
 from datetime import datetime
 from src.monitoring.common.config import log_info, send_email
 from dotenv import load_dotenv
+from monitoring.common.secrets import load_secret
 
-# ------------------------------------------------------------
+# ----------------------------------------
 # Configuración BBDD
-# ------------------------------------------------------------
+# ----------------------------------------
 load_dotenv(os.getenv("SMTP_RELAY_ENV_PATH", "ops/services/smtp_relay/.env"))
 
 POSTGRES_USER = os.getenv("POSTGRES_USER", "postgres")
-POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "")
+try:
+    POSTGRES_PASSWORD = load_secret('POSTGRES_PASSWORD_FILE', 'POSTGRES_PASSWORD')
+except Exception as e:
+    log_info(f"[❌]: Error loading Postgres secret: {e}")
+    raise
 POSTGRES_NAME = os.getenv("POSTGRES_NAME", "monitoring_db")
 POSTGRES_DEST = f"{POSTGRES_NAME}_restored"
 POSTGRES_CONTAINER_NAME = os.getenv("POSTGRES_CONTAINER_NAME", "monitoring-postgres")
@@ -33,9 +38,9 @@ BACKUP_DIR_HOST = os.getenv("BACKUP_DIR_HOST", "/opt/monitoring/ops/backups")
 BACKUP_CONTAINER_PATH = "/tmp/restore.backup"
 BACKUP_SQL = "/tmp/restore.sql"
 
-# ------------------------------------------------------------
+# ----------------------------------------
 # Seleccionar backup más reciente
-# ------------------------------------------------------------
+# ----------------------------------------
 try:
     backups = sorted(
         [f for f in os.listdir(BACKUP_DIR_HOST) if f.endswith(".backup")],
@@ -50,19 +55,19 @@ except Exception as e:
     log_info(f"[❌]: Error buscando backup: {e}")
     raise SystemExit(1)
 
-# ------------------------------------------------------------
+# ----------------------------------------
 # Función auxiliar
-# ------------------------------------------------------------
+# ----------------------------------------
 def exec_in_postgres(cmd):
     """Ejecuta comandos dentro del contenedor de PostgreSQL"""
     full_cmd = ["docker", "exec", "-i", POSTGRES_CONTAINER_NAME] + cmd
     subprocess.run(full_cmd, check=True)
 
-# ------------------------------------------------------------
+# ----------------------------------------
 # Proceso principal
-# ------------------------------------------------------------
+# ----------------------------------------
 try:
-    log_info(f"[🚀]: Iniciando restauración de {POSTGRES_NAME} dentro de {POSTGRES_CONTAINER_NAME}...")
+    log_info(f"[INFO] Iniciando restauración de {POSTGRES_NAME} dentro de {POSTGRES_CONTAINER_NAME}...")
 
     # Copiar backup al contenedor de Postgres
     subprocess.run(
@@ -75,14 +80,14 @@ try:
         "psql", "-U", POSTGRES_USER, "-d", "template1",
         "-c", f"DROP DATABASE IF EXISTS {POSTGRES_DEST};"
     ])
-    log_info(f"[ℹ️]: Base de datos {POSTGRES_DEST} eliminada si existía.")
+    log_info(f"[INFO] Base de datos {POSTGRES_DEST} eliminada si existía.")
 
     # Crear DB destino
     exec_in_postgres([
         "psql", "-U", POSTGRES_USER, "-d", "template1",
         "-c", f"CREATE DATABASE {POSTGRES_DEST};"
     ])
-    log_info(f"[✅]: Base de datos {POSTGRES_DEST} creada.")
+    log_info(f"[OK] Base de datos {POSTGRES_DEST} creada.")
 
     # Restaurar dentro del contenedor
     exec_in_postgres([
@@ -92,22 +97,22 @@ try:
     exec_in_postgres([
         "psql", "-U", POSTGRES_USER, "-d", POSTGRES_DEST, "-f", BACKUP_SQL
     ])
-    log_info(f"[✅]: Restauración completada correctamente en {POSTGRES_DEST}.")
+    log_info(f"[OK] Restauración completada correctamente en {POSTGRES_DEST}.")
 
-# ------------------------------------------------------------
+# ----------------------------------------
 # Notificar por mail
-# ------------------------------------------------------------
+# ----------------------------------------
     send_email(
         subject=f"Restauración completada ({POSTGRES_DEST})",
         html_content=f"Se ha restaurado correctamente la base de datos desde {latest_backup}."
     )
 
 except subprocess.CalledProcessError as e:
-    log_info(f"[❌]: Error en restauración: {e}")
+    log_info(f"[ERROR] Error en restauración: {e}")
     send_email(
         subject=f"Error restaurando {POSTGRES_DEST}",
         html_content=f"Ocurrió un error durante la restauración: {e}"
     )
     raise SystemExit(1)
 
-log_info(f"[🎉]: Proceso de restauración finalizado correctamente.")
+log_info(f"[OK] Proceso de restauración finalizado correctamente.")

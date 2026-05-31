@@ -5,6 +5,8 @@ import smtplib
 from email.mime.text import MIMEText
 from email.utils import formataddr
 from email.mime.multipart import MIMEMultipart
+from .utils import log_info
+from .secrets import load_secret
 import datetime
 import re
 import socket
@@ -27,8 +29,9 @@ except ImportError:
 DEFAULT_ENV_PATH = os.getenv("SMTP_RELAY_ENV_PATH", "ops/services/smtp_relay/.env")
 DEFAULT_SECRETS_DIR = os.getenv("SMTP_RELAY_SECRETS_DIR", "ops/services/smtp_relay/secrets")
 
-# NOTE: Do not cache SMTP_MODE at import-time. Use get_smtp_mode() to
-# determine mode dynamically at runtime to avoid import-time side-effects.
+# NOTA: No cachear `SMTP_MODE` en tiempo de importación. Usar `get_smtp_mode()`
+# para determinar el modo en tiempo de ejecución y evitar efectos secundarios
+# durante la importación.
 
 # ==========================================
 # SMTP MODE
@@ -45,8 +48,8 @@ def get_smtp_mode() -> str:
         mode = "relay"
     mode = mode.strip().lower()
     if mode not in ("relay", "auth"):
-        log_info(f"[❌]: SMTP_MODE inválido: {mode}. Valores permitidos: {VALID_SMTP_MODES}")
-        raise RuntimeError(f"Invalid SMTP_MODE: {mode}")
+        log_info(f"[ERROR] SMTP_MODE= {mode} inválido. Valores permitidos: {VALID_SMTP_MODES}")
+        raise RuntimeError(f"[ERROR] SMTP_MODE= {mode} SMTP_MODE inválido")
     return mode
 
 # ==========================================
@@ -76,12 +79,13 @@ DB = {
     "port": int(os.getenv("POSTGRES_PORT", 5432)),
     "name": os.getenv("POSTGRES_NAME"),
     "user": os.getenv("POSTGRES_USER"),
-    "password": os.getenv("POSTGRES_PASSWORD"),
+    # Support secrets as files: prefer POSTGRES_PASSWORD_FILE, fallback to POSTGRES_PASSWORD
+    "password": None,
 }
 # INIT CONFIG (runtime explícito)
 def init_config(env_path: str = None, secrets_dir: str = None):
     """
-    Inicializa la configuración en tiempo de ejecución.
+    Inicializa y devuelve la configuración en tiempo de ejecución.
 
     SMTP_MODE define COMPLETAMENTE el comportamiento:
 
@@ -96,7 +100,7 @@ def init_config(env_path: str = None, secrets_dir: str = None):
       - Lee secrets SMTP desde filesystem si están disponibles.
       - Re-lee variables dependientes del entorno.
       - NO lanza excepción en ausencia de ficheros.
-      - fail-fast si faltan
+      - fail-fast y fallará si no existen
 
     Esta función debe invocarse desde los entrypoints (wrappers/sh/containers)
     antes de ejecutar operaciones que dependan de estas credenciales.
@@ -116,13 +120,13 @@ def init_config(env_path: str = None, secrets_dir: str = None):
         try:
             if load_dotenv:
                 load_dotenv(env_path)
-                log_info(f"[ℹ️]: Se ha cargado .env desde {env_path}")
+                log_info(f"[INFO] Se ha cargado .env desde {env_path}")
             else:
-                log_info("[⚠️]: python-dotenv no instalado; se omite carga .env")
+                log_info("[WARN] python-dotenv no instalado; se omite carga .env")
         except Exception as e:
-            log_info(f"[⚠️]: Error cargando .env ({env_path}): {e}")
+            log_info(f"[WARN] Error cargando .env ({env_path}): {e}")
     else:
-        log_info(f"[⚠️]: .env no encontrado en {env_path}; usando variables de entorno actuales")
+        log_info(f"[WARN] .env no encontrado en {env_path}; usando variables de entorno actuales")
 
     # Re-lectura de variables que podrían haber cambiado al cargar .env
     EMAIL_FROM = os.getenv("EMAIL_FROM")
@@ -136,8 +140,11 @@ def init_config(env_path: str = None, secrets_dir: str = None):
         "port": int(os.getenv("POSTGRES_PORT", 5432)),
         "name": os.getenv("POSTGRES_NAME"),
         "user": os.getenv("POSTGRES_USER"),
-        "password": os.getenv("POSTGRES_PASSWORD"),
+        "password": None,
     }
+
+    # Load DB password via file-based secret pattern (preferred)
+    DB["password"] = load_secret('POSTGRES_PASSWORD_FILE', 'POSTGRES_PASSWORD')
 
     # Leer secrets SMTP del filesystem si están disponibles; fallback a variables de entorno
     user_path = os.path.join(secrets_dir, "smtp_user")
@@ -151,42 +158,39 @@ def init_config(env_path: str = None, secrets_dir: str = None):
     if mode == "relay":
         SMTP_USER = os.getenv("SMTP_USER")
         SMTP_PASS = os.getenv("SMTP_PASS")
-        log_info(f"[ℹ️]: SMTP_MODE={mode} sin autenticación SMTP")
+        log_info(f"[INFO] SMTP_MODE={mode} sin autenticación SMTP")
 
     # AUTH MODE
+    # Auth-required: intentar cargar desde filesystem y fallar explícitamente si no existen
     elif mode == "auth":
-        # Auth-required: intentar cargar desde filesystem y fallar explícitamente si no existen
-        user_val = None
-        pass_val = None
+        SMTP_USER = load_secret('SMTP_USER_FILE', 'SMTP_USER')
+        SMTP_PASS = load_secret('SMTP_PASS_FILE', 'SMTP_PASS')
 
-        if os.path.exists(user_path):
+        # Si no están via *_FILE, intentar secrets_dir tradicional
+        if not SMTP_USER and os.path.exists(user_path):
             try:
                 with open(user_path) as f:
-                    user_val = f.read().strip()
-                    log_info("[✅]: SMTP_USER cargado desde secrets")
+                    SMTP_USER = f.read().strip()
+                    log_info("[OK] SMTP_USER cargado desde secrets_dir")
             except Exception as e:
-                log_info(f"[❌]: Error leyendo SMTP_USER desde {user_path}: {e}")
-        else:
-            log_info(f"[⚠️]: SMTP_USER no encontrado en secrets ({user_path})")
+                log_info(f"[ERROR] Error leyendo SMTP_USER desde {user_path}: {e}")
+        elif not SMTP_USER:
+            log_info(f"[WARN] SMTP_USER no encontrado en secrets ({user_path})")
 
-        if os.path.exists(pass_path):
+        if not SMTP_PASS and os.path.exists(pass_path):
             try:
                 with open(pass_path) as f:
-                    pass_val = f.read().strip()
-                    log_info("[✅]: SMTP_PASS cargado desde secrets")
+                    SMTP_PASS = f.read().strip()
+                    log_info("[OK] SMTP_PASS cargado desde secrets_dir")
             except Exception as e:
-                log_info(f"[❌]: Error leyendo SMTP_PASS desde {pass_path}: {e}")
-        else:
-            log_info(f"[⚠️]: SMTP_PASS no encontrado en secrets ({pass_path})")
-
-        # Fallback a variables de entorno si no se leyeron archivos
-        SMTP_USER = user_val or os.getenv("SMTP_USER")
-        SMTP_PASS = pass_val or os.getenv("SMTP_PASS")
+                log_info(f"[ERROR] Error leyendo SMTP_PASS desde {pass_path}: {e}")
+        elif not SMTP_PASS:
+            log_info(f"[WARN] SMTP_PASS no encontrado en secrets ({pass_path})")
 
         # Hard-fail si el modo exige auth pero faltan credenciales
         if not SMTP_USER or not SMTP_PASS:
-            log_info(f"[❌]: SMTP_MODE=auth pero faltan credenciales al intentar enviar correo (se requieren smtp_user/smtp_pass)")
-            raise RuntimeError("Auth mode requiere credenciales SMTP")
+            log_info(f"[ERROR] SMTP_MODE= auth pero faltan credenciales SMTP para enviar correo (se requieren smtp_user/smtp_pass)")
+            raise RuntimeError(f"[ERROR] SMTP_MODE= auth requiere credenciales SMTP para enviar correo")
 
     return {
         "SMTP_SERVER": SMTP_SERVER,
@@ -215,10 +219,10 @@ def connect_db():
             connect_timeout=5,
             keepalives=1,
         )
-        log_info(f"[✅]: Conexión a la base de datos establecida.")
+        log_info(f"[OK] Conexión a la base de datos establecida.")
         return conn
     except Exception as e:
-        log_info(f"[❌]: Error conectando a la base de datos: {e}")
+        log_info(f"[ERROR] Error conectando a la base de datos: {e}")
         return None
 
 # ==========================================
@@ -230,14 +234,14 @@ def close_db(cursor=None, conn=None):
         try:
             cursor.close()
         except Exception as e:
-            log_info(f"[⚠️]: Error cerrando cursor: {e}")
+            log_info(f"[WARN] Error cerrando cursor: {e}")
 
     if conn:
         try:
             conn.close()
-            log_info("[✅]: Conexión a la base de datos cerrada.")
+            log_info("[OK] Conexión a la base de datos cerrada.")
         except Exception as e:
-            log_info(f"[⚠️]: Error cerrando conexión: {e}")
+            log_info(f"[WARN] Error cerrando conexión: {e}")
 
 # ==========================================
 # ENVIAR CORREO con smtplib
@@ -286,41 +290,41 @@ def send_email(html_content: str = None, subject: str = None, email_to: str = No
         smtp_host_ipv4 = socket.getaddrinfo(SMTP_SERVER, SMTP_PORT, socket.AF_INET)[0][4][0]
         with smtplib.SMTP(smtp_host_ipv4, SMTP_PORT, timeout=10) as server:
 
-            log_info(f"[ℹ️ ]: Conectando al servidor SMTP...")
+            log_info(f"[INFO] Conectando al servidor SMTP...")
 #            server.set_debuglevel(1)
             server.ehlo()
 
             # Solo usa TLS si el servidor lo soporta
             if server.has_extn("STARTTLS"):
-                log_info(f"[ℹ️ ]: Usando servidor SMTP externo, activando conexión segura, iniciando TLS...")
+                log_info(f"[INFO] Usando servidor SMTP externo, activando conexión segura, iniciando TLS...")
                 server.starttls()
                 server.ehlo()
 
-                log_info(f"[ℹ️ ]: Conexión TLS iniciada: Autenticando...")
+                log_info(f"[INFO] Conexión TLS iniciada: Autenticando...")
 
             # En modo 'auth' las credenciales son obligatorias
             mode = get_smtp_mode()
             if mode == "auth":
                 if not SMTP_USER or not SMTP_PASS:
-                    log_info(f"[❌]: SMTP_MODE=auth pero faltan credenciales al intentar enviar correo (se requieren smtp_user/smtp_pass)")
-                    raise RuntimeError("Se requieren credenciales SMTP")
+                    log_info(f"[ERROR] SMTP_MODE= auth pero faltan credenciales SMTP para enviar correo (se requieren smtp_user/smtp_pass)")
+                    raise RuntimeError(f"[ERROR] SMTP_MODE= auth requiere credenciales SMTP para enviar correo")
                 server.login(SMTP_USER, SMTP_PASS)
-                log_info(f"[ℹ️ ]: Autenticación SMTP exitosa.")
+                log_info(f"[INFO] Autenticación SMTP exitosa.")
             else:
                 # relay-only: si hay credenciales las usa y si no, continúa sin autenticar
                 if SMTP_USER and SMTP_PASS:
                     server.login(SMTP_USER, SMTP_PASS)
-                    log_info(f"[ℹ️ ]: Autenticación SMTP exitosa (creds desde env/secrets).")
+                    log_info(f"[INFO] Autenticación SMTP exitosa (creds desde env/secrets).")
 
             # Enviar mensaje
             recipients = [email_to] + cc_list
             server.sendmail(EMAIL_FROM, recipients, msg.as_string())
 
-        log_info(f"[📧]: Enviado a {email_to} con CC a {', '.join(cc_list) or '(sin CC)'}")
+        log_info(f"[INFO] Enviado a {email_to} con CC a {', '.join(cc_list) or '(sin CC)'}")
         return True
 
     except Exception as e:
-        log_info(f"[❌]: Error enviando correo: {e}")
+        log_info(f"[ERROR] Error enviando correo: {e}")
         return False
 
 # ==========================================
@@ -376,8 +380,8 @@ def get_month_gap(month_gap):
 # CONFIG LOGS
 # ==========================================
 def log_info(msg: str):
-    """Logger simple con fecha ISO y prefijo GDA."""
-    print(f"gda-info: {datetime.datetime.now().isoformat()} - {msg}")
+    """Logger simple con fecha ISO y prefijo."""
+    print(f"mnt-info: {datetime.datetime.now().isoformat()} - {msg}")
 
 # ==========================================
 # HTML BUILDER
@@ -452,7 +456,7 @@ IPINFO_TOKEN = os.getenv("IPINFO_TOKEN") # Token IP Geolocalización https://ipi
 # Consulta IPInfo.io y devuelve país, ciudad, latitud y longitud.
 def get_ip_info(ip):
     if not IPINFO_TOKEN:
-        log_info(f"[⚠️]: IPINFO_TOKEN no definido")
+        log_info(f"[WARN] IPINFO_TOKEN no definido")
         return None
 
     try:
@@ -468,6 +472,6 @@ def get_ip_info(ip):
             "long": data.get("loc", "0,0").split(",")[1]
         }
     except Exception as e:
-        log_info(f"[❌]: Error obteniendo datos desde IPInfo para {ip}: {e}")
+        log_info(f"[ERROR] Error obteniendo datos desde IPInfo para {ip}: {e}")
         return None
 
