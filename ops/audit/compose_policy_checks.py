@@ -36,7 +36,7 @@ except Exception:
 
 
 def ok(msg: str):
-    print(f"[ OK ] {msg}", file=sys.stderr)
+    print(f"[OK] {msg}", file=sys.stderr)
 
 
 def warn(msg: str):

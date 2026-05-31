@@ -47,6 +47,35 @@ jobs:
           echo "ci_user@test.com" > ops/services/smtp_relay/secrets/smtp_user
           echo "ci_pass" > ops/services/smtp_relay/secrets/smtp_pass
 
+      - name: Create Postgres secret (CI)
+        run: |
+          mkdir -p ops/services/postgres/secrets
+          echo "ci_postgres_pass" > ops/services/postgres/secrets/postgres_password
+          chmod 600 ops/services/postgres/secrets/postgres_password
+
+      - name: Comprobar fichero secreto Postgres (CI)
+        run: |
+          chmod +x ops/services/postgres/scripts/check_postgres_secret.sh || true
+          bash ops/services/postgres/scripts/check_postgres_secret.sh
+
+      - name: Runtime smoke tests (imports + init_config)
+        run: |
+          export PYTHONPATH=src
+          export SMTP_MODE=relay
+          python3 - <<'PY'
+          import sys
+          try:
+              import monitoring.common.config as cfg
+              import monitoring.common.secrets as sec
+              import monitoring.common.utils as u
+              print('OK: imports')
+              cfg.init_config()
+              print('OK: init_config')
+          except Exception as e:
+              print('SMOKE_FAIL', e)
+              sys.exit(1)
+          PY
+
       - name: Test init_config modes (relay/auth)
         run: |
           export PYTHONPATH=src
@@ -54,8 +83,8 @@ jobs:
           import os, sys, shutil
           from monitoring.common import config
 
-          # Ensure env-based relay mode works
-          # RELAY MODE
+          # Asegurar que el modo relay basado en variables funciona
+          # MODO RELAY
 
           os.environ.pop('SMTP_USER', None)
           os.environ.pop('SMTP_PASS', None)
@@ -63,8 +92,8 @@ jobs:
           config.init_config()
           print('OK: relay mode')
 
-          # Simulate missing secrets for auth mode: move files temporarily
-          # AUTH MODE
+          # Simular ausencia de secrets para modo auth: mover archivos temporalmente
+          # MODO AUTH
 
           os.environ["SMTP_MODE"] = "auth"
           smtp_user = "ops/services/smtp_relay/secrets/smtp_user"
@@ -97,6 +126,17 @@ jobs:
           docker compose -f ops/stacks/observability/compose.yml config > /dev/null
           docker compose -f ops/services/postgres/compose.yml config > /dev/null
           docker compose -f ops/services/smtp_relay/compose.yml config > /dev/null
+
+      - name: Validar enlaces de secrets en Postgres compose
+        run: |
+          docker compose -f ops/services/postgres/compose.yml config > /tmp/postgres_config.yml
+          if ! grep -q "POSTGRES_PASSWORD_FILE" /tmp/postgres_config.yml; then
+            echo "[ERROR] POSTGRES_PASSWORD_FILE no está presente en resolved compose config"; exit 1; fi
+          if grep -q "POSTGRES_PASSWORD:" /tmp/postgres_config.yml; then
+            echo "[ERROR] POSTGRES_PASSWORD expuesta en la resolved compose config"; exit 1; fi
+          if ! grep -q "./secrets/postgres_password" /tmp/postgres_config.yml || ! grep -q "/run/secrets/postgres_password" /tmp/postgres_config.yml; then
+            echo "[ERROR]  El mapeo para el montaje del secret no está presente en resolved compose config"; exit 1; fi
+          echo "[OK] Postgres compose secret bindings validated"
 
       - name: Validate healthchecks policy (runtime classification)
         run: |
@@ -133,7 +173,7 @@ jobs:
 
           for f in $FILES; do
             if grep -E "image:.*:latest" "$f"; then
-              echo "❌ Uso de :latest en $f"
+              echo "[ERROR] Uso de :latest en $f"
               exit 1
             fi
           done
@@ -233,7 +273,7 @@ jobs:
           "
 
           # Test desde host (Loki expuesto en 127.0.0.1)
-          curl -f http://localhost:3100/ready || (echo "❌ Loki no accesible desde host" && exit 1)
+          curl -f http://localhost:3100/ready || (echo "[ERROR] Loki no accesible desde host" && exit 1)
 
           echo "✔ Conectividad OK"
 
@@ -244,7 +284,7 @@ jobs:
         run: |
           docker ps --format "{{.Names}} {{.Ports}}"
           if docker ps --format "{{.Ports}}" | grep -E "0.0.0.0"; then
-            echo "❌ Puertos expuestos incorrectamente"
+            echo "[ERROR] Puertos expuestos incorrectamente"
             exit 1
           else
             echo "✔ Puertos correctamente restringidos"
@@ -279,11 +319,16 @@ jobs:
       - name: Test python health
         run: make test-python-health
 
+      - name: Test Python compilation
+        run: |
+          export PYTHONPATH=src
+          python3 -m compileall src
+
       - name: Test SMTP (CI safe)
         run: make test-smtp-ci
 
       # ------------------------------------------
-      # SMTP unit + integration tests
+      # SMTP tests unitarios/ integración
       # ------------------------------------------
       - name: Test SMTP unit/integration
         run: |
@@ -302,13 +347,13 @@ jobs:
           pytest tests/unit/test_compose_policy.py -q
 
       # ------------------------------------------
-      # SECURITY RUNTIME (ADR-0018)
+      # SEGURIDAD EN RUNTIME (ADR-0018)
       # ------------------------------------------
       - name: Test security runtime
         run: make test-security-runtime
 
       # ------------------------------------------
-      # Logs on failure
+      # Extracción de logs en caso de fallo
       # ------------------------------------------
       - name: Dump logs on failure
         if: failure()
@@ -322,7 +367,7 @@ jobs:
           docker logs monitoring-smtp-relay || true
 
       # ------------------------------------------
-      # Cleanup
+      # Limpieza
       # ------------------------------------------
       - name: Cleanup
         if: always()

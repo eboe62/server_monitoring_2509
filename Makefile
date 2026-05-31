@@ -102,6 +102,9 @@ audit:
 	@echo ""
 	$(MAKE) audit-runtime-ci
 	@echo ""
+	@echo "=== VERIFY SECURITY CHECKS ==="
+	$(MAKE) verify-security
+	@echo ""
 
 # ------------------------------------------
 # STATUS (snapshot)
@@ -246,6 +249,12 @@ validate-dockerfiles:
 	@chmod +x ops/audit/validate_dockerfiles.sh
 	@./ops/audit/validate_dockerfiles.sh
 
+.PHONY: verify-security
+
+verify-security:
+	@echo "=== VERIFY SECURITY CHECKS ==="
+	@bash ops/services/postgres/scripts/check_postgres_secret.sh
+
 .PHONY: test-policy-structured
 
 test-policy-structured:
@@ -320,7 +329,7 @@ test-resilience-restart:
 	(echo "[FAIL] contenedor no se ha reiniciado" && \
 	docker inspect monitoring-python --format="State={{.State.Status}}" && exit 1)
 
-	@echo "[ OK ] contenedor reiniciado"
+	@echo "[OK] contenedor reiniciado"
 
 	# --- VALIDAR HEALTH POST-RESTART ---
 	@echo "esperando recuperación health (healthy)..."
@@ -332,7 +341,7 @@ test-resilience-restart:
 	(echo "[FAIL] contenedor no alcanza healthy tras restart" && \
 	docker inspect monitoring-python --format="State={{.State.Status}} Health={{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}" && exit 1)
 
-	@echo "[ OK ] restart + recovery OK"
+	@echo "[OK] restart + recovery OK"
 
 	# Debug
 	@echo "[INFO] estado tras restart:"
@@ -363,7 +372,7 @@ test-resilience-db:
 	done' || \
 	(echo "[FAIL] no se detecta caída real de DB" && exit 1)
 
-	@echo "[ OK ] degradación detectada (conectividad perdida)"
+	@echo "[OK] degradación detectada (conectividad perdida)"
 
 	@docker start monitoring-postgres
 
@@ -397,7 +406,7 @@ test-resilience-db:
 	exit 1' || \
 	(echo "[FAIL] DB no recupera conectividad estable" && exit 1)
 
-	@echo "[ OK ] DB recuperada"
+	@echo "[OK] DB recuperada"
 	@echo ""
 
 test-resilience-network:
@@ -434,7 +443,7 @@ test-resilience-network:
 		sleep 2; \
 	done' || (echo "[FAIL] el aislamiento de red NO es efectivo" && exit 1); \
 	\
-	echo "[ OK ] aislamiento de red confirmado"; \
+	echo "[OK] aislamiento de red confirmado"; \
 	\
 	echo "esperando degradación (health)..."; \
 	timeout 60 sh -c '\
@@ -442,7 +451,7 @@ test-resilience-network:
 		sleep 2; \
 	done' || (echo "[FAIL] no degrada por red" && exit 1); \
 	\
-	echo "[ OK ] degradación por red OK"; \
+	echo "[OK] degradación por red OK"; \
 	\
 	echo "[STEP] reconectando red..."; \
 	if ! docker network connect $$NETWORK monitoring-postgres; then \
@@ -462,7 +471,7 @@ test-resilience-network:
 		sleep 2; \
 	done' || (echo "[FAIL] no recupera tras red" && exit 1); \
 	\
-	echo "[ OK ] red restaurada"
+	echo "[OK] red restaurada"
 	@echo ""
 
 test-resilience-observability:
@@ -478,7 +487,7 @@ test-resilience-observability:
 	@timeout 30 sh -c 'until curl -s http://127.0.0.1:3100/ready; do sleep 2; done' || \
 		(echo "[FAIL] Loki no responde" && exit 1)
 
-	@echo "[ OK ] Loki accesible"
+	@echo "[OK] Loki accesible"
 
 	@echo "[STEP] generando log REAL en contenedor (PID 1)..."
 	@docker exec monitoring-cron sh -c "echo 'SRE_test_$$(date +%s)' >> /proc/1/fd/1" || \
@@ -493,7 +502,7 @@ test-resilience-observability:
 	if [ "$$RESULT" -eq 0 ]; then \
 		echo "[FAIL] Loki no ingiere logs"; exit 1; \
 	else \
-		echo "[ OK ] Loki ingestando logs"; \
+		echo "[OK] Loki ingestando logs"; \
 	fi
 
 test-resilience-fin:
@@ -537,7 +546,7 @@ test-python-health:
 		$(WAIT_SCRIPT) monitoring-python strict 90; \
 	fi
 
-	@echo "[ OK ] python healthy"
+	@echo "[OK] python healthy"
 
 	@echo ""
 
@@ -571,7 +580,7 @@ test-cron-execution:
 	@docker exec monitoring-cron sh -c "grep test_ /opt/monitoring/logs/test.log" >/dev/null 2>&1 || \
 		(echo "[FAIL] cron no ejecuta" && exit 1)
 
-	@echo "[ OK ] cron ejecutando correctamente"
+	@echo "[OK] cron ejecutando correctamente"
 
 # ------------------------------------------
 # TEST OBSERVABILITY CORE (reutilizable)
@@ -588,7 +597,7 @@ test-observability-core:
 		(echo "[ERROR] Loki no responde" && exit 1)
 	@echo ""
 
-	@echo "[ OK ] Loki accesible"
+	@echo "[OK] Loki accesible"
 	@echo ""
 
 	@echo "[2] Generando log REAL en contenedor"
@@ -604,7 +613,7 @@ test-observability-core:
 	if [ "$$RESULT" -eq 0 ]; then \
 		echo "[FAIL] Loki no ingiere logs"; exit 1; \
 	else \
-		echo "[ OK ] logs ingeridos"; \
+		echo "[OK] logs ingeridos"; \
 	fi
 	@echo ""
 
@@ -649,7 +658,7 @@ test-security-runtime:
 				FAIL=1; \
 				;; \
 			*) \
-				echo "[ OK ] $$c usa usuario non-root (UID=$$UID)"; \
+				echo "[OK] $$c usa usuario non-root (UID=$$UID)"; \
 				;; \
 		esac; \
 	done; \
@@ -668,7 +677,7 @@ test-security-runtime:
 					echo "[WARN] $$e ejecuta como root (UID=0) — excepción infra-trusted permitida"; \
 					;; \
 				*) \
-					echo "[ OK ] $$e usa UID=$$UID"; \
+					echo "[OK] $$e usa UID=$$UID"; \
 					;; \
 			esac; \
 		else \
@@ -682,7 +691,7 @@ test-security-runtime:
 		exit 1; \
 	fi; \
 	\
-	echo "[ OK ] test-security-runtime completado"
+	echo "[OK] test-security-runtime completado"
 
 	# [3] docker.sock
 	@echo "[3] Verificando uso de docker.sock"
@@ -691,7 +700,7 @@ test-security-runtime:
 		echo "[FAIL] docker.sock usado en micro-stacks"; \
 		exit 1; \
 	else \
-		echo "[ OK ] docker.sock no usado en servicios"; \
+		echo "[OK] docker.sock no usado en servicios"; \
 	fi
 	@echo ""
 
@@ -703,7 +712,7 @@ test-security-runtime:
 		if [ "$$POLICY" = "no" -o "$$POLICY" = "none" ]; then \
 			echo "[WARN] $$c sin restart policy o no presente"; \
 		else \
-			echo "[ OK ] $$c restart=$$POLICY"; \
+			echo "[OK] $$c restart=$$POLICY"; \
 		fi; \
 	done
 	@echo ""
@@ -716,7 +725,7 @@ test-security-runtime:
 		if [ "$$HEALTH" = "none" ]; then \
 			echo "[WARN] $$c sin healthcheck"; \
 		else \
-			echo "[ OK ] $$c health=$$HEALTH"; \
+			echo "[OK] $$c health=$$HEALTH"; \
 		fi; \
 	done
 	@echo ""
@@ -787,7 +796,7 @@ test-smtp-connect:
 	@docker exec monitoring-debug nc -zv smtp-relay 587 || \
 		(echo "[FAIL] no conecta a smtp-relay" && exit 1)
 
-	@echo "[ OK ] conexión TCP correcta"
+	@echo "[OK] conexión TCP correcta"
 	@echo ""
 
 # --- test-smtp-send-banner
@@ -800,7 +809,7 @@ test-smtp-banner:
 	" | grep -E '^220' >/dev/null || \
 		(echo '[FAIL] banner SMTP inválido' && exit 1)
 
-	@echo "[ OK ] banner SMTP correcto"
+	@echo "[OK] banner SMTP correcto"
 	@echo ""
 
 # --- test-smtp-protocol (EHLO)
@@ -816,7 +825,7 @@ test-smtp-protocol:
 	' | grep -q "250" || \
 		(echo "[FAIL] SMTP handshake inválido" && exit 1)
 
-	@echo "[ OK ] SMTP handshake válido"
+	@echo "[OK] SMTP handshake válido"
 	@echo ""
 
 # --- test-smtp-config-auth
@@ -825,7 +834,7 @@ test-smtp-config-auth:
 	@echo "=== TEST SMTP AUTH ==="
 	@docker exec monitoring-smtp-relay postconf smtp_sasl_auth_enable | grep -q yes || \
 		(echo "[FAIL] SASL desactivado" && exit 1)
-	@echo "[ OK ] SASL activo"
+	@echo "[OK] SASL activo"
 	@echo ""
 
 # --- test-smtp-config-auth (para CI, sin credenciales reales)
@@ -850,7 +859,7 @@ test-smtp-relay-local:
 	' | grep -q "250" || \
 		(echo "[FAIL] relay local no acepta flujo SMTP" && exit 1)
 
-	@echo "[ OK ] relay acepta MAIL FROM / RCPT / DATA"
+	@echo "[OK] relay acepta MAIL FROM / RCPT / DATA"
 	@echo ""
 
 # --- test-smtp-relay-flow (relay acceptance)
@@ -870,7 +879,7 @@ test-smtp-delivery:
 	echo "[INFO] Buscando queue_id: $$QUEUE_ID"; \
 	docker logs monitoring-smtp-relay --tail 100 > /tmp/smtp_status.log || true; \
 	if grep -q "$$QUEUE_ID" /tmp/smtp_status.log && grep -q "status=sent" /tmp/smtp_status.log; then \
-		echo "[ OK ] entregado (relay → Postmark)"; \
+		echo "[OK] entregado (relay → Postmark)"; \
 	elif grep -q "$$QUEUE_ID" /tmp/smtp_status.log && grep -q "status=deferred" /tmp/smtp_status.log; then \
 		echo "[WARN] deferred"; exit 1; \
 	elif grep -q "$$QUEUE_ID" /tmp/smtp_status.log && grep -q "status=bounced" /tmp/smtp_status.log; then \
@@ -889,7 +898,7 @@ test-smtp-queue:
 
 	@docker exec monitoring-smtp-relay postqueue -p | grep -q "^[A-F0-9]" && \
 	(echo "[WARN] hay correos en cola") || \
-	(echo "[ OK ] cola vacía")
+	(echo "[OK] cola vacía")
 	@echo ""
 
 # --- test-smtp-logs-clean
@@ -898,7 +907,7 @@ test-smtp-logs-clean:
 	@echo "=== TEST SMTP LOG CLEAN ==="
 	@docker logs monitoring-smtp-relay --since 30s | grep -i warning && \
 	(echo "[WARN] warnings en logs") || \
-	(echo "[ OK ] logs limpios")
+	(echo "[OK] logs limpios")
 	@echo ""
 
 # --- Network
@@ -925,7 +934,7 @@ test-smtp-unitarios-integration:
 		PYTHONPATH=src pytest tests/unit -q || exit 1; \
 		PYTHONPATH=src pytest tests/integration -q || exit 1; \
 	else \
-		echo "⚠️ pytest no encontrado. Intentando entorno virtual temporal..."; \
+		echo "[INFO] pytest no encontrado. Intentando entorno virtual temporal..."; \
 		if command -v python3 >/dev/null 2>&1 && python3 -c "import venv" >/dev/null 2>&1; then \
 			rm -rf .venv-test; \
 			python3 -m venv .venv-test; \
@@ -1014,7 +1023,7 @@ debug-loki: ## Test acceso interno a Loki (sin exposición de puertos)
 	@docker exec monitoring-python curl -s http://loki:3100/loki/api/v1/labels
 
 	@echo ""
-	@echo "[ OK ] Loki accesible vía red interna"
+	@echo "[OK] Loki accesible vía red interna"
 	@echo ""
 
 debug-ports: ## Ver puertos expuestos en host
@@ -1051,7 +1060,7 @@ debug-toolbox-up: ## Levanta contenedor de debugging (DEBUG_NET=$(DEBUG_NET))
 	@docker run -d --name $(DEBUG_CONTAINER) \
 		--network $(DEBUG_NET) \
 		$(DEBUG_IMAGE) sleep infinity
-	@echo "[ OK ] contenedor debug activo"
+	@echo "[OK] contenedor debug activo"
 	@echo ""
 
 debug-toolbox-shell: ## Shell en contenedor debug
@@ -1060,7 +1069,7 @@ debug-toolbox-shell: ## Shell en contenedor debug
 
 debug-toolbox-down: ## Elimina contenedor debug
 	@docker rm -f $(DEBUG_CONTAINER) || true
-	@echo "[ OK ] contenedor debug eliminado"
+	@echo "[OK] contenedor debug eliminado"
 	@echo ""
 
 # ------------------------------------------
@@ -1072,7 +1081,7 @@ debug-toolbox-down: ## Elimina contenedor debug
 stack-up:  ## Levanta un stack (STACK=nombre)
 	$(call validate_stack)
 	@DIR=$$( $(call stack_path) ); \
-	echo "=== 🚀 Levantando stack $(STACK) ==="; \
+	echo "=== [INFO] Levantando stack $(STACK) ==="; \
 	cd $$DIR && $(COMPOSE) up -d --build
 	@echo ""
 
@@ -1122,7 +1131,7 @@ monitoring-networks:  ## Crea las redes Docker usadas por la plataforma
 	@docker network inspect backend-net >/dev/null 2>&1 || docker network create backend-net
 	@docker network inspect observability-net >/dev/null 2>&1 || docker network create observability-net
 	@docker network inspect restricted-net >/dev/null 2>&1 || docker network create restricted-net
-	@echo "[ OK ] networks ready"
+	@echo "[OK] networks ready"
 
 
 # ------------------------------------------
@@ -1133,8 +1142,8 @@ monitoring-networks:  ## Crea las redes Docker usadas por la plataforma
 
 ## Inicialización completa - construye todas las imágenes
 build: build-python build-cron
-	@echo "[ OK ] imágenes construidas"
-	@echo "[ OK ] entorno inicializado"
+	@echo "[OK] imágenes construidas"
+	@echo "[OK] entorno inicializado"
 	@echo ""
 
 build-python:
@@ -1148,8 +1157,8 @@ build-cron:
 	@echo ""
 
 deploy: monitoring-networks build deploy-infra deploy-services deploy-validate runtime-apply
-	@echo "[ OK ] build completo"
-	@echo "=== 🚀 Despliegue completo ==="; \
+	@echo "[OK] build completo"
+	@echo "=== [INFO] Despliegue completo ==="; \
 
 
 # 🔑 Infra primero (correcto según ADR-0008)
@@ -1181,21 +1190,21 @@ deploy-validate:
 	@echo "[CHECK] healthchecks"
 	@docker ps --format '{{.Names}} {{.Status}}' | grep -E "unhealthy" && \
 		(echo "[FAIL] contenedores unhealthy"; exit 1) || \
-		echo "[ OK ] todos healthy"
+		echo "[OK] todos healthy"
 
 	@echo "[CHECK] redes de monitorización (backend/observability/restricted)"
 	@docker network inspect backend-net >/dev/null 2>&1 \
 		&& docker network inspect observability-net >/dev/null 2>&1 \
 		&& docker network inspect restricted-net >/dev/null 2>&1 \
-		&& echo "[ OK ] redes operativas" \
+		&& echo "[OK] redes operativas" \
 		|| (echo "[FAIL] alguna red no disponible"; exit 1)
 
 	@echo "[CHECK] conectividad mínima postgres"
 	@docker exec monitoring-python nc -z monitoring-postgres 5432 \
-		&& echo "[ OK ] postgres accesible" \
+		&& echo "[OK] postgres accesible" \
 		|| echo "[WARN] postgres no accesible (revisar dependencias)"
 
-	@echo "[ OK ] validación completada"
+	@echo "[OK] validación completada"
 
 # ------------------------------------------
 # Runtime hardening
@@ -1206,7 +1215,7 @@ deploy-validate:
 runtime-apply:
 	@echo "[RUNTIME] aplicando límites"
 	bash ops/deployment/configure_docker_limits.sh
-	@echo "[ OK ] runtime aplicado"
+	@echo "[OK] runtime aplicado"
 
 # ------------------------------------------
 # Limpieza
@@ -1317,7 +1326,7 @@ test-reproducibilidad:
 	@echo "[7] Verificación estado"
 	docker ps
 
-	@echo "[ OK ] reproducibilidad validada"
+	@echo "[OK] reproducibilidad validada"
 
 
 test-aislamiento-red:
@@ -1328,7 +1337,7 @@ test-aislamiento-red:
 		if nc -zv monitoring-postgres 5432 >/dev/null 2>&1; then \
 			echo "[FAIL] acceso permitido (revisar)"; exit 1; \
 		else \
-			echo "[ OK ] acceso restringido (esperado)"; \
+			echo "[OK] acceso restringido (esperado)"; \
 		fi'
 
 	@echo "[2] Validando redes internas"
@@ -1336,7 +1345,7 @@ test-aislamiento-red:
 	@docker network inspect observability-net | grep Containers || true
 	@docker network inspect restricted-net | grep Containers || true
 
-	@echo "[ OK ] test aislamiento completado"
+	@echo "[OK] test aislamiento completado"
 
 test-dependencias-host:
 	@echo "\n=== TEST DEPENDENCIAS HOST ==="
@@ -1346,10 +1355,10 @@ test-dependencias-host:
 
 	@echo "[2] Verificando /opt/monitoring interno"
 	@docker exec monitoring-python ls /opt/monitoring/src >/dev/null \
-	&& echo "[ OK ] código disponible dentro del contenedor" \
+	&& echo "[OK] código disponible dentro del contenedor" \
 	|| echo "[FAIL] dependencia externa detectada"
 
-	@echo "[ OK ] test dependencias finalizado"
+	@echo "[OK] test dependencias finalizado"
 
 test-permisos:
 	@echo "\n=== TEST PERMISOS ==="
@@ -1360,10 +1369,10 @@ test-permisos:
 
 	@echo "[2] escritura en logs"
 	@docker exec monitoring-cron sh -c "touch /opt/monitoring/logs/test.log" \
-	&& echo "[ OK ] escritura válida" \
+	&& echo "[OK] escritura válida" \
 	|| echo "[FAIL] problema permisos"
 
-	@echo "[ OK ] test permisos completado"
+	@echo "[OK] test permisos completado"
 
 test-arranque-desordenado:
 	@echo "\n=== TEST ARRANQUE DESORDENADO ==="
@@ -1381,7 +1390,7 @@ test-arranque-desordenado:
 
 	sleep 10
 
-	@echo "[ OK ] sistema tolera orden variable"
+	@echo "[OK] sistema tolera orden variable"
 
 test-aislamiento-fs:
 	@echo "\n=== TEST AISLAMIENTO FS ==="
@@ -1392,7 +1401,7 @@ test-aislamiento-fs:
 	@echo "[2] comprobando en contenedor B"
 	@docker exec monitoring-cron sh -c "cat /tmp/testfile" 2>/dev/null \
 	&& echo "[FAIL] fuga de filesystem" \
-	|| echo "[ OK ] aislamiento correcto"
+	|| echo "[OK] aislamiento correcto"
 
 # ------------------------------------------
 # ------------------------------------------
@@ -1435,7 +1444,7 @@ dev-down:
 .PHONY: rebuild rebuild-all
 
 rebuild: clean build
-	@echo "[ OK ] rebuild realizado"
+	@echo "[OK] rebuild realizado"
 	@echo ""
 
 rebuild-all:

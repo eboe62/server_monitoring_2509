@@ -1,11 +1,11 @@
 # SMTP Relay con Docker y Postfix (IaC)
 
-Infraestructura para envío seguro de correos mediante Postmark o cualquier SMTP externo, usando Docker y Postfix.  
+Infraestructura para envío seguro de correos mediante Postmark o cualquier SMTP externo, usando Docker y Postfix.
 Permite realizar relay SMTP local con autenticación y TLS, gestionado con Docker Compose.
 
 ---
 
-## ✅ Pasos de instalación (Docker Compose)
+## Pasos de instalación (Docker Compose)
 
 ```bash
 git clone <repo>

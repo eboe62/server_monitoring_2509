@@ -6,7 +6,7 @@ FAILED=0
 info(){ echo "[INFO] $1"; }
 warn(){ echo "[WARN] $1"; }
 fail(){ echo "[FAIL] $1"; FAILED=1; }
-ok(){ echo "[ OK ] $1"; }
+ok(){ echo "[OK] $1"; }
 
 COMPOSE_FILES=$(find ops -name "compose*.yml" -o -name "compose.yml" 2>/dev/null | sort -u)
 

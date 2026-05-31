@@ -6,13 +6,13 @@
 
 LOG_FILE="/var/log/backup_restore.log"
 
-echo "$(date '+%Y-%m-%d %H:%M:%S') [🚀] Iniciando restauración dentro de monitoring-python..." >> "$LOG_FILE"
+echo "$(date '+%Y-%m-%d %H:%M:%S') [INFO] Iniciando restauración dentro de monitoring-python..." >> "$LOG_FILE"
 
 /usr/bin/docker exec -i monitoring-python \
   python3 /opt/monitoring/ops/services/postgres/scripts/backup_restore.py
 
 if [ $? -eq 0 ]; then
-  echo "$(date '+%Y-%m-%d %H:%M:%S') [✅] Restauración completada correctamente." >> "$LOG_FILE"
+  echo "$(date '+%Y-%m-%d %H:%M:%S') [OK] Restauración completada correctamente." >> "$LOG_FILE"
 else
-  echo "$(date '+%Y-%m-%d %H:%M:%S') [❌] Error durante la restauración. Revisa el log anterior." >> "$LOG_FILE"
+  echo "$(date '+%Y-%m-%d %H:%M:%S') [ERROR] Error durante la restauración. Revisa el log anterior." >> "$LOG_FILE"
 fi

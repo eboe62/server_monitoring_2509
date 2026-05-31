@@ -56,6 +56,6 @@ PY
     fi
   fi
 
-  echo "❌ NO INSTALADO"
+  echo "[ERROR] NO INSTALADO"
 done < "$REQ_FILE"
 

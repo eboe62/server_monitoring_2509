@@ -98,28 +98,28 @@ try:
         code, _ = server.ehlo()
         if code != 250:
             raise RuntimeError(f"EHLO fallo: {code} {response}")
-        print("[ OK ] EHLO aceptado")
+        print("[OK] EHLO aceptado")
 
         # MAIL FROM
         code, response = server.mail(MAIL_FROM)
 
         if code != 250:
             raise RuntimeError(f"MAIL FROM fallo: {code} {response}")
-        print("[ OK ] MAIL FROM aceptado")
+        print("[OK] MAIL FROM aceptado")
 
         # RCPT TO
         code, response = server.rcpt(MAIL_TO)
 
         if code != 250:
             raise RuntimeError(f"RCPT TO fallo: {code} {response}")
-        print("[ OK ] RCPT TO aceptado")
+        print("[OK] RCPT TO aceptado")
 
         # DATA (aquí es donde obtenemos el queue_id)
         code, response = server.data(msg.as_string())
 
         if code != 250:
             raise RuntimeError(f"DATA fallo: {code} {response}")
-        print("[ OK ] DATA aceptado")
+        print("[OK] DATA aceptado")
 
         # Captura queue_id
         # Ejemplo response:
@@ -130,12 +130,12 @@ try:
         if match:
             queue_id = match.group(1)
             print(f"✅ SMTP aceptado por el relay Postmark")
-            print(f"[ OK ] queue_id capturado: {queue_id}")
+            print(f"[OK] queue_id capturado: {queue_id}")
 
             with open("/tmp/smtp_queue_id", "w") as f:
                 f.write(queue_id)
         else:
-            print(f"❌[WARN] No se pudo extraer queue_id de: {resp_str}")
+            print(f"[WARN] No se pudo extraer queue_id de: {resp_str}")
 
         server.quit()
 
@@ -146,7 +146,7 @@ try:
 
 except (smtplib.SMTPException, socket.error, RuntimeError, Exception) as e:
     print("")
-    print(f"❌ Error SMTP: {e}")
+    print(f"[ERROR] Error SMTP: {e}")
 
     # 🔥 IMPORTANTE: modo CI tolerante
     if os.getenv("CI") == "true":
@@ -182,14 +182,14 @@ if queue_id:
 
 print("   ✔ relay SMTP aceptó mensaje")
 
-print("⚠️ Nota:")
+print("[WARN] Nota:")
 print("   - Este test valida infraestructura SMTP, no la entrega final")
 print("   - Esto NO garantiza entrega final (limitaciones Postmark / cuota)")
 print("   - Verificar entrega real requiere webhook o API directa")
 print("   - 'status=sent' debe verificarse en logs del contenedor smtp-relay")
 print("   - Si no ves el email, puede ser por cuota de Postmark")
 
-print("ℹ️ Verifica los logs en el contenedor con:")
+print("[INFO] Verifica los logs en el contenedor con:")
 print("   docker logs monitoring-smtp-relay --tail 20")
 
 sys.exit(0)
