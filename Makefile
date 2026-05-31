@@ -102,6 +102,9 @@ audit:
 	@echo ""
 	$(MAKE) audit-runtime-ci
 	@echo ""
+	@echo "=== VERIFY SECURITY CHECKS ==="
+	$(MAKE) verify-security
+	@echo ""
 
 # ------------------------------------------
 # STATUS (snapshot)
