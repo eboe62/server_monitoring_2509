@@ -171,7 +171,7 @@ def init_config(env_path: str = None, secrets_dir: str = None):
             try:
                 with open(user_path) as f:
                     SMTP_USER = f.read().strip()
-                    log_info("[OK] SMTP_USER cargado desde secrets")
+                    log_info("[OK] SMTP_USER cargado desde secrets_dir")
             except Exception as e:
                 log_info(f"[ERROR] Error leyendo SMTP_USER desde {user_path}: {e}")
         elif not SMTP_USER:
@@ -186,10 +186,6 @@ def init_config(env_path: str = None, secrets_dir: str = None):
                 log_info(f"[ERROR] Error leyendo SMTP_PASS desde {pass_path}: {e}")
         elif not SMTP_PASS:
             log_info(f"[WARN] SMTP_PASS no encontrado en secrets ({pass_path})")
-
-        # Fallback a variables de entorno si no se leyeron archivos
-        SMTP_USER = user_val or os.getenv("SMTP_USER")
-        SMTP_PASS = pass_val or os.getenv("SMTP_PASS")
 
         # Hard-fail si el modo exige auth pero faltan credenciales
         if not SMTP_USER or not SMTP_PASS:
@@ -294,17 +290,17 @@ def send_email(html_content: str = None, subject: str = None, email_to: str = No
         smtp_host_ipv4 = socket.getaddrinfo(SMTP_SERVER, SMTP_PORT, socket.AF_INET)[0][4][0]
         with smtplib.SMTP(smtp_host_ipv4, SMTP_PORT, timeout=10) as server:
 
-            log_info(f"[ℹ️ ]: Conectando al servidor SMTP...")
+            log_info(f"[INFO] Conectando al servidor SMTP...")
 #            server.set_debuglevel(1)
             server.ehlo()
 
             # Solo usa TLS si el servidor lo soporta
             if server.has_extn("STARTTLS"):
-                log_info(f"[ℹ️ ]: Usando servidor SMTP externo, activando conexión segura, iniciando TLS...")
+                log_info(f"[INFO] Usando servidor SMTP externo, activando conexión segura, iniciando TLS...")
                 server.starttls()
                 server.ehlo()
 
-                log_info(f"[ℹ️ ]: Conexión TLS iniciada: Autenticando...")
+                log_info(f"[INFO] Conexión TLS iniciada: Autenticando...")
 
             # En modo 'auth' las credenciales son obligatorias
             mode = get_smtp_mode()
@@ -313,18 +309,18 @@ def send_email(html_content: str = None, subject: str = None, email_to: str = No
                     log_info(f"[ERROR] SMTP_MODE= auth pero faltan credenciales SMTP para enviar correo (se requieren smtp_user/smtp_pass)")
                     raise RuntimeError(f"[ERROR] SMTP_MODE= auth requiere credenciales SMTP para enviar correo")
                 server.login(SMTP_USER, SMTP_PASS)
-                log_info(f"[ℹ️ ]: Autenticación SMTP exitosa.")
+                log_info(f"[INFO] Autenticación SMTP exitosa.")
             else:
                 # relay-only: si hay credenciales las usa y si no, continúa sin autenticar
                 if SMTP_USER and SMTP_PASS:
                     server.login(SMTP_USER, SMTP_PASS)
-                    log_info(f"[ℹ️ ]: Autenticación SMTP exitosa (creds desde env/secrets).")
+                    log_info(f"[INFO] Autenticación SMTP exitosa (creds desde env/secrets).")
 
             # Enviar mensaje
             recipients = [email_to] + cc_list
             server.sendmail(EMAIL_FROM, recipients, msg.as_string())
 
-        log_info(f"[ℹ️ ]: Enviado a {email_to} con CC a {', '.join(cc_list) or '(sin CC)'}")
+        log_info(f"[INFO] Enviado a {email_to} con CC a {', '.join(cc_list) or '(sin CC)'}")
         return True
 
     except Exception as e:
