@@ -1,0 +1,563 @@
+
+//Servidor_DigitalOcean_Definicion_Proyecto_260301
+Versión 260301
+Estado: Estratégico – Alineado con Implementación PRO 260227
+Ámbito: server_monitoring_2602
+Proveedor: DigitalOcean
+Droplet: eob-260131
+Sistema Operativo: Ubuntu 24.04.3 LTS (x64)
+
+==========================================
+Características del usuario:
+==========================================
+Soy desarrollador informático fullstack y devops junior en España
+
+==========================================
+Cualidades que debería tener ChatGPT:
+==========================================
+Si no conoces una respuesta se sincero y dime que no la sabes.
+Proponme fuentes de estudio.
+No te inventes nada
+Ofréceme propuestas de mejora
+
+==========================================
+Comportamiento:
+==========================================
+Empieza todas tus respuestas con fecha y hora (aaaa/mm/dd hh:mm:ss)
+Los títulos del proyecto y sus carpetas deben terminar con año, mes y dia (aammdd)
+No me gusta que me des siempre la razón y me gusta el pensamiento crítico
+Si te falta información para completar el prompt, pídemela y transforma el prompt en un prompt completo.
+Pregunta siempre que sea necesario.
+Evita la utilización de gráficos, en su lugar utiliza esquemas con texto plano. De este modo evitamos el consumo innecesario de recursos.
+Se coherente y advierte de posible incoherencias
+
+==========================================
+ESTE DOCUMENTO
+==========================================
+Este es un:
+- Documento estratégico.
+- Define identidad, principios y arquitectura.
+- No contiene comandos operativos detallados.
+- Define el “qué” y el “por qué”
+
+==========================================
+IDENTIDAD DEL PROYECTO
+==========================================
+Naturaleza:
+Plataforma de monitorización y observabilidad contenerizada bajo modelo Infraestructura como Código (IaC).
+
+La plataforma se despliega mediante múltiples stacks Docker Compose independientes, organizados por dominios funcionales (observabilidad, backend, base de datos, etc.).
+
+La arquitectura de observabilidad adopta un modelo híbrido:
+- observabilidad container-centric para aplicaciones y servicios contenerizados
+- observabilidad host-centric para eventos críticos de seguridad y sistema
+
+Container-centric:
+- aplicaciones
+- métricas
+- stdout/stderr
+- logs Docker
+
+Host-centric:
+- SSH
+- fail2ban
+- kernel
+- firewall
+- eventos de seguridad del sistema
+
+Este enfoque permite mantener capacidades de observabilidad defensiva sobre el servidor sin acoplar el runtime interno de los contenedores al sistema anfitrión.
+
+Los logs del host se montan exclusivamente en modo lectura (`/var/log:ro`) mientras que el estado interno de Promtail se persiste mediante volúmenes Docker explícitos.
+
+Este sistema opera explícitamente en un modelo "single-node Docker Compose sin orquestador". No se utiliza ningún sistema de orquestación como Kubernetes o Docker Swarm.
+
+Como consecuencia:
+- La gestión de resiliencia depende exclusivamente de las políticas de reinicio de Docker (restart: always).
+- No existe reconciliación automática de estado deseado (desired state).
+- La recuperación ante fallos de contenedores debe validarse mediante tests de resiliencia específicos (SIGKILL, caída de dependencias, OOM).
+- La red de servicios se basa en redes Docker externas compartidas, sin service discovery avanzado.
+
+Cualquier evolución futura hacia un entorno multi-nodo u orquestado deberá tratarse como un cambio arquitectónico mayor.
+
+El sistema utiliza una arquitectura de contenedores estructurada en:
+
+    - Infra-Stacks:
+        Contenedores operativos del sistema.
+        Ejemplos:
+            monitoring-python
+            monitoring-cron
+
+No existe runtime operativo compartido entre stacks.
+Cada contenedor define su propio runtime de forma autónoma y explícita.
+
+    - Micro-Stacks:
+        Servicios autónomos ubicados en:
+            ops/services/<servicio>/
+
+El runtime Python del sistema se define de forma independiente en cada contenedor que lo requiera.
+Las dependencias se instalan en cada imagen durante su build para garantizar:
+- aislamiento
+- reproducibilidad
+- independencia entre stacks
+
+Entorno objetivo:
+Servidor dedicado (Droplet) en DigitalOcean.
+
+Propósito principal:
+Diseñar, desplegar y operar una infraestructura de monitorización reproducible, modular y arquitectónicamente coherente, orientada a:
+- Detección de eventos de seguridad.
+- Observabilidad centralizada.
+- Auditoría de actividad del sistema.
+- Análisis estructurado de logs.
+- Evaluación controlada de exposición a ataques.
+
+Por lo tanto se asumen las siguientes limitaciones:
+- No existe alta disponibilidad (single point of failure)
+- No hay autoescalado
+- No hay self-healing más allá de restart policies
+- No hay balanceo dinámico de carga
+
+El proyecto tiene carácter formativo-evolutivo, pero adopta criterios de arquitectura profesional en entorno PRO.
+
+==========================================
+2. PRINCIPIOS RECTORES
+==========================================
+El sistema se basa en contenedores Docker organizados por servicios.
+
+Se aplica un modelo de seguridad runtime basado en:
+- principio de mínimo privilegio contextual,
+- aislamiento de red,
+- control de exposición de puertos,
+- endurecimiento proporcional al nivel de control sobre cada contenedor,
+- ejecución dentro de contenedores (no en host).
+
+Los servicios se comunican a través de redes monitoring-network (Makefile)
+Reglas:
+- Comunicación interna exclusivamente dentro de la red Docker
+- No exposición directa de servicios internos
+- Acceso desde el host únicamente mediante loopback (127.0.0.1) cuando sea necesario
+
+El sistema debe ser:
+- Robusto
+- Mantenible
+- Resiliente
+
+La resiliencia implica:
+- recuperación automática ante fallos
+- degradación controlada
+- observabilidad continua
+
+El sistema debe poder operarse de forma sencilla y verificable.
+Debe incluir:
+- comandos de validación (make test)
+- auditoría automatizada (FASE 4/5)
+- validación de resiliencia mediante tests reproducibles
+
+El sistema debe garantizar las siguientes capacidades críticas:
+- Reproducibilidad:
+    Que el sistema se construya igual siempre (usando digests de Docker en lugar de etiquetas variables).
+- Determinismo:
+    Que el arranque y la conexión entre servicios funcionen bajo cualquier orden o circunstancia.
+- Aislamiento (Red y FS):
+    Garantizar que ningún contenedor acceda a lo que no debe (ni en red ni en archivos del host).
+- Privilegios:
+    Asegurar el principio de mínimo privilegio (ejecución non-root, control de capabilities de Linux).
+- Coherencia:
+    Eliminar el "drift" (desviación) entre la documentación, el código de infraestructura y el entorno real.
+
+2.1 Infraestructura como Código (IaC)
+El entorno se rige por los siguientes principios:
+- El host no ejecuta lógica de aplicación funcional del proyecto.
+- El host puede ejecutar lógica operacional declarativa asociada a:
+    - orquestación Docker Compose
+    - auditoría estructural
+    - validaciones IaC
+    - comprobaciones de reproducibilidad
+    - tooling operacional host-side
+- Toda lógica funcional de negocio y procesamiento runtime permanece exclusivamente dentro de contenedores oficiales del proyecto.
+- El estado del sistema se define exclusivamente por:
+    el repositorio versionado
+    las imágenes Docker construidas
+    los volúmenes declarados
+- No se permiten dependencias implícitas del sistema operativo.
+- No se permiten dependencias implícitas de runtime, configuración sensible o credenciales mediante bind mounts del host.
+- Todo runtime operativo debe reconstruirse exclusivamente desde imágenes Docker declarativas.
+- El código ejecutado por los contenedores debe formar parte de las imágenes Docker construidas.
+- No se permiten bind mounts de código fuente en runtime productivo.
+- La infraestructura debe poder reconstruirse desde cero mediante Docker Compose y repositorio versionado exclusivamente.
+- No se permite ejecución manual fuera del modelo declarativo.
+- La arquitectura debe poder reconstruirse desde cero siguiendo el documento normativo de implementación.
+- No se permite el uso de wrappers host-level para ejecutar scripts del proyecto.
+    Ejemplos prohibidos:
+        bash scripts/*.sh ejecutados desde el host
+        cron del host invocando scripts Python del proyecto
+- Toda lógica de aplicación debe ejecutarse exclusivamente dentro de contenedores oficiales del runtime:
+        monitoring-python
+        monitoring-cron
+
+Modelo de ejecución de contenedores:
+- Los contenedores deben ser autocontenidos, reproducibles y sin dependencias implícitas del host.
+- No se permite el uso de bind mounts de código como mecanismo estructural en entorno PRO.
+- El comportamiento del sistema debe ser idéntico independientemente del host subyacente.
+
+Regla de privilegios:
+- Si un contenedor cumple:
+    - autonomía estructural
+    - reproducibilidad completa
+    - ausencia de dependencias del host
+  debe ejecutarse como usuario no-root.
+
+- Si un contenedor tiene finalidad:
+    - interactiva
+    - diagnóstico
+    - ejecución manual controlada
+  puede ejecutarse como root, siempre de forma explícita y justificada.
+
+Esta regla establece el equilibrio entre:
+- seguridad (principio de mínimo privilegio)
+- operabilidad (debugging y mantenimiento)
+- coherencia arquitectónica (IaC)
+
+Los snapshots del proveedor se consideran únicamente mecanismo operativo de contingencia, no parte estructural del modelo.
+
+2.2. Runtime de ejecución Python
+La ejecución de los módulos Python del proyecto se divide estrictamente según su propósito operacional: la lógica funcional de negocio se ejecuta de manera exclusiva dentro de los contenedores del proyecto, mientras que las tareas de control-plane e inspección de infraestructura se ejecutan directamente en el host de manera nativa.
+
+Toda ejecución de código Python funcional de aplicación se realiza dentro de contenedores basados en la imagen runtime del proyecto:
+    monitoring-python
+
+Este runtime define:
+    PYTHONPATH=/opt/monitoring/src
+
+y garantiza un entorno reproducible y aislado para todos los servicios del sistema, manteniendo el motor de contenedores fuera del alcance de la aplicación.
+
+2.3 Separación de responsabilidades en tres planos
+PLANO 1 – Aplicación (Micro-Stacks Autónomos)
+- Servicios desacoplados.
+- Despliegue independiente.
+- Volúmenes propios.
+- Secrets propios.
+- No introducen dependencias estructurales cruzadas.
+
+    Ejemplos:
+    - PostgreSQL (micro-stack de persistencia)
+    - SMTP Relay
+
+PLANO 2 – Runtime Interno (Infra-Stacks)
+- Servicios internos del entorno.
+- Comparten código versionado y runtime operativo.
+- No son autónomos fuera del proyecto a nivel arquitectónico/exportable.
+
+No obstante:
+- Deben ser autónomos a nivel runtime/ejecución.
+- El código necesario para operar debe residir dentro de las imágenes Docker.
+- No puede existir dependencia estructural de bind mounts de código fuente del host.
+- Deben poder reconstruirse desde cero en entorno limpio.
+
+    Ejemplos:
+    - monitoring-python
+    - monitoring-cron
+    - observability stack (Grafana + Loki + Promtail)
+
+PLANO 3 – Seguridad del Host
+- Componentes nativos del sistema operativo.
+- No ejecutan lógica de aplicación.
+- Refuerzan el perímetro.
+
+    Ejemplos:
+    - UFW (deny-by-default)
+    - fail2ban
+    - configuración SSH endurecida
+Cada plano tiene responsabilidades estrictamente delimitadas.
+
+2.4 Red y comunicación
+- Todos los servicios del proyecto comparten una red Docker explicita monitoring-network (Makefile).
+- La comunicación entre servicios solo puede realizarse:
+    vía redes monitoring-network (Makefile)
+    mediante variables de entorno declarativas
+    mediante volúmenes explícitos
+- No se permiten dependencias implícitas ni enlaces no declarados.
+
+2.4 Regla arquitectónica de ejecución Python
+Ningún archivo Python puede ejecutarse por ruta absoluta.
+
+Forma válida:
+    python3 -m paquete.modulo
+
+Forma inválida:
+    python3 src/modulo/script.py
+    /usr/bin/python3 ...
+
+Toda ejecución de lógica funcional Python de aplicación ocurre exclusivamente dentro de los contenedores del ecosistema:
+    monitoring-python
+    monitoring-cron
+
+Excepciones explícitamente permitidas para su ejecución directa en el host:
+    tooling operacional host-side
+    auditoría estructural IaC
+    validaciones de políticas Docker Compose
+    verificaciones de reproducibilidad
+    wrappers declarativos de automatización
+
+Estas excepciones se ejecutan de manera nativa en el host para garantizar el acceso al control-plane de Docker sin comprometer la seguridad de los contenedores ni requerir la exposición de docker.sock. Ninguna de estas excepciones del host debe contener lógica funcional de negocio.
+
+El contenedor monitoring-python actúa como un entorno aislado dedicado a las operaciones de la aplicación (comunicación con bases de datos, envío de métricas y gestión de logs de observabilidad), delegando por completo las tareas de auditoría de infraestructura al sistema operativo del host.
+
+==========================================
+3. TIPOLOGÍA OFICIAL DE CONTENEDORES
+==========================================
+
+El entorno PRO distingue explícitamente distintos tipos de contenedores según su función arquitectónica y comportamiento runtime.
+
+No todos los contenedores representan servicios HTTP tradicionales.
+Por tanto, no todos requieren el mismo modelo de healthcheck, readiness o liveness.
+
+TIPOS OFICIALES:
+
+1. SERVICE_RUNTIME
+   Contenedores que exponen funcionalidad activa consumible:
+   - APIs
+   - interfaces web
+   - servicios DB
+   - almacenamiento
+   - observabilidad
+
+   Requieren:
+   - readiness checks reales
+   - validación funcional explícita
+
+   Ejemplos:
+   - grafana
+   - loki
+   - postgres
+
+2. SUPERVISOR_RUNTIME
+   Contenedores cuya función principal es mantener un supervisor
+   o scheduler operativo.
+
+   Requieren:
+   - liveness checks de proceso
+
+   Ejemplo:
+   - monitoring-cron
+
+3. TOOLBOX_RUNTIME
+   Contenedores persistentes utilizados como entorno operador, runtime de ejecución de la aplicación o punto de entrada operacional interno.
+
+   No representan servicios funcionales expuestos hacia el exterior.
+
+   Pueden:
+   - mantener proceso keepalive explícito
+   - permitir docker exec controlado para depuración de la aplicación
+   - ejecutar tooling runtime propio de la lógica de negocio
+
+   NO requieren readiness HTTP ni validación semántica de servicio. No deben asumir acceso al control-plane de Docker ni ejecutar scripts de auditoría IaC.
+
+   Ejemplo:
+   - monitoring-python
+
+4. INFRA_TRUSTED
+   Contenedores externos o upstream considerados dependencias
+   infraestructurales confiables.
+
+   Pueden requerir:
+   - readiness
+   - liveness
+   según su función real.
+
+   Ejemplos:
+   - promtail
+   - smtp-relay
+
+Resumen:
+|	Tipo de Contenedor	|	Función	|	Tipo de Check Permitido	|	Ejemplo	|
+|	SERVICE_RUNTIME	|	Exponen APIs o servicios activos consumibles.	|	Readiness real (pg_isready, endpoints /ready o /health). No acepta simulaciones.	|	Postgres, Grafana, Loki	|
+|	SUPERVISOR_RUNTIME	|	Mantienen tareas programadas (schedulers).	|	Liveness de procesos (pidof, pgrep) para ver si el supervisor sigue vivo.	|	monitoring-cron	|
+|	TOOLBOX_RUNTIME	|	Entornos de herramientas persistentes para operadores.	|	No requieren endpoints. Se permiten keepalives básicos si están documentados.	|	monitoring-python	|
+|	INFRA_TRUSTED	|	Componentes de infraestructura de terceros confiables.	|	Alineados estrictamente con las capacidades nativas de la imagen upstream.	|	Promtail, SMTP-relay	|
+
+==========================================
+4. AUDITORIA SRE (Site Reliability Engineering)
+==========================================
+
+SRE: Mientras que un administrador de sistemas tradicional gestiona la infraestructura de forma manual, un ingeniero SRE lo hace a través de código y automatización, buscando que los sistemas sean ultra-escalables, altamente disponibles y ultrarresilientes. Mide la brecha entre la teoría arquitectónica y la realidad operativa.
+
+En este entorno, la auditoría SRE se define a través de las siguientes dimensiones:
+1. El fin del "Grep" (Auditoría Estructurada vs. Heurística):
+    Tradicionalmente, auditar un despliegue consistía en buscar texto con comandos como grep en los archivos de configuración (por ejemplo, buscar si la palabra "healthcheck" aparecía en el código).
+    En este proyecto, la auditoría SRE pasa a ser estructurada y determinista: el motor oficial ops/audit/compose_policy_checks.py ejecuta un parseo nativo en el host sobre las estructuras de datos de los archivos Compose de manera reproducible, generando salidas JSON estructuradas machine-readable alineadas con el plano arquitectónico.
+
+2. Clasificación Semántica (La "ITV" de los contenedores):
+    La auditoría SRE analiza contenedor por contenedor y los clasifica según su naturaleza operativa. El auditor SRE no exige que todo tenga un healthcheck HTTP. En su lugar, el script oficial (check-health <container>) comprueba si el contenedor cumple con su estándar:
+    - Si es un Service, audita que responda un endpoint real (p.e. /ready).
+    - Si es un Supervisor, audita que el proceso del sistema (pidof) esté vivo.
+    - Si es una Toolbox, valida que su existencia esté documentada para que el sistema de alertas no levante un falso positivo.
+
+3. Verificación de Invariantes de Seguridad y Runtime:
+    La auditoría de infraestructura se encarga de examinar los archivos declarativos en el host para buscar "Hallazgos Críticos" antes o durante el despliegue. Utiliza el motor de políticas en Python para verificar de forma estática y determinista que:
+    - Mínimo Privilegio: Comprueba en los bloques de servicios que las configuraciones no expongan el socket de Docker (docker.sock) de manera innecesaria ni activen flags de privilegios peligrosos (privileged=true).
+    - Inmutabilidad: Detecta si hay imágenes usando etiquetas dinámicas (como :latest) en lugar de identificadores fijos (digests de Docker), asegurando la reproducibilidad del sistema.
+    - Control Perimetral: Los comportamientos reactivos del entorno vivo ante fallos o aislamientos de red se delegan de forma separada a los tests de resiliencia del Makefile (make test-resilience-completo).
+
+4. Detección del Drift (Desviación Documental):
+    Uno de los objetivos principales de esta auditoría es asegurar que no haya mentiras en el sistema. Analiza el ecosistema para certificar la consistencia en cuatro niveles:
+
+        ADR (Diseño) --> longleftrightarrow Compose (Configuración) --> longleftrightarrow CI (Control) --> longleftrightarrow Runtime (Realidad)
+
+    Si un ADR dice que una red está aislada, pero el archivo de Compose no aplica las reglas de firewall o el entorno en ejecución permite la salida a internet, la auditoría SRE lo detecta, emite un código de salida de error (exit 1) y bloquea el despliegue en el CI/CD.
+
+Resumen Operativo: En este proyecto ejecutar la auditoría SRE significa ejecutar comandos como make audit o make test-aislamiento-red. Su resultado no es un reporte en PDF para la gerencia, sino un inventario formalizado de garantías técnicas que demuestra matemáticamente si el sistema es seguro, portátil, resiliente y determinista.
+
+==========================================
+5. COMPONENTES FUNCIONALES
+==========================================
+
+5.1 Ingesta y procesamiento de logs
+- Scripts Python que procesan:
+    auth.log
+    kern.log
+    fail2ban
+    logs del honeypot
+
+- Detección de patrones sospechosos.
+- Normalización de eventos.
+- Inserción en PostgreSQL.
+
+5.2 Persistencia – PostgreSQL como micro-stack autónomo
+Características:
+- Volumen persistente propio.
+- No expuesto a red pública.
+- Comunicación interna vía redes monitoring-network (Makefile).
+- Migrable mediante dump lógico.
+- Sustituible por servidor PostgreSQL compatible.
+- No depende estructuralmente de otros servicios.
+
+El modelo de persistencia es local al droplet mediante volúmenes Docker.
+
+5.3 Monitorización de recursos Docker
+- Medición de CPU, RAM, Swap y límites.
+- Detección de saturaciones.
+- Registro periódico vía cron declarativo.
+
+5.4 Programación de tareas
+Modelo:
+- No se utiliza cron del host.
+- Todas las tareas programadas se ejecutan en el contenedor monitoring-cron.
+- Supercronic es el scheduler oficial.
+- El host no contiene crontabs relacionadas con la aplicación.
+
+5.5 Observabilidad centralizada
+Stack contenerizado:
+- Promtail → recolección de logs
+- Loki → almacenamiento
+- Grafana → visualización
+
+Objetivos:
+- Centralizar logs del sistema y contenedores.
+- Permitir análisis temporal.
+- Soportar detección temprana de incidentes.
+
+5.6 Sistema de alertas
+- SMTP relay independiente.
+- Envío de alertas de seguridad y recursos.
+- Evaluación periódica de riesgo mediante jobs declarativos.
+
+==========================================
+6. MODELO DE EXPOSICIÓN Y SEGURIDAD
+==========================================
+
+6.1 Perímetro del host
+- Política deny-by-default en UFW.
+- Solo puertos estrictamente necesarios:
+    22 (SSH)
+    80/443 si aplica
+- PostgreSQL no se expone públicamente.
+- No se permite apertura arbitraria de puertos.
+
+6.2 Honeypot controlado
+Puede mantenerse un servicio expuesto con fines de observación de ataques, bajo las siguientes condiciones:
+- Aislamiento de red.
+- Sin credenciales reales.
+- Sin acceso a micro-stack PostgreSQL real.
+- Logging completo hacia observabilidad.
+- No compartir volúmenes con servicios críticos.
+
+El honeypot no forma parte estructural del runtime principal.
+
+6.3 Defensa en profundidad
+El modelo de seguridad del sistema aplica defensa en profundidad mediante:
+- UFW en host con política deny-by-default.
+- fail2ban para protección frente a ataques automatizados.
+- Separación arquitectónica entre Infra-Stacks y Micro-Stacks.
+- Red Docker interna compartida (redes monitoring-network (Makefile)) para comunicación entre servicios.
+- Minimización de superficie de exposición de puertos Docker.
+- Validación posterior al despliegue.
+
+6.4 Principio de exposición mínima:
+- Los servicios internos del sistema no deben exponerse directamente al exterior.
+- La comunicación entre contenedores se realiza mediante redes Docker internas.
+- La exposición de puertos hacia el host solo se permite cuando existe una justificación operativa explícita (por ejemplo, interfaces de administración como Grafana).
+- Las reglas concretas de exposición de puertos se definen en los ADR de arquitectura.
+
+==========================================
+7. MODELO DE RECUPERACIÓN
+==========================================
+La resiliencia del entorno se basa en:
+- Arquitectura reproducible mediante IaC.
+- Recreación declarativa de contenedores.
+- Restauración lógica de datos cuando aplique.
+- Validación continua mediante tests automatizados de resiliencia:
+    - crash de proceso (PID 1)
+    - pérdida real de conectividad (DB)
+    - fallo de red (disconnect/reconnect)
+    - validación de observabilidad (Loki)
+- Snapshots del droplet como mecanismo operativo extraordinario.
+
+Los snapshots no sustituyen el modelo declarativo ni la validación operativa continua.
+
+==========================================
+8. ALCANCE Y LIMITACIONES
+==========================================
+Incluye:
+- Infraestructura Docker completa.
+- Micro-stacks autónomos.
+- Observabilidad contenerizada.
+- Persistencia local declarativa.
+- Hardening del host.
+- Pipeline CI básico en GitHub Actions para:
+    - Build de contenedores
+    - Validación continua automatizada (CI) de configuración Docker Compose mediante pipeline reproducible
+    - Ejecución de tests operativos automatizados (resiliencia, observabilidad, SMTP, cron, health)
+    - Auditoría automática de seguridad runtime (puertos, docker.sock, uso de latest)
+
+Excluye:
+- Despliegue automático (CD).
+- Alta disponibilidad multi-nodo.
+- Persistencia gestionada externa.
+- Orquestadores como Kubernetes.
+- Escalado horizontal automático.
+
+==========================================
+9. OBJETIVO EVOLUTIVO
+==========================================
+El proyecto debe permitir:
+- Extensión mediante nuevos jobs.
+- Incorporación de nuevos micro-stacks.
+- Sustitución de servicios sin romper arquitectura.
+- Evolución progresiva hacia mayor madurez operativa.
+La autonomía estructural prevalece sobre la conveniencia de reutilización.
+
+==========================================
+10. RELACIÓN CON DOCUMENTO DE IMPLEMENTACIÓN
+==========================================
+Este documento es estratégico y define:
+- Identidad
+- Principios
+- Arquitectura
+- Modelo de seguridad
+- Alcance
+
+El documento normativo operativo es:
+- Servidor_DigitalOcean_Implementacion_260227.txt
+
+En caso de conflicto, el documento de implementación prevalece.
