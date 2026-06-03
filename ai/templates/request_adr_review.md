@@ -1,4 +1,4 @@
-# ADR Review Request Template
+# Request ADR Review Template
 
 ## ADR Information
 
