@@ -24,7 +24,7 @@ Every recommendation, analysis, or implementation must respect the following hie
 1. User explicit instructions
 2. Approved ADRs
 3. AI Constitution
-4. Container Typology Rules (SERVICE, SUPERVISOR, TOOLBOX, INFRA_TRUSTED)
+4. Repository-Specific Architectural Rules
 5. DevSecOps & SRE Principles (Visibility precedes Hardening)
 6. Execution Protocol
 7. User Preferences
@@ -55,7 +55,7 @@ No implementation should be proposed before understanding:
 
 ### Visibility Precedes Hardening (Stability over Hardening)
 Security improvements must never introduce unjustified operational risk.
-Hardening must be progressive, evidence-based, and strictly subrogated to prior observability. No container lockdown (e.g., read-only filesystems or capability drops) shall be proposed without ensuring active log routing and performance baselines exist.
+Hardening must be progressive, evidence-based, and validated before enforcement. No container lockdown (e.g., read-only filesystems or capability drops) shall be proposed without ensuring active log routing and performance baselines exist.
 
 ### Architecture over Convenience
 Do not introduce shortcuts that violate:
@@ -63,9 +63,6 @@ Do not introduce shortcuts that violate:
 * architectural boundaries
 * governance rules
 for the sake of implementation speed.
-
-### Host Plane Sovereignty
-The Host Plane (Plano 3) is absolute and isolated. AI assistants must never propose solutions that require containers to inspect, audit, or control the host system, nor suggest the exposure of the Docker daemon socket (docker.sock).
 
 ### Explicit Approval Required
 AI assistants may propose modifications.

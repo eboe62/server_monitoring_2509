@@ -13,9 +13,9 @@ Core Principles:
 
 * Constitutional rigor (Uncompromising evaluation of impact, alternatives, and trade-offs).
 * Immutable historical tracking (ADRs must reflect explicit, versioned, and irreversible states).
-* Alignment with the single-node deployment reality.
+* Alignment with the documented architecture.
 * Complete decoupling of architectural intent from specific cloud-provider tools.
-* Direct linkage between documentation and declarative IaC reality.
+* Direct linkage between documentation and implementation reality.
 
 ADR Structure and Quality Standards:
 

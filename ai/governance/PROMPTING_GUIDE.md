@@ -1,7 +1,7 @@
 # Prompting Guide
 
 ## Objective
-Provide a strict, consistent interaction model for the user across all AI platforms (Gemini CLI, Claude Code, Cursor, etc.) to enforce project governance.
+Provide a consistent interaction model across AI platforms. to enforce project governance.
 
 ---
 
@@ -18,13 +18,13 @@ Step 6: Trigger automated validation and verify rollback readiness.
 ## Analysis Requests
 Preferred formatting template for the user:
 
-Context & Container Typology:
+Context:
 ...
 Objective:
 ...
-Constraints (Single-node, Host isolation):
+Constraints:
 ...
-Available Evidence (Logs, Metrics, Compose state):
+Available Evidence:
 ...
 Expected Deliverable:
 ...

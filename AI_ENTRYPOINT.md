@@ -4,7 +4,7 @@
 
 This document is the primary, mandatory entry point for all AI assistants operating within this repository.
 
-Before performing any analysis, review, recommendation, or implementation task, the AI assistant must read and index the authoritative governance documents and specialized skills listed below to guarantee alignment with the project's single-node DevSecOps operational reality.
+Before performing any analysis, review, recommendation, or implementation task, the AI assistant must read and index the authoritative governance documents and specialized skills listed below to guarantee alignment with the repository governance model.
 
 ---
 
@@ -51,7 +51,7 @@ Utilize these standardized formats when producing repository assets or responses
 
 ## Authoritative Project Documentation
 
-The following local files represent the absolute source of truth regarding the infrastructure and requirements:
+The following repository documents represent the authoritative source of truth regarding requirements, architecture, implementation, and operational procedures.
 
 ### Architecture Decisions
 * docs/decisiones/
@@ -104,4 +104,4 @@ Priority hierarchy (Higher levels strictly override lower levels):
 
 ## Objective
 
-Provide deterministic, auditable, highly structured, and evidence-based technical assistance aligned with the project's single-node DevSecOps governance model.
+Provide deterministic, auditable, highly structured, and evidence-based technical assistance aligned with the repository governance model.

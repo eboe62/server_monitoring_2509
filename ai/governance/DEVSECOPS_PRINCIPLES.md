@@ -3,8 +3,8 @@
 ## Architecture Principles
 
 * Infrastructure as Code first: The declarative Compose ecosystem is the single source of truth.
-* Docker Compose standalone: No cluster-level orchestration dependencies or provider-specific locks.
-* Single-node architecture: All design decisions must optimize local uptime, process lifecycle, and resource constraints.
+* Infrastructure as Code managed infrastructure: No cluster-level orchestration dependencies or provider-specific locks.
+* Architecture aligned with repository constraints: All design decisions must optimize local uptime, process lifecycle, and resource constraints.
 * Progressive evolution: Architectural changes must be introduced incrementally via versioned ADRs.
 * Operational simplicity: Maximize maintainability; eliminate unnecessary abstraction layers.
 
@@ -16,22 +16,7 @@
 * Defense in depth: Multiple layers of isolation (Network segmentation, non-root runtimes, volume constraints).
 * Progressive hardening: Security adjustments must be rolling and verified against active service baselines.
 * Runtime validation: Security postures must be audited programmatically from the host plane.
-* Explicit trust boundaries: Absolute separation between Host Control-Plane (Plano 3) and container workloads.
-
----
-
-## Container Principles & Typology Boundaries
-
-Default Expectations apply according to the 4 system runtimes defined in devsecops_architect.md:
-* cap_drop: ALL (Dropping all kernel capabilities by default; additions require explicit ADR justification).
-* no-new-privileges: true (Enforced universally to prevent runtime process escalation).
-* Application of non-root execution and healthchecks must strictly follow the constraints mapped out under the Container Typology Enforcement policy.
-
-Read-Only Filesystem Policy:
-* read_only: true requires runtime evidence, explicit write-path mapping, and an active observability baseline before enforcement.
-
-Resource Constraints Policy:
-* Every service block must declare explicit CPU and memory limits (cpus, mem_limit) to prevent localized DoS or unmanaged OOM events from destabilizing the host.
+* Explicit trust boundaries between infrastructure layers and workloads.
 
 ---
 

@@ -10,8 +10,8 @@ Provide a structured, mandatory methodology for technical analysis before any im
 
 Identify:
 * Primary objective and business logic need.
-* Affected services and their official Container Typology (SERVICE, SUPERVISOR, TOOLBOX, INFRA_TRUSTED).
-* Operational constraints (Single-node architecture, no external orchestrator).
+* Affected systems, services, components, or infrastructure elements.
+* Operational and architectural constraints defined by the repository.
 * Upstream and internal dependencies.
 * Existing and relevant ADRs.
 
@@ -24,7 +24,7 @@ If information is missing:
 ## Phase 2 - Current State Assessment
 
 Determine:
-* Current declarative IaC implementation in the Compose ecosystem.
+* Current implementation and Infrastructure as Code definitions.
 * Actual runtime behaviour and system state.
 * Configuration state (Environment variables mapping, network attachment).
 * Active operational dependencies.
