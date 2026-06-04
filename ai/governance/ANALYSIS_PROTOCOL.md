@@ -79,7 +79,7 @@ Explain the technical rationale for each path, prioritizing simplicity and upstr
 
 Define:
 * Required evidence to prove successful deployment.
-* Specific test definitions (e.g., local resilience simulations, make test-resilience-completo).
+* Specific test definitions (e.g., local resilience simulations or automated pipeline verification tasks).
 * Actionable rollback strategy (Exact steps to reverse configurations and preserve data state).
 * Unambiguous acceptance criteria.
 

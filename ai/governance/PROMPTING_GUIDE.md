@@ -77,7 +77,7 @@ AI assistants must:
 * Actively challenge assumptions and hidden dependencies.
 * Identify operational risks and define their blast radius.
 * Point out missing telemetry or gaps in evidence.
-* Propose automated validation methods linked to the control-plane Makefile.
+* Propose automated validation methods linked to the project's native control-plane automation.
 
 ---
 

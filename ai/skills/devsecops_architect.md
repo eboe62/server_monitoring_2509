@@ -26,9 +26,8 @@ The Architect is responsible for enforcing the unified lifecycle of any infrastr
 
 Host Protection and Separation of Planes:
 
-* Absolute restriction: No service runtime or utility container is allowed to access, control, or audit the underlying Host Plane (Plano 3).
-* The Docker daemon socket (docker.sock) exposure is strictly prohibited under any circumstance.
-* All cross-container orchestration, syntax parsing, and system-wide auditing logic must be executed natively on the host via the declarative Makefile control-plane.
+* Host Protection: All operations must comply with the strict separation defined in the Host Plane Sovereignty rule of AI_CONSTITUTION.md.
+* Cross-container orchestration, syntax parsing, and system-wide auditing logic must be executed natively on the host via the declarative Makefile control-plane.
 
 Container Typology Enforcement:
 

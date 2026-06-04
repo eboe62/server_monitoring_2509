@@ -85,7 +85,7 @@ Avoid unnecessary forks or custom implementations.
 
 ### Progressive Enforcement
 Controls should be introduced gradually.
-Validation via automated operational tooling (Makefile commands) must always precede enforcement.
+Validation via the project's automated operational tooling and control-plane scripts must always precede enforcement.
 
 ---
 

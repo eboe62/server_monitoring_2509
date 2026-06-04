@@ -22,11 +22,10 @@
 
 ## Container Principles & Typology Boundaries
 
-Default Expectations:
+Default Expectations apply according to the 4 system runtimes defined in devsecops_architect.md:
 * cap_drop: ALL (Dropping all kernel capabilities by default; additions require explicit ADR justification).
 * no-new-privileges: true (Enforced universally to prevent runtime process escalation).
-* non-root execution: Mandatory across SERVICE, SUPERVISOR, and TOOLBOX runtimes unless upstream compatibility prevents it.
-* healthchecks enabled: Mandatory for SERVICE_RUNTIME; strictly forbidden on supervisor or toolbox runtimes to prevent false evictions.
+* Application of non-root execution and healthchecks must strictly follow the constraints mapped out under the Container Typology Enforcement policy.
 
 Read-Only Filesystem Policy:
 * read_only: true requires runtime evidence, explicit write-path mapping, and an active observability baseline before enforcement.
@@ -47,12 +46,9 @@ Resource Constraints Policy:
 
 ## Observability Principles
 
-All core services must provide:
-* Structured logs routed exclusively to stdout/stderr.
-* Runtime metrics accessible via isolated internal networks.
-* Deterministic health status indicators.
+All core services must provide structured logs (stdout/stderr), isolated runtime metrics, and deterministic health indicators.
 
-Observability is a binding prerequisite for hardening. If a service cannot be monitored, its security posture cannot be modified.
+These outputs serve to establish the mandatory operational baselines required by the Visibility Precedes Hardening rule in AI_CONSTITUTION.md.
 
 ---
 

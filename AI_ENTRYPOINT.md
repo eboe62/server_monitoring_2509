@@ -67,10 +67,10 @@ The following local files represent the absolute source of truth regarding the i
 * docs/Project_Corrections/
 
 ### Tooling
-* tooling_260418.txt
+* [Project specific tooling manifest file, e.g., tooling_*.txt]
 
 ### Infrastructure & Hardware Context
-* Configuracion_Equipo_2601.txt
+* [Project specific hardware configuration file, e.g., Configuracion_Equipo_*.txt]
 
 ---
 
