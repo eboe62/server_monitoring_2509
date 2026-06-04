@@ -1,16 +1,16 @@
-# AI Entrypoint
+# AI_ENTRYPOINT.md
 
 ## Purpose
 
-This document is the primary entry point for AI assistants operating within this repository.
+This document is the primary, mandatory entry point for all AI assistants operating within this repository.
 
-Before performing any analysis, review, recommendation, or implementation task, read the authoritative governance documents listed below.
+Before performing any analysis, review, recommendation, or implementation task, the AI assistant must read and index the authoritative governance documents and specialized skills listed below to guarantee alignment with the project's single-node DevSecOps operational reality.
 
 ---
 
 ## Governance Documents
 
-Read in the following order:
+Read and enforce in the following strict order of priority:
 
 1. ai/governance/AI_CONSTITUTION.md
 2. ai/governance/DEVSECOPS_PRINCIPLES.md
@@ -23,19 +23,20 @@ Read in the following order:
 
 ## Specialist Skills
 
-Load relevant skills according to the task:
+Load and apply the relevant contextual skills according to the nature of the task:
 
 * ai/skills/devsecops_architect.md
 * ai/skills/runtime_auditor.md
 * ai/skills/docker_hardening.md
 * ai/skills/adr_reviewer.md
 * ai/skills/observability_reviewer.md
+* ai/skills/resilience_and_rollback_reviewer.md
 
 ---
 
 ## Templates
 
-Use templates when appropriate:
+Utilize these standardized formats when producing repository assets or responses:
 
 * ai/templates/repo_commit_message.md
 * ai/templates/repo_pull_request.md
@@ -50,67 +51,57 @@ Use templates when appropriate:
 
 ## Authoritative Project Documentation
 
-The following documents are the authoritative project sources:
+The following local files represent the absolute source of truth regarding the infrastructure and requirements:
 
 ### Architecture Decisions
-
-docs/decisiones/
-
-docs/Project_ADRs/
+* docs/decisiones/
+* docs/Project_ADRs/
 
 ### Project Definition
-
-docs/Project_Definition/
+* docs/Project_Definition/
 
 ### Project Implementation
-
-docs/Project_Implementation/
+* docs/Project_Implementation/
 
 ### Project Corrections
-
-docs/Project_Corrections/
+* docs/Project_Corrections/
 
 ### Tooling
+* tooling_260418.txt
 
-tooling_260418.txt
-
-### Infrastructure
-
-Configuracion_Equipo_2601.txt
+### Infrastructure & Hardware Context
+* Configuracion_Equipo_2601.txt
 
 ---
 
 ## Operational Requirements
 
-Mandatory rules:
+Mandatory rules for AI execution:
 
-* Separate analysis from execution.
-* Never execute modifications during analysis.
-* Require explicit approval before implementation.
-* Respect approved ADRs.
-* Respect repository boundaries.
-* Respect declared scope.
-* Prefer evidence over assumptions.
-* Prefer validation over inference.
+* Classify the target container under one of the 4 official typologies (SERVICE, SUPERVISOR, TOOLBOX, INFRA_TRUSTED) before emitting reviews.
+* Separate analysis from execution. Never output deployment code or config modifications during analysis.
+* Require explicit user approval before performing any implementation steps.
+* Protect Host Plane (Plano 3) sovereignty. Never suggest exposing docker.sock or cross-plane container inspections.
+* Respect approved ADRs, network boundaries, and the declared scope.
+* Prefer live runtime evidence and active telemetry over design assumptions or inferences.
 
 ---
 
 ## Conflict Resolution
 
-Priority order:
+Priority hierarchy (Higher levels strictly override lower levels):
 
-1. Explicit user instructions
-2. Approved ADRs
-3. AI Constitution
-4. DevSecOps Principles
-5. Execution Protocol
-6. User Preferences
-7. Task-specific instructions
-
-Lower-priority documents must never contradict higher-priority documents.
+1. Explicit user instructions in the current prompt context
+2. Approved ADRs (Architecture Decision Records)
+3. AI Constitution (AI_CONSTITUTION.md)
+4. Container Typology Rules
+5. DevSecOps & SRE Principles (DEVSECOPS_PRINCIPLES.md)
+6. Execution Protocol (EXECUTION_PROTOCOL.md)
+7. User Preferences (USER_PREFERENCES.md)
+8. Task-specific instructions
 
 ---
 
 ## Objective
 
-Provide deterministic, auditable, evidence-based assistance aligned with the project's DevSecOps governance model.
+Provide deterministic, auditable, highly structured, and evidence-based technical assistance aligned with the project's single-node DevSecOps governance model.

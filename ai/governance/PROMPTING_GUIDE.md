@@ -1,131 +1,96 @@
 # Prompting Guide
 
 ## Objective
-
-Provide a consistent interaction model across all AI platforms.
+Provide a strict, consistent interaction model for the user across all AI platforms (Gemini CLI, Claude Code, Cursor, etc.) to enforce project governance.
 
 ---
 
 ## Preferred Workflow
-
-Step 1
-
-Provide context.
-
-Step 2
-
-Request analysis.
-
-Step 3
-
-Review recommendations.
-
-Step 4
-
-Approve implementation.
+Step 1: Provide context and live runtime evidence.
+Step 2: Request structured analysis (Analysis Protocol execution).
+Step 3: Review recommendations and trade-offs.
+Step 4: Approve scope and grant explicit authorization.
+Step 5: Execute declarative implementation.
+Step 6: Trigger automated validation and verify rollback readiness.
 
 ---
 
 ## Analysis Requests
+Preferred formatting template for the user:
 
-Preferred format:
-
-Context:
+Context & Container Typology:
 ...
-
 Objective:
 ...
-
-Constraints:
+Constraints (Single-node, Host isolation):
 ...
-
-Available Evidence:
+Available Evidence (Logs, Metrics, Compose state):
 ...
-
 Expected Deliverable:
 ...
 
 ---
 
 ## Execution Requests
-
-Preferred format:
+Preferred formatting template for the user:
 
 Context:
 ...
-
 Approved Scope:
 ...
-
 Constraints:
 ...
-
-Expected Deliverable:
+Expected Deliverable (Declarative IaC plain text):
 ...
-
-Validation Requirements:
+Validation & Rollback Requirements:
 ...
 
 ---
 
 ## Review Requests
-
-Preferred format:
+Preferred formatting template for the user:
 
 Artifact:
 ...
-
 Objective:
 ...
-
-Review Focus:
+Review Focus (Hardening, Observability, Resilience, or ADR compliance):
 ...
-
 Constraints:
 ...
 
 ---
 
 ## Evidence Requirements
+When requesting an assessment, the user should provide, and the AI must actively demand:
+* Structured log outputs or active telemetry diagnostics.
+* Live shell command or verification script outputs.
+* Explicit declarative configurations (Compose blocks).
+* Current state runtime metrics.
 
-When possible provide:
-
-* logs
-* command output
-* configuration
-* runtime evidence
-
-Avoid asking for conclusions without evidence.
+The AI assistant must refuse to provide structural conclusions or security enforcements in the absence of evidence.
 
 ---
 
 ## Preferred Behaviour
-
-AI assistants should:
-
-* challenge assumptions
-* identify risks
-* identify missing evidence
-* propose validation methods
+AI assistants must:
+* Actively challenge assumptions and hidden dependencies.
+* Identify operational risks and define their blast radius.
+* Point out missing telemetry or gaps in evidence.
+* Propose automated validation methods linked to the control-plane Makefile.
 
 ---
 
 ## Avoid
-
-Avoid prompts such as:
-
+The AI must flag and decline vague, imperative prompts such as:
 * "Fix everything"
-* "Optimize this"
-* "Make it secure"
-
-without scope, constraints, or objectives.
+* "Optimize the container network"
+* "Make the infrastructure secure"
+Every prompt must be strictly bounded by scope, specific container typologies, and clear operational objectives.
 
 ---
 
 ## Golden Rule
-
 Analysis precedes implementation.
-
 Evidence precedes conclusions.
-
 Validation precedes enforcement.

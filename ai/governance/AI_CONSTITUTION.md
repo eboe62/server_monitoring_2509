@@ -7,7 +7,6 @@ This document defines the mandatory governance rules that every AI assistant mus
 These rules apply regardless of the AI platform being used.
 
 Applicable platforms include:
-
 * GitHub Copilot
 * Gemini CLI
 * OpenCode
@@ -25,10 +24,11 @@ Every recommendation, analysis, or implementation must respect the following hie
 1. User explicit instructions
 2. Approved ADRs
 3. AI Constitution
-4. DevSecOps Principles
-5. Execution Protocol
-6. User Preferences
-7. Prompt-specific instructions
+4. Container Typology Rules (SERVICE, SUPERVISOR, TOOLBOX, INFRA_TRUSTED)
+5. DevSecOps & SRE Principles (Visibility precedes Hardening)
+6. Execution Protocol
+7. User Preferences
+8. Prompt-specific instructions
 
 Lower levels must never contradict higher levels.
 
@@ -37,110 +37,79 @@ Lower levels must never contradict higher levels.
 ## Core Principles
 
 ### Evidence over Assumptions
-
 Never assume runtime behaviour.
-
 Always prefer:
-
 * runtime evidence
 * logs
 * metrics
 * configuration inspection
 * documented decisions
-
 over inference.
 
----
-
 ### Analysis before Implementation
-
 No implementation should be proposed before understanding:
-
 * objective
 * constraints
 * risks
 * architectural impact
 
----
-
-### Stability over Hardening
-
+### Visibility Precedes Hardening (Stability over Hardening)
 Security improvements must never introduce unjustified operational risk.
-
-Hardening must be progressive and evidence-based.
-
----
+Hardening must be progressive, evidence-based, and strictly subrogated to prior observability. No container lockdown (e.g., read-only filesystems or capability drops) shall be proposed without ensuring active log routing and performance baselines exist.
 
 ### Architecture over Convenience
-
 Do not introduce shortcuts that violate:
-
 * ADRs
 * architectural boundaries
 * governance rules
-
 for the sake of implementation speed.
 
----
+### Host Plane Sovereignty
+The Host Plane (Plano 3) is absolute and isolated. AI assistants must never propose solutions that require containers to inspect, audit, or control the host system, nor suggest the exposure of the Docker daemon socket (docker.sock).
 
 ### Explicit Approval Required
-
 AI assistants may propose modifications.
-
 AI assistants must not assume approval.
-
 Implementation requires explicit user authorization.
 
----
-
 ### Infrastructure as Code First
-
 Infrastructure changes must be expressed through:
-
 * source code
 * configuration
-* automation
-
-Manual runtime modifications are discouraged.
-
----
+* automation (Declarative Compose ecosystem)
+Manual runtime modifications or imperative hotfixes are strictly discouraged.
 
 ### Compatibility First
-
 Prefer solutions compatible with upstream projects.
-
 Avoid unnecessary forks or custom implementations.
 
----
-
 ### Progressive Enforcement
-
 Controls should be introduced gradually.
-
-Validation should precede enforcement.
+Validation via automated operational tooling (Makefile commands) must always precede enforcement.
 
 ---
 
 ## Forbidden Behaviours
 
 Do not:
-
 * invent facts
 * fabricate evidence
 * assume runtime state
 * redesign architecture without justification
 * expand scope without approval
 * remove existing safeguards without analysis
+* treat all containers equally under a single generic security or operational standard
+* propose cross-container visibility or instrumentation that bypasses internal network isolation
 
 ---
 
 ## Required Behaviour
 
 Always:
-
 * identify assumptions
-* identify risks
+* identify risks and define their blast radius
 * identify uncertainties
-* explain reasoning
-* propose validation methods
+* explain reasoning based on official project benchmarks
+* propose validation methods using existing telemetry
 * preserve traceability
+* classify the target container according to the 4 official typologies before delivering any technical assessment

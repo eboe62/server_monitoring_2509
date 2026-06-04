@@ -1,117 +1,73 @@
 # Request Incident Review Template
 
-## Incident Information
-
-Incident Identifier:
-
-Date:
-
-Environment:
-
-Severity:
+## Incident Metadata
+* Incident Identifier: [INC-YYYYMMDD-XX]
+* Failure Timestamp: YYYY/MM/DD HH:MM:SS
+* Affected Runtime Typology: [SERVICE / SUPERVISOR / TOOLBOX / INFRA_TRUSTED]
+* Severity Level: [LOW / MEDIUM / HIGH / CRITICAL]
 
 ---
 
 ## Executive Summary
-
-Provide a brief description of the incident.
-
----
-
-## Available Evidence
-
-Provide:
-
-* logs
-* alerts
-* metrics
-* command outputs
-* screenshots
-* timelines
+Provide a brief, technical description of the runtime failure, service degradation, or security anomaly. Avoid qualitative statements or conversational prose.
 
 ---
 
-## Timeline
-
-Document:
-
-* detection
-* escalation
-* mitigation
-* recovery
+## Empirical Evidence Collected
+Provide the direct, unedited telemetry captured during the event:
+* Raw stdout/stderr Log Streams:
+* Active Metric Threshold Anomalies:
+* Host-Plane Command Outputs (e.g., docker inspect or system diagnostics):
 
 ---
 
-## Impact Assessment
-
-Evaluate:
-
-* service impact
-* customer impact
-* operational impact
-* security impact
+## Chronological Timeline
+Document every phase using absolute timestamps:
+1. Detection [YYYY/MM/DD HH:MM:SS]: [How the alert or log drift was flagged]
+2. Escalation [YYYY/MM/DD HH:MM:SS]: [Triggering of host-plane controls]
+3. Mitigation [YYYY/MM/DD HH:MM:SS]: [Temporary or execution hotfixes applied]
+4. Recovery [YYYY/MM/DD HH:MM:SS]: [Restoration of the baseline declarative state]
 
 ---
 
-## Root Cause Analysis
-
-Identify:
-
-* direct causes
-* contributing factors
-* missing controls
-
-Separate:
-
-* confirmed causes
-* suspected causes
+## Impact & Blast Radius Assessment
+Quantify the operational damage within the single-node architecture:
+* Service Availability: Total downtime or degraded performance metrics.
+* Data Volume Persistence: Structural state check (State corruption or data loss evaluated).
+* Observability Pipelines: Telemetry gaps or alert fatigue analysis.
+* Security Isolation: Evaluation of potential host plane leaks or exposure vectors.
 
 ---
 
-## Corrective Actions
+## Root Cause Analysis (RCA)
+Deconstruct the mechanism of failure:
+* Direct Causes: The explicit technical breakdown (e.g., OOM event due to missing limits).
+* Contributing Factors: Environment configurations or dependency drops.
+* Defeated Safetynets: Why existing health checks or constraints failed to prevent the incident.
+Strictly separate CONFIRMED FACTS from HYPOTHESES.
 
-Classify:
+---
 
+## Corrective Actions & Mitigations
+Define the structural remediation path using declarative IaC:
 ### Immediate Actions
-
-Actions required now.
-
+* Immediate fixes to safely secure the runtime state without altering core architecture.
 ### Short-Term Actions
-
-Actions required in the next iteration.
-
+* Versioned adjustments to Compose resource limits or retry configurations.
 ### Long-Term Actions
-
-Structural improvements.
-
----
-
-## Validation Requirements
-
-Define:
-
-* how corrective actions will be validated
-* success criteria
-* rollback criteria
+* Formal proposals for new ADRs to modify baseline infrastructure or isolation policies.
 
 ---
 
-## Deliverable Structure
-
-1. Executive Summary
-2. Timeline
-3. Findings
-4. Root Cause Analysis
-5. Corrective Actions
-6. Validation Plan
-7. Lessons Learned
+## Validation & Success Criteria
+* Corrective Action Verification: Specific local tests (e.g., make test-resilience-completo) required to simulate and verify the fix.
+* Success Metrics: Target telemetry values confirming normal operational thresholds.
+* Rollback Trigger Criteria: Conditions under which the corrective action must be immediately undone.
 
 ---
 
 ## Prohibited Behaviour
-
 Do not:
-
-* speculate without evidence
-* assign blame
-* mix facts with assumptions
+* Speculate or formulate theories in the absence of explicit log or metric data.
+* Assign blame or incorporate emotional filler text.
+* Mix unverified assumptions with confirmed technical facts.
