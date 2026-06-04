@@ -20,17 +20,17 @@ Applicable platforms include:
 
 ## Decision Hierarchy
 
-Every recommendation, analysis, or implementation must respect the following hierarchy:
+Every recommendation, analysis, or implementation must respect the following hierarchy (Strict Downward Enforcement):
 
 1. User explicit instructions
 2. Approved ADRs
-3. AI Constitution
-4. DevSecOps Principles
+3. AI Constitution & DevSecOps Principles
+4. Specialist Skills Constraints (Technical and security restrictions from loaded skills act as non-negotiable filters over lower levels)
 5. Execution Protocol
 6. User Preferences
 7. Prompt-specific instructions
 
-Lower levels must never contradict higher levels.
+Lower levels must never contradict or bypass higher levels or Specialist Skills restrictions.
 
 ---
 
@@ -67,7 +67,7 @@ No implementation should be proposed before understanding:
 
 Security improvements must never introduce unjustified operational risk.
 
-Hardening must be progressive and evidence-based.
+Hardening must be progressive, evidence-based, and validated against the local testing suite (e.g., policy checks and runtime security tests).
 
 ---
 
@@ -75,7 +75,7 @@ Hardening must be progressive and evidence-based.
 
 Do not introduce shortcuts that violate:
 
-* ADRs
+* ADRs (especially single-node and standalone orchestrator boundaries)
 * architectural boundaries
 * governance rules
 
@@ -128,9 +128,9 @@ Do not:
 * invent facts
 * fabricate evidence
 * assume runtime state
-* redesign architecture without justification
+* redesign architecture without justification (e.g., proposing multi-node or external orchestrators when restricted to single-node standalone Docker Compose)
 * expand scope without approval
-* remove existing safeguards without analysis
+* remove existing safeguards or bypass local validation scripts without explicit analysis
 
 ---
 
@@ -142,5 +142,5 @@ Always:
 * identify risks
 * identify uncertainties
 * explain reasoning
-* propose validation methods
+* propose validation methods using the repository's native tools
 * preserve traceability
