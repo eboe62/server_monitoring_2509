@@ -72,6 +72,23 @@ tests/
 .gitignore
 
 # ------------------------------------------
-# ai history
+# AI transient artifacts
 # ------------------------------------------
+
+ai/history/
+ai/tmp/
+ai/cache/
+ai/sessions/
+
 ai/prompts/history_*
+
+# ------------------------------------------
+# AI Governance (must be included)
+# ------------------------------------------
+#
+# Do not exclude:
+# - ai/governance/
+# - ai/skills/
+# - ai/templates/
+#
+# These directories provide AI governance and project documentation.
