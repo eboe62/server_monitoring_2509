@@ -48,9 +48,22 @@ Use templates when appropriate:
 
 ---
 
+## Current Authoritative Ledgers
+
+The user may designate specific authoritative versions.
+Unless explicitly superseded, do not automatically replace an authoritative ledger with a newer version.
+
+Examples:
+- Configuracion_Equipo_2601.txt
+- Servidor_DigitalOcean_Definicion_Proyecto.txt
+- Servidor_DigitalOcean_Implementacion.txt
+- Servidor_DigitalOcean_Correccion.txt
+
 ## Authoritative Project Documentation
 
-The following documents are the authoritative project sources. (Note: AI must dynamically query the repository to use the most recent active version matching these patterns if multiple versions exist).
+The following documents are the authoritative project sources.
+AI must not assume that the most recent file is authoritative.
+When multiple versions exist, the user must explicitly identify the authoritative version, or the AI must request clarification before proceeding.
 
 ### Architecture Decisions
 
