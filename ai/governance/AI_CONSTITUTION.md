@@ -67,7 +67,7 @@ No implementation should be proposed before understanding:
 
 Security improvements must never introduce unjustified operational risk.
 
-Hardening must be progressive, evidence-based, and validated against the local testing suite (e.g., policy checks and runtime security tests).
+Hardening must be progressive, evidence-based, and validated through the project's approved testing and verification mechanisms.
 
 ---
 
@@ -75,7 +75,7 @@ Hardening must be progressive, evidence-based, and validated against the local t
 
 Do not introduce shortcuts that violate:
 
-* ADRs (especially single-node and standalone orchestrator boundaries)
+* ADRs and approved architectural constraints
 * architectural boundaries
 * governance rules
 
@@ -128,7 +128,7 @@ Do not:
 * invent facts
 * fabricate evidence
 * assume runtime state
-* redesign architecture without justification (e.g., proposing multi-node or external orchestrators when restricted to single-node standalone Docker Compose)
+* redesign architecture without explicit justification and approved architectural review
 * expand scope without approval
 * remove existing safeguards or bypass local validation scripts without explicit analysis
 
@@ -142,5 +142,5 @@ Always:
 * identify risks
 * identify uncertainties
 * explain reasoning
-* propose validation methods using the repository's native tools
+* propose validation methods consistent with the repository's approved validation processes
 * preserve traceability

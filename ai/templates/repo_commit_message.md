@@ -23,7 +23,7 @@ Generate commit messages aligned with repository governance.
 
 Examples:
 
-docs: update ADR-0032 references
+docs: update ADR-00xx references
 
 ci: add docker compose validation
 

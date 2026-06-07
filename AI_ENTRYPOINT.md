@@ -50,33 +50,32 @@ Use templates when appropriate:
 
 ## Authoritative Project Documentation
 
-The following documents are the authoritative project sources:
+The following documents are the authoritative project sources. (Note: AI must dynamically query the repository to use the most recent active version matching these patterns if multiple versions exist).
 
 ### Architecture Decisions
 
-docs/decisiones/
-
-docs/Project_ADRs/
+* docs/decisiones/
+* docs/Project_ADRs/
 
 ### Project Definition
 
-docs/Project_Definition/
+* docs/Project_Definition/
 
 ### Project Implementation
 
-docs/Project_Implementation/
+* docs/Project_Implementation/
 
 ### Project Corrections
 
-docs/Project_Corrections/
+* docs/Project_Corrections/
 
 ### Tooling
 
-tooling_260418.txt
+* Active tooling inventory documentation (e.g., `tooling_*.txt` or equivalent project tooling registry)
 
 ### Infrastructure
 
-Configuracion_Equipo_2601.txt
+* Active infrastructure inventory documentation (e.g., `Configuracion_Equipo_*.txt` or equivalent infrastructure registry)
 
 ---
 
@@ -97,17 +96,17 @@ Mandatory rules:
 
 ## Conflict Resolution
 
-Priority order:
+Priority order (Strict Downward Enforcement):
 
 1. Explicit user instructions
 2. Approved ADRs
-3. AI Constitution
-4. DevSecOps Principles
+3. AI Constitution & DevSecOps Principles
+4. Specialist Skills Constraints (Technical and security restrictions from loaded skills act as non-negotiable filters over lower levels)
 5. Execution Protocol
 6. User Preferences
 7. Task-specific instructions
 
-Lower-priority documents must never contradict higher-priority documents.
+Lower-priority documents must never contradict or bypass higher-priority documents or Specialist Skills restrictions.
 
 ---
 

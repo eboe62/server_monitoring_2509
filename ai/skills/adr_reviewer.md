@@ -51,7 +51,7 @@ REQUIRES REVISION
 The document lacks crucial alternatives, fails to address major technical risks, or its scope is poorly defined.
 
 REJECTED
-The decision directly contradicts core repository paradigms (e.g., proposing multi-node orchestration against ADR-0017) or violates the AI Constitution.
+The decision directly contradicts approved ADRs, established architectural constraints, or violates the AI Constitution.
 
 Mandatory Behaviours:
 
