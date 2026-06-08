@@ -25,11 +25,17 @@ Read in the following order:
 
 Load relevant skills according to the task:
 
-* ai/skills/devsecops_architect.md
-* ai/skills/runtime_auditor.md
-* ai/skills/docker_hardening.md
-* ai/skills/adr_reviewer.md
-* ai/skills/observability_reviewer.md
+* ai/skills/common/adr_reviewer.md
+* ai/skills/infraestructure/devsecops_architect.md
+* ai/skills/infraestructure/docker_hardening.md
+* ai/skills/infraestructure/runtime_auditor.md
+* ai/skills/infraestructure/observability_reviewer.md
+* ai/skills/backend/api_gateway_reviewer.md
+* ai/skills/backend/backend_security_reviewer.md
+* ai/skills/backend/backend_testing_reviewer.md
+* ai/skills/backend/jpa_reviewer.md
+* ai/skills/backend/microservice_architect.md
+* ai/skills/backend/spring_architect.md
 
 ---
 
