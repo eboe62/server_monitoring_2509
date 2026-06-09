@@ -70,9 +70,9 @@ docker-compose.override.yml
 # === Documentation Podcast, Slides, etc ===
 docs/Project_ADRs/*
 docs/Project_Corrections/*
-* .m4a
-* .pdf
-* .xlsx
-* .xls
-* .pptx
-* .ppt
+*.m4a
+*.pdf
+*.xlsx
+*.xls
+*.pptx
+*.ppt
