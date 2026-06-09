@@ -69,9 +69,21 @@ Examples:
 * Persistence strategy decisions
 * CI/CD governance decisions
 
+Non-Examples (DO NOT apply this skill here):
+
+* Banal framework setups (e.g., changing a Java version in a pom.xml)
+* Adding linting or code quality plugins (e.g., Checkstyle, SonarQube default setups)
+* Standard project bootstrapping tasks (e.g., default Maven profiles for environments)
+
 ---
 
 ## ADR Creation Principles
+
+### Structural Focus over Generic Setup
+
+CRITICAL: An ADR is only valid if it documents a structural design decision, a boundary definition, or a topological pattern specific to this project. Generic framework setups or standard industry practices that do not alter the system's core architecture MUST NOT be authored as ADRs.
+
+---
 
 ### Decision First
 
