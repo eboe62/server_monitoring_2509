@@ -8,6 +8,13 @@ Before performing any analysis, review, recommendation, or implementation task, 
 
 ---
 
+## Context Resolution & Path Constraints
+
+* **Strict Relative Resolution:** AI assistants MUST NOT expect or attempt to access absolute OS filesystem paths (e.g., `C:\WorkSpace\...`). All internal governance references, skills, templates, and codebase analysis MUST be executed using relative workspace paths (`./`) or files explicitly attached to the active session via chat references (`#` or `@`).
+* **Path Alignment:** Any absolute path mentioned in prompts or configurations must be automatically translated by the AI to its equivalent relative position within the active VS Code workspace root.
+
+---
+
 ## Governance Documents
 
 Read in the following order:
@@ -25,17 +32,30 @@ Read in the following order:
 
 Load relevant skills according to the task:
 
+* ai/skills/common/adr_author.md
 * ai/skills/common/adr_reviewer.md
+* ai/skills/common/architecture_reviewer.md
+* ai/skills/common/governance_reviewer.md
 * ai/skills/infraestructure/devsecops_architect.md
 * ai/skills/infraestructure/docker_hardening.md
-* ai/skills/infraestructure/runtime_auditor.md
 * ai/skills/infraestructure/observability_reviewer.md
+* ai/skills/infraestructure/resilience_and_rollback_reviewer.md
+* ai/skills/infraestructure/runtime_auditor.md
 * ai/skills/backend/api_gateway_reviewer.md
 * ai/skills/backend/backend_security_reviewer.md
 * ai/skills/backend/backend_testing_reviewer.md
 * ai/skills/backend/jpa_reviewer.md
 * ai/skills/backend/microservice_architect.md
 * ai/skills/backend/spring_architect.md
+* ai/skills/frontend/accessibility_reviewer.md
+* ai/skills/frontend/api_client_reviewer.md
+* ai/skills/frontend/composables_reviewer.md
+* ai/skills/frontend/frontend_architect.md
+* ai/skills/frontend/frontend_security_reviewer.md
+* ai/skills/frontend/frontend_testing_reviewer.md
+* ai/skills/frontend/quasar_architect.md
+* ai/skills/frontend/state_management_reviewer.md
+* ai/skills/frontend/vue_architect.md
 
 ---
 
@@ -102,6 +122,7 @@ When multiple versions exist, the user must explicitly identify the authoritativ
 
 Mandatory rules:
 
+* **Architectural Precision:** Every proposed ADR must document a real, non-trivial structural design decision, boundary restriction, or topological pattern specific to the project. Generic framework setup, language versioning bump, linting rules, or standard library updates MUST NOT be generated as ADRs.
 * Separate analysis from execution.
 * Never execute modifications during analysis.
 * Require explicit approval before implementation.

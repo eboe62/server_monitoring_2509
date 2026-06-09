@@ -68,6 +68,8 @@ docker-compose.override.yml
 * copy*.txt
 
 # === Documentation Podcast, Slides, etc ===
+docs/Project_ADRs/*
+docs/Project_Corrections/*
 * .m4a
 * .pdf
 * .xlsx
