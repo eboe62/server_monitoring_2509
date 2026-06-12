@@ -159,6 +159,161 @@ Use templates when appropriate:
 
 ---
 
+## Alineación de Infraestructura
+
+### Protocolo Obligatorio para Cambios de Infraestructura
+
+Toda modificación que afecte:
+
+* Configuración Docker Compose
+* Modelo de ejecución de contenedores (privilegios, usuarios, capacidades)
+* Segmentación o exposición de redes
+* Requisitos de seguridad en runtime
+* Gestión de secretos
+
+**Debe cumplir obligatoriamente** con las decisiones arquitectónicas aprobadas listadas a continuación.
+
+---
+
+### ADRs Aprobados — Seguridad Infraestructura
+
+1. **ADR-0014 — Docker Port Exposure Policy**
+   - `docs/decisiones/ADR-0014-docker_port_exposure_policy.md`
+   - **Regla:** Puerto restringido a loopback (`127.0.0.1:port`) o red interna Docker
+   - **Prohibido:** Publicación global (`port:port` sin restricción de interfaz)
+   - **Justificación:** Reducción de superficie de ataque, coherencia IaC
+
+2. **ADR-0018 — Docker Security Runtime & Resilience Requirements**
+   - `docs/decisiones/ADR-0018-docker_security_runtime_and_resilience_requirements.md`
+   - **Regla:** `cap_drop: ALL` por defecto
+   - **Regla:** Usuario no-root en runtime-stacks
+   - **Prohibido:** `docker.sock` sin justificación ADR explícita
+   - **Validación:** `make test-security-runtime`
+
+3. **ADR-0020 — Container Execution Model & Privilege Strategy**
+   - `docs/decisiones/ADR-0020-Container_Execution_Model_Privilege_Strategy.md`
+   - **Clasificación:** runtime-stacks, service-stacks, operational-stacks
+   - **Regla:** Separación clara por propósito funcional
+   - **Regla:** Sin bind mounts de código en producción
+   - **Validación:** `make test-reproducibilidad`
+
+4. **ADR-0021 — Network Segmentation Strategy**
+   - `docs/decisiones/ADR-0021-Network_Segmentation_Strategy.md`
+   - **Redes aprobadas:** `backend-net`, `observability-net`, `restricted-net`, `edge-net` (opcional)
+   - **Prohibido:** Red global única (`monitoring-net`)
+   - **Regla:** Principio de mínimo acceso por red
+   - **Justificación:** Aislamiento de dominios funcionales, reducción de movimiento lateral
+
+5. **ADR-0027 — Container Typology & Healthchecks Policy**
+   - `docs/decisiones/ADR-0027-tipologia_contenedores_politica_healthchecks.md`
+   - **Tipología:** SERVICE_RUNTIME, SUPERVISOR_RUNTIME, TOOLBOX_RUNTIME, INFRA_TRUSTED
+   - **Regla:** Clasificación explícita en `ops/runtime_containers.yml`
+   - **Regla:** Healthchecks semánticamente coherentes con propósito del contenedor
+   - **Fuente única de verdad:** `ops/runtime_containers.yml`
+
+6. **ADR-0032 — PostgreSQL Secrets Hardening & CI Validation**
+   - `docs/decisiones/ADR-0032-endurecimiento_secretos_PostgreSQL_y_validaciones_CI.md`
+   - **Regla:** `POSTGRES_PASSWORD_FILE=/run/secrets/postgres_password`
+   - **Prohibido:** Secretos hardcodeados en `.env` o archivos versionados
+   - **Validación:** `ops/services/postgres/scripts/check_postgres_secret.sh`
+   - **Validación CI:** `make verify-security`
+
+---
+
+### Principios Rectores — DevSecOps Infrastructure
+
+Referencia: `ai/governance/DEVSECOPS_PRINCIPLES.md`
+
+**Container Principles:**
+* `cap_drop: ALL` por defecto
+* `no-new-privileges` habilitado
+* Usuario no-root cuando sea viable
+* Healthchecks habilitados
+
+**Security Principles:**
+* Principio de mínimo privilegio
+* Defensa en profundidad
+* Hardening progresivo
+* Validación en runtime
+
+**Operations Principles:**
+* Estabilidad sobre optimización
+* Monitoreo antes de enforcement
+* Evidencia antes de acción
+* Reproducibilidad verificable
+
+---
+
+### Modelo de Activación de Skills — Tareas Infraestructurales
+
+Los cambios infraestructurales requieren activación proporcional de skills especialistas:
+
+**Cuando la tarea implique:**
+
+* Modelo de ejecución, privilegios o usuarios de contenedores → Activar: **devsecops_architect**
+* Seguridad Docker, hardening o validación de runtime → Activar: **docker_hardening**
+* Exposición de puertos o cambios de red → Activar: **devsecops_architect**
+* Secretos, credenciales o cumplimiento regulatorio → Activar: **backend_security_reviewer** + **devsecops_architect**
+* Integración de observabilidad (logs, métricas, healthchecks) → Activar: **observability_reviewer**
+* Resiliencia, retry logic o escenarios de fallo → Activar: **resilience_and_rollback_reviewer**
+
+**Activación interdependiente de skills:**
+
+Si ADR-0014 (exposición de puertos) es afectado → También activar validación ADR-0021 (segmentación de red).
+
+Si ADR-0020 (modelo de privilegios) es afectado → También validar cumplimiento ADR-0018 (seguridad runtime).
+
+---
+
+### Gates de Validación — Cambios Infraestructurales
+
+Antes de proponer modificaciones infraestructurales, verificar obligatoriamente:
+
+**Validación Estructural:**
+
+* ✓ Todos los servicios docker-compose tienen asignación explícita de red
+* ✓ Sin uso de red por defecto (`monitoring-net` eliminada)
+* ✓ Declaraciones de puerto siguen regla de vinculación a loopback (si es necesario)
+* ✓ Usuario/UID declarado explícitamente en runtime-stacks
+* ✓ Capacidades explícitamente droppadas (`cap_drop: ALL`)
+
+**Validación de Cumplimiento:**
+
+* ✓ Cambios respetan todos los ADRs referenciados (estado = Aprobado)
+* ✓ Clasificación de contenedor en `ops/runtime_containers.yml` es explícita
+* ✓ Semántica de healthcheck coincide con tipología de contenedor
+* ✓ Gestión de secretos sigue estándar ADR-0032
+
+**Validación de Seguridad Runtime (Makefile):**
+
+```
+make test-security-runtime       # Verifica usuario, exposición, docker.sock
+make verify-security             # Validación de secretos PostgreSQL
+make test-reproducibilidad       # Validación de independencia del host
+```
+
+**Gate CI/CD:**
+
+Todo cambio infraestructural requiere:
+
+* Validación exitosa: `make test-security-runtime`
+* Validación exitosa: `make verify-security`
+* Validación exitosa: `make test-reproducibilidad`
+* Actualización documentación en ADR relevante o README
+
+---
+
+### Language & Documentation
+
+Toda documentación de gobernanza infraestructural:
+
+* Sigue política de idioma español (coherente con `DEVSECOPS_PRINCIPLES.md`, ADRs)
+* Utiliza terminología consistente de ADRs aprobados
+* Debe ser auditable y referenceable
+* Referencias a rutas deben ser relativas (`./` o `docs/decisiones/`)
+
+---
+
 ## Current Authoritative Ledgers
 
 The user may designate specific authoritative versions.

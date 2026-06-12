@@ -110,15 +110,7 @@ La auditoría se realizó utilizando:
         descubrimiento multi-compose
         auditoría runtime federada
 
-<<<<<<< Updated upstream
     # Problema
-=======
-<<<<<<< Updated upstream
-## 2. Dependencias host permitidas únicamente como excepción aprobada
-=======
-# Problema
->>>>>>> Stashed changes
->>>>>>> Stashed changes
 
     La ausencia de una política runtime consolidada generaba:
     - ambigüedad operacional
@@ -134,19 +126,7 @@ La auditoría se realizó utilizando:
     - observabilidad host-centric necesita mounts readonly del host
     - SMTP relay requiere capacidades Linux específicas
 
-<<<<<<< Updated upstream
     # Decisión
-=======
-<<<<<<< Updated upstream
-Quedan prohibidos:
-- mounts RW sobre paths sensibles del host
-- mounts runtime arbitrarios
-- exposición del control plane Docker
-- dependencias implícitas no auditadas
-=======
-# Decisión
->>>>>>> Stashed changes
->>>>>>> Stashed changes
 
     Se adopta un modelo oficial de:
     “Gobernanza Runtime Declarativa Basada en Evidencia Operacional”.
@@ -164,35 +144,9 @@ Quedan prohibidos:
     - validación runtime real
     - clasificación explícita de excepciones
 
-<<<<<<< Updated upstream
     # Política Runtime Oficial
 
     ## 1. Prohibiciones estructurales
-=======
-<<<<<<< Updated upstream
-Las políticas readonly deberán aplicarse únicamente:
-- cuando el servicio sea compatible operacionalmente
-- tras validar runtime completo
-- tras identificar correctamente:
-    caches
-    tmpfs
-    runtime dirs
-    WAL
-    plugins
-    sockets
-    directorios efímeros
-
-No se aceptará hardening puramente teórico que:
-- rompa disponibilidad
-- invalide CI/CD
-- introduzca falsos positivos operacionales
-- genere degradación funcional no controlada
-=======
-# Política Runtime Oficial
-
-## 1. Prohibiciones estructurales
->>>>>>> Stashed changes
->>>>>>> Stashed changes
 
     Queda prohibido:
     - privileged=true
@@ -210,25 +164,11 @@ No se aceptará hardening puramente teórico que:
     - validación CI
     - revisión arquitectónica
 
-<<<<<<< Updated upstream
     ## 2. Clasificación oficial de mounts
-=======
-<<<<<<< Updated upstream
-Queda prohibido:
-- persistir estado aplicativo crítico en bind mounts host-side
-- depender de directorios runtime no gobernados
-- utilizar almacenamiento mutable no versionado ni auditado
-=======
-## 2. Clasificación oficial de mounts
->>>>>>> Stashed changes
     Permitidos baseline
     - volúmenes Docker nombrados
     - mounts readonly de configuración
     - secrets readonly
-<<<<<<< Updated upstream
-=======
->>>>>>> Stashed changes
->>>>>>> Stashed changes
 
     Permitidos por excepción auditada
         /var/log:ro
@@ -245,19 +185,7 @@ Queda prohibido:
     - mounts arbitrarios no documentados
     - bind mounts de código runtime
 
-<<<<<<< Updated upstream
     ## 3. Hardening baseline obligatorio
-=======
-<<<<<<< Updated upstream
-Las tareas operativas deberán ejecutarse mediante:
-- contenedores efímeros
-- stacks declarativos
-- pipelines CI/CD
-- servicios Docker gobernados
-=======
-## 3. Hardening baseline obligatorio
->>>>>>> Stashed changes
->>>>>>> Stashed changes
 
     Obligatorio:
 - prohibición privileged
@@ -266,15 +194,7 @@ Las tareas operativas deberán ejecutarse mediante:
 - validación HostConfig automática
 - clasificación explícita de excepciones runtime
 
-<<<<<<< Updated upstream
     ## 4. Hardening incremental service-aware
-=======
-<<<<<<< Updated upstream
-### Hardening recomendado
-=======
-## 4. Hardening incremental service-aware
->>>>>>> Stashed changes
->>>>>>> Stashed changes
 
     Readonly rootfs:
     - NO será obligatorio globalmente
@@ -297,15 +217,7 @@ Las tareas operativas deberán ejecutarse mediante:
     - validación CI
     - control de mounts
 
-<<<<<<< Updated upstream
     ## 5. Servicios con excepciones explícitas
-=======
-<<<<<<< Updated upstream
-# Consecuencias
-=======
-## 5. Servicios con excepciones explícitas
->>>>>>> Stashed changes
->>>>>>> Stashed changes
 
     monitoring-smtp-relay
         Excepción aprobada:
@@ -339,23 +251,6 @@ Las tareas operativas deberán ejecutarse mediante:
             persistencia gobernada
             límites CPU/memoria activos
 
-<<<<<<< Updated upstream
-=======
-<<<<<<< Updated upstream
-El entorno PRO deberá quedar:
-- completamente gobernado
-- reproducible
-- auditable
-- sin privilegios implícitos
-- sin dependencias host ambiguas
-- con excepciones runtime explícitas y justificadas
-- con enforcement CI/CD operativo
-- con separación explícita entre:
-    hardening baseline
-    hardening recomendado
-    hardening avanzado diferido
-=======
->>>>>>> Stashed changes
     promtail
         Excepción aprobada:
             acceso readonly host-centric
@@ -385,11 +280,7 @@ El entorno PRO deberá quedar:
     Quedan prohibidas:
         suposiciones hardcoded sobre compose monolítico
 
-<<<<<<< Updated upstream
     # Consecuencias
-=======
-# Consecuencias
->>>>>>> Stashed changes
 
     Positivas
     - reducción de ambigüedad operacional
@@ -410,11 +301,7 @@ El entorno PRO deberá quedar:
     - auditorías runtime más sofisticadas
     - necesidad de tooling multi-compose
 
-<<<<<<< Updated upstream
     # Validación
-=======
-# Validación
->>>>>>> Stashed changes
 
     Las auditorías deberán validar automáticamente:
         Seguridad
@@ -439,11 +326,7 @@ El entorno PRO deberá quedar:
             correlación runtime vs compose
             clasificación de excepciones
 
-<<<<<<< Updated upstream
     # Estado objetivo
-=======
-# Estado objetivo
->>>>>>> Stashed changes
 
     El entorno PRO deberá permanecer:
         gobernado
@@ -462,11 +345,7 @@ El entorno PRO deberá quedar:
         compatibilidad upstream
         reducción progresiva de superficie de ataque
 
-<<<<<<< Updated upstream
     ## Relación con otros ADR
-=======
-## Relación con otros ADR
->>>>>>> Stashed changes
 
     - ADR-0016 — Segmentación de redes: refuerza el requisito de aislamiento por redes (`backend-net`, `observability-net`, `restricted-net`) y condiciona las excepciones de exposición.
     - ADR-0018 — Seguridad runtime y resiliencia: dicta controles de `privileged`, `capabilities`, `restart` y healthchecks que esta gobernanza materializa en validaciones HostConfig.
@@ -475,18 +354,10 @@ El entorno PRO deberá quedar:
     - ADR-0029 — Structured Compose Policy Audit: obliga a discovery multi-compose y correlación runtime vs compose; este ADR implementa la fase runtime de esa estrategia.
     - ADR-0030 — Auditoría HostConfig y visibilidad: complementa la fase observacional con un enforcement incremental y clasificación de excepciones.
 
-<<<<<<< Updated upstream
     ## Estado
-=======
-## Estado
->>>>>>> Stashed changes
 
     - Estado: Aprobado.
     - Enforcement: Parcial operativo. Las validaciones host-side se ejecutan periódicamente y en CI en modo `audit-runtime-ci`. Violaciones `forbidden` fallan pipelines; `warning` se registran para corrección progresiva.
     - Hardening: Incremental — el enforcement runtime actual prioriza compatibilidad operacional y clasificación explícita de excepciones. Algunas recomendaciones baseline (cap_drop ALL, ReadonlyRootfs, no-new-privileges) permanecen parcialmente desplegadas.
     - Observabilidad: Integrada — la taxonomía de mounts y la allowlist permiten mantener observability funcional sin romper aislamiento de red.
-<<<<<<< Updated upstream
-=======
->>>>>>> Stashed changes
->>>>>>> Stashed changes
 
