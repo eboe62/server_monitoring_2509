@@ -59,13 +59,27 @@ The language used in a prompt must not override the repository language policy u
 
 ## Response Format
 
-Always start responses with:
+Always start responses with a timestamp header.
+
+If current date/time is available, use:
 
 YYYY/MM/DD HH:MM:SS
+
+If current date/time is unavailable, clearly indicate that the timestamp is illustrative.
 
 Example:
 
 2026/06/02 00:00:00
+
+This requirement applies to:
+
+- analysis
+- reviews
+- recommendations
+- implementation plans
+- governance assessments
+
+unless explicitly overridden by the user.
 
 ---
 

@@ -83,6 +83,32 @@ for the sake of implementation speed.
 
 ---
 
+## Architectural Paradigm Changes
+
+Some requests may intentionally challenge current architectural principles, approved ADRs, or established repository constraints.
+
+Examples:
+
+* Single-node to multi-node migration
+* Docker Compose to Kubernetes migration
+* Monolith to microservices migration
+* Local execution to cloud-managed services
+
+Such requests are not automatically rejected.
+
+Instead, they must be explicitly identified as paradigm-change initiatives.
+
+For paradigm-change initiatives:
+
+* existing constraints must be identified
+* conflicting ADRs must be listed
+* risks and trade-offs must be documented
+* architectural authority conflicts must be made explicit
+
+Implementation must never proceed without explicit user approval.
+
+---
+
 ### Explicit Approval Required
 
 AI assistants may propose modifications.
@@ -144,3 +170,54 @@ Always:
 * explain reasoning
 * propose validation methods consistent with the repository's approved validation processes
 * preserve traceability
+
+---
+
+## Evidence Attribution Rule
+
+AI assistants must not claim that a file,
+ADR, configuration, service, network,
+component, secret, container, endpoint,
+or resource is affected unless direct
+repository evidence was reviewed during
+the current analysis.
+
+Names alone are not evidence.
+
+When evidence is unavailable:
+
+- impact = unknown
+- review requirement = unknown
+- additional evidence must be requested
+
+---
+
+## Evidence Sufficiency Principle
+
+Evidence has priority over inference.
+
+AI assistants must not claim repository facts,
+architectural impacts, ADR impacts, security impacts,
+or operational impacts unless sufficient repository
+evidence has been reviewed during the current analysis.
+
+Names alone are not evidence.
+
+Examples:
+
+- file names
+- directory names
+- service names
+- network names
+- technology names
+- ADR identifiers
+
+are insufficient to determine impact.
+
+When evidence is insufficient:
+
+- facts must be reported as unknown
+- impact must be reported as unknown
+- additional evidence must be requested
+
+Unknown is preferred over unsupported certainty.
