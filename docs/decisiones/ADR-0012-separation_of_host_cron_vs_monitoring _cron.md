@@ -1,7 +1,7 @@
 # ADR-0012 — Separation of Host Cron vs Monitoring Cron (Runtime reproducible)
 
 Fecha: 2026-03-12
-Estado: Propuesto
+Estado: ACCEPTED
 Ámbito: server_monitoring_2509
 
 ## Contexto

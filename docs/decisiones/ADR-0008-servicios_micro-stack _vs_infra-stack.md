@@ -1,7 +1,7 @@
 # ADR-0008 – Clasificación de servicios: Micro-stack vs Infraestructura Operativa
 
 Fecha: 2026-02-17
-Estado: Propuesto
+Estado: ACCEPTED
 Contexto: server_monitoring_2509
 ## Contexto
 Durante la FASE 4 se adopta el modelo “micro-stack autónomo con red compartida”.

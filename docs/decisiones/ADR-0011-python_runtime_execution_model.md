@@ -1,7 +1,7 @@
 # ADR-0011 - Python Runtime Execution Model (Determinismo)
 
 Fecha: 2026-03-05
-Estado: Propuesto
+Estado: ACCEPTED
 Ámbito: server_monitoring_2509
 
 ## Contexto
