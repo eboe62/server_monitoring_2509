@@ -177,3 +177,96 @@ Repository inspection becomes mandatory only when:
 - the requested action could reasonably alter runtime behavior, security boundaries, persistence, networking, authorization, authentication, infrastructure, or architectural constraints
 
 The Evidence Sufficiency Gate prohibits unsupported technical inferences, not the use of explicit user-provided scope information.
+
+## Evidence Assessment
+
+All findings must identify:
+
+* evidence sources
+* highest evidence level
+* missing evidence
+
+Use the Evidence Classification Model.
+
+Conclusions without identified evidence levels are considered incomplete.
+
+## Confidence Assessment
+
+All findings and recommendations must include:
+
+* confidence level
+* confidence justification
+* known limitations
+
+Use the Confidence Assessment Model.
+
+Confidence must be treated independently from evidence level.
+
+High evidence does not automatically imply high confidence.
+
+Missing evidence must reduce confidence.
+
+Confidence levels:
+
+* INSUFFICIENT
+* LOW
+* MEDIUM
+* HIGH
+* VERY HIGH
+
+## Governance Conflict Detection
+
+If multiple authoritative sources provide incompatible guidance:
+
+Activate:
+
+governance_arbiter
+
+Do not silently choose one source.
+
+Determine:
+
+* authority hierarchy
+* evidence levels
+* confidence levels
+
+Document the rationale.
+
+If authority cannot be determined:
+
+STOP.
+
+Request clarification.
+
+## Authority Validation
+
+Before evaluating evidence:
+
+Determine authority using:
+
+docs/governance/AUTHORITY_HIERARCHY.md
+
+Authority assessment precedes evidence assessment.
+
+## ADR Validation
+
+When ADRs are referenced:
+
+Verify ADR status using:
+
+docs/architecture/ADR_INDEX.md
+
+Do not assume referenced ADRs remain active.
+
+## Skill Validation
+
+Before activating specialized skills:
+
+Verify:
+
+* skill exists
+* skill status is ACTIVE
+
+using:
+
+docs/governance/SKILL_REGISTRY.md

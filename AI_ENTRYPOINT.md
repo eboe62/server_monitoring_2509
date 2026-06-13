@@ -19,12 +19,22 @@ Before performing any analysis, review, recommendation, or implementation task, 
 
 Read in the following order:
 
-1. ai/governance/AI_CONSTITUTION.md
-2. ai/governance/DEVSECOPS_PRINCIPLES.md
-3. ai/governance/ANALYSIS_PROTOCOL.md
-4. ai/governance/EXECUTION_PROTOCOL.md
-5. ai/governance/USER_PREFERENCES.md
-6. ai/governance/PROMPTING_GUIDE.md
+1. ai/governance/01_AI_CONSTITUTION.md
+2. ai/governance/02_DEVSECOPS_PRINCIPLES.md
+3. ai/governance/04_ARCHITECTURE_GUIDELINES.md
+4. ai/governance/05_ANALYSIS_PROTOCOL.md
+5. ai/governance/07_SKILL_ACTIVATION_MODEL.md
+6. ai/governance/08_TASK_CLASSIFICATION.md
+7. ai/governance/10_EVIDENCE_MODEL.md
+8. ai/governance/11_CONFIDENCE_MODEL.md
+9. ai/governance/13_AUTHORITY_HIERARCHY.md
+10. ai/governance/14_ADR_INDEX.md
+11. ai/governance/16_SKILL_REGISTRY.md
+12. ai/governance/17_SKILL_LIFECYCLE.md
+13. ai/governance/19_AI_DECISION_REGISTRY.md
+14. ai/governance/20_EXECUTION_PROTOCOL.md
+15. ai/governance/22_USER_PREFERENCES.md
+16. ai/governance/23_PROMPTING_GUIDE.md
 
 ---
 
@@ -36,6 +46,7 @@ Load relevant skills according to the task:
 * ai/skills/common/adr_reviewer.md
 * ai/skills/common/architecture_reviewer.md
 * ai/skills/common/dependency_governance_reviewer.md
+* ai/skills/common/governance_arbiter.md
 * ai/skills/common/governance_reviewer.md
 * ai/skills/common/quality_attribute_reviewer.md
 * ai/skills/common/threat_model_reviewer.md
