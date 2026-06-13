@@ -159,158 +159,158 @@ Use templates when appropriate:
 
 ---
 
-## Infrastructure Alignment
+## Alineación de Infraestructura
 
-### Mandatory Protocol for Infrastructure Changes
+### Protocolo Obligatorio para Cambios de Infraestructura
 
-Any modification affecting:
+Toda modificación que afecte:
 
-* Docker Compose configuration
-* Container execution model (privileges, users, capabilities)
-* Network segmentation or exposure
-* Runtime security requirements
-* Secrets management
+* Configuración Docker Compose
+* Modelo de ejecución de contenedores (privilegios, usuarios, capacidades)
+* Segmentación o exposición de redes
+* Requisitos de seguridad en runtime
+* Gestión de secretos
 
-**Must mandatory comply** with the approved architectural decisions listed below.
+**Debe cumplir obligatoriamente** con las decisiones arquitectónicas aprobadas listadas a continuación.
 
 ---
 
-### Approved ADRs — Infrastructure Security
+### ADRs Aprobados — Seguridad Infraestructura
 
 1. **ADR-0014 — Docker Port Exposure Policy**
    - `docs/decisiones/ADR-0014-docker_port_exposure_policy.md`
-   - **Rule:** Port restricted to loopback (`127.0.0.1:port`) or internal Docker network
-   - **Forbidden:** Global publication (`port:port` without interface restriction)
-   - **Justification:** Attack surface reduction, IaC consistency
+   - **Regla:** Puerto restringido a loopback (`127.0.0.1:port`) o red interna Docker
+   - **Prohibido:** Publicación global (`port:port` sin restricción de interfaz)
+   - **Justificación:** Reducción de superficie de ataque, coherencia IaC
 
 2. **ADR-0018 — Docker Security Runtime & Resilience Requirements**
    - `docs/decisiones/ADR-0018-docker_security_runtime_and_resilience_requirements.md`
-   - **Rule:** `cap_drop: ALL` by default
-   - **Rule:** Non-root user in runtime-stacks
-   - **Forbidden:** `docker.sock` without explicit ADR justification
-   - **Validation:** `make test-security-runtime`
+   - **Regla:** `cap_drop: ALL` por defecto
+   - **Regla:** Usuario no-root en runtime-stacks
+   - **Prohibido:** `docker.sock` sin justificación ADR explícita
+   - **Validación:** `make test-security-runtime`
 
 3. **ADR-0020 — Container Execution Model & Privilege Strategy**
    - `docs/decisiones/ADR-0020-Container_Execution_Model_Privilege_Strategy.md`
-   - **Classification:** runtime-stacks, service-stacks, operational-stacks
-   - **Rule:** Clear separation by functional purpose
-   - **Rule:** No code bind mounts in production
-   - **Validation:** `make test-reproducibilidad`
+   - **Clasificación:** runtime-stacks, service-stacks, operational-stacks
+   - **Regla:** Separación clara por propósito funcional
+   - **Regla:** Sin bind mounts de código en producción
+   - **Validación:** `make test-reproducibilidad`
 
 4. **ADR-0021 — Network Segmentation Strategy**
    - `docs/decisiones/ADR-0021-Network_Segmentation_Strategy.md`
-   - **Approved networks:** `backend-net`, `observability-net`, `restricted-net`, `edge-net` (optional)
-   - **Forbidden:** Single global network (`monitoring-net`)
-   - **Rule:** Principle of least network access
-   - **Justification:** Functional domain isolation, lateral movement reduction
+   - **Redes aprobadas:** `backend-net`, `observability-net`, `restricted-net`, `edge-net` (opcional)
+   - **Prohibido:** Red global única (`monitoring-net`)
+   - **Regla:** Principio de mínimo acceso por red
+   - **Justificación:** Aislamiento de dominios funcionales, reducción de movimiento lateral
 
 5. **ADR-0027 — Container Typology & Healthchecks Policy**
    - `docs/decisiones/ADR-0027-tipologia_contenedores_politica_healthchecks.md`
-   - **Typology:** SERVICE_RUNTIME, SUPERVISOR_RUNTIME, TOOLBOX_RUNTIME, INFRA_TRUSTED
-   - **Rule:** Explicit classification in `ops/runtime_containers.yml`
-   - **Rule:** Healthchecks semantically coherent with container purpose
-   - **Single source of truth:** `ops/runtime_containers.yml`
+   - **Tipología:** SERVICE_RUNTIME, SUPERVISOR_RUNTIME, TOOLBOX_RUNTIME, INFRA_TRUSTED
+   - **Regla:** Clasificación explícita en `ops/runtime_containers.yml`
+   - **Regla:** Healthchecks semánticamente coherentes con propósito del contenedor
+   - **Fuente única de verdad:** `ops/runtime_containers.yml`
 
 6. **ADR-0032 — PostgreSQL Secrets Hardening & CI Validation**
    - `docs/decisiones/ADR-0032-endurecimiento_secretos_PostgreSQL_y_validaciones_CI.md`
-   - **Rule:** `POSTGRES_PASSWORD_FILE=/run/secrets/postgres_password`
-   - **Forbidden:** Hardcoded secrets in `.env` or versioned files
-   - **Validation:** `ops/services/postgres/scripts/check_postgres_secret.sh`
-   - **CI Validation:** `make verify-security`
+   - **Regla:** `POSTGRES_PASSWORD_FILE=/run/secrets/postgres_password`
+   - **Prohibido:** Secretos hardcodeados en `.env` o archivos versionados
+   - **Validación:** `ops/services/postgres/scripts/check_postgres_secret.sh`
+   - **Validación CI:** `make verify-security`
 
 ---
 
-### Governing Principles — DevSecOps Infrastructure
+### Principios Rectores — DevSecOps Infrastructure
 
-Reference: `ai/governance/DEVSECOPS_PRINCIPLES.md`
+Referencia: `ai/governance/DEVSECOPS_PRINCIPLES.md`
 
 **Container Principles:**
-* `cap_drop: ALL` by default
-* `no-new-privileges` enabled
-* Non-root user when viable
-* Healthchecks enabled
+* `cap_drop: ALL` por defecto
+* `no-new-privileges` habilitado
+* Usuario no-root cuando sea viable
+* Healthchecks habilitados
 
 **Security Principles:**
-* Principle of least privilege
-* Defense in depth
-* Progressive hardening
-* Runtime validation
+* Principio de mínimo privilegio
+* Defensa en profundidad
+* Hardening progresivo
+* Validación en runtime
 
 **Operations Principles:**
-* Stability over optimization
-* Monitoring before enforcement
-* Evidence before action
-* Verifiable reproducibility
+* Estabilidad sobre optimización
+* Monitoreo antes de enforcement
+* Evidencia antes de acción
+* Reproducibilidad verificable
 
 ---
 
-### Skill Activation Model — Infrastructure Tasks
+### Modelo de Activación de Skills — Tareas Infraestructurales
 
-Infrastructure changes require proportional activation of specialist skills:
+Los cambios infraestructurales requieren activación proporcional de skills especialistas:
 
-**When the task involves:**
+**Cuando la tarea implique:**
 
-* Container execution model, privileges, or users → Activate: **devsecops_architect**
-* Docker security, hardening, or runtime validation → Activate: **docker_hardening**
-* Port exposure or network changes → Activate: **devsecops_architect**
-* Secrets, credentials, or regulatory compliance → Activate: **backend_security_reviewer** + **devsecops_architect**
-* Observability integration (logs, metrics, healthchecks) → Activate: **observability_reviewer**
-* Resilience, retry logic, or failure scenarios → Activate: **resilience_and_rollback_reviewer**
+* Modelo de ejecución, privilegios o usuarios de contenedores → Activar: **devsecops_architect**
+* Seguridad Docker, hardening o validación de runtime → Activar: **docker_hardening**
+* Exposición de puertos o cambios de red → Activar: **devsecops_architect**
+* Secretos, credenciales o cumplimiento regulatorio → Activar: **backend_security_reviewer** + **devsecops_architect**
+* Integración de observabilidad (logs, métricas, healthchecks) → Activar: **observability_reviewer**
+* Resiliencia, retry logic o escenarios de fallo → Activar: **resilience_and_rollback_reviewer**
 
-**Interdependent skill activation:**
+**Activación interdependiente de skills:**
 
-If ADR-0014 (port exposure) is affected → Also activate ADR-0021 validation (network segmentation).
+Si ADR-0014 (exposición de puertos) es afectado → También activar validación ADR-0021 (segmentación de red).
 
-If ADR-0020 (privilege model) is affected → Also validate ADR-0018 compliance (runtime security).
+Si ADR-0020 (modelo de privilegios) es afectado → También validar cumplimiento ADR-0018 (seguridad runtime).
 
 ---
 
-### Validation Gates — Infrastructure Changes
+### Gates de Validación — Cambios Infraestructurales
 
-Before proposing infrastructure modifications, mandatory verification:
+Antes de proponer modificaciones infraestructurales, verificar obligatoriamente:
 
-**Structural Validation:**
+**Validación Estructural:**
 
-* ✓ All docker-compose services have explicit network assignment
-* ✓ No default network usage (`monitoring-net` eliminated)
-* ✓ Port declarations follow loopback binding rule (if necessary)
-* ✓ User/UID explicitly declared in runtime-stacks
-* ✓ Capabilities explicitly dropped (`cap_drop: ALL`)
+* ✓ Todos los servicios docker-compose tienen asignación explícita de red
+* ✓ Sin uso de red por defecto (`monitoring-net` eliminada)
+* ✓ Declaraciones de puerto siguen regla de vinculación a loopback (si es necesario)
+* ✓ Usuario/UID declarado explícitamente en runtime-stacks
+* ✓ Capacidades explícitamente droppadas (`cap_drop: ALL`)
 
-**Compliance Validation:**
+**Validación de Cumplimiento:**
 
-* ✓ Changes respect all referenced ADRs (status = Approved)
-* ✓ Container classification in `ops/runtime_containers.yml` is explicit
-* ✓ Healthcheck semantics match container typology
-* ✓ Secrets management follows ADR-0032 standard
+* ✓ Cambios respetan todos los ADRs referenciados (estado = Aprobado)
+* ✓ Clasificación de contenedor en `ops/runtime_containers.yml` es explícita
+* ✓ Semántica de healthcheck coincide con tipología de contenedor
+* ✓ Gestión de secretos sigue estándar ADR-0032
 
-**Runtime Security Validation (Makefile):**
+**Validación de Seguridad Runtime (Makefile):**
 
 ```
-make test-security-runtime       # Verifies user, exposure, docker.sock
-make verify-security             # PostgreSQL secrets validation
-make test-reproducibilidad       # Host independence validation
+make test-security-runtime       # Verifica usuario, exposición, docker.sock
+make verify-security             # Validación de secretos PostgreSQL
+make test-reproducibilidad       # Validación de independencia del host
 ```
 
-**CI/CD Gate:**
+**Gate CI/CD:**
 
-All infrastructure changes require:
+Todo cambio infraestructural requiere:
 
-* Successful validation: `make test-security-runtime`
-* Successful validation: `make verify-security`
-* Successful validation: `make test-reproducibilidad`
-* Documentation update in relevant ADR or README
+* Validación exitosa: `make test-security-runtime`
+* Validación exitosa: `make verify-security`
+* Validación exitosa: `make test-reproducibilidad`
+* Actualización documentación en ADR relevante o README
 
 ---
 
 ### Language & Documentation
 
-All infrastructure governance documentation:
+Toda documentación de gobernanza infraestructural:
 
-* Follows Spanish language policy (consistent with `DEVSECOPS_PRINCIPLES.md`, ADRs). (Note: The original authoritative reference documents and ADRs remain in Spanish)
-* Uses consistent terminology from approved ADRs
-* Must be auditable and referenceable
-* Path references must be relative (`./` or `docs/decisiones/`)
+* Sigue política de idioma español (coherente con `DEVSECOPS_PRINCIPLES.md`, ADRs)
+* Utiliza terminología consistente de ADRs aprobados
+* Debe ser auditable y referenceable
+* Referencias a rutas deben ser relativas (`./` o `docs/decisiones/`)
 
 ---
 
