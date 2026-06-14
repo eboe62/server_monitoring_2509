@@ -66,10 +66,10 @@ docker-compose.override.yml
 # === AI Docker ===
 Dockerfile.sandbox
 box-claude.sh
+box-gemini.sh
 
 # === Documentation working copies ===
-* copy*.md
-* copy*.txt
+* copy*
 
 # === Documentation Podcast, Slides, etc ===
 docs/Project_ADRs/*
