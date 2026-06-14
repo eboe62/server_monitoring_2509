@@ -63,6 +63,10 @@ docker-compose.override.yml
 #
 # These directories are authoritative project documentation.
 
+# === AI Docker ===
+Dockerfile.sandbox
+box-claude.sh
+
 # === Documentation working copies ===
 * copy*.md
 * copy*.txt

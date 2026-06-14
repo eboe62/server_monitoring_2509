@@ -11,36 +11,167 @@ Before performing any analysis, review, recommendation, or implementation task, 
 ## Context Resolution & Path Constraints
 
 * **Strict Relative Resolution:** AI assistants MUST NOT expect or attempt to access absolute OS filesystem paths (e.g., `C:\WorkSpace\...`). All internal governance references, skills, templates, and codebase analysis MUST be executed using relative workspace paths (`./`) or files explicitly attached to the active session via chat references (`#` or `@`).
-* **Path Alignment:** Any absolute path mentioned in prompts or configurations must be automatically translated by the AI to its equivalent relative position within the active VS Code workspace root.
+* **Path Alignment:** Any absolute path provided by the user must be interpreted relative to the active repository root.
 
 ---
 
-## Governance Documents
+# LAYER 1 — MANDATORY CORE GOVERNANCE
+
+These documents MUST always be loaded.
 
 Read in the following order:
 
 1. ai/governance/01_AI_CONSTITUTION.md
 2. ai/governance/02_DEVSECOPS_PRINCIPLES.md
-3. ai/governance/04_ARCHITECTURE_GUIDELINES.md
-4. ai/governance/05_ANALYSIS_PROTOCOL.md
-5. ai/governance/07_SKILL_ACTIVATION_MODEL.md
-6. ai/governance/08_TASK_CLASSIFICATION.md
-7. ai/governance/10_EVIDENCE_MODEL.md
-8. ai/governance/11_CONFIDENCE_MODEL.md
-9. ai/governance/13_AUTHORITY_HIERARCHY.md
-10. ai/governance/14_ADR_INDEX.md
-11. ai/governance/16_SKILL_REGISTRY.md
-12. ai/governance/17_SKILL_LIFECYCLE.md
-13. ai/governance/19_AI_DECISION_REGISTRY.md
-14. ai/governance/20_EXECUTION_PROTOCOL.md
-15. ai/governance/22_USER_PREFERENCES.md
-16. ai/governance/23_PROMPTING_GUIDE.md
+3. ai/governance/08_TASK_CLASSIFICATION.md
+4. ai/governance/10_EVIDENCE_MODEL.md
+5. ai/governance/11_CONFIDENCE_MODEL.md
+6. ai/governance/13_AUTHORITY_HIERARCHY.md
+7. ai/governance/14_ADR_INDEX.md
+8. ai/governance/22_USER_PREFERENCES.md
+
+These documents define:
+
+* authority
+* task type
+* evidence
+* confidence
+* ADR authority
+* response behaviour
+
+No task may bypass Layer 1.
 
 ---
 
-## Specialist Skills
+# LAYER 2 — TASK-SPECIFIC GOVERNANCE
 
-Load relevant skills according to the task:
+After task classification, load only the governance required for that task.
+
+---
+
+## ANALYSIS
+
+Load:
+
+* ai/governance/04_ARCHITECTURE_GUIDELINES.md
+* ai/governance/05_ANALYSIS_PROTOCOL.md
+* ai/governance/07_SKILL_ACTIVATION_MODEL.md
+
+---
+
+## AUDIT
+
+Load:
+
+* ai/governance/05_ANALYSIS_PROTOCOL.md
+* ai/governance/07_SKILL_ACTIVATION_MODEL.md
+* ai/governance/16_SKILL_REGISTRY.md
+
+---
+
+## EXECUTION
+
+Load:
+
+* ai/governance/05_ANALYSIS_PROTOCOL.md
+* ai/governance/07_SKILL_ACTIVATION_MODEL.md
+* ai/governance/20_EXECUTION_PROTOCOL.md
+* ai/governance/16_SKILL_REGISTRY.md
+
+---
+
+## ADR
+
+Load:
+
+* ai/governance/04_ARCHITECTURE_GUIDELINES.md
+* ai/governance/05_ANALYSIS_PROTOCOL.md
+* ai/governance/16_SKILL_REGISTRY.md
+* ai/governance/17_SKILL_LIFECYCLE.md
+
+---
+
+## HARDENING
+
+Load:
+
+* ai/governance/05_ANALYSIS_PROTOCOL.md
+* ai/governance/07_SKILL_ACTIVATION_MODEL.md
+* ai/governance/16_SKILL_REGISTRY.md
+
+Mandatory principles:
+
+* Stability over hardening
+* Evidence before action
+* Validation before enforcement
+
+---
+
+## INCIDENT
+
+Load:
+
+* ai/governance/05_ANALYSIS_PROTOCOL.md
+* ai/governance/07_SKILL_ACTIVATION_MODEL.md
+
+Follow TASK_CLASSIFICATION incident workflow.
+
+No dedicated incident governance layer is required.
+
+---
+
+## DOCUMENTATION
+
+Load:
+
+* ai/governance/05_ANALYSIS_PROTOCOL.md
+
+Only load additional governance if required by scope.
+
+---
+
+# LAYER 3 — GOVERNANCE EXTENSIONS
+
+Load only when required.
+
+---
+
+## Governance Extensions
+
+Potential governance extensions:
+
+* ai/governance/17_SKILL_LIFECYCLE.md
+* ai/governance/19_AI_DECISION_REGISTRY.md
+
+Load only when the task explicitly affects:
+
+* skill creation
+* skill modification
+* skill retirement
+* governance lifecycle
+* AI decision traceability
+
+Do not load by default.
+
+---
+
+# LAYER 4 — SPECIALIST SKILLS
+
+Load only the skills required by:
+
+* task type
+* repository scope
+* affected components
+
+Never load all skills.
+
+Skills must be activated proportionally.
+
+---
+
+## Common Skills
+
+Potentially relevant:
 
 * ai/skills/common/adr_author.md
 * ai/skills/common/adr_reviewer.md
@@ -50,26 +181,109 @@ Load relevant skills according to the task:
 * ai/skills/common/governance_reviewer.md
 * ai/skills/common/quality_attribute_reviewer.md
 * ai/skills/common/threat_model_reviewer.md
+
+---
+
+## Infrastructure Skills
+
+Potentially relevant:
+
 * ai/skills/infraestructure/devsecops_architect.md
 * ai/skills/infraestructure/docker_hardening.md
 * ai/skills/infraestructure/observability_reviewer.md
 * ai/skills/infraestructure/resilience_and_rollback_reviewer.md
 * ai/skills/infraestructure/runtime_auditor.md
+
+---
+
+## Backend Skills
+
+Potentially relevant:
+
 * ai/skills/backend/api_gateway_reviewer.md
 * ai/skills/backend/backend_security_reviewer.md
 * ai/skills/backend/backend_testing_reviewer.md
 * ai/skills/backend/jpa_reviewer.md
 * ai/skills/backend/microservice_architect.md
 * ai/skills/backend/spring_architect.md
+
+---
+
+## Frontend Skills
+
+Potentially relevant:
+
 * ai/skills/frontend/accessibility_reviewer.md
 * ai/skills/frontend/api_client_reviewer.md
-* ai/skills/frontend/composables_reviewer.md
-* ai/skills/frontend/frontend_architect.md
 * ai/skills/frontend/frontend_security_reviewer.md
-* ai/skills/frontend/frontend_testing_reviewer.md
-* ai/skills/frontend/quasar_architect.md
+* ai/skills/frontend/quasar_reviewer.md
 * ai/skills/frontend/state_management_reviewer.md
-* ai/skills/frontend/vue_architect.md
+
+Load only the minimum set required.
+
+---
+
+# Authoritative Project Documentation
+
+Authoritative project sources include:
+
+* docs/Project_Definition/
+* docs/Project_Implementation/
+* docs/Project_Corrections/
+* docs/Project_ADRs/
+* docs/decisiones/
+
+Approved ADRs remain normative and binding.
+
+ADR status must be validated through:
+
+ai/governance/14_ADR_INDEX.md
+
+before architectural conclusions are produced.
+
+---
+
+# Response Generation Requirements
+
+Before generating a final response verify:
+
+1. Task classification determined.
+2. Authority hierarchy applied.
+3. ADR status validated.
+4. Evidence model applied.
+5. Confidence model applied.
+6. Relevant skills activated.
+7. Analysis and execution separated.
+8. User preferences respected.
+
+---
+
+# Conflict Resolution
+
+Priority order:
+
+1. Explicit User Instructions
+2. Approved ADRs
+3. AI Constitution
+4. Core Governance
+5. Active Specialist Skills
+6. Execution Protocol
+7. User Preferences
+8. Task-Specific Instructions
+
+When conflicts exist:
+
+* determine authority first
+* determine evidence second
+* determine confidence third
+
+Do not invert this order.
+
+---
+
+# Objective
+
+Provide deterministic, auditable, evidence-based assistance aligned with the repository DevSecOps governance model while minimizing unnecessary context consumption.
 
 ---
 
