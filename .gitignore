@@ -65,8 +65,12 @@ docker-compose.override.yml
 
 # === AI Docker ===
 Dockerfile.sandbox
+Dockerfile.proxy
+Dockerfile.runtime
 box-claude.sh
 box-gemini.sh
+box-opencode.sh
+proxy-start.sh
 
 # === Documentation working copies ===
 * copy*

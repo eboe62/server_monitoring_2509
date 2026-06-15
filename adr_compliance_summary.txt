@@ -1,0 +1,165 @@
+
+====================================================================================================
+ADR COMPLIANCE AUDIT - DETAILED FINDINGS
+====================================================================================================
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+1. OVERALL ASSESSMENT
+────────────────────────────────────────────────────────────────────────────────────────────────────
+
+Audit Scope:         40 ADRs (ADR-0000 through ADR-0032, ADR-0600-0603, ADR-0801-0803)
+Total Audited:       40
+Compliance Status:   0% fully compliant, 100% require normalization
+
+Breakdown:
+  • COMPLIANT:               0 (  0%)
+  • PARTIALLY_COMPLIANT:     0 (  0%)
+  • NON_COMPLIANT:          40 (100%)
+
+Critical Finding: ALL ADRs are using Spanish headers and vocabulary instead of
+English standardized fields defined in the template. This is a systemic issue
+affecting the entire ADR repository.
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+2. FIELD-BY-FIELD ANALYSIS
+────────────────────────────────────────────────────────────────────────────────────────────────────
+
+Field                  Present              Valid                Compliance
+────────────────────────────────────────────────────────────────────────────────────────────────────
+Status                  33/40 ( 82%)        0/40 (  0%)      ✗ CRIT
+Date                    33/40 ( 82%)       33/40 ( 82%)      ⚠ WARN
+Decision Type            0/40 (  0%)        0/40 (  0%)      ✗ CRIT
+Scope                    9/40 ( 22%)        0/40 (  0%)      ✗ CRIT
+Tags                     0/40 (  0%)        0/40 (  0%)      ✗ CRIT
+Related ADRs             0/40 (  0%)        0/40 (  0%)      ✗ CRIT
+Supersedes               0/40 (  0%)        0/40 (  0%)      ✗ CRIT
+Superseded By            0/40 (  0%)        0/40 (  0%)      ✗ CRIT
+Validation Reference     0/40 (  0%)        0/40 (  0%)      ✗ CRIT
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+3. CRITICAL ISSUES (Must fix for compliance)
+────────────────────────────────────────────────────────────────────────────────────────────────────
+
+Decision Type Missing: 40 ADRs affected
+  • ADR-0000-trabajo-paralelo-fuera-git: Trabajo paralelo fuera de Git durante refactor estructural
+  • ADR-0001-verificar-imports-en-fase-migacion: — Verificación de imports durante la fase de migración
+  • ADR-0002-scripts-como-wrappers-operativos: Scripts como wrappers operativos
+  ... and 37 more
+
+Tags Missing: 40 ADRs affected
+  • ADR-0000-trabajo-paralelo-fuera-git: Trabajo paralelo fuera de Git durante refactor estructural
+  • ADR-0001-verificar-imports-en-fase-migacion: — Verificación de imports durante la fase de migración
+  • ADR-0002-scripts-como-wrappers-operativos: Scripts como wrappers operativos
+  ... and 37 more
+
+Related ADRs Missing: 40 ADRs affected
+  • ADR-0000-trabajo-paralelo-fuera-git: Trabajo paralelo fuera de Git durante refactor estructural
+  • ADR-0001-verificar-imports-en-fase-migacion: — Verificación de imports durante la fase de migración
+  • ADR-0002-scripts-como-wrappers-operativos: Scripts como wrappers operativos
+  ... and 37 more
+
+Supersedes Missing: 40 ADRs affected
+  • ADR-0000-trabajo-paralelo-fuera-git: Trabajo paralelo fuera de Git durante refactor estructural
+  • ADR-0001-verificar-imports-en-fase-migacion: — Verificación de imports durante la fase de migración
+  • ADR-0002-scripts-como-wrappers-operativos: Scripts como wrappers operativos
+  ... and 37 more
+
+Superseded By Missing: 40 ADRs affected
+  • ADR-0000-trabajo-paralelo-fuera-git: Trabajo paralelo fuera de Git durante refactor estructural
+  • ADR-0001-verificar-imports-en-fase-migacion: — Verificación de imports durante la fase de migración
+  • ADR-0002-scripts-como-wrappers-operativos: Scripts como wrappers operativos
+  ... and 37 more
+
+Validation Reference Missing: 40 ADRs affected
+  • ADR-0000-trabajo-paralelo-fuera-git: Trabajo paralelo fuera de Git durante refactor estructural
+  • ADR-0001-verificar-imports-en-fase-migacion: — Verificación de imports durante la fase de migración
+  • ADR-0002-scripts-como-wrappers-operativos: Scripts como wrappers operativos
+  ... and 37 more
+
+Status Invalid: 33 ADRs affected
+  • ADR-0000-trabajo-paralelo-fuera-git: Trabajo paralelo fuera de Git durante refactor estructural
+  • ADR-0001-verificar-imports-en-fase-migacion: — Verificación de imports durante la fase de migración
+  • ADR-0002-scripts-como-wrappers-operativos: Scripts como wrappers operativos
+  ... and 30 more
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+4. MIGRATION PRIORITY & RISK ASSESSMENT
+────────────────────────────────────────────────────────────────────────────────────────────────────
+
+HIGH Priority (33 ADRs):
+  Risk: Invalid fields or broken cross-references
+  Impact: These ADRs cannot be processed until corrected
+    • ADR-0000-trabajo-paralelo-fuera-git | Invalid: ['Status'], Missing: ['Decision Type', 'Scope']
+    • ADR-0001-verificar-imports-en-fase-migacion | Invalid: ['Status'], Missing: ['Decision Type', 'Scope']
+    • ADR-0002-scripts-como-wrappers-operativos | Invalid: ['Status'], Missing: ['Decision Type', 'Scope']
+    • ADR-0003-desacoplar-configuracion-y-ejecución-en-runtime | Invalid: ['Status'], Missing: ['Decision Type', 'Scope']
+    • ADR-0004-eliminar-version-en-docker-compose | Invalid: ['Status'], Missing: ['Decision Type', 'Scope']
+    ... and 28 more
+
+MEDIUM Priority (7 ADRs):
+  Risk: Missing 2-3 fields, but not invalid
+  Impact: ADRs are readable but incomplete
+    • ADR-0600-estrategia-despliegue      | Missing: ['Status', 'Date', 'Decision Type']
+    • ADR-0601-desacoplamiento-modulo-commons | Missing: ['Status', 'Date', 'Decision Type']
+    • ADR-0602-comunicacion-interservicios | Missing: ['Status', 'Date', 'Decision Type']
+    • ADR-0603-gestion-bbdd               | Missing: ['Status', 'Date', 'Decision Type']
+    • ADR-0801-estrategia-empaquetado-despliegue | Missing: ['Status', 'Date', 'Decision Type']
+
+LOW Priority (0 ADRs):
+  Risk: Normalization-only (missing Tags, etc.)
+  Impact: Administrative cleanup
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+5. BODY INTEGRITY CHECK
+────────────────────────────────────────────────────────────────────────────────────────────────────
+
+INTACT (38 ADRs): Body sections present and coherent
+MODIFIED (2 ADRs): Body sections missing or irregular
+  • ADR-0023-RestrictedNet_Egress_Control: — Egress Control for restricted-net (Propuesto)
+  • ADR-0031-gobernanza_runtime_y_clasificacion_dependencias_host: 
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+6. LANGUAGE & FORMAT ISSUES
+────────────────────────────────────────────────────────────────────────────────────────────────────
+
+Finding: ADRs use mixed Spanish/English headers and vocabulary:
+  • Status field uses Spanish: "Aprobado", "Rechazado", "Propuesto"
+  • Expected: English: "APPROVED", "SUPERSEDED", "PROPOSED", "DEPRECATED"
+  
+  • Date field uses Spanish: "Fecha" instead of "Date"
+  • Decision Type field: Missing completely (100% of ADRs)
+  
+  • Scope/Ámbito field: Some use "Ámbito" (Spanish), others use "Scope"
+  • When present, often contains unvalidated values
+
+Recommendation: Implement strict English-only header enforcement in template
+and provide migration path for existing ADRs.
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+7. REMEDIATION RECOMMENDATIONS (By Phase)
+────────────────────────────────────────────────────────────────────────────────────────────────────
+
+PHASE 1 - CRITICAL (Weeks 1-2):
+  1. Add missing Decision Type field to ALL 40 ADRs
+  2. Standardize Status values to English uppercase
+  3. Add Tags field with meaningful values
+  4. Add Validation Reference field (use "NONE" for most)
+
+PHASE 2 - IMPORTANT (Weeks 3-4):
+  1. Add Related ADRs field (NONE for most, unless clearly related)
+  2. Add Supersedes field (NONE for most)
+  3. Add Superseded By field (NONE for most)
+  4. Add/validate Scope field
+
+PHASE 3 - CLEANUP (Week 5):
+  1. Migrate Spanish headers to English
+  2. Validate all cross-references (Related ADRs, Supersedes, etc.)
+  3. Audit body integrity for all ADRs
+  4. Create validation pipeline for future ADRs
+
+Total Estimated Effort: ~2-3 person-weeks
+Blocking Issues: 0 (all issues are correctable without content changes)
+
+====================================================================================================
