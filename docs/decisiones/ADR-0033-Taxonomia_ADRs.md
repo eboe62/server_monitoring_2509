@@ -4,6 +4,7 @@ Status: APPROVED
 Date: 2026-06-17
 Decision Type: GOVERNANCE
 Scope: System
+Category: GOVERNANCE
 Tags: governance, adr, taxonomy, documentation
 Related ADRs: ADR-0000, ADR-0031
 Supersedes: NONE

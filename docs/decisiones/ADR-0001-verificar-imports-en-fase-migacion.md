@@ -4,6 +4,7 @@ Status: APPROVED
 Date: 2025-12-09
 Decision Type: REVIEW_REQUIRED
 Scope: Runtime
+Category: ARCHITECTURE
 Tags: REVIEW_REQUIRED
 Related ADRs: ADR-0002
 Supersedes: NONE

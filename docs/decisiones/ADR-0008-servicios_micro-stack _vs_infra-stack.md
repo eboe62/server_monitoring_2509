@@ -4,6 +4,7 @@ Status: APPROVED
 Date: 2026-02-17
 Decision Type: REVIEW_REQUIRED
 Scope: Infrastructure
+Category: ARCHITECTURE
 Tags: REVIEW_REQUIRED
 Related ADRs: ADR-0009, ADR-0010, ADR-0020
 Supersedes: NONE

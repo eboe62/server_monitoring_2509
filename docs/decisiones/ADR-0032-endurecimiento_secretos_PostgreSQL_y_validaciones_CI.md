@@ -4,6 +4,7 @@ Status: APPROVED
 Date: 2026-05-31
 Decision Type: REVIEW_REQUIRED
 Scope: Database
+Category: SECURITY
 Tags: REVIEW_REQUIRED
 Related ADRs: ADR-0013
 Supersedes: NONE

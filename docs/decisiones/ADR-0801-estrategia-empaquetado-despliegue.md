@@ -4,6 +4,7 @@ Status: APPROVED
 Date: 2026-06-11
 Decision Type: REVIEW_REQUIRED
 Scope: Infrastructure
+Category: DEPLOYMENT
 Tags: REVIEW_REQUIRED
 Related ADRs: ADR-0602, ADR-0802
 Supersedes: NONE

@@ -26,12 +26,12 @@ fi
 
 # 2. Limpieza de contenedores huérfanos o activos previos
 if [ "$(docker ps -a -q -f name=^/${PROXY_NAME}$)" ]; then
-    echo "🧹 Detectado contenedor antiguo o en bucle. Limpiando..."
+    echo "🧹 DeLimpiando contenedor sidecar activo previo..."
     docker stop "$PROXY_NAME" >/dev/null 2>&1 || true
     docker rm "$PROXY_NAME" >/dev/null 2>&1 || true
 fi
 
-echo "🚀 Levantando Proxy Sidecar en segundo plano de forma segura..."
+echo "🚀 LevaLevantando Proxy Sidecar con Hardening de Máximo Aislamiento..."
 
 # 3. Lanzamiento automatizado con Hardening Estricto y restricción Loopback al puerto 8082 y Enrutamiento hacia GEMINI
 docker run -d \

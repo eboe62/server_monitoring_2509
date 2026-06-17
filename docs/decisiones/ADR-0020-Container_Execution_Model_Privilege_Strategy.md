@@ -4,6 +4,7 @@ Status: APPROVED
 Date: 2026-05-04
 Decision Type: REVIEW_REQUIRED
 Scope: Runtime
+Category: SECURITY
 Tags: REVIEW_REQUIRED
 Related ADRs: ADR-0018, ADR-0024
 Supersedes: NONE

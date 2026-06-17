@@ -4,6 +4,7 @@ Status: APPROVED
 Date: 2026-01-24
 Decision Type: REVIEW_REQUIRED
 Scope: System
+Category: GOVERNANCE
 Tags: REVIEW_REQUIRED
 Related ADRs: NONE
 Supersedes: NONE

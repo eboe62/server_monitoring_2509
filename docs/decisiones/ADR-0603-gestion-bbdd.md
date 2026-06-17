@@ -4,6 +4,7 @@ Status: APPROVED
 Date: 2026-06-11
 Decision Type: REVIEW_REQUIRED
 Scope: Database
+Category: DATABASE
 Tags: REVIEW_REQUIRED
 Related ADRs: ADR-0600
 Supersedes: NONE

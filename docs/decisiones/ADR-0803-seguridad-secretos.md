@@ -4,6 +4,7 @@ Status: APPROVED
 Date: 2026-06-11
 Decision Type: REVIEW_REQUIRED
 Scope: Infrastructure
+Category: SECURITY
 Tags: REVIEW_REQUIRED
 Related ADRs: ADR-0600, ADR-0801
 Supersedes: NONE
