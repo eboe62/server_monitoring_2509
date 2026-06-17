@@ -86,21 +86,22 @@ Meaning: No longer recommended. Historical reference only. Not authoritative.
 | ADR-0015 | Docker Network Exposure Model | APPROVED | Infrastructure | 2026-03-14 | ADR-0014, ADR-0021 | 3 niveles exposición |
 | ADR-0016 | Política aislamiento redes Docker | APPROVED | Infrastructure | 2026-05-06 | ADR-0015, ADR-0021 | Redes por dominio |
 | ADR-0017 | Resilience model single-node Docker | APPROVED | Runtime | 2026-04-01 | ADR-0018, ADR-0019 | Límites Docker Compose |
-| ADR-0018 | Modelo seguridad runtime + resiliencia | APPROVED | Runtime | 2026-04-05 | ADR-0017, ADR-0020, ADR-0024 | Normativo seguridad; `make test-security-runtime` |
+| ADR-0018 | Modelo seguridad runtime + resiliencia | APPROVED | Runtime | 2026-04-05 | ADR-0017, ADR-0020, ADR-0024 | Normativo seguridad; `make test-security-runtime |
 | ADR-0019 | Resilience Testing Strategy | APPROVED | Runtime | 2026-04-25 | ADR-0017 | Tests multinivel |
 | ADR-0020 | Container Execution Model & Privilege | APPROVED | Runtime | 2026-05-04 | ADR-0018, ADR-0024 | Privilegios contextuales |
-| ADR-0021 | Network Segmentation Strategy | APPROVED | Infrastructure | 2026-05-04 | ADR-0015, ADR-0016, ADR-0022 | backend/observability/restricted; `make audit-runtime` |
+| ADR-0021 | Network Segmentation Strategy | APPROVED | Infrastructure | 2026-05-04 | ADR-0015, ADR-0016, ADR-0022 | backend/observability/restricted; `make audit-runtime |
 | ADR-0022 | Promtail Privilege Approval | APPROVED | Runtime | 2026-05-08 | ADR-0018, ADR-0020, ADR-0021 | Excepción auditada |
 | ADR-0023 | Egress Control restricted-net | PROPOSED | Infrastructure | 2026-05-08 | ADR-0021 | Futuro: proxy egress |
 | ADR-0024 | Container Privilege Exception Policy | APPROVED | Runtime | 2026-05-09 | ADR-0020, ADR-0018 | Mínimo privilegio contextual |
-| ADR-0025 | Modelo SMTP explícito + endurecimiento | APPROVED | Runtime | 2026-05-13 | ADR-0005, ADR-0003, ADR-0026 | SMTP_MODE: relay\|auth; `make test-smtp-all` |
+| ADR-0025 | Modelo SMTP explícito + endurecimiento | APPROVED | Runtime | 2026-05-13 | ADR-0005, ADR-0003, ADR-0026 | SMTP_MODE: relay\|auth; `make test-smtp-all |
 | ADR-0026 | Estrategia testing modelo SMTP | PROPOSED | Runtime | 2026-05-13 | ADR-0025 | Testing multinivel SMTP |
-| ADR-0027 | Tipología contenedores + healthchecks | APPROVED | Runtime | 2026-05-17 | ADR-0008, ADR-0020 | Clasificación oficial; `make test-python-health` |
-| ADR-0028 | Política reproducibilidad Docker | APPROVED | Infrastructure | 2026-05-18 | ADR-0004 | Digest SHA256 obligatorio; `make validate-dockerfiles` |
-| ADR-0029 | Structured Compose Policy Audit | APPROVED | Infrastructure | 2026-05-20 | ADR-0027 | ops/audit/compose_policy_checks.py; `make test-policy-structured` |
-| ADR-0030 | Auditoría Runtime HostConfig | APPROVED | Runtime | 2026-05-23 | ADR-0020, ADR-0029 | docker inspect host-side; `make audit-runtime` |
-| ADR-0031 | Gobernanza Runtime + Dependencias Host | APPROVED | Runtime | 2026-05-26 | ADR-0030, ADR-0018, ADR-0029, ADR-0020, ADR-0024 | Auditoría federada evidencia; `make audit-runtime-ci` |
-| ADR-0032 | Endurecimiento secretos PostgreSQL | APPROVED | Database | 2026-05-31 | ADR-0013 | POSTGRES_PASSWORD_FILE; `make verify-security` |
+| ADR-0027 | Tipología contenedores + healthchecks | APPROVED | Runtime | 2026-05-17 | ADR-0008, ADR-0020 | Clasificación oficial; `make test-python-health |
+| ADR-0028 | Política reproducibilidad Docker | APPROVED | Infrastructure | 2026-05-18 | ADR-0004 | Digest SHA256 obligatorio; `make validate-dockerfiles |
+| ADR-0029 | Structured Compose Policy Audit | APPROVED | Infrastructure | 2026-05-20 | ADR-0027 | ops/audit/compose_policy_checks.py; `make test-policy-structured |
+| ADR-0030 | Auditoría Runtime HostConfig | APPROVED | Runtime | 2026-05-23 | ADR-0020, ADR-0029 | docker inspect host-side; `make audit-runtime |
+| ADR-0031 | Gobernanza Runtime + Dependencias Host | APPROVED | Runtime | 2026-05-26 | ADR-0030, ADR-0018, ADR-0029, ADR-0020, ADR-0024 | Auditoría federada evidencia; `make audit-runtime-ci |
+| ADR-0032 | Endurecimiento secretos PostgreSQL | APPROVED | Database | 2026-05-31 | ADR-0013 | POSTGRES_PASSWORD_FILE; `make verify-security |
+| ADR-0033 | Taxonomia_ADRs | APPROVED | System | 2026-06-17 | - | - |
 
 ### Backend — Java/Maven Multi-Module
 

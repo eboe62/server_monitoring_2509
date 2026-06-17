@@ -1,7 +1,14 @@
 # ADR-0601: Estructura de Desacoplamiento de Capas mediante el Patrón Módulo-Commons
 
-## Estado
-ACCEPTED
+Status: APPROVED
+Date: 2026-06-11
+Decision Type: REVIEW_REQUIRED
+Scope: System
+Tags: REVIEW_REQUIRED
+Related ADRs: ADR-0600, ADR-0602
+Supersedes: NONE
+Superseded By: NONE
+Validation Reference: NONE
 
 ## Contexto
 Se observa que cada dominio de negocio del backend está duplicado sistemáticamente en dos subartefactos emparentados: un módulo principal (ej. `gda-agrupacion`) y un submódulo con el sufijo `-commons` (ej. `gda-agrupacion-commons`). Es necesario fijar la frontera de qué lógica reside en cada lado para evitar el acoplamiento cíclico en el árbol de Maven y la fuga de responsabilidades.

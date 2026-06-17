@@ -1,7 +1,14 @@
 # ADR-0802: Lineamientos de Integración Frontend con Microservicios Backend
 
-## Estado
-Proposed
+Status: PROPOSED
+Date: 2026-06-11
+Decision Type: REVIEW_REQUIRED
+Scope: System
+Tags: REVIEW_REQUIRED
+Related ADRs: ADR-0602, ADR-0801
+Supersedes: NONE
+Superseded By: NONE
+Validation Reference: NONE
 
 ## Contexto
 El frontend del proyecto debe interactuar con múltiples microservicios backend, lo que introduce desafíos en la gestión de llamadas, manejo de errores y consistencia en la comunicación. Actualmente, no se han definido lineamientos claros para esta integración, lo que puede generar inconsistencias y dificultades en el desarrollo.

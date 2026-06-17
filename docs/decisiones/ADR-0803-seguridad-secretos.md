@@ -1,7 +1,14 @@
 # ADR-0803: Estrategias de Seguridad y Gestión de Secretos en Microservicios
 
-## Estado
-Proposed
+Status: PROPOSED
+Date: 2026-06-11
+Decision Type: REVIEW_REQUIRED
+Scope: Infrastructure
+Tags: REVIEW_REQUIRED
+Related ADRs: ADR-0600, ADR-0801
+Supersedes: NONE
+Superseded By: NONE
+Validation Reference: NONE
 
 ## Contexto
 En un ecosistema de microservicios, la seguridad y la gestión de secretos son fundamentales para proteger datos sensibles y garantizar la confiabilidad del sistema. Actualmente, no se han definido lineamientos claros sobre cómo manejar variables de entorno, secretos y autenticación entre servicios.

@@ -1,7 +1,14 @@
 # ADR-0801: Estrategia de Empaquetado y Despliegue con Contenedores Docker
 
-## Estado
-Proposed
+Status: PROPOSED
+Date: 2026-06-11
+Decision Type: REVIEW_REQUIRED
+Scope: Infrastructure
+Tags: REVIEW_REQUIRED
+Related ADRs: ADR-0602, ADR-0802
+Supersedes: NONE
+Superseded By: NONE
+Validation Reference: NONE
 
 ## Contexto
 En un Monorrepo Maven Multi-Module con microservicios independientes, es necesario definir una estrategia de empaquetado y despliegue que garantice consistencia, eficiencia y portabilidad. Actualmente, no se han establecido lineamientos claros sobre cómo se deben construir y desplegar los contenedores Docker para cada microservicio.

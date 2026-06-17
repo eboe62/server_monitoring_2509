@@ -1,8 +1,14 @@
-ADR-0028 – Política de reproducibilidad Docker y endurecimiento de validaciones IaC
+# ADR-0028 – Política de reproducibilidad Docker y endurecimiento de validaciones IaC
 
-Fecha: 2026-05-18
-Estado: Aprobado
-Contexto: Hardening moderado de reproducibilidad Docker – server_monitoring_2509
+Status: APPROVED
+Date: 2026-05-18
+Decision Type: REVIEW_REQUIRED
+Scope: Infrastructure
+Tags: REVIEW_REQUIRED
+Related ADRs: ADR-0004
+Supersedes: NONE
+Superseded By: NONE
+Validation Reference: make validate-dockerfiles
 
 ## Contexto
 

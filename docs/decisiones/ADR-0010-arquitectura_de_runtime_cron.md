@@ -1,8 +1,15 @@
 # ADR-0010 - Arquitectura de runtime cron
 
-Fecha: 2026-03-05
-Estado: ACCEPTED
-Contexto: server_monitoring_2509
+Status: APPROVED
+Date: 2026-03-05
+Decision Type: REVIEW_REQUIRED
+Scope: Runtime
+Tags: REVIEW_REQUIRED
+Related ADRs: ADR-0008, ADR-0011, ADR-0012
+Supersedes: NONE
+Superseded By: NONE
+Validation Reference: NONE
+
 ## Contexto
 El sistema server_monitoring requiere ejecutar tareas periódicas para:
 - mantenimiento del sistema

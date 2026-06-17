@@ -1,8 +1,14 @@
 # ADR-0029 — Structured Compose Policy Audit
 
-Fecha: 2026-05-20
-Estado: Aprobado
-Contexto: server_monitoring_2509 — Hardening de auditoría Compose y validación estructurada runtime
+Status: APPROVED
+Date: 2026-05-20
+Decision Type: REVIEW_REQUIRED
+Scope: Infrastructure
+Tags: REVIEW_REQUIRED
+Related ADRs: ADR-0027
+Supersedes: NONE
+Superseded By: NONE
+Validation Reference: make test-policy-structured
 
 ## Contexto
 

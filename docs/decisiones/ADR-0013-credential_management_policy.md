@@ -1,8 +1,14 @@
 # ADR-0013 – Credential Management Policy
 
-Fecha: 2026-03-14
-Estado: Aprobado
-Contexto: server_monitoring_2509
+Status: APPROVED
+Date: 2026-03-14
+Decision Type: REVIEW_REQUIRED
+Scope: Infrastructure
+Tags: REVIEW_REQUIRED
+Related ADRs: ADR-0032
+Supersedes: NONE
+Superseded By: NONE
+Validation Reference: NONE
 
 ## Contexto
 Durante FASE 4 del proceso de implementación se evaluó el modelo de gestión de credenciales definido inicialmente en la arquitectura del proyecto.

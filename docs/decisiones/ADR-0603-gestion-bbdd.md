@@ -1,7 +1,14 @@
 # ADR-0603: Políticas de Gestión de Bases de Datos en Microservicios
 
-## Estado
-Proposed
+Status: PROPOSED
+Date: 2026-06-11
+Decision Type: REVIEW_REQUIRED
+Scope: Database
+Tags: REVIEW_REQUIRED
+Related ADRs: ADR-0600
+Supersedes: NONE
+Superseded By: NONE
+Validation Reference: NONE
 
 ## Contexto
 En una arquitectura de microservicios desacoplados, cada servicio debe ser independiente en todos los aspectos, incluida la gestión de datos. Actualmente, no se han definido lineamientos claros sobre cómo los microservicios deben gestionar sus bases de datos, lo que puede llevar a conflictos de acceso, acoplamiento entre servicios y dificultades para escalar.

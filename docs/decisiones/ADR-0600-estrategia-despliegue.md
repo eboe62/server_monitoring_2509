@@ -1,7 +1,14 @@
 # ADR-0600: Estrategia de Despliegue: Arquitectura de Microservicios Independientes basados en Maven Multi-Module
 
-## Estado
-ACCEPTED
+Status: APPROVED
+Date: 2026-06-11
+Decision Type: REVIEW_REQUIRED
+Scope: System
+Tags: REVIEW_REQUIRED
+Related ADRs: ADR-0601, ADR-0602, ADR-0603
+Supersedes: NONE
+Superseded By: NONE
+Validation Reference: NONE
 
 ## Contexto
 El backend de la plataforma GDA está compuesto por múltiples carpetas de negocio diferenciadas (gda-finance, gda-imputacion, gda-persona, etc.). Cada una cuenta de forma nativa con su propio wrapper de Maven (`mvnw`), su directorio de configuración `.mvn` y su archivo `pom.xml` independiente. Esto demuestra que, aunque comparten el mismo repositorio de código (Monorrepo), no están concebidos como un único monolito acoplado en tiempo de compilación.

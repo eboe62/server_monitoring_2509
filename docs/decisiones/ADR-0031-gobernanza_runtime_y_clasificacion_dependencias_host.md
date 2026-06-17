@@ -1,8 +1,14 @@
     # ADR-0031 – Gobernanza Runtime Docker y Clasificación de Dependencias Host
 
-    Fecha: 2026-05-26
-    Estado: Aprobado
-    Contexto: server_monitoring_2509
+Status: APPROVED
+Date: 2026-05-26
+Decision Type: REVIEW_REQUIRED
+Scope: Runtime
+Tags: REVIEW_REQUIRED
+Related ADRs: ADR-0030, ADR-0018, ADR-0029, ADR-0020, ADR-0024
+Supersedes: NONE
+Superseded By: NONE
+Validation Reference: make audit-runtime-ci
 
     ## Contexto
 

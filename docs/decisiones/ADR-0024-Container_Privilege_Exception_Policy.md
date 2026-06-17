@@ -1,9 +1,14 @@
 # ADR-0024 — Container Privilege Exception Policy (Mínimo privilegio contextual)
 
-Fecha: 2026-05-09
-Estado: Aprobado
-Implementación: Completa
-Ámbito: server_monitoring_2509
+Status: APPROVED
+Date: 2026-05-09
+Decision Type: REVIEW_REQUIRED
+Scope: Runtime
+Tags: REVIEW_REQUIRED
+Related ADRs: ADR-0020, ADR-0018
+Supersedes: NONE
+Superseded By: NONE
+Validation Reference: NONE
 
 ## Contexto
 

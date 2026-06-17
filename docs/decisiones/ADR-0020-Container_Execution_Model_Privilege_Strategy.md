@@ -1,8 +1,14 @@
 # ADR-0020 — Container Execution Model & Privilege Strategy
 
-Fecha: 2026-05-04
-Estado: Aprobado
-Contexto: server_monitoring_2509
+Status: APPROVED
+Date: 2026-05-04
+Decision Type: REVIEW_REQUIRED
+Scope: Runtime
+Tags: REVIEW_REQUIRED
+Related ADRs: ADR-0018, ADR-0024
+Supersedes: NONE
+Superseded By: NONE
+Validation Reference: NONE
 
 ## Contexto
 

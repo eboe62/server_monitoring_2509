@@ -1,10 +1,14 @@
 # ADR-0021 — Network Segmentation Strategy
 
-Fecha: 2026-05-04
-Estado: Aprobado
-Contexto: server_monitoring_2509
-
-Nota: Durante la migración de la plataforma la red histórica `monitoring-net` se ha sustituido por un conjunto de redes segmentadas: `backend-net`, `observability-net` y `restricted-net`. Este documento refleja la estrategia y la transición.
+Status: APPROVED
+Date: 2026-05-04
+Decision Type: REVIEW_REQUIRED
+Scope: Infrastructure
+Tags: REVIEW_REQUIRED
+Related ADRs: ADR-0015, ADR-0016, ADR-0022
+Supersedes: NONE
+Superseded By: NONE
+Validation Reference: make audit-runtime
 
 ## Contexto
 

@@ -1,9 +1,14 @@
 # ADR-0026 — Estrategia de validación y testing del modelo SMTP (Estrategia de validación multinivel)
 
-Fecha: 2026-05-13
-Estado: Propuesta
-Implementación: Parcial
-Ámbito: server_monitoring_2509
+Status: PROPOSED
+Date: 2026-05-13
+Decision Type: REVIEW_REQUIRED
+Scope: Runtime
+Tags: REVIEW_REQUIRED
+Related ADRs: ADR-0025
+Supersedes: NONE
+Superseded By: NONE
+Validation Reference: NONE
 
 ## Contexto
 

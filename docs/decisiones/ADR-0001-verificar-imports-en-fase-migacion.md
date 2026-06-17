@@ -1,8 +1,14 @@
 # ADR-0001 — Verificación de imports durante la fase de migración
 
-Fecha: 2025-12-09
-Estado: Aprobado
-Contexto: Migración IaC server_monitoring_2509
+Status: APPROVED
+Date: 2025-12-09
+Decision Type: REVIEW_REQUIRED
+Scope: Runtime
+Tags: REVIEW_REQUIRED
+Related ADRs: ADR-0002
+Supersedes: NONE
+Superseded By: NONE
+Validation Reference: NONE
 
 ## Contexto
 

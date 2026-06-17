@@ -1,8 +1,14 @@
-# ADR-004 - Eliminación del atributo version en docker-compose (Docker Compose v2)
+# ADR-0004 - Eliminación del atributo version en docker-compose (Docker Compose v2)
 
-Fecha: 2026-01-27
-Estado: Aprobado
-Contexto: Migración IaC server_monitoring_2509
+Status: APPROVED
+Date: 2026-01-27
+Decision Type: REVIEW_REQUIRED
+Scope: Infrastructure
+Tags: REVIEW_REQUIRED
+Related ADRs: NONE
+Supersedes: NONE
+Superseded By: NONE
+Validation Reference: NONE
 
 ## Contexto
 

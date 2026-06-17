@@ -1,8 +1,14 @@
 # ADR-0015 — Docker Network Exposure Model
 
-Fecha: 2026-03-14
-Estado: Aprobado
-Ámbito: server_monitoring_2509
+Status: APPROVED
+Date: 2026-03-14
+Decision Type: REVIEW_REQUIRED
+Scope: Infrastructure
+Tags: REVIEW_REQUIRED
+Related ADRs: ADR-0014, ADR-0021
+Supersedes: NONE
+Superseded By: NONE
+Validation Reference: NONE
 
 ## Contexto
 El proyecto server_monitoring adopta un modelo Host-Controlled Docker Compose IaC donde:
