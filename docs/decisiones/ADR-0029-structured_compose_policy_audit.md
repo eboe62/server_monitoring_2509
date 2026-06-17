@@ -2,9 +2,8 @@
 
 Status: APPROVED
 Date: 2026-05-20
-Decision Type: REVIEW_REQUIRED
 Scope: Infrastructure
-Category: TESTING
+Category: GOVERNANCE
 Tags: REVIEW_REQUIRED
 Related ADRs: ADR-0027
 Supersedes: NONE

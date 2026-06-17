@@ -2,7 +2,6 @@
 
 Status: APPROVED
 Date: 2026-01-25
-Decision Type: REVIEW_REQUIRED
 Scope: Runtime
 Category: ARCHITECTURE
 Tags: REVIEW_REQUIRED

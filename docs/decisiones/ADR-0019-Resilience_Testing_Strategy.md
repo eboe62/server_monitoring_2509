@@ -2,7 +2,6 @@
 
 Status: APPROVED
 Date: 2026-04-25
-Decision Type: REVIEW_REQUIRED
 Scope: Runtime
 Category: TESTING
 Tags: REVIEW_REQUIRED

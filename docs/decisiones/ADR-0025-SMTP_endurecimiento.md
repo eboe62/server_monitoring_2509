@@ -2,7 +2,6 @@
 
 Status: APPROVED
 Date: 2026-05-13
-Decision Type: REVIEW_REQUIRED
 Scope: Runtime
 Category: SECURITY
 Tags: REVIEW_REQUIRED

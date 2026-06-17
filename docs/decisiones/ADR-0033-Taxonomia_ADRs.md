@@ -2,7 +2,6 @@
 
 Status: APPROVED
 Date: 2026-06-17
-Decision Type: GOVERNANCE
 Scope: System
 Category: GOVERNANCE
 Tags: governance, adr, taxonomy, documentation
@@ -17,7 +16,7 @@ Durante la Fase 1 de normalización estructural de ADRs se ha establecido una ca
 
 La revisión realizada ha evidenciado que los campos:
 
-* Decision Type
+* Category
 * Tags
 
 carecen de una taxonomía oficial y de un vocabulario controlado aprobado.
@@ -32,9 +31,9 @@ Se requiere una política común que establezca:
 
 ## Decisión
 
-Se adopta la siguiente taxonomía oficial para el campo `Decision Type`.
+Se adopta la siguiente taxonomía oficial para el campo `Category`.
 
-### Decision Types Oficiales
+### Categorías Oficiales
 
 #### GOVERNANCE
 
@@ -178,13 +177,13 @@ Gobernanza:
 
 ## Reglas de Gobernanza
 
-1. Todo ADR nuevo deberá incluir un único `Decision Type`.
+1. Todo ADR nuevo deberá incluir un único `Category`.
 
 2. Todo ADR nuevo deberá incluir entre uno y cinco tags.
 
 3. Los tags deberán proceder preferentemente del catálogo aprobado.
 
-4. La creación de nuevos Decision Types requerirá un ADR específico.
+4. La creación de nuevas Categorías requerirá un ADR específico.
 
 5. La incorporación de nuevos tags podrá realizarse mediante actualización de este ADR o mediante ADR posterior que amplíe el vocabulario oficial.
 

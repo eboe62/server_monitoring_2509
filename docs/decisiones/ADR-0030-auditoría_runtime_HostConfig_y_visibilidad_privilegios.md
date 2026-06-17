@@ -2,9 +2,8 @@
 
 Status: APPROVED
 Date: 2026-05-23
-Decision Type: REVIEW_REQUIRED
 Scope: Runtime
-Category: TESTING
+Category: GOVERNANCE
 Tags: REVIEW_REQUIRED
 Related ADRs: ADR-0020, ADR-0029
 Supersedes: NONE

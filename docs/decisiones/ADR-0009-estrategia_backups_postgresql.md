@@ -2,7 +2,6 @@
 
 Status: APPROVED
 Date: 2026-03-05
-Decision Type: REVIEW_REQUIRED
 Scope: Database
 Category: DATABASE
 Tags: REVIEW_REQUIRED

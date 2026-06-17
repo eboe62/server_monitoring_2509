@@ -2,7 +2,6 @@
 
 Status: APPROVED
 Date: 2026-05-26
-Decision Type: REVIEW_REQUIRED
 Scope: Runtime
 Category: GOVERNANCE
 Tags: REVIEW_REQUIRED

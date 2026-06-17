@@ -2,7 +2,6 @@
 
 Status: APPROVED
 Date: 2026-06-11
-Decision Type: REVIEW_REQUIRED
 Scope: Infrastructure
 Category: SECURITY
 Tags: REVIEW_REQUIRED

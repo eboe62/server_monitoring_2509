@@ -2,7 +2,6 @@
 
 Status: DEPRECATED
 Date: 2026-05-04
-Decision Type: REVIEW_REQUIRED
 Scope: Infrastructure
 Category: GOVERNANCE
 Tags: REVIEW_REQUIRED

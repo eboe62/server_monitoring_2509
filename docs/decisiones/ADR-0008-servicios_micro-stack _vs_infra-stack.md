@@ -2,7 +2,6 @@
 
 Status: APPROVED
 Date: 2026-02-17
-Decision Type: REVIEW_REQUIRED
 Scope: Infrastructure
 Category: ARCHITECTURE
 Tags: REVIEW_REQUIRED

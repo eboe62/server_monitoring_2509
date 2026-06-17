@@ -66,97 +66,95 @@ Meaning: No longer recommended. Historical reference only. Not authoritative.
 
 ### server_monitoring_2509 (Platform: Docker Compose, Python, IaC)
 
-| ADR | Título | Status | Scope | Fecha | Relacionados | Notas |
-|-----|--------|--------|-------|-------|--------------|-------|
-| ADR-0000 | Trabajo paralelo fuera de Git durante refactor | APPROVED | System | 2026-01-24 | - | Metodología migración |
-| ADR-0001 | Verificación de imports en migración Python | APPROVED | Runtime | 2025-12-09 | ADR-0002 | Policy imports |
-| ADR-0002 | Scripts como wrappers operativos | APPROVED | Runtime | 2026-01-25 | ADR-0003, ADR-0011 | Separación src/scripts |
-| ADR-0003 | Desacoplamiento config y ejecución runtime | APPROVED | Runtime | 2026-01-25 | ADR-0005, ADR-0011, ADR-0025 | init_config() obligatorio |
-| ADR-0004 | Eliminación version docker-compose v2 | APPROVED | Infrastructure | 2026-01-27 | - | Docker Compose v2 |
-| ADR-0005 | Desacoplamiento runtime + lazy imports | APPROVED | Runtime | 2026-01-27 | ADR-0003, ADR-0025 | Base SMTP (ADR-0025) |
-| ADR-0006 | Gobernanza imagen base monitoring-base | DEPRECATED | Infrastructure | 2026-05-04 | - | Rechazado: imagen compartida |
-| ADR-0007 | Política entorno VS Code + WSL | APPROVED | System | 2026-02-16 | - | Stack dev oficial |
-| ADR-0008 | Clasificación servicios: Micro-stack vs Infra | APPROVED | Infrastructure | 2026-02-17 | ADR-0009, ADR-0010, ADR-0020 | Taxonomía servicios |
-| ADR-0009 | Estrategia backups PostgreSQL | APPROVED | Database | 2026-03-05 | ADR-0008, ADR-0010 | Backups contenerizado |
-| ADR-0010 | Arquitectura runtime cron | APPROVED | Runtime | 2026-03-05 | ADR-0008, ADR-0011, ADR-0012 | monitoring-cron oficial |
-| ADR-0011 | Python Runtime Execution Model | APPROVED | Runtime | 2026-03-05 | ADR-0002, ADR-0003, ADR-0012 | Determinismo Python |
-| ADR-0012 | Separation host cron vs monitoring cron | APPROVED | Runtime | 2026-03-12 | ADR-0010, ADR-0011 | Cron reproducible |
-| ADR-0013 | Credential Management Policy | APPROVED | Infrastructure | 2026-03-14 | ADR-0032 | .env + .env.template |
-| ADR-0014 | Docker Port Exposure Policy | APPROVED | Infrastructure | 2026-03-14 | ADR-0015 | Loopback only |
-| ADR-0015 | Docker Network Exposure Model | APPROVED | Infrastructure | 2026-03-14 | ADR-0014, ADR-0021 | 3 niveles exposición |
-| ADR-0016 | Política aislamiento redes Docker | APPROVED | Infrastructure | 2026-05-06 | ADR-0015, ADR-0021 | Redes por dominio |
-| ADR-0017 | Resilience model single-node Docker | APPROVED | Runtime | 2026-04-01 | ADR-0018, ADR-0019 | Límites Docker Compose |
-| ADR-0018 | Modelo seguridad runtime + resiliencia | APPROVED | Runtime | 2026-04-05 | ADR-0017, ADR-0020, ADR-0024 | Normativo seguridad; `make test-security-runtime |
-| ADR-0019 | Resilience Testing Strategy | APPROVED | Runtime | 2026-04-25 | ADR-0017 | Tests multinivel |
-| ADR-0020 | Container Execution Model & Privilege | APPROVED | Runtime | 2026-05-04 | ADR-0018, ADR-0024 | Privilegios contextuales |
-| ADR-0021 | Network Segmentation Strategy | APPROVED | Infrastructure | 2026-05-04 | ADR-0015, ADR-0016, ADR-0022 | backend/observability/restricted; `make audit-runtime |
-| ADR-0022 | Promtail Privilege Approval | APPROVED | Runtime | 2026-05-08 | ADR-0018, ADR-0020, ADR-0021 | Excepción auditada |
-| ADR-0023 | Egress Control restricted-net | APPROVED | Infrastructure | 2026-05-08 | ADR-0021 | Futuro: proxy egress |
-| ADR-0024 | Container Privilege Exception Policy | APPROVED | Runtime | 2026-05-09 | ADR-0020, ADR-0018 | Mínimo privilegio contextual |
-| ADR-0025 | Modelo SMTP explícito + endurecimiento | APPROVED | Runtime | 2026-05-13 | ADR-0005, ADR-0003, ADR-0026 | SMTP_MODE: relay\|auth; `make test-smtp-all |
-| ADR-0026 | Estrategia testing modelo SMTP | APPROVED | Runtime | 2026-05-13 | ADR-0025 | Testing multinivel SMTP |
-| ADR-0027 | Tipología contenedores + healthchecks | APPROVED | Runtime | 2026-05-17 | ADR-0008, ADR-0020 | Clasificación oficial; `make test-python-health |
-| ADR-0028 | Política reproducibilidad Docker | APPROVED | Infrastructure | 2026-05-18 | ADR-0004 | Digest SHA256 obligatorio; `make validate-dockerfiles |
-| ADR-0029 | Structured Compose Policy Audit | APPROVED | Infrastructure | 2026-05-20 | ADR-0027 | ops/audit/compose_policy_checks.py; `make test-policy-structured |
-| ADR-0030 | Auditoría Runtime HostConfig | APPROVED | Runtime | 2026-05-23 | ADR-0020, ADR-0029 | docker inspect host-side; `make audit-runtime |
-| ADR-0031 | Gobernanza Runtime + Dependencias Host | APPROVED | Runtime | 2026-05-26 | ADR-0030, ADR-0018, ADR-0029, ADR-0020, ADR-0024 | Auditoría federada evidencia; `make audit-runtime-ci |
-| ADR-0032 | Endurecimiento secretos PostgreSQL | APPROVED | Database | 2026-05-31 | ADR-0013 | POSTGRES_PASSWORD_FILE; `make verify-security |
-| ADR-0033 | Taxonomia_ADRs | APPROVED | System | 2026-06-17 | - | - |
+| ADR | Status | Category | Scope | Date | Title |
+|-----|--------|----------|-------|------|-------|
+| ADR-0000 | APPROVED | GOVERNANCE | System | 2026-01-24 | Trabajo paralelo fuera de Git durante refactor estructural |
+| ADR-0001 | APPROVED | ARCHITECTURE | Runtime | 2025-12-09 | Verificación de imports durante la fase de migración |
+| ADR-0002 | APPROVED | ARCHITECTURE | Runtime | 2026-01-25 | Scripts como wrappers operativos |
+| ADR-0003 | APPROVED | RUNTIME | Runtime | 2026-01-25 | Desacoplamiento de configuración y ejecución en runtime |
+| ADR-0004 | APPROVED | INFRASTRUCTURE | Infrastructure | 2026-01-27 | Eliminación del atributo version en docker-compose (Docker Compose v2) |
+| ADR-0005 | APPROVED | RUNTIME | Runtime | 2026-01-27 | Desacoplamiento runtime y lazy imports en config (Runtime desacoplado) |
+| ADR-0006 | DEPRECATED | GOVERNANCE | Infrastructure | 2026-05-04 | Gobernanza de imagen base monitoring-base (Rechazado) |
+| ADR-0007 | APPROVED | GOVERNANCE | System | 2026-02-16 | Política oficial de entorno VS Code + WSL para proyectos Linux/DevOps |
+| ADR-0008 | APPROVED | ARCHITECTURE | Infrastructure | 2026-02-17 | Clasificación de servicios: Micro-stack vs Infraestructura Operativa |
+| ADR-0009 | APPROVED | DATABASE | Database | 2026-03-05 | Estrategia de Backups PostgreSQL |
+| ADR-0010 | APPROVED | RUNTIME | Runtime | 2026-03-05 | Arquitectura de runtime cron |
+| ADR-0011 | APPROVED | RUNTIME | Runtime | 2026-03-05 | Python Runtime Execution Model (Determinismo) |
+| ADR-0012 | APPROVED | RUNTIME | Runtime | 2026-03-12 | Separation of Host Cron vs Monitoring Cron (Runtime reproducible) |
+| ADR-0013 | APPROVED | SECURITY | Infrastructure | 2026-03-14 | Credential Management Policy |
+| ADR-0014 | APPROVED | INFRASTRUCTURE | Infrastructure | 2026-03-14 | Docker Port Exposure Policy |
+| ADR-0015 | APPROVED | INFRASTRUCTURE | Infrastructure | 2026-03-14 | Docker Network Exposure Model |
+| ADR-0016 | APPROVED | SECURITY | Infrastructure | 2026-05-06 | Política de aislamiento y segmentación de redes Docker |
+| ADR-0017 | APPROVED | RUNTIME | Runtime | 2026-04-01 | Resilience model at docker single-node |
+| ADR-0018 | APPROVED | SECURITY | Runtime | 2026-04-05 | Modelo de Seguridad Runtime Docker y Requisitos de Resiliencia |
+| ADR-0019 | APPROVED | TESTING | Runtime | 2026-04-25 | Resilience Testing Strategy |
+| ADR-0020 | APPROVED | SECURITY | Runtime | 2026-05-04 | Container Execution Model & Privilege Strategy |
+| ADR-0021 | APPROVED | SECURITY | Infrastructure | 2026-05-04 | Network Segmentation Strategy |
+| ADR-0022 | APPROVED | SECURITY | Runtime | 2026-05-08 | Promtail Privilege Approval |
+| ADR-0023 | APPROVED | SECURITY | Infrastructure | 2026-05-08 | Egress Control for restricted-net (Propuesto) |
+| ADR-0024 | APPROVED | SECURITY | Runtime | 2026-05-09 | Container Privilege Exception Policy (Mínimo privilegio contextual) |
+| ADR-0025 | APPROVED | SECURITY | Runtime | 2026-05-13 | Modelo SMTP explícito y endurecimiento de configuración (Endurecimiento SMTP) |
+| ADR-0026 | APPROVED | TESTING | Runtime | 2026-05-13 | Estrategia de validación y testing del modelo SMTP (Estrategia de validación multinivel) |
+| ADR-0027 | APPROVED | RUNTIME | Runtime | 2026-05-17 | Tipología oficial de contenedores y política de healthchecks |
+| ADR-0028 | APPROVED | INFRASTRUCTURE | Infrastructure | 2026-05-18 | Política de reproducibilidad Docker y endurecimiento de validaciones IaC |
+| ADR-0029 | APPROVED | GOVERNANCE | Infrastructure | 2026-05-20 | Structured Compose Policy Audit |
+| ADR-0030 | APPROVED | GOVERNANCE | Runtime | 2026-05-23 | Auditoría Runtime HostConfig y Visibilidad de Privilegios Docker |
+| ADR-0031 | APPROVED | GOVERNANCE | Runtime | 2026-05-26 | Gobernanza Runtime Docker y Clasificación de Dependencias Host |
+| ADR-0032 | APPROVED | SECURITY | Database | 2026-05-31 | Endurecimiento de gestión de secretos PostgreSQL y validaciones CI |
+| ADR-0033 | APPROVED | GOVERNANCE | System | 2026-06-17 | Taxonomía Oficial de Clasificación y Etiquetado de ADRs |
 
 ### Backend — Java/Maven Multi-Module
 
-| ADR | Título | Status | Scope | Fecha | Relacionados | Notas |
-|-----|--------|--------|-------|-------|--------------|-------|
-| ADR-0600 | Estrategia despliegue microservicios | APPROVED | System | 2026-06-11 | ADR-0601, ADR-0602, ADR-0603 | Arquitectura Maven independientes |
-| ADR-0601 | Desacoplamiento capas patrón Commons | APPROVED | System | 2026-06-11 | ADR-0600, ADR-0602 | DTOs/Interfaces en Commons |
-| ADR-0602 | Comunicación inter-servicio REST | APPROVED | System | 2026-06-11 | ADR-0600, ADR-0801 | OpenAPI + versionado |
-| ADR-0603 | Gestión BBDD microservicios | APPROVED | Database | 2026-06-11 | ADR-0600 | DB por servicio |
+| ADR | Status | Category | Scope | Date | Title |
+|-----|--------|----------|-------|------|-------|
+| ADR-0600 | APPROVED | ARCHITECTURE | System | 2026-06-11 | Estrategia de Despliegue: Arquitectura de Microservicios Independientes basados en Maven Multi-Module |
+| ADR-0601 | APPROVED | ARCHITECTURE | System | 2026-06-11 | Estructura de Desacoplamiento de Capas mediante el Patrón Módulo-Commons |
+| ADR-0602 | APPROVED | ARCHITECTURE | System | 2026-06-11 | Estrategia de Comunicación Inter-Servicio en Arquitectura de Microservicios |
+| ADR-0603 | APPROVED | DATABASE | Database | 2026-06-11 | Políticas de Gestión de Bases de Datos en Microservicios |
 
 ### Deployment & Frontend Strategy
 
-| ADR | Título | Status | Scope | Fecha | Relacionados | Notas |
-|-----|--------|--------|-------|-------|--------------|-------|
-| ADR-0801 | Empaquetado despliegue Docker | APPROVED | Infrastructure | 2026-06-11 | ADR-0602, ADR-0802 | Multi-stage + Kubernetes |
-| ADR-0802 | Integración frontend-backend | APPROVED | System | 2026-06-11 | ADR-0602, ADR-0801 | API Gateway |
-| ADR-0803 | Seguridad + secretos microservicios | APPROVED | Infrastructure | 2026-06-11 | ADR-0600, ADR-0801 | Vault + JWT |
+| ADR | Status | Category | Scope | Date | Title |
+|-----|--------|----------|-------|------|-------|
+| ADR-0801 | APPROVED | DEPLOYMENT | Infrastructure | 2026-06-11 | Estrategia de Empaquetado y Despliegue con Contenedores Docker |
+| ADR-0802 | APPROVED | ARCHITECTURE | System | 2026-06-11 | Lineamientos de Integración Frontend con Microservicios Backend |
+| ADR-0803 | APPROVED | SECURITY | Infrastructure | 2026-06-11 | Estrategias de Seguridad y Gestión de Secretos en Microservicios |
 
 ---
 
 ## Active ADRs — Summary by Category
 
-### ✅ Infrastructure & DevSecOps (APPROVED)
-ADR-0004, ADR-0013, ADR-0014, ADR-0015, ADR-0016, ADR-0021, ADR-0028, ADR-0029
+### ✅ ARCHITECTURE (APPROVED)
+ADR-0001, ADR-0002, ADR-0008, ADR-0600, ADR-0601, ADR-0602, ADR-0802
 
-### ✅ Runtime & Container Security (APPROVED)
-ADR-0017, ADR-0018, ADR-0019, ADR-0020, ADR-0022, ADR-0024, ADR-0027, ADR-0030, ADR-0031
+### ✅ RUNTIME (APPROVED)
+ADR-0003, ADR-0005, ADR-0010, ADR-0011, ADR-0012, ADR-0017, ADR-0027
 
-### ✅ Database & Persistence (APPROVED)
-ADR-0009, ADR-0032
+### ✅ INFRASTRUCTURE (APPROVED)
+ADR-0004, ADR-0014, ADR-0015, ADR-0028
 
-### ✅ Architecture & System Design (APPROVED)
-ADR-0000, ADR-0001, ADR-0002, ADR-0003, ADR-0005, ADR-0007, ADR-0008, ADR-0010, ADR-0011, ADR-0012, ADR-0025, ADR-0600, ADR-0601
+### ✅ SECURITY (APPROVED)
+ADR-0013, ADR-0016, ADR-0018, ADR-0020, ADR-0021, ADR-0022, ADR-0023, ADR-0024, ADR-0025, ADR-0032, ADR-0803
+
+### ✅ DATABASE (APPROVED)
+ADR-0009, ADR-0603
+
+### ✅ DEPLOYMENT (APPROVED)
+ADR-0801
+
+### ✅ TESTING (APPROVED)
+ADR-0019, ADR-0026
+
+### ✅ GOVERNANCE (APPROVED)
+ADR-0000, ADR-0007, ADR-0029, ADR-0030, ADR-0031, ADR-0033
 
 ---
 
 ## Deprecated ADRs
 
-| ADR | Razón |
-|-----|-------|
-| ADR-0006 | Rechazado: Decisión arquitectónica contra imagen base compartida. NO aplicable. |
-
----
-
-## Proposed ADRs (No Authoritative)
-
-| ADR | Título | Scope |
-|-----|--------|-------|
-| ADR-0023 | Egress Control restricted-net | Infrastructure |
-| ADR-0026 | Estrategia testing SMTP | Runtime |
-| ADR-0602 | Comunicación inter-servicio REST | System |
-| ADR-0603 | Gestión BBDD microservicios | Database |
-| ADR-0801 | Empaquetado despliegue Docker | Infrastructure |
-| ADR-0802 | Integración frontend-backend | System |
-| ADR-0803 | Seguridad + secretos microservicios | Infrastructure |
+| ADR | Status | Category | Scope | Date | Title |
+|-----|--------|----------|-------|------|-------|
+| ADR-0006 | DEPRECATED | GOVERNANCE | Infrastructure | 2026-05-04 | Gobernanza de imagen base monitoring-base (Rechazado) |
 
 ---
 
