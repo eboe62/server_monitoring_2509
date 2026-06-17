@@ -1,6 +1,6 @@
 # ADR-0802: Lineamientos de Integración Frontend con Microservicios Backend
 
-Status: PROPOSED
+Status: APPROVED
 Date: 2026-06-11
 Decision Type: REVIEW_REQUIRED
 Scope: System

@@ -91,10 +91,10 @@ Meaning: No longer recommended. Historical reference only. Not authoritative.
 | ADR-0020 | Container Execution Model & Privilege | APPROVED | Runtime | 2026-05-04 | ADR-0018, ADR-0024 | Privilegios contextuales |
 | ADR-0021 | Network Segmentation Strategy | APPROVED | Infrastructure | 2026-05-04 | ADR-0015, ADR-0016, ADR-0022 | backend/observability/restricted; `make audit-runtime |
 | ADR-0022 | Promtail Privilege Approval | APPROVED | Runtime | 2026-05-08 | ADR-0018, ADR-0020, ADR-0021 | Excepción auditada |
-| ADR-0023 | Egress Control restricted-net | PROPOSED | Infrastructure | 2026-05-08 | ADR-0021 | Futuro: proxy egress |
+| ADR-0023 | Egress Control restricted-net | APPROVED | Infrastructure | 2026-05-08 | ADR-0021 | Futuro: proxy egress |
 | ADR-0024 | Container Privilege Exception Policy | APPROVED | Runtime | 2026-05-09 | ADR-0020, ADR-0018 | Mínimo privilegio contextual |
 | ADR-0025 | Modelo SMTP explícito + endurecimiento | APPROVED | Runtime | 2026-05-13 | ADR-0005, ADR-0003, ADR-0026 | SMTP_MODE: relay\|auth; `make test-smtp-all |
-| ADR-0026 | Estrategia testing modelo SMTP | PROPOSED | Runtime | 2026-05-13 | ADR-0025 | Testing multinivel SMTP |
+| ADR-0026 | Estrategia testing modelo SMTP | APPROVED | Runtime | 2026-05-13 | ADR-0025 | Testing multinivel SMTP |
 | ADR-0027 | Tipología contenedores + healthchecks | APPROVED | Runtime | 2026-05-17 | ADR-0008, ADR-0020 | Clasificación oficial; `make test-python-health |
 | ADR-0028 | Política reproducibilidad Docker | APPROVED | Infrastructure | 2026-05-18 | ADR-0004 | Digest SHA256 obligatorio; `make validate-dockerfiles |
 | ADR-0029 | Structured Compose Policy Audit | APPROVED | Infrastructure | 2026-05-20 | ADR-0027 | ops/audit/compose_policy_checks.py; `make test-policy-structured |
@@ -109,16 +109,16 @@ Meaning: No longer recommended. Historical reference only. Not authoritative.
 |-----|--------|--------|-------|-------|--------------|-------|
 | ADR-0600 | Estrategia despliegue microservicios | APPROVED | System | 2026-06-11 | ADR-0601, ADR-0602, ADR-0603 | Arquitectura Maven independientes |
 | ADR-0601 | Desacoplamiento capas patrón Commons | APPROVED | System | 2026-06-11 | ADR-0600, ADR-0602 | DTOs/Interfaces en Commons |
-| ADR-0602 | Comunicación inter-servicio REST | PROPOSED | System | 2026-06-11 | ADR-0600, ADR-0801 | OpenAPI + versionado |
-| ADR-0603 | Gestión BBDD microservicios | PROPOSED | Database | 2026-06-11 | ADR-0600 | DB por servicio |
+| ADR-0602 | Comunicación inter-servicio REST | APPROVED | System | 2026-06-11 | ADR-0600, ADR-0801 | OpenAPI + versionado |
+| ADR-0603 | Gestión BBDD microservicios | APPROVED | Database | 2026-06-11 | ADR-0600 | DB por servicio |
 
 ### Deployment & Frontend Strategy
 
 | ADR | Título | Status | Scope | Fecha | Relacionados | Notas |
 |-----|--------|--------|-------|-------|--------------|-------|
-| ADR-0801 | Empaquetado despliegue Docker | PROPOSED | Infrastructure | 2026-06-11 | ADR-0602, ADR-0802 | Multi-stage + Kubernetes |
-| ADR-0802 | Integración frontend-backend | PROPOSED | System | 2026-06-11 | ADR-0602, ADR-0801 | API Gateway |
-| ADR-0803 | Seguridad + secretos microservicios | PROPOSED | Infrastructure | 2026-06-11 | ADR-0600, ADR-0801 | Vault + JWT |
+| ADR-0801 | Empaquetado despliegue Docker | APPROVED | Infrastructure | 2026-06-11 | ADR-0602, ADR-0802 | Multi-stage + Kubernetes |
+| ADR-0802 | Integración frontend-backend | APPROVED | System | 2026-06-11 | ADR-0602, ADR-0801 | API Gateway |
+| ADR-0803 | Seguridad + secretos microservicios | APPROVED | Infrastructure | 2026-06-11 | ADR-0600, ADR-0801 | Vault + JWT |
 
 ---
 

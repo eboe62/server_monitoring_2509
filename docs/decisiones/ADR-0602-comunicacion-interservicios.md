@@ -1,6 +1,6 @@
 # ADR-0602: Estrategia de Comunicación Inter-Servicio en Arquitectura de Microservicios
 
-Status: PROPOSED
+Status: APPROVED
 Date: 2026-06-11
 Decision Type: REVIEW_REQUIRED
 Scope: System

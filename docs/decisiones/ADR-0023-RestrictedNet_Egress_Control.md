@@ -1,6 +1,6 @@
 # ADR-0023 — Egress Control for restricted-net (Propuesto)
 
-Status: PROPOSED
+Status: APPROVED
 Date: 2026-05-08
 Decision Type: REVIEW_REQUIRED
 Scope: Infrastructure

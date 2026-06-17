@@ -1,6 +1,6 @@
 # ADR-0603: Políticas de Gestión de Bases de Datos en Microservicios
 
-Status: PROPOSED
+Status: APPROVED
 Date: 2026-06-11
 Decision Type: REVIEW_REQUIRED
 Scope: Database

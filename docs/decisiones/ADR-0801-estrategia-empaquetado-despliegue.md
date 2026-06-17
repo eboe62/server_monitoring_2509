@@ -1,6 +1,6 @@
 # ADR-0801: Estrategia de Empaquetado y Despliegue con Contenedores Docker
 
-Status: PROPOSED
+Status: APPROVED
 Date: 2026-06-11
 Decision Type: REVIEW_REQUIRED
 Scope: Infrastructure
