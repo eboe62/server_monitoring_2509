@@ -1,0 +1,37 @@
+# ==========================================
+# INFRASTRUCTURE GOVERNANCE — CLAUDE PROXY SIDECAR
+# ==========================================
+FROM python:3.13-slim
+
+# Instalar dependencias esenciales de sistema de forma segura
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Instalar uv directamente desde la imagen oficial
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
+# Configurar el usuario seguro sin privilegios (eboe62) con UID/GID 1000
+RUN groupadd -g 1000 eboe62 && \
+    useradd -u 1000 -g eboe62 -m -s /bin/bash eboe62
+
+WORKDIR /app
+
+# Declaramos las dependencias inline para que UV las gestione al vuelo de forma ultra eficiente
+RUN uv venv && uv pip install fastapi uvicorn httpx
+
+# Copiamos nuestro script del proxy
+COPY proxy-start-ia.py /app/proxy-start-ia.py
+
+RUN chown -R eboe62:eboe62 /app
+
+# Cambiamos al usuario ANTES de clonar y sincronizar con uv.
+# Esto garantiza que los symlinks creados por uv pertenezcan legítimamente a eboe62
+# y elimina el error "Permission denied (os error 13)".
+USER eboe62
+
+EXPOSE 8000
+
+# [MODIFICADO] Ejecutamos el proxy a través del entorno de uv
+CMD ["uv", "run", "python", "proxy-start-ia.py"]
