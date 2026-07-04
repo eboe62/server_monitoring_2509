@@ -64,13 +64,14 @@ docker-compose.override.yml
 # These directories are authoritative project documentation.
 
 # === AI Docker ===
-Dockerfile.sandbox
+box-opencode.sh
+compose-opencode.yml
+compose-proxy.yml
+Dockerfile.claude
+Dockerfile.ia_proxy
 Dockerfile.proxy
 Dockerfile.runtime
-box-claude.sh
-box-gemini.sh
-box-opencode.sh
-proxy-start.sh
+proxy-start-ia.sh
 
 # === Documentation working copies ===
 * copy*
