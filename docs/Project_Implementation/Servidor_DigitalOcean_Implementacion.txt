@@ -1,0 +1,1921 @@
+//Servidor_DigitalOcean_Implementacion_260227
+Versión 260227
+Estado: Normativo (entorno PRO)
+Ámbito: server_monitoring_2509
+Proveedor: DigitalOcean
+Droplet: eob-260131
+Sistema Operativo: Ubuntu 24.04.3 LTS (x64)
+
+==========================================
+ESTE DOCUMENTO
+==========================================
+Este es un:
+- Documento normativo y operativo.
+- Define pasos operativos concretos.
+- Contiene fases detalladas.
+- Define el “cómo”.
+
+==========================================
+1. OBJETIVO Y ALCANCE
+==========================================
+Desplegar desde cero el proyecto server_monitoring_2509 en un droplet
+DigitalOcean dedicado, siguiendo el modelo IaC (Infrastructure as Code) definido en el repositorio.
+
+Incluye:
+- Infraestructura Docker
+- Cronjobs vía contenedor
+- Observabilidad
+- Persistencia mediante volúmenes Docker
+
+Modelo de persistencia:
+    La persistencia de datos se basa exclusivamente en volúmenes Docker locales al droplet. No se emplea almacenamiento externo ni servicios gestionados de base de datos.
+
+Modelo de recuperación
+    La recuperación ante desastre se apoya en:
+    - Recreación declarativa completa desde repositorio versionado.
+    - Reconstrucción de contenedores a partir de Dockerfiles y docker-compose declarativos.
+    - Restauración lógica de datos mediante backups lógicos PostgreSQL.
+    - Volúmenes Docker persistentes como única fuente de estado.
+
+    Backups lógicos PostgreSQL:
+        Ejecutados desde el runtime contenerizado mediante monitoring-cron.
+        Flujo conceptual:
+            monitoring-cron
+                └ pg_dump -h postgres
+        Los backups se almacenan en:
+            /ops/backups
+
+    Snapshots del droplet:
+        Se consideran únicamente mecanismo de contingencia a nivel de infraestructura y no sustituyen los backups lógicos.
+        - No constituyen dependencia estructural del modelo.
+        - No sustituyen la reproducibilidad declarativa.
+        - No eximen de validar reconstrucción completa desde cero.
+
+    El entorno debe poder reconstruirse íntegramente sin necesidad de snapshot previo.
+    Este modelo es una decisión consciente del alcance PRO.
+
+Excluye explícitamente:
+- Cambios de código
+- Refactorizaciones
+- Nuevas funcionalidades
+- CI/CD automático
+
+PRINCIPIO FUNDAMENTAL:
+
+El entorno PRO sigue estrictamente Infraestructura como Código (IaC):
+
+- El host no ejecuta lógica funcional de aplicación.
+- El host puede ejecutar tooling operacional asociado a:
+    - Docker Compose
+    - auditoría IaC
+    - validaciones estructurales
+    - comprobaciones runtime
+    - automatismos declarativos del entorno
+- El host mantiene el control-plane operacional del entorno Docker Compose standalone.
+- No se permite instalar dependencias Python globales asociadas al proyecto.
+- No se permite ejecutar scripts del proyecto directamente desde el host.
+- No se permite el uso de:
+    python3 script.py
+    /usr/bin/python3 ...
+    fuera de contenedores oficiales del proyecto.
+- Toda ejecución de código debe ocurrir exclusivamente dentro de:
+    monitoring-python
+    monitoring-cron
+- monitoring-python actúa como bridge funcional controlado entre:
+    backend
+    observabilidad
+    Y eso tiene sentido arquitectónico:
+    - necesita enviar logs/métricas
+    - necesita hablar con postgres
+- Los contenedores runtime deben contener internamente todo el código necesario para su ejecución.
+    No se permite dependencia estructural de bind mounts del host para lógica de aplicación.
+- La reconstrucción completa del entorno debe ser posible tras:
+    docker system prune -af --volumes
+- Esta validación forma parte obligatoria del modelo IaC del proyecto.
+- No se permiten ejecuciones manuales de lógica funcional fuera del modelo declarativo.
+- Se permiten automatismos host-side declarativos destinados exclusivamente a:
+    - auditoría
+    - validación
+    - orquestación
+    - tooling operacional
+
+Cualquier desviación invalida el modelo IaC del entorno PRO.
+
+No pretendemos un modelo "monolito Docker con modularización parcial” sino un modelo híbrido controlado estructurado en tres planos de arquitectura claramente diferenciados:
+
+PLANO 1 – Aplicación (Micro-Stacks Autónomos)
+    - Servicios desacoplados.
+    - Despliegue independiente.
+    - Autonomía estructural completa.
+    - Segmentación de red explícita según responsabilidad funcional. Ejemplos:
+        PostgreSQL → backend-net
+        SMTP-Relay → restricted-net
+
+PLANO 2 – Runtime Interno (Infra-Stacks)
+    - Servicios internos del entorno.
+    - Comparten código versionado cuando aplica.
+    - No son autónomos a nivel arquitectónico/exportable.
+    - Sí deben ser autónomos a nivel runtime y reproducibilidad operacional.
+    - Se comunican exclusivamente mediante redes explícitamente segmentadas. Ejemplos:
+        monitoring-python → backend-net + observability-net
+        monitoring-cron → backend-net
+        observability → observability-net
+
+PLANO 3 – Seguridad del Host
+    - Componentes nativos del sistema operativo.
+    - No ejecutan lógica de aplicación.
+    - Refuerzan el perímetro y el acceso.
+    - Ejemplos: UFW, fail2ban, automatismos declarados.
+
+MODELO DE EJECUCIÓN DE CONTENEDORES:
+- Los contenedores del runtime deben ser autónomos, reproducibles y desacoplados del host.
+- No deben depender de bind mounts de código ni de rutas externas al contenedor.
+- Deben ejecutar un único proceso claramente definido y controlado.
+
+Regla de privilegios:
+- Si un contenedor es:
+    - autónomo
+    - reproducible
+    - sin dependencias del host
+    → Debe ejecutarse como usuario no-root (ej: appuser).
+
+- Si un contenedor es:
+    - interactivo
+    - de debugging
+    - herramienta operativa puntual
+    → Puede ejecutarse como root de forma controlada y explícita.
+
+Esta distinción es obligatoria para mantener coherencia entre seguridad, reproducibilidad y operabilidad.
+
+Cada plano tiene responsabilidades diferenciadas y no debe introducir dependencias estructurales cruzadas que violen el modelo IaC adoptado.
+
+La plataforma adopta el modelo de red única con segmentación explícita de redes Docker:
+
+Definición operativa del modelo micro-stack autónomo:
+Cada Micro-Stack:
+- Tiene su propio docker-compose.yaml
+- Puede construirse y desplegarse de forma independiente
+- Gestiona sus propios secrets y .env.template
+- Declara sus propios volúmenes
+- No introduce dependencias estructurales en el Infra-Stack
+- Contiene su propio Dockerfile (si aplica)
+
+El Infra-Stack agrupa servicios internos operativos.
+
+Cada servicio:
+- Define su propia imagen
+- No comparte imagen base obligatoria
+- Puede duplicar runtime si es necesario para mantener aislamiento y reproducibilidad
+
+Modelo de ejecución de jobs (CRON)
+    Todos los jobs programados se ejecutan dentro del contenedor:
+        monitoring-cron
+    Scheduler:
+        supercronic
+    Restricciones:
+        - El host no ejecuta crontabs del proyecto.
+        - Los jobs se ejecutan mediante:
+            python3 -m paquete.modulo
+        Ejemplo:
+            python3 -m log_ingestor.alert_risk
+
+PostgreSQL es considerado como un micro-stack autónomo de estado, con las siguientes reglas adicionales:
+- No se expone públicamente
+- Declara su propio volumen persistente
+- Puede migrarse de servidor mediante dump lógico
+- No depende estructuralmente de otros servicios
+
+La comunicación entre servicios se realiza exclusivamente a través de:
+- Redes Docker explícitamente declaradas según el dominio funcional:
+    backend-net
+    observability-net
+    restricted-net
+- Variables de entorno declarativas
+- Volúmenes explícitamente definidos
+
+No se utilizará imágenes base comunes internas (p.e. monitoring-base python) porque dificulta la validación en CI/CD
+
+Por lo tanto cada stack debe construir su imagen directamente desde una imagen oficial versionada (ej. python:3.12-slim).
+
+Condiciones obligatorias:
+Debe contener exclusivamente:
+- Runtime común
+- Dependencias compartidas
+- Código fuente versionado
+
+No puede contener:
+- Secrets
+- .env
+- Configuración específica de servicio
+- Variables de entorno de producción
+- Lógica de aplicación específica
+
+Restricciones adicionales:
+- No se permite el uso de imágenes base internas compartidas.
+- No se permite dependencia entre stacks a nivel de build.
+- Cada stack debe ser completamente autónomo en su construcción.
+
+Cada servicio debe poder:
+- Sustituir monitoring-base por otra base compatible.
+- Extender una imagen oficial externa sin romper la arquitectura declarativa.
+monitoring-base es una optimización de build, no un componente arquitectónico estructural.
+
+El principio de autonomía prevalece sobre la conveniencia de reutilización.
+
+REGLA ARQUITECTONICA:
+- Ningún archivo Python se ejecuta por ruta absoluta.
+- Siempre se ejecuta mediante: python3 -m paquete.modulo
+
+Comando válido:
+docker exec -it monitoring-python python3 -m log_ingestor.alert_risk
+
+Comando prohibido:
+python3 src/log_ingestor/alert_risk.py
+/usr/bin/python3 ...
+
+monitoring-python está clasificado oficialmente como:
+    TOOLBOX_RUNTIME
+
+Su función es:
+- proporcionar entorno runtime persistente de la aplicación
+- permitir ejecución controlada de scripts internos de negocio mediante docker exec
+- procesar utilidades en diferido que requieran interactuar con el ecosistema de persistencia
+
+No representa:
+- API runtime expuesta externamente
+- servicio HTTP
+- daemon de automatización de infraestructura o auditoría IaC (responsabilidad exclusiva del host)
+
+Por tanto:
+- no requiere readiness HTTP
+- puede utilizar keepalive explícito
+- puede utilizar healthcheck trivial documentado
+
+Este comportamiento es intencional y NO constituye desviación
+arquitectónica.
+
+==========================================
+2. POLÍTICA OFICIAL DE HEALTHCHECKS
+==========================================
+
+Los healthchecks Docker deben alinearse con la función arquitectónica
+real de cada contenedor.
+
+El entorno PRO NO asume que todos los contenedores representan
+microservicios HTTP clásicos.
+
+REGLAS OFICIALES:
+
+2.1. SERVICE_RUNTIME
+   Requieren readiness checks reales.
+
+   Los checks deben validar:
+   - disponibilidad funcional
+   - aceptación de conexiones
+   - operatividad semántica del servicio
+
+   Ejemplos válidos:
+   - pg_isready
+   - HTTP /ready
+   - HTTP /api/health
+
+2.2. SUPERVISOR_RUNTIME
+   Requieren liveness checks de proceso supervisor.
+
+   Ejemplos válidos:
+   - pidof supercronic
+   - pgrep master
+
+2.3. TOOLBOX_RUNTIME
+   Pueden:
+   - no tener healthcheck
+   - utilizar keepalive explícito
+   - utilizar healthchecks triviales documentados
+
+   Estos contenedores:
+   - NO representan servicios funcionales
+   - NO deben participar en readiness gates
+   - NO deben bloquear CI/CD por ausencia de readiness
+
+2.4. INFRA_TRUSTED
+   Deben utilizar el mecanismo más apropiado según:
+   - servicio real
+   - capacidades upstream
+   - endpoints disponibles
+
+RESTRICCIONES:
+- Se prohíben healthchecks artificiales en SERVICE_RUNTIME.
+- Los healthchecks NO deben depender del host.
+- Los healthchecks deben ejecutarse dentro del runtime contenerizado.
+- Los checks deben devolver exit codes reales y deterministas.
+- Las excepciones deben documentarse mediante ADR.
+
+OBSERVACIÓN:
+Un healthcheck trivial puede considerarse válido únicamente cuando el contenedor esté explícitamente  clasificado como TOOLBOX_RUNTIME.
+
+==========================================
+3. REFERENCIAS DOCUMENTALES
+==========================================
+- README / estructura del proyecto
+- Decisiones de migración y ADRs
+- Implementaciones históricas (solo como referencia)
+
+Este documento describe la implementación PRO actual
+y prevalece sobre documentos históricos.
+
+==========================================
+4. SUPUESTOS Y DECISIONES CLAVE
+==========================================
+- Sistema operativo: Ubuntu 24.04 LTS x64
+- Usuario operativo: eboe62 (sudoers)
+- Acceso: SSH key only
+- Secrets: transferencia manual basada en plantillas
+- Secrets: NO están versionados, se almacenan en:
+    ops/services/<servicio>/secrets/
+- El archivo .env solo contiene variables no sensibles.
+- Las credenciales reales se inyectan manualmente en entorno PRO en la documentación se muestran sólo ejemplos absolutamente ficticios
+- Hostname: basado en IP (DNS considerado como mejora futura)
+- Persistencia: volúmenes Docker locales
+- Backups operativos:
+    Backups lógicos de PostgreSQL ejecutados desde el runtime contenerizado mediante el servicio monitoring-cron.
+    Estrategia:
+        monitoring-cron
+            └ pg_dump -h postgres
+    Los backups se almacenan en:
+        /ops/backups
+- Snapshots del droplet:
+    Se mantienen exclusivamente como mecanismo de contingencia a nivel de infraestructura y no forman parte del modelo IaC.
+
+==========================================
+5. PLAN DE MIGRACIÓN PASO A PASO
+==========================================
+FASE 0 – BLOQUEO DE CONTEXTO
+- Confirmar nombre oficial del proyecto: server_monitoring_2509
+- Declarar repositorio y commit canónico
+- Confirmar exclusiones:
+  - sin cambios de código
+  - sin refactors
+  - sin nuevas funcionalidades
+- Marcar este despliegue como “PRO – desde cero”
+
+FASE 1 – SISTEMA OPERATIVO Y ACCESO
+- Creación del usuario administrativo operativo.
+- Configuración de autenticación SSH mediante clave pública.
+- Configuración de personalización del entorno shell (opcional)
+- Configuración de alias preventivos para minimizar errores humanos.
+- Configuración de zona horaria del sistema.
+- Estado del Firewall del Host en esta fase
+
+FASE 2 – RUNTIME BASE DEL HOST
+- Actualización del sistema base
+- Instalación del runtime Docker
+- Validación del runtime Docker:
+- Asignación de permisos Docker al usuario operativo:
+- Estructura base del host
+
+PRE-FASE 2B - DECISIÓN ARQUITECTÓNICA DE PERÍMETRO: UFW EN HOST
+
+FASE 2B - ACTIVACION DEL FIREWAL (modelo deny-by-default)
+- Activación controlada de UFW
+- Política resultante:
+- Puertos autorizados a nivel de host
+- Restricción explícita sobre PostgreSQL:
+- Ejemplo de estado incorrecto y corrección
+- Consideraciones técnicas sobre Docker
+- Resultado esperado al finalizar
+
+FASE 3 – DESPLIEGUE DEL REPOSITORIO
+- Preparación del Entorno en Host
+- Clonado del Repositorio
+- Verificaciones Posteriores al Clonado
+- Restricciones de la Fase
+
+FASE 4 – CONFIGURACIÓN DE ENTORNO: Modelo Micro-Stack Autónomo (Pre-runtime estructural)
+- Definición de MICRO-STACKS AUTONOMO:
+- Definición de INFRA-STACKS (infraestructura Operativa):
+- Gestión de variables de entorno y secretos:
+- Separación Import-Time / Run-Time
+- Construcción Autónoma de Imagen por servicio
+- Infraestructura de Red Compartida (Red Docker):
+- Automatismos Runtime Declarados
+
+FASE 5 – HARDENING, OPERABILIDAD Y PRUEBA DE RESILIENCIA
+- Endurecimiento del Perímetro
+    - Perímetro del Host:
+    - Modelo de Publicación en Docker
+    - Hardening de Contenedores
+    - Gobernanza de la Trilogía de Hardening y Automatismos
+    - Ajuste automático de límites Docker
+    - Protección ante Saturación SSH
+- Validación de Persistencia y BackUp
+    - Persistencia de Datos
+    - Backup y Restore
+- Observabilidad Funcional End-to-End
+- Recuperación ante Desastre
+- Validación Final Previa a Activación Runtime
+- Validación continua (CI/CD)
+
+FASE 6 – INICIALIZACIÓN DECLARATIVA DEL MICRO-STACK POSTGRES
+- Despliegue autónomo del micro-stack
+- Inicialización declarativa
+- Validación de estado
+- Validación de persistencia
+- Implementación manual pre-IaC (no vigente)
+
+FASE 7 – ACTIVACIÓN FORMAL DEL RUNTIME PRODUCTIVO
+- Despliegue controlado por micro-stack
+- Validación de aislamiento y segmentación de red
+- Validación de estado del runtime
+- Validación de reproducibilidad
+- Activación de Seguridad Operativa del Host
+    - Automatismos declarados en fases anteriores
+    - Activación del perímetro del host
+    - Defensa activa (Post-activación controlada)
+- Criterio de cierre:
+- ENDURECIMIENTO Y DEFENSA ACTIVA (Post-despliegue)
+
+FASE 8 – CRON Y EJECUCIÓN DE JOBS
+- Verificación del scheduler
+- Validación estructural de jobs
+- Ejecución controlada
+
+FASE 9 – CONECTIVIDAD EXTERNA
+- Conectividad interna
+- Conectividad SMTP
+
+FASE 10 – OBSERVABILIDAD
+- Verificación de stack de observabilidad
+- Ingestión de logs
+- Validación funcional
+
+FASE 11 – VALIDACIÓN FINAL DEL ENTORNO PRO
+- Checklist técnico
+- Reinicio controlado
+- Verificación post-reboot
+
+FASE 12 – POSIBLES MEJORAS FUTURAS (NO NORMATIVAS)
+
+==========================================
+FASE 1 – SISTEMA OPERATIVO Y ACCESO
+==========================================
+Acciones:
+1.1. Creación del usuario administrativo operativo.
+    Debe existir un usuario no-root con privilegios controlados para la operación del entorno.
+
+    Ejemplo de creación:
+        adduser eboe62
+        usermod -aG sudo,adm,docker eboe62
+
+    Notas:
+    - El acceso directo como root debe evitarse en operación normal.
+    - La contraseña inicial es temporal y debe cambiarse inmediatamente tras el primer acceso.
+    - La pertenencia al grupo docker se justifica únicamente si el entorno utilizará Docker.
+
+1.2. Configuración de autenticación SSH mediante clave pública.
+    Se debe habilitar acceso por clave pública al nuevo usuario administrativo.
+    Acciones típicas:
+        mkdir -p /home/eboe62/.ssh
+        chmod 700 /home/eboe62/.ssh
+        cp /root/.ssh/authorized_keys /home/eboe62/.ssh/
+        chmod 600 /home/eboe62/.ssh/authorized_keys
+        chown -R eboe62:eboe62 /home/eboe62/.ssh
+
+    Requisitos:
+    - Permisos estrictos en directorio .ssh y archivo authorized_keys.
+    - Posteriormente debe deshabilitarse el acceso SSH por contraseña.
+
+1.3. Configuración de personalización del entorno shell (opcional)
+    Puede configurarse el prompt del sistema para facilitar:
+    - Identificación visual del usuario y host.
+    - Estado del último comando ejecutado.
+    - Contexto de ruta actual.
+
+    Configuración del prompt en .bashrc .
+        echo 'PROMPT_COMMAND='\''PS1="\[\033[0;33m\][\!]\`if [[ \$? = \"0\" ]]; then echo \"\[\033[1;32m\]\"; else echo \"\[\033[38;5;214m\]\"; fi\`[\u@\h: \`if [[ `pwd | wc -c | tr -d \" \"` > 18 ]]; then echo \"\\W\"; else echo \"\\w\"; fi\`]\$ \[\033[0m\]"; echo -ne "\033]0;`hostname -s`:`pwd`\007"'\'' ' >> /root/.bashrc
+
+    La configuración debe aplicarse preferentemente al usuario operativo y no exclusivamente a root.
+
+1.4. Configuración de alias preventivos para minimizar errores humanos.
+    Se recomienda habilitar alias interactivos para operaciones destructivas:
+        alias rm='rm -i'
+        alias cp='cp -i'
+        alias mv='mv -i'
+
+    Estos alias reducen el riesgo de eliminación o sobreescritura accidental de archivos en entorno productivo.
+
+1.5. Configuración de zona horaria del sistema.
+    El servidor debe operar en zona horaria UTC (Etc/UTC).
+
+    Justificación:
+    - Evitar ambigüedades en logs.
+    - Facilitar correlación temporal entre servicios.
+    - Simplificar análisis forense y auditoría.
+
+    La conversión a zona local, si se requiere, se realizará únicamente a nivel de visualización.
+
+    Validación:
+        timedatectl
+
+    Requisitos esperados:
+        Local time:                 Sun 2026-02-01 19:46:22 UTC
+        Universal time:             Sun 2026-02-01 19:46:22 UTC
+        RTC time:                   Sun 2026-02-01 19:46:22
+        Time zone:                  Etc/UTC (UTC, +0000)
+        System clock synchronized:  yes
+        NTP service:                active
+        RTC in local TZ:            no
+
+1.6. Estado del Firewall del Host en esta fase
+    En esta fase no se activa ni configura el firewall del sistema (UFW).
+    La definición del perímetro de exposición y su activación forman parte
+    de fases posteriores asociadas al hardening y validación runtime.
+
+    De momento nos conformamos con limitar la configuración base del sistema evitando introducir prematuramente decisiones de arquitectura de red.
+
+==========================================
+FASE 2 – RUNTIME BASE DEL HOST
+==========================================
+2.1 Actualización del sistema base
+    - Actualización del sistema base:
+        sudo apt update && sudo apt upgrade -y
+    - Si durante la actualización del sistema base se nos pregunta sobre sshd_config respondemos con:
+        Keep the local version currently installed
+    - Habilitación de repositorio Universe (requerido en imágenes minimal):
+        sudo add-apt-repository universe
+        sudo apt update
+    - Reboot recomendado tras actualización de kernel:
+        sudo reboot
+
+El reinicio se ejecuta antes de continuar con la fase siguiente para evitar inconsistencias con kernel, iptables, nftables u overlayfs.
+
+2.2 Instalación del runtime Docker
+    - Instalación Docker Engine (repositorios oficiales Ubuntu):
+        sudo apt install -y docker.io
+    - Instalación Docker Compose v2 (Ubuntu 24.04):
+        sudo apt install -y docker-compose-v2
+    - Decisión arquitectónica:
+        Se utilizan repositorios oficiales Ubuntu.
+        No se utiliza repositorio upstream Docker Inc.
+        No se utiliza Snap.
+        Se prioriza estabilidad y portabilidad sobre versión más reciente.
+
+    - Instalación de utilidades base:
+        sudo apt install -y git make ufw
+        fail2ban se instala en esta fase, pero su configuración activa se realizará en FASE 5.
+            sudo apt install -y git make ufw fail2ban
+
+    - Instalar plugins oficiales:
+        sudo apt install docker-buildx
+
+    Nota:
+    docker-buildx-plugin habilita el builder moderno basado en BuildKit utilizado por Docker Compose v2. Su instalación no es estrictamente necesaria para ejecutar contenedores, pero evita warnings de build y mejora rendimiento de compilación de imágenes.
+
+    El plugin forma parte del tooling del host Docker y no introduce dependencias en el runtime de los
+    contenedores del proyecto.
+
+2.3 Validación del runtime Docker:
+    Comprobaciones obligatorias:
+        docker --version
+        docker compose version
+        docker buildx version
+        systemctl status docker
+
+    Resultado esperado:
+        Docker Engine operativo
+        Docker Compose disponible como "docker compose"
+
+2.4 Asignación de permisos Docker al usuario operativo:
+    Añadir usuario operativo al grupo docker:
+        sudo usermod -aG docker eboe62
+    Requiere cerrar sesión y volver a entrar.
+    Reboot recomendado tras actualización de kernel:
+        sudo reboot
+
+    Nota:
+    Tras apt upgrade, puede quedar pendiente la carga de un kernel más reciente. El reboot se recomienda antes de continuar con FASE 3 para evitar inconsistencias con iptables, nftables y overlayfs.
+
+2.5 Estructura base del host
+    Directorios estructurales mínimos:
+        /opt/monitoring
+        /opt/backups
+        /opt/logs
+        /ops/audit
+    Asignación de ownership al usuario operativo.
+    El directorio /ops/audit contendrá exclusivamente la lógica ejecutable del motor de auditoría estática y políticas del host (como compose_policy_checks.py). Los demás directorios constituyen soporte estructural sin lógica ejecutable para el modelo IaC.
+
+==========================================
+PRE-FASE 2B - DECISIÓN ARQUITECTÓNICA DE PERÍMETRO: UFW EN HOST
+==========================================
+Motivación
+El modelo IaC adoptado establece que el host no ejecuta lógica de aplicación y actúa exclusivamente como orquestador de contenedores Docker.
+Sin embargo, esto no elimina la necesidad de control de perímetro a nivel de sistema operativo.
+
+Se evalúan dos estrategias principales:
+A.- Confiar únicamente en:
+    - Security Groups del proveedor (DigitalOcean)
+    - Reverse proxy (si aplica)
+    - No exponer servicios sensibles
+B.- Activar firewall local en el host (UFW) con política deny-by-default.
+
+Comparativa resumida:
+CRITERIO                          | UFW ACTIVADO EN HOST                    | SOLO SECURITY GROUP + REVERSE PROXY
+----------------------------------|-----------------------------------------|------------------------------
+Capa de seguridad                 | Doble capa (provider + host)            | Única capa (provider)
+Protección ante error Docker -p   | Parcial (si reglas coherentes)          | Depende 100% del security group
+Riesgo de exposición accidental   | Menor si disciplina correcta            | Mayor si se abre puerto en DO
+Complejidad operativa             | Media                                   | Baja
+Debugging de red                  | Más complejo (iptables + ufw + docker)  | Más simple
+Coherencia con hardening formal   | Alta                                    | Media
+Defensa en profundidad            | Sí                                      | Limitada
+Rendimiento                       | Impacto despreciable                    | Impacto despreciable
+Modelo profesional producción     | Recomendado                             | Aceptable en entornos simples
+
+Decisión adoptada
+- Se adopta el modelo: "UFW activado en host con política deny-by-default"
+
+Reglas base:
+- Default: deny incoming
+- Allow:
+    22/tcp (SSH)
+    80/tcp (HTTP) si aplica
+    443/tcp (HTTPS) si aplica
+- PostgreSQL NO se expone públicamente
+- Cualquier apertura adicional requiere justificación explícita
+
+Recomendación razonada
+- Añade una segunda capa de defensa independiente del proveedor.
+- Reduce impacto de errores humanos en Security Groups.
+- Aísla servicios Docker que accidentalmente publiquen puertos.
+- Refuerza coherencia con modelo de micro-stacks autónomos.
+- Mantiene el principio de mínimo privilegio.
+
+Advertencia crítica
+Docker manipula iptables/nftables dinámicamente.
+El firewall debe activarse únicamente:
+- Tras instalar Docker
+- Tras verificar que el daemon está operativo
+- Con política explícita definida
+
+Un firewall mal configurado puede:
+- Bloquear tráfico legítimo entre contenedores
+- Interferir con reglas NAT creadas por Docker
+- Provocar pérdida de acceso SSH si no se permite previamente
+
+Por tanto:
+    sudo ufw allow OpenSSH
+    sudo ufw enable
+
+Debe ejecutarse en ese orden estricto.
+Momento de ejecución en el plan
+La activación formal de UFW se realiza en: FASE 2 – RUNTIME BASE DEL HOST
+
+Antes del despliegue del repositorio (FASE 3) y antes de cualquier runtime productivo.
+
+Esto garantiza que:
+- El perímetro está definido antes de exponer servicios
+- No existe ventana temporal sin política de red explícita
+- El modelo IaC opera sobre un host ya endurecido
+
+Conclusión arquitectónica
+- El firewall local no sustituye a los Security Groups del proveedor, pero sí actúa como segunda capa defensiva y mecanismo de contención.
+- En un entorno PRO minimalista sin servicios gestionados externos, esta decisión refuerza la resiliencia sin introducir complejidad estructural significativa.
+
+
+Internet
+   │
+   ▼
+UFW
+   │
+   ├── 22 SSH
+   ├── 80 HTTP
+   └── 443 HTTPS
+
+Host
+   │
+   └── Docker network
+        ├ postgres
+        ├ loki
+        ├ promtail
+        ├ python runtime
+        ├ cron
+        ├ grafana (loopback)
+        └ smtp relay (loopback o puerto dedicado)
+
+==========================================
+FASE 2B - ACTIVACION DEL FIREWAL (modelo deny-by-default)
+==========================================
+Objetivo
+    Definir el perímetro de red del host bajo modelo deny-by-default, aplicando el principio de mínimo privilegio y defensa en profundidad..
+
+Momento de ejecución
+    Tras validar que Docker está operativo  y antes del despliegue del repositorio (FASE 3).
+    El firewall no se activa antes de Docker para evitar interferencias con las reglas de red gestionadas dinámicamente por el daemon.
+
+2B.1. Activación controlada de UFW
+Antes de activar el firewall debe permitirse explícitamente el acceso SSH:
+    sudo ufw allow OpenSSH
+
+Esta regla habilita el tráfico entrante por el puerto 22 (IPv4/IPv6) y es obligatoria antes de ejecutar la activación de UFW, ya que garantiza la continuidad del acceso administrativo remoto bajo una política restrictiva.
+
+Orden estricto de ejecución:
+    sudo ufw allow OpenSSH
+    sudo ufw enable
+
+Durante la activación puede mostrarse una advertencia indicando que la conexión SSH podría interrumpirse.
+Si la regla "OpenSSH" fue configurada previamente, la activación puede confirmarse con seguridad.
+
+2B.2. Política resultante:
+    Tras la activación, el estado esperado es:
+    Default deny (incoming)
+    Default allow (outgoing)
+    Default deny (routed)
+
+Esto implica:
+    Todo tráfico entrante no autorizado explícitamente queda bloqueado.
+    El servidor puede iniciar conexiones salientes (updates, pulls, etc.).
+    El host no actúa como router entre interfaces.
+
+Verificación:
+    sudo ufw status verbose
+
+    Resultado esperado:
+        Status: active
+        Logging: on (low)
+        Default: deny (incoming), allow (outgoing), deny (routed)
+
+2B.3. Puertos autorizados a nivel de host
+Unicamente se autorizan los siguientes puertos:
+    22/tcp → SSH
+    80/tcp → HTTP (si aplica)
+    443/tcp → HTTPS (si aplica)
+
+Ejemplo de habilitación explícita:
+    sudo ufw allow 80/tcp
+    sudo ufw allow 443/tcp
+
+2B.4. Restricción explícita sobre PostgreSQL:
+    PostgreSQL NO se expone en el host.
+
+    Reglas:
+        - El puerto 5432 NO se publica.
+        - No se permite apertura directa del puerto, ni siquiera restringida por IP.
+        - PostgreSQL es accesible exclusivamente a través de la red Docker interna (redes monitoring-network Makefile).
+        - El acceso se realiza exclusivamente mediante:
+            Red Docker interna (redes monitoring-network)
+            SSH al host + docker exec
+            Túnel SSH temporal (si fuera imprescindible)
+        - Cualquier excepción requiere ADR explícito documentado.
+
+La activación del firewall se realiza:
+    Tras validar que Docker está operativo, para evitar interferencias con las reglas de red gestionadas por el daemon Docker
+    Antes del despliegue del repositorio (FASE 3).
+
+2B.5. Ejemplo de estado incorrecto y corrección
+    Ejemplo de estado detectado tras activación inicial:
+        sudo ufw status numbered
+            Status: active
+                To                         Action      From
+                --                         ------      ----
+            [ 1] OpenSSH                    ALLOW IN    Anywhere
+            [ 2] 80,443,3000,3100,5432,5433/tcp ALLOW IN    Anywhere
+            [ 3] OpenSSH (v6)               ALLOW IN    Anywhere (v6)
+            [ 4] 80,443,3000,3100,5432,5433/tcp (v6) ALLOW IN    Anywhere (v6)
+
+    Este estado NO es compatible con el modelo PRO, ya que expone puertos no autorizados.
+    Posteriormente se detectó una regla temporal:
+    5432/tcp   ALLOW IN   213.94.55.139
+    Incluso restringida por IP, esta regla contradice la política arquitectónica.
+
+    Eliminación de la regla:
+        sudo ufw delete 4
+
+    Confirmación posterior:
+        sudo ufw status verbose
+
+    Resultado esperado definitivo:
+
+            Status: active
+            Logging: on (low)
+            Default: deny (incoming), allow (outgoing), deny (routed)
+            New profiles: skip
+            To                         Action      From
+            --                         ------      ----
+            22/tcp (OpenSSH)           ALLOW IN    Anywhere
+            80/tcp                     ALLOW IN    Anywhere
+            443/tcp                    ALLOW IN    Anywhere
+            22/tcp (OpenSSH (v6))      ALLOW IN    Anywhere (v6)
+            80/tcp (v6)                ALLOW IN    Anywhere (v6)
+            443/tcp (v6)               ALLOW IN    Anywhere (v6)
+
+    Estado final coherente con la arquitectura.
+
+2B.6. Consideraciones técnicas sobre Docker
+Docker gestiona reglas propias en iptables cuando se publican puertos mediante la opción:
+    -p host:container
+
+Estas reglas se insertan directamente en las cadenas de filtrado del sistema, pudiendo permitir el acceso externo a un puerto aunque no exista una regla explícita en UFW que lo autorice.
+
+Por ejemplo, si se lanza un contenedor utilizando:
+
+    -p 8080:80
+
+Docker creará automáticamente las reglas necesarias para exponer el puerto 8080 del host hacia el servicio interno del contenedor.
+En este escenario, el puerto 8080 quedará accesible desde el exterior aunque no exista una regla específica en UFW permitiendo dicho puerto.
+
+Esto implica dos consideraciones técnicas fundamentales:
+
+- Bypass de UFW: Docker puede exponer servicios al exterior mediante la publicación explícita de puertos (-p host:container), independientemente de la configuración declarativa de UFW.
+- Falsa sensación de seguridad: La existencia de reglas restrictivas en UFW no garantiza, por sí sola, que un puerto permanezca inaccesible si Docker lo ha publicado directamente.
+
+Por tanto:
+- No se deben publicar puertos sensibles en docker-compose.
+- UFW no sustituye la disciplina declarativa.
+- La seguridad depende de coherencia entre:
+    docker-compose
+    reglas UFW
+    Security Groups del proveedor.
+
+2B.7. Política de exposición de puertos Docker
+Por defecto, los contenedores del proyecto NO deben publicar puertos hacia el host.
+
+Regla de exposición de puertos:
+    - Micro-stacks:
+        No deben declarar ports
+
+    - Servicios internos accesibles desde el host:
+        Deben usar bind explícito a loopback:
+        127.0.0.1:<host_port>:<container_port>
+
+    - Servicios públicos:
+        Solo 80 y 443 pueden exponerse en el host
+
+La comunicación entre servicios debe realizarse exclusivamente mediante:
+    - redes Docker internas
+    - resolución DNS interna de Docker
+
+Cuando sea necesario exponer un servicio al host, debe aplicarse una restricción explícita de interfaz:
+    127.0.0.1:<puerto_host>:<puerto_contenedor>
+
+Ejemplo permitido:
+    ports:
+        - "127.0.0.1:3001:3001"
+
+Ejemplo prohibido:
+    ports:
+        - "3001:3001"
+
+La exposición sin restricción de interfaz provoca que Docker publique el servicio en todas las interfaces del host.
+
+Servicios considerados internos que NO deben exponerse por defecto:
+    - PostgreSQL
+    - Promtail
+    - contenedores de runtime interno
+
+Excepciones controladas:
+    - Loki puede exponerse exclusivamente en loopback (127.0.0.1) para tareas de debugging, testing o validación operativa, siempre que no exista exposición pública.
+    - Esta excepción debe considerarse temporal o justificada.
+
+Servicios que pueden exponerse bajo justificación:
+    - Grafana
+    - servicios de administración explícitamente documentados
+
+Esta política complementa el firewall UFW y reduce el riesgo de exposición accidental.
+
+2B.8. Resultado esperado al finalizar
+El host queda con:
+    - Perímetro definido bajo política deny-by-default
+    - SSH garantizado
+    - HTTP/HTTPS (si aplica)
+    - PostgreSQL completamente aislado
+    - Ausencia de exposición accidental de servicios internos
+
+Nota:
+    Las medidas de defensa reactiva (fail2ban, hardening avanzado) se aplicarán tras el despliegue del proyecto, una vez que los servicios, logs y patrones de tráfico sean definitivos.
+
+==========================================
+FASE 3 – DESPLIEGUE DEL REPOSITORIO
+==========================================
+3.1. Preparación del Entorno en Host:
+
+Debe existir una ruta base dedicada al proyecto, por ejemplo:
+    /opt/monitoring
+
+Directorios mínimos requeridos:
+    - /opt/monitoring
+    - /opt/backups
+    - /opt/logs
+
+Estos directorios deben asignarse al usuario operativo del entorno.
+    Ejemplo:
+        sudo chown -R eboe62:eboe62 /opt/monitoring
+        sudo chown -R eboe62:eboe62 /opt/backups
+        sudo chown -R eboe62:eboe62 /opt/logs
+
+3.2. Clonado del Repositorio:
+    - El despliegue debe realizarse desde la rama declarada como canónica para producción, en este caso `migracion`.
+    Ejemplo:
+        cd /opt/monitoring
+        git clone -b migracion https://github.com/eboe62/server_monitoring_2509.git .
+
+3.3. Verificaciones Posteriores al Clonado:
+Verificaciones obligatorias
+    - Confirmar que la rama activa coincide con la rama canónica.
+    - Confirmar estado limpio del repositorio (sin modificaciones locales).
+    - Verificar estructura mínima esperada del proyecto.
+
+Validaciones sugeridas:
+    git branch --show-current
+    git status
+    find . -maxdepth 2 -type d
+
+3.4. Restricciones de la Fase
+Durante esta fase:
+  - No se crean archivos .env.
+  - No se ejecutan servicios en modo persistente.
+  - La validación estructural del docker-compose no implica ejecución productiva.
+  - Aunque puedan existir mapeos de puertos definidos en los docker-compose, los servicios no deben iniciarse de forma persistente..
+  - La validación estructural no implica exposición real de puertos
+
+==========================================
+FASE 4 – CONFIGURACIÓN DE ENTORNO: Modelo Micro-stack Autónomo (Pre-runtime estructural)
+==========================================
+4.1. Definición de MICRO-STACKS AUTONOMO:
+Se consideran Micro-Stacks Autónomos aquellos servicios ubicados en:
+    ops/services/<servicio>/
+
+Cada Micro-Stack debe:
+    - Ser construible y desplegable de forma independiente.
+    - Poder copiarse a otro repositorio sin perder funcionalidad.
+    - Construirse utilizando exclusivamente archivos contenidos dentro de su propio directorio.
+    - No depender estructuralmente de archivos externos al servicio.
+
+No se permite dependencia estructural de runtime común entre stacks.
+    Cada Micro-Stack o Infra-Stack debe:
+    - Definir su propio runtime (ej. Python)
+    - Gestionar sus propias dependencias
+    - Ser construible de forma autónoma
+
+La reutilización de imágenes base internas queda eliminada como patrón arquitectónico.
+
+Restricciones aplicables a Micro-Stacks
+No se permite:
+    - Dependencia de archivos fuera de ops/services/<servicio>/.
+    - Uso de build context superior al directorio del servicio.
+    - Montaje de rutas absolutas del host como dependencia estructural.
+
+Estructura mínima obligatoria
+Cada Micro-Stack debe contener como mínimo:
+Estructura mínima obligatoria
+Cada Micro-Stack debe contener como mínimo:
+
+ops/services/<servicio>/
+├── docker-compose.yaml
+├── Dockerfile
+├── .env.template
+├── config/
+├── scripts/
+
+Notas:
+- No se utiliza directorio secrets/ en el modelo actual.
+- Las credenciales se gestionan exclusivamente mediante variables
+  de entorno definidas en archivos .env no versionados.
+
+4.2. Definición de INFRA-STACKS (infraestructura Operativa):
+Se consideran Infra-Stacks aquellos servicios definidos en:
+    ops/docker/
+    Ejemplos:
+    - monitoring-python
+    - monitoring-cron
+    - observability
+
+Estos forman parte del runtime interno del entorno y no son Micro-Stacks autónomos a nivel arquitectónico/exportable y, por lo tanto:
+    - Deben mantenerse coherentes como unidad de runtime interno.
+    - Pueden usar build context superior
+    - Pueden montar rutas del host justificadas
+    - Pueden acceder al socket Docker
+    - Pueden acceder a logs del host
+
+No obstante:
+    - NO pueden depender de bind mounts estructurales para ejecutar código
+    - El código operativo debe existir dentro de la imagen Docker
+    - Deben poder reconstruirse desde cero tras:
+        docker system prune -af --volumes
+
+Por tanto:
+    - NO son autónomos como unidad exportable/reutilizable
+    - PERO sí deben ser autónomos a nivel runtime/ejecución
+
+No obstante, deberán:
+    - Declarar redes monitoring-network (Makefile) como external: true
+    - No versionar secretos
+    - No incluir secretos dentro de la imagen
+
+Notas:
+Algunos contenedores de infraestructura requieren acceso al socket Docker del host (/var/run/docker.sock). Este acceso debe limitarse exclusivamente a infra-stacks y considerarse equivalente a privilegios administrativos sobre el host Docker.
+
+4.3. Gestión de variables de entorno y secretos:
+Por cada servicio:
+    - Debe existir .env.template versionado.
+    - El archivo real .env se genera a partir de la plantilla.
+    - .env debe estar incluido en .gitignore.
+
+Modelo actual (Docker Compose v2 sin Swarm):
+    - No se utilizará Docker Swarm secrets.
+    - No se permite el uso de "secrets: external: true".
+    - No se permite el uso implícito de Docker Swarm como mecanismo de gestión de secretos.
+
+Las credenciales deben gestionarse exclusivamente mediante:
+    - Variables de entorno definidas en archivos .env no versionados.
+
+Reglas obligatorias:
+    - Debe existir un archivo .env.template versionado.
+    - El archivo real .env se genera manualmente a partir de la plantilla.
+    - .env debe estar incluido en .gitignore.
+    - Los valores reales nunca deben aparecer en el repositorio.
+
+No se utiliza:
+    - Docker Swarm secrets
+    - directorios secrets/
+    - mecanismos de gestión de secretos externos
+
+Si en el futuro se adopta Swarm u otro orquestador, deberá formalizarse mediante ADR específico.
+
+4.4. Separación Import-Time / Run-Time
+Debe garantizarse que la configuración sensible no forme parte de las imágenes Docker.
+
+Comprobar que:
+    - Las imágenes Docker NO contienen .env
+    - Las imágenes Docker NO deben contener carpeta secrets/
+    - No existen instrucciones COPY .env en el Dockerfile
+
+Validación por servicio
+    docker compose build
+    docker run --rm <imagen_servicio> find / -name ".env"
+
+    No deben encontrarse archivos .env ni contenido sensible propio del servicio dentro de la imagen construida.
+
+Si el servicio usa imagen base:
+    docker run --rm monitoring-base:<tag> find / -name ".env"
+
+4.5. Construcción Autónoma de Imagen por servicio
+Cada servicio debe construir su propia imagen de forma autónoma.
+
+No se permite el uso de imágenes base internas compartidas.
+Solo se permite:
+    A) Uso directo de imagen oficial externa versionada
+        Ejemplo: FROM python:3.12-slim
+
+Condiciones para utilizar imagen base (modularidad monitoring-base) interna:
+    - Debe construirse independientemente del servicio
+    - No debe contener secretos
+    - Debe estar desacoplada del servicio.
+    - Debe estar versionada explícitamente (no usar latest)
+    - Debe poder publicarse en registry
+    - No debe depender de archivos fuera de su propio Dockerfile
+    - Se permite depender de imágenes base versionadas y publicadas en registry.
+    - No se permite depender de scripts compartidos no versionados como imagen.
+    - Cada servicio debe poder extraerse y reutilizarse sin arrastrar dependencias internas del stack.
+
+Validación:
+    docker images
+    Verificar que cada stack construye su propia imagen sin dependencias internas.
+
+4.6. Infraestructura de Red (Red Docker):
+Se desestima la declaración de una red externa común a todos los stacks adoptando el modelo de red única con segmentación explícita de redes Docker:
+Objetivos:
+- reducir movimiento lateral
+- minimizar superficie de exposición
+- mejorar capacidad forense
+- evitar contaminación cruzada entre stacks.
+
+La plataforma adopta el modelo de red única con segmentación explícita de redes Docker:
+    backend-net
+    Comunicación interna de aplicación y persistencia.
+    Uso previsto:
+    - monitoring-python
+    - monitoring-cron
+    - postgres
+
+    observability-net
+    Plano de observabilidad y logging.
+    Uso previsto:
+    - grafana
+    - loki
+    - promtail
+    - monitoring-python (solo si requiere acceso a Loki)
+
+    restricted-net
+    Servicios con aislamiento reforzado o egress controlado.
+    Uso previsto:
+    - smtp-relay
+    - contenedores temporales de debugging controlado
+
+Las redes se declaran en cada docker-compose:
+    networks:
+        external: true
+
+Reglas:
+    - La red se crea explícitamente una única vez por host.
+    - La red puede eliminarse durante operaciones de limpieza profunda:
+        docker system prune -af --volumes
+    - Todo proceso de reconstrucción completa debe re-crear explícitamente la red compartida antes del despliegue.
+        Bootstrap oficial:
+            make monitoring-networks
+        Validación:
+            make test-network
+    - Validación sintactica:
+        docker compose -f ops/docker/docker-compose.observability.yml config
+    - No se permite depender del project-name implícito de Docker Compose.
+    - Se prohíbe el uso de redes generadas automáticamente.
+
+El stack de observabilidad opera exclusivamente sobre observability-net.
+Excepciones explícitas:
+    - monitoring-python puede conectarse adicionalmente a observability-net si requiere ingestión o consulta de logs.
+    - Grafana no debe conectarse a backend-net salvo necesidad documentalmente justificada.
+
+Validación:
+    - docker network inspect <red>
+    - Confirmar ausencia de redes prefijadas tipo <project>_<red>
+
+4.7. Automatismos Runtime y Componentes de Seguridad del Host Declarados
+Forman parte del modelo declarativo aquellos mecanismos cuya finalidad es:
+    - Ajuste automático de recursos de contenedores.
+    - Aplicación de mecanismos de protección dinámica.
+    - Refuerzo de límites operativos del entorno.
+    - Protección activa del acceso al host.
+
+Estos mecanismos pertenecen al de Seguridad del Host, y no constituyen ni Micro-Stacks ni Infra-Stacks Docker.
+
+Pueden ejecutarse:
+    A.- Como scripts versionados en el repositorio.
+    B.- Como servicios nativos del sistema operativo cuya configuración esté declarada y versionada en el proyecto.
+
+Requisitos obligatorios:
+    - Estar versionados en el repositorio.
+    - Ser reproducibles desde una VPS limpia.
+    - No depender de configuraciones manuales externas no documentadas.
+    - Registrar ejecución y errores en logs del sistema.
+
+Ejemplos actuales declarados en el modelo:
+    - scripts/configure_docker_limits.sh
+    - scripts/apply_ssh_ratelimit.sh
+    - Servicio fail2ban para protección del acceso SSH
+    - Firewall UFW como perímetro del host
+
+Fail2ban:
+    - Forma parte del modelo de seguridad activa del host.
+    - Analiza logs reales del sistema.
+    - No sustituye al firewall.
+    - Su configuración debe mantenerse bajo control de versiones o generarse desde plantillas declaradas.
+
+No se permite:
+    - La creación manual de tareas persistentes no documentadas.
+    - La modificación manual directa de reglas de firewall (iptables).
+    - La configuración manual de fail2ban fuera del modelo declarado.
+
+Cualquier ajuste de seguridad observado en producción deberá formalizarse posteriormente en la arquitectura del repositorio.
+
+Toda ejecución del sistema se realiza dentro de contenedores.
+
+Requisitos adicionales:
+- Los contenedores deben ejecutarse con usuario no root cuando sea viable
+- Debe aplicarse el principio de mínimo privilegio:
+  - cap_drop: ALL por defecto
+  - añadir únicamente capacidades necesarias
+- Se recomienda filesystem read-only cuando sea compatible
+
+==========================================
+FASE 5 – HARDENING, OPERABILIDAD Y PRUEBA DE RESILIENCIA
+==========================================
+Objetivo
+Verificar que la arquitectura configurada en FASE 4 es:
+    - Segura frente a exposición accidental.
+    - Coherente con el modelo declarativo.
+    - Operativamente verificable.
+    - Resiliente ante fallos reales.
+Esta fase no introduce nueva arquitectura. Valida, audita y endurece la existente.
+
+La resiliencia es un requisito obligatorio del sistema.
+El sistema debe:
+    - Detectar fallos
+    - Degradarse de forma controlada
+    - Recuperarse automáticamente
+    - Mantener observabilidad durante incidencias
+
+La validación se realiza mediante:
+  make test-resilience-completo
+
+Ejecutado tanto en entorno local como en CI (GitHub Actions).
+
+Incluye validaciones deterministas:
+    - crash real de proceso (PID 1) y recuperación automática
+    - degradación por pérdida de conectividad real a base de datos
+    - recuperación progresiva (DNS + TCP + estabilidad)
+    - simulación de fallo de red mediante desconexión de network Docker
+    - validación de observabilidad (Loki ingestión real)
+
+Los tests deben:
+    - ser reproducibles
+    - no depender de intervención manual
+    - devolver PASS/FAIL explícito
+
+El sistema SMTP debe garantizar:
+- aceptación del mensaje,
+- gestión de cola,
+- separación explícita entre modos relay y auth,
+- endurecimiento contextual del acceso a credenciales SMTP,
+- envío hacia proveedor externo cuando corresponda.
+
+Nota:
+La entrega final depende del proveedor externo (ej. Postmark) y no forma parte de los requisitos de resiliencia del sistema.
+
+Se aplica un modelo de seguridad runtime sobre Docker alineado con ADR-0018, que incluye:
+    - Principio de mínimo privilegio en todos los contenedores
+    - Ejecución como usuario no root cuando sea viable
+    - Reducción explícita de capacidades Linux (cap_drop: ALL + allowlist)
+    - Uso de filesystem read-only cuando sea compatible
+    - Eliminación de imágenes no versionadas (:latest)
+    - Prohibición de uso de docker.sock en micro-stacks
+
+Validación automática en CI:
+    - Verificación de ausencia de :latest en docker-compose
+    - Detección de uso de docker.sock
+    - Validación de exposición de puertos (no 0.0.0.0 salvo explícito)
+    - Validación de SMTP_MODE en stacks SMTP
+    - Validación de mounts autorizados de credenciales SMTP
+
+5.1. Endurecimiento del Perímetro
+
+- Perímetro del Host:
+    Confirmar que únicamente están expuestos a nivel de host:
+        - 22/tcp (SSH)
+        - 80/tcp y 443/tcp (si aplica)
+    No deben estar expuestos:
+        - Bases de datos (PostgreSQL)
+        - Servicios internos (Observabilidad)
+        - Servicios auxiliares no públicos
+
+    En caso de servicios auxiliares (ej. smtp-relay), la exposición en producción debe limitarse a:
+        127.0.0.1:PUERTO:PUERTO
+
+    Validaciones sugeridas:
+        ss -tulpn
+        ufw status (si el firewall ha sido activado en la fase previa)
+
+- Modelo de Publicación y Gobernanza de Puertos en Docker:
+    - Solo deben mapearse puertos declarados explícitamente en la arquitectura.
+    - No debe existir publicación accidental de puertos sensibles.
+    - La instrucción EXPOSE en un Dockerfile es informativa y no implica publicación externa.
+
+- Gobernanza Docker – Firewall
+    Para que el firewall del host actúe como segunda línea de defensa:
+        - Exposición controlada: los puertos publicados en Docker deben coincidier con el perímetro documentado de UFW.
+        - Protección ante errores humanos: evitar el despliegue de contenedores que expongan servicios sensibles sin mecanismos adicionales de control.
+        - Seguridad por capas: Docker no sustituye al firewall del host.
+
+- Hardening de Contenedores
+    Verificar cuando aplique:
+        - Ejecución como usuario no root.
+        - Uso de read-only root filesystem si es compatible.
+        - Eliminación de capacidades Linux innecesarias.
+        - No inclusión de secretos en imágenes.
+        - Uso de imágenes base oficiales y mantenidas.
+
+5.2. Seguridad Runtime y Automatismos Declarados
+Trilogía de Hardening de Infraestructura (ADR-0029, 0030, 0031)
+
+Antes de la ejecución de automatismos en el Host, el sistema rige su cumplimiento de seguridad bajo tres pilares de auditoría estructurada y gobernanza declarativa que eliminan el uso de scripts heurísticos basados en texto plano (grep/awk).
+
+===============================================================================
+                       ESQUEMA DE LA TRILOGÍA DE HARDENING
+===============================================================================
+
+[ CAPA DECLARATIVA ]          [ CAPA DE OBSERVABILIDAD ]      [ CAPA DE GOBERNANZA ]
+     ADR-0029 (El Plano)             ADR-0030 (La Foto)             ADR-0031 (La Ley)
+              │                              │                              │
+ ┌────────────┴────────────┐    ┌────────────┴────────────┐   ┌────────────┴────────────┐
+ │  Validación de Archivos │    │ Inspección de Contenedor│   │ Taxonomía y Excepciones │
+ │      Docker Compose     │    │   en Vivo desde Host    │   │  de Dependencias Host   │
+ └────────────┬────────────┘    └────────────┬────────────┘   └────────────┬────────────┘
+              │                              │                              │
+              ▼                              ▼                              ▼
+   Descubre y mapea de forma      Ejecuta docker inspect nativo  Aplica un bloqueo activo
+   dinámica la arquitectura       mediante motor unificado       en CI (--ci) ante riesgos
+   Compose distribuida actual     (runtime_governance_audit.py)  "forbidden", gobernando la
+   bajo un inventario de          correlacionando el plano con   matriz de excepciones de
+   micro-stacks federados.        la evidencia viva del host.    infraestructura (ALLOWLIST).
+              │                              │                              │
+              └──────────────────────────────┼──────────────────────────────┘
+                                             ▼
+                               ┌───────────────────────────┐
+                               │     ENTORNO SEGURO PRO    │
+                               │   Host-Controlled IaC     │
+                               └───────────────────────────┘
+
+- Capa Declarativa (ADR-0029 — Structured Compose Policy Audit):
+    Establece la necesidad de auditar la configuración estática frente a la arquitectura Compose distribuida actual. Debido a la segmentación del entorno en múltiples sub-directorios (ops/stacks y ops/services), el sistema abandona los supuestos monolíticos y delega el descubrimiento dinámico en un inventario federado capaz de mapear y correlacionar cada servicio declarado mediante sus etiquetas oficiales ('com.docker.compose.service').
+
+- Capa de Observabilidad Runtime (ADR-0030 — Auditoría Runtime HostConfig):
+    Consiste en la ejecución automatizada host-side de inspecciones estructuradas mediante el motor unificado 'ops/audit/runtime_governance_audit.py'. El sistema captura en tiempo real los parámetros críticos de aislamiento del kernel (Privileged, NetworkMode, SecurityOpt, CapDrop y ReadonlyRootfs), transformando la fase observacional inicial en un mecanismo de control de cambios activo que valida la coincidencia exacta entre el plano declarativo y el estado vivo de los contenedores.
+
+- Capa de Gobernanza, Excepciones y Enforcement (ADR-0031 — Clasificación de Dependencias Host):
+    Consolida la política regulatoria del entorno PRO mediante la automatización de un pipeline de CI ('audit-runtime.yml') y objetivos en el 'Makefile' ('audit-runtime-ci'). La gobernanza se rige bajo dos principios operativos:
+    1. Bloqueo Activo Punitivo: Cualquier hallazgo crítico calificado como prohibido ('forbidden') —tales como la presencia de 'privileged=true', 'network_mode=host', montajes mutables en rutas sensibles o fugas del plano de control mediante 'docker.sock'— provocará de forma determinista la caída del pipeline y el fallo del despliegue.
+    2. Matriz Oficial de Excepciones Aprobadas ('ALLOWLIST'): Codifica las tolerancias operacionales necesarias para la estabilidad de la infraestructura. Aprueba de forma explícita que 'monitoring-smtp-relay' retenga capabilities específicas de red ejecutando como root, que 'monitoring-postgres' mantenga 'read_only: false' para su transaccionalidad WAL, y que 'promtail' acceda exclusivamente en modo lectura a las rutas logs del host (/var/log y /var/lib/docker/containers) para el shipping correlacionado del stack de observabilidad.
+
+- Ajuste automático de límites Docker
+    Script declarado: configure_docker_limits.sh
+    El script configure_docker_limits.sh forma parte del repositorio en:
+        scripts/configure_docker_limits.sh
+    Debe instalarse en:
+        /usr/local/bin/
+    durante la FASE 4 mediante copia explícita.
+
+    Responsabilidad: Aplicar límites de recursos coherentes a contenedores críticos conforme al modelo definido en la arquitectura.
+
+    # Configurar permisos y ejecutar configure_docker_limits.sh al reiniciar
+    @reboot chmod +x /usr/local/bin/configure_docker_limits.sh && sleep 60 && /bin/bash /usr/local/bin/configure_docker_limits.sh > /var/log/configure_docker_limits.log 2>&1
+
+    # Ejecutar configure_docker_limits.sh cada 10 minutos
+    */10 * * * * /usr/local/bin/configure_docker_limits.sh > /var/log/configure_docker_limits.log 2>&1
+
+- Los automatismos del sistema se ejecutan mediante dos mecanismos diferenciados:
+    - crontab del host: Utilizado exclusivamente para tareas de mantenimiento del sistema (hardening, rotación de logs, backups del host, etc.).
+    - contenedor monitoring-cron: Utilizado para la ejecución de tareas programadas propias del runtime del proyecto (ingestión de logs, procesamiento, automatismos internos).
+
+    En ningún caso el host ejecuta lógica de aplicación del proyecto.
+    Toda la lógica de aplicación se ejecuta dentro de contenedores Docker.
+
+    Requisitos:
+    - El script debe estar versionado en el repositorio.
+    - No debe depender de configuraciones manuales no declaradas.
+    - Debe registrar ejecución y errores.
+
+- Protección ante Saturación SSH
+    Script declarado: apply_ssh_ratelimit.sh
+
+    Base funcional: src/resource_monitor/docker_resources.py
+
+    Responsabilidad: Aplicar mecanismos de limitación ante intentos masivos de conexión SSH. El script debe copiarse explícitamente a /usr/local/bin/ durante la FASE 4, desacoplándolo del código fuente de la aplicación en el host.
+    Ejecución persistente:
+
+    # Configuramos la prevención de saturación por ataques masivos
+    @reboot chmod +x /usr/local/bin/apply_ssh_ratelimit.sh && /bin/bash /usr/local/bin/apply_ssh_ratelimit.sh > /var/log/apply_ssh_ratelimit.log 2>&1
+
+    Estos automatismos deben cumplir con:
+        - El mecanismo debe estar documentado.
+        - Debe ser reproducible desde VPS limpia.
+        - No debe depender de estado manual externo al repositorio.
+
+5.3. Validación de Persistencia y BackUp
+- Persistencia de Datos
+    - Simular recreación total de contenedores manteniendo volúmenes.
+    - Verificar persistencia efectiva tras reinicio del VPS.
+
+- Backup y Restore
+    - Ejecutar prueba completa de backup de PostgreSQL.
+    - Ejecutar restore en entorno controlado.
+    - Validar integridad de datos restaurados.
+
+5.4. Observabilidad Funcional End-to-End
+    - Validar envío real de logs desde Promtail a Loki.
+    - Confirmar visualización efectiva en Grafana.
+    - Probar envío real de alertas vía SMTP.
+
+    La validación debe comprobar flujo real end-to-end, no únicamente el estado del contenedor.
+
+5.5. Recuperación ante Desastre
+    - Documentar procedimiento de reconstrucción completa desde VPS limpia.
+    - Medir tiempo estimado de recuperación (RTO).
+    - Verificar coherencia de dependencias entre stacks.
+    - Confirmar que el sistema puede reconstruirse únicamente a partir del repositorio y backups.
+
+5.6. Validación Final Previa a Activación Runtime
+Antes de considerar el entorno apto para activación productiva debe confirmarse:
+    - No existen contenedores productivos persistentes no declarados
+        docker ps
+    - Las redes están creada y operativa
+        make test-network
+    - No existen volúmenes huérfanos críticos no documentados.
+        docker volume ls
+    - El perímetro de exposición coincide con la arquitectura definida
+        Validación sugerida:
+            ss -tulpn
+            docker ps
+
+    La activación en modo productivo solo podrá realizarse tras superar todas las validaciones anteriores.
+
+5.7 – Validación continua (CI/CD)
+Se establece un mecanismo de validación continua orientado a garantizar la reproducibilidad, seguridad y resiliencia del sistema ante cualquier cambio.
+
+Todo cambio en el repositorio debe poder validarse automáticamente mediante un pipeline que ejecute:
+- Construcción de imágenes Docker con versionado explícito (prohibido :latest)
+- Validación de sintaxis de docker-compose
+- Ejecución de tests operativos:
+    - make test-resilience-completo
+        - crash de proceso (kill -9 PID 1)
+        - validación restart + recovery (health)
+        - fallo real de DB (DNS + TCP)
+        - fallo de red (disconnect/reconnect)
+        - validación de observabilidad (Loki)
+    - make test-observability
+    - make test-cron-execution
+    - make test-python-health
+    - make test-smtp-ci (entorno CI sin credenciales reales)
+    - make test-smtp-all (validación completa en entorno real)
+
+- Verificación de cumplimiento de seguridad runtime:
+    Delegada de forma exclusiva en el motor estructurado ops/audit/compose_policy_checks.py para auditar de forma determinista:
+    - ausencia de puertos expuestos en 0.0.0.0
+    - uso controlado de docker.sock (solo infra-stacks según ADR)
+    - aislamiento de red mediante monitoring-network
+    - no ejecución de código fuera de contenedores (prohibición de lógica Python en host)
+
+- El pipeline CI debe:
+    - levantar el stack completo
+    - validar dependencias reales (PostgreSQL ready)
+    - ejecutar tests end-to-end reproducibles
+    - destruir el entorno tras ejecución
+
+- El pipeline debe fallar ante cualquier incumplimiento.
+
+Objetivo:
+- Detectar errores antes de despliegue
+- Garantizar coherencia con ADRs
+- Asegurar que el sistema sigue siendo resiliente y auditable
+
+5.8 – Modelo de validación de resiliencia:
+La resiliencia se valida mediante simulaciones controladas de fallo real:
+- Fallo interno de contenedor:
+    Terminación del proceso principal (PID 1) para validar restart policy.
+- Fallo de dependencia:
+    Parada del servicio PostgreSQL y validación de pérdida real de conectividad (DNS + TCP).
+- Fallo de red:
+    Desconexión de la red Docker para validar degradación y recuperación.
+- Observabilidad:
+    Generación de logs y validación de ingestión en Loki.
+
+Estos tests reflejan el comportamiento real de Docker Compose (single-node, sin orquestador), según ADR-0017, y no asumen capacidades de self-healing propias de Kubernetes. Asimismo, la recolección de datos de HostConfig mediante docker inspect actúa en esta fase como un baseline de evidencia estrictamente observacional, posponiendo la lógica de diff estructurado automático para hitos posteriores.
+
+Nota:
+Esta fase no introduce despliegue automático (CD), sino validación previa obligatoria antes de cualquier promoción de cambios.
+
+==========================================
+FASE 6 – INICIALIZACIÓN DECLARATIVA DEL MICRO-STACK POSTGRES
+==========================================
+Objetivo:
+Formalizar la inicialización del servicio de base de datos como micro-stack autónomo, reproducible, idempotente y completamente declarativo.
+
+Principio:
+No se permite configuración manual interactiva dentro del contenedor.
+Toda inicialización debe ejecutarse mediante:
+    - scripts en init/
+    - mecanismos estándar de Docker (entrypoint)
+    - archivos versionados
+
+    La inicialización debe ser reproducible y no depender del estado manual previo del entorno.
+
+Bloques de trabajo:
+
+6.1. Despliegue autónomo del micro-stack
+    - Ejecutar docker compose up -d desde ops/services/postgres
+    - Verificar healthcheck declarado
+    - Confirmar conexión exclusiva mediante redes monitoring-network (Makefile)
+    - Confirmar que no se exponen puertos en el host
+
+6.2. Inicialización declarativa
+    - Scripts SQL ubicados en init/ se ejecutan automáticamente en primer arranque del contenedor.
+    - Creación declarativa de:
+        - base de datos
+        - roles
+        - tablas
+        - funciones
+    - Confirmar que los scripts en init/ NO se reejecutan si el volumen ya contiene datos.
+    - No se permite uso de docker exec interactivo para configuración estructural.
+
+6.3. Validación de estado
+    - Verificar existencia de base de datos mediante ejecución no interactiva:
+        docker exec monitoring-postgres psql -U <user> -c "\l"
+        El comando se usa exclusivamente como verificación técnica, no como mecanismo de configuración.
+    - Verificar tablas esperadas.
+    - Confirmar que reinicio del contenedor no altera el estado.
+
+6.4. Validación de persistencia
+    - Eliminar contenedor (sin borrar volumen).
+    - Recrear micro-stack
+    - Confirmar que la recreación del contenedor no implica pérdida de datos
+    - Confirmar integridad estructural y funcional de datos.
+
+Criterio de cierre:
+    - El micro-stack puede desplegarse en droplet vacío.
+    - La base se inicializa automáticament en primer arrancque.
+    - La inicialización es idempotente y reproducible.
+    - No requiere intervención manual.
+    - Cumple autonomía arquitectónica definida en ADR-0008.
+
+6.5. Implementación manual pre-IaC (no vigente)
+    A efectos exclusivamente históricos se documenta el procedimiento anterior empleado antes de la adopción del modelo declarativo.
+
+    Este procedimiento NO forma parte del modelo actual y no debe utilizarse.
+
+    Pasos históricos:
+    - Conexión al contenedor PostgreSQL:
+            docker exec -it monitoring-postgres bash
+            psql -U postgres
+    - Creación manual de la base de datos:
+            CREATE DATABASE "Security2502";
+    - Conexión manual a la nueva base:
+            \c Security2502
+    - Creación manual de tablas principales:
+            attacking_logs
+            honeypot_logs
+            fail2ban_logs
+            kern_logs
+    - Creación manual de función PL/pgSQL update_attacking_no()
+            (se reutilizó el script documentado en implementaciones previas)
+    - Verificación manual mediante:
+            \d honeypot_logs
+            \df
+            \q
+
+==========================================
+FASE 7 – ACTIVACIÓN FORMAL DEL RUNTIME PRODUCTIVO
+==========================================
+Objetivo:
+Activar los servicios en entorno PRO validando coherencia arquitectónica, aislamiento entre stacks y estabilidad operativa del runtime.
+
+Alcance:
+Esta fase no diseña arquitectura (FASE 4)
+ni valida resiliencia profunda (FASE 5),
+sino que formaliza el paso a estado operativo activo.
+
+7.1. Despliegue controlado por micro-stack
+    - Despliegue independiente desde su propio docker-compose.yaml.
+    - Uso exclusivo de Docker Compose v2 (docker compose).
+    - No se permite docker-compose (v1).
+    - No se permite build manual fuera de compose.
+    - No se permite ejecución desde directorios arbitrarios.
+    - No debe existir compose global implícito.
+    - Confirmar que cada servicio puede levantarse y bajarse de forma autónoma.
+
+Secuencia recomendada por stack:
+    - Secuencia recomendada:
+        - docker compose pull (si aplica)
+        - docker compose build (si aplica)
+        - docker compose up -d
+
+    MICRO-STACKS
+
+        Ejemplo POSTGRES:
+        - Activación del micro-stack inicializado en la fase anterior:
+                docker compose -f ops/services/postgres/docker-compose.postgres.yaml up -d
+        - Validar únicamente estado runtime:
+                Estado: healthy
+                Red: monitoring-network (Makefile)
+                Volumen: ya existente
+                No exposición de puertos salvo que esté explícitamente documentado.
+        Nota:
+        En esta fase no se realiza inicialización estructural ni validación de persistencia.
+
+        Ejemplo SMTP RELAY:
+        Antes del despliegue, el archivo de configuración local ops/services/smtp_relay/.env debe contener las variables de entorno con los valores de autenticación reales, siguiendo la política general de inyección de secretos del proyecto.
+
+        SMTP RELAY
+
+        Antes del despliegue deben existir las credenciales SMTP cargadas en el entorno local a través del archivo .env correspondiente.
+
+        Configuración recomendada de permisos:
+            sudo chmod 600 /ops/services/smtp_relay/.env
+
+        El servicio smtp_relay debe declarar explícitamente:
+            SMTP_MODE=auth
+
+        Los stacks relay-only no deben montar credenciales SMTP.
+
+        Despliegue declarativo:
+            docker compose -f ops/services/smtp_relay/docker-compose.yaml up -d
+
+        Resultado esperado:
+            Imagen base: boky/postfix
+            Nombre: smtp-relay
+            Estado: healthy
+            Red: redes monitoring-network (Makefile)
+            Puerto publicado: 127.0.0.1:2526->587
+
+    INFRA-STACKS
+
+        Ejemplo CRON (SUPERVISOR):
+        docker compose -f ops/docker/docker-compose.cron.yml up -d --build
+
+        CRON (SUPERVISOR)
+        - Despliegue exclusivamente mediante Infra-Stack declarativo:
+            docker compose -f ops/stacks/cron/compose.yml up -d --build
+
+        Características obligatorias:
+            - runtime autocontenido
+            - sin bind mounts de código
+            - código integrado en la imagen Docker
+            - ejecución como usuario no-root
+            - reproducible desde host limpio
+        - Resultado:
+                Imagen: monitoring-cron:latest
+                Puerto: 3100 (si aplica)
+                Nombre: monitoring-cron
+                Red: redes monitoring-network (Makefile)
+
+        Ejemplo OBSERVABILITY (LOKI - PROMTAIL - GRAFANA):
+        docker compose -f ops/docker/docker-compose.observability.yml up -d --build
+
+        OBSERVABILITY (LOKI - PROMTAIL - GRAFANA)
+        - Comando ejecutado:
+            cd /opt/monitoring
+            docker compose -f ops/docker/docker-compose.observability.yml up -d --build
+        - Resultado:
+                grafana/promtail:latest   → promtail   → 9080
+                grafana/loki:latest       → loki       → 3100
+                grafana/grafana:latest    → grafana    → 3000
+                Red compartida: redes monitoring-network (Makefile)
+
+Revisión obligatoria de Makefiles heredados
+    Si un micro-stack contiene Makefile propio:
+        - Debe revisarse para:
+        - Eliminar referencias a docker-compose v1.
+        - Eliminar comandos build manuales.
+        - Garantizar que invoca exclusivamente docker compose.
+
+    Opciones permitidas:
+    A.- Integrar sus objetivos en el Makefile raíz del proyecto.
+    B.- Mantener Makefile propio siempre que respete estrictamente el modelo declarativo.
+
+    No se permite mantener automatismos heredados incompatibles con Docker Compose v2.
+
+
+Acciones:
+    - Levantar Micro-Stacks necesarios:
+        docker compose -f ops/services/postgres/docker-compose.postgres.yaml up -d
+    - Levantar Infra-Stack:
+        docker compose -f ops/docker/docker-compose.observability.yml down
+        docker compose -f ops/docker/docker-compose.observability.yml up -d
+
+7.2. Validación de aislamiento y segmentación de red
+Validaciones obligatorias:
+    - Servicios no autorizados NO deben alcanzar PostgreSQL.
+    - restricted-net NO debe utilizarse como red compartida global.
+    - observability-net debe quedar limitada al plano de observabilidad.
+    - Las pruebas deben ejecutarse mediante:
+    make test-aislamiento-red
+    - Confirmar que PostgreSQL no publica puertos en el host salvo que esté explícitamente documentado.
+    - Validar que no existen exposiciones accidentales.
+
+        docker ps
+        ss -tulpn
+        docker network inspect <red>
+
+    No deben existir redes automáticas no documentadas distintas de la red declarada en la arquitectura.
+
+7.3. Validación de estado del runtime
+    - Verificar healthchecks declarados.
+    - Verificar estado “healthy” en docker ps.
+    - Confirmar reinicio automático (restart policy).
+    - Confirmar que reinicio del droplet mantiene el estado operativo.
+
+7.4 Validación de reproducibilidad
+    Debe validarse periódicamente la reconstrucción íntegra del entorno desde un host Docker limpio.
+    Objetivo:
+        Detectar dependencias implícitas del host o acoplamientos no declarados.
+    Validación oficial:
+        make test-reproducibilidad
+    El test debe:
+        - eliminar contenedores
+        - eliminar imágenes
+        - eliminar volúmenes
+        - eliminar redes Docker no persistentes
+        - reconstruir redes monitoring-network (Makefile)
+        - reconstruir todos los stacks
+        - validar estado healthy final
+    Criterio obligatorio:
+        El sistema debe arrancar correctamente sin bind mounts de código ni dependencias manuales externas.
+
+7.5. Activación de Seguridad Operativa del Host
+    Objetivo:
+    Activar tareas persistentes del sistema operativo que refuerzan la estabilidad y seguridad del runtime Docker una vez desplegados los stacks.
+
+    Incluye:
+- Automatismos declarados en fases anteriores
+        configure_docker_limits.sh
+        apply_ssh_ratelimit.sh
+
+    La ejecución persistente debe corresponder exclusivamente a los automatismos declarados en FASE 4 y validados en FASE 5.
+    No se permite introducir nuevas tareas persistentes en esta fase.
+    Nota: Esto evita reabrir decisiones arquitectónicas ya formalizadas en fases anteriores (FASE 4)
+
+    Ejemplo de crontab:
+
+    # Configurar permisos y ejecutar configure_docker_limits.sh al reiniciar
+    @reboot chmod +x /usr/local/bin/configure_docker_limits.sh && sleep 60 && /bin/bash /usr/local/bin/configure_docker_limits.sh > /var/log/configure_docker_limits.log 2>&1
+
+    # Ejecutar configure_docker_limits.sh cada 10 minutos
+    */10 * * * * /usr/local/bin/configure_docker_limits.sh > /var/log/configure_docker_limits.log 2>&1
+
+    - Aplicar limitación básica de intentos SSH
+    @reboot /scripts/apply_ssh_ratelimit.sh > /var/log/apply_ssh_ratelimit.log 2>&1
+
+    Confirmar que:
+    - Los cron del host no ejecutan lógica de aplicación.
+    - Los cron del host no ejecutan módulos Python del proyecto.
+    - Los cron del host no sustituyen el scheduler interno del sistema.
+
+    La ejecución periódica de tareas del proyecto se realiza mediante un contenedor dedicado:
+        monitoring-cron
+
+    Este contenedor utiliza supercronic como scheduler y ejecuta las tareas definidas en:
+        ops/cron/monitoring.cron
+
+    Las tareas del proyecto se ejecutan dentro del runtime Python definido por cada contenedor (monitoring-python o monitoring-cron), construido de forma autónoma.
+
+- Activación del perímetro del host
+    - Activar y configurar UFW.
+    - Confirmar reglas coherentes con arquitectura declarada.
+    - Confirmar que PostgreSQL no es accesible desde el exterior.
+    - Confirmar que solo están abiertos los puertos documentados.
+    - No se permite modificación manual directa de iptables.
+
+- Defensa activa (Post-activación controlada)
+
+    - Activar fail2ban basado en logs reales.
+    - - Proponer ajustes de firewall basados en tráfico observado, que deberán formalizarse posteriormente en la arquitectura declarativa.
+    - Validar eventos de bloqueo.
+    - Realizar pruebas controladas de bloqueo y recuperación.
+    - Esta etapa se ejecuta tras observar comportamiento real del sistema.
+
+    No se permite:
+    - Configuración manual directa de iptables.
+    - Introducir tareas persistentes no documentadas.
+
+Nota: No se realiza configuración directa de iptables. El filtrado de tráfico se gestiona mediante UFW como capa de abstracción soportada por el sistema operativo, y por Docker, que administra dinámicamente las reglas necesarias  para la comunicación entre contenedores. La modificación manual de iptables introduciría riesgos de conflicto con Docker y no aporta beneficios reales para el alcance del proyecto.
+
+7.6. Criterio de cierre:
+El sistema puede:
+    - Levantarse completamente desde repositorio limpio
+    - Restaurar backup cuando aplique.
+    - Reiniciarse sin intervención manual.
+    - Mantener aislamiento entre micro-stacks.
+    - Mantener integridad de red y exposición controlada.
+    - Mantener automatismos runtime funcionales tras reinicio.
+
+==========================================
+FASE 8 – CRON Y EJECUCIÓN DE JOBS
+==========================================
+Objetivo:
+Validar que la ejecución programada de tareas ocurre de forma
+aislada, contenida y exclusivamente dentro del modelo declarativo
+definido.
+
+Principios:
+- No se utiliza cron del host para lógica de aplicación.
+- Todas las tareas programadas se ejecutan dentro del contenedor monitoring-cron.
+- Supercronic es el scheduler oficial del proyecto.
+- El host no contiene entradas crontab relacionadas con la aplicación.
+
+Bloques de trabajo:
+8.1. Verificación del scheduler
+- Confirmar que Supercronic está operativo dentro del contenedor.
+- Verificar que el archivo de definición de jobs está presente y correctamente montado.
+- Confirmar que no existen errores de parseo en el arranque del contenedor.
+
+8.2. Validación estructural de jobs
+- Confirmar que los jobs se ejecutan exclusivamente mediante: python3 -m <paquete.modulo>
+No se permiten:
+- rutas absolutas al host - ejecución de /usr/bin/python3 del sistema
+- ejecución fuera del contenedor monitoring-cron o monitoring-python
+
+8.3. Ejecución controlada
+- Ejecutar jobs manualmente (dry-run si aplica).
+- Confirmar salida esperada. - Validar que los logs generados son coherentes.
+- Confirmar que no existen dependencias ocultas del host.
+
+Criterio de cierre:
+- Todos los jobs definidos se ejecutan correctamente.
+- No existe dependencia del cron del host.
+- El runtime de tareas es completamente contenido y reproducible.
+
+==========================================
+FASE 9 – CONECTIVIDAD EXTERNA
+==========================================
+Objetivo:
+Validar que los servicios desplegados pueden comunicarse correctamente con sus dependencias externas e internas sin romper el aislamiento definido.
+
+Bloques de trabajo:
+9.1. Conectividad interna
+- Validar conexión a base de datos desde servicios dependientes.
+- Confirmar resolución correcta vía redes monitoring-network (Makefile).
+- Verificar que no se utiliza localhost ni IP del host como atajo.
+
+9.2. Conectividad SMTP
+- Ejecutar envío real de correo de prueba.
+- Confirmar recepción efectiva.
+- Validar que errores de autenticación o red generan logs visibles.
+
+Criterio de cierre:
+- Las dependencias externas responden correctamente.
+- Los fallos generan logs observables.
+- No se rompe el modelo de aislamiento de red.
+
+==========================================
+FASE 10 – OBSERVABILIDAD
+==========================================
+Objetivo:
+Garantizar visibilidad operativa del sistema mediante ingesta y consulta centralizada de logs.
+
+Bloques de trabajo:
+10.1. Verificación de stack de observabilidad
+- Confirmar que Loki, Promtail y Grafana están en estado healthy.
+- Verificar que los contenedores comparten redes monitoring-network (Makefile).
+
+10.2. Ingestión de logs
+- Confirmar que Promtail recoge logs de los contenedores.
+- Validar que Loki almacena los eventos correctamente.
+- Verificar consulta básica desde Grafana.
+
+10.3. Validación funcional
+- Confirmar que los logs críticos son visibles.
+- Validar retención básica configurada.
+- Confirmar que reinicio de servicios no rompe la cadena de ingesta.
+
+Criterio de cierre:
+- Los logs operativos son consultables.
+- No existen servicios ejecutándose sin trazabilidad.
+- La visibilidad mínima de producción está garantizada.
+
+==========================================
+FASE 11 – VALIDACIÓN FINAL DEL ENTORNO PRO
+==========================================
+Objetivo:
+Confirmar que el sistema completo puede considerarse operativo en entorno PRO.
+
+Bloques de trabajo:
+11.1. Checklist técnico
+- Verificar que todas las fases anteriores cumplen su criterio de cierre.
+- Confirmar ausencia de contenedores en estado error.
+- Confirmar coherencia entre arquitectura declarada y runtime real.
+
+11.2. Reinicio controlado
+- Reiniciar el droplet de forma controlada.
+- Confirmar arranque automático de todos los stacks.
+
+Validar que:
+- PostgreSQL mantiene persistencia.
+- Cron reanuda ejecución.
+- Observabilidad continúa operativa.
+- UFW mantiene reglas declaradas.
+
+11.3. Verificación post-reboot
+- Validar que no existen errores en logs tras reinicio.
+- Confirmar estado healthy de todos los servicios.
+
+Criterio de cierre:
+- El sistema puede levantarse desde repositorio limpio.
+- Puede reiniciarse sin intervención manual.
+- Mantiene aislamiento, persistencia y trazabilidad.
+- Se declara entorno PRO operativo.
+
+==========================================
+FASE 12 – POSIBLES MEJORAS FUTURAS (NO NORMATIVAS)
+==========================================
+Las siguientes propuestas no son obligatorias ni forman parte del modelo normativo actual.
+Representan líneas de mejora futura.
+
+Propuestas:
+- Healthcheck específico del contenedor de cron.
+- Job que verifique que otros jobs han corrido correctamente.
+- Alerta de silencio (ausencia de eventos durante X horas).
+- Unificación explícita del plano temporal del sistema.
+- Checksum de configuración crítica para detectar desviaciones.
+- Definición formal de un modo de aislamiento de contingencia que, en caso de fallo crítico de Docker, permita levantar sub-servicios mediante contenedores de recuperación minimalistas y efímeros, reforzando la prohibición absoluta de instalar dependencias de Python o ejecutar lógica de la aplicación directamente sobre el host de producción.
+- Optimización de backups PostgreSQL
+    Actualmente los backups se ejecutan mediante script Python que invoca pg_dump dentro del contenedor PostgreSQL.
+    Una mejora futura podría simplificar el flujo utilizando directamente pg_dump desde el contenedor monitoring-cron.
+    Arquitectura objetivo:
+        monitoring-cron
+        └ pg_dump -h postgres
+    Ventajas:
+        - Eliminación de capa Python intermedia
+        - Simplificación operativa
+        - Mayor compatibilidad con herramientas estándar
+    Referencias:
+        Ver ADR-0009-estrategia_backups_postgresql.md
+
+Estas mejoras deberán formalizarse mediante ADR si se incorporan al modelo declarativo.
+
+==========================================
+APÉNDICE A – Evolución futura del entorno
+==========================================
+Lo siguiente no forma parte del alcance actual:
+
+    - DNS y dominio
+    - Secrets manager
+    - CI/CD
+    - Alta disponibilidad
+    - Externalización de persistencia
+
+Requerirán ADR independiente.

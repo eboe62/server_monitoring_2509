@@ -53,3 +53,35 @@ docker-compose.override.yml
 *.key
 *.p12
 *.crt
+
+# === AI Governance (must remain versioned) ===
+# Do not exclude:
+# - ai/governance/
+# - ai/skills/
+# - ai/templates/
+# - docs/
+#
+# These directories are authoritative project documentation.
+
+# === AI Docker ===
+box-opencode.sh
+compose-opencode.yml
+compose-proxy.yml
+Dockerfile.claude
+Dockerfile.ia_proxy
+Dockerfile.proxy
+Dockerfile.runtime
+proxy-start-ia.sh
+
+# === Documentation working copies ===
+* copy*
+
+# === Documentation Podcast, Slides, etc ===
+docs/Project_ADRs/*
+docs/Project_Corrections/*
+*.m4a
+*.pdf
+*.xlsx
+*.xls
+*.pptx
+*.ppt

@@ -1,8 +1,14 @@
 # ADR-0019 — Resilience Testing Strategy
 
-Fecha: 2026-04-25
-Estado: Aprobado
-Contexto: server_monitoring_2509
+Status: APPROVED
+Date: 2026-04-25
+Scope: Runtime
+Category: TESTING
+Tags: REVIEW_REQUIRED
+Related ADRs: ADR-0017
+Supersedes: NONE
+Superseded By: NONE
+Validation Reference: NONE
 
 ## Contexto
 

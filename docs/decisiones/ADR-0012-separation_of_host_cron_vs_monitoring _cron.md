@@ -1,8 +1,14 @@
 # ADR-0012 — Separation of Host Cron vs Monitoring Cron (Runtime reproducible)
 
-Fecha: 2026-03-12
-Estado: Propuesto
-Ámbito: server_monitoring_2509
+Status: APPROVED
+Date: 2026-03-12
+Scope: Runtime
+Category: RUNTIME
+Tags: REVIEW_REQUIRED
+Related ADRs: ADR-0010, ADR-0011
+Supersedes: NONE
+Superseded By: NONE
+Validation Reference: NONE
 
 ## Contexto
 El sistema server_monitoring se despliega en un servidor VPS bajo una arquitectura basada en Infrastructure as Code y contenedores Docker.

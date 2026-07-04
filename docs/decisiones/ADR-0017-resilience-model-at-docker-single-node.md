@@ -1,8 +1,14 @@
 # ADR-0017 — Resilience model at docker single-node
 
-Fecha: 2026-04-01
-Estado: Aprobado
-Ámbito: server_monitoring_2509
+Status: APPROVED
+Date: 2026-04-01
+Scope: Runtime
+Category: RUNTIME
+Tags: REVIEW_REQUIRED
+Related ADRs: ADR-0018, ADR-0019
+Supersedes: NONE
+Superseded By: NONE
+Validation Reference: NONE
 
 ## Contexto
 El sistema de monitorización se despliega en un entorno basado en Docker Compose sobre un único nodo (single-node), sin uso de orquestadores como Kubernetes o Docker Swarm.

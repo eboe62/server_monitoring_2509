@@ -1,8 +1,14 @@
 # ADR-0000 – Trabajo paralelo fuera de Git durante refactor estructural
 
-Fecha: 2026-01-24
-Estado: Aprobado
-Contexto: Migración IaC server_monitoring_2509
+Status: APPROVED
+Date: 2026-01-24
+Scope: System
+Category: GOVERNANCE
+Tags: REVIEW_REQUIRED
+Related ADRs: NONE
+Supersedes: NONE
+Superseded By: NONE
+Validation Reference: NONE
 
 ## Contexto
 

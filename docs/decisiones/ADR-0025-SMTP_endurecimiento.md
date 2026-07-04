@@ -1,8 +1,14 @@
 # ADR-0025 — Modelo SMTP explícito y endurecimiento de configuración (Endurecimiento SMTP)
 
-Fecha: 2026-05-13
-Estado: Aprobado
-Ámbito: server_monitoring_2509
+Status: APPROVED
+Date: 2026-05-13
+Scope: Runtime
+Category: SECURITY
+Tags: REVIEW_REQUIRED
+Related ADRs: ADR-0005, ADR-0003, ADR-0026
+Supersedes: NONE
+Superseded By: NONE
+Validation Reference: make test-smtp-all
 
 ## Contexto
 

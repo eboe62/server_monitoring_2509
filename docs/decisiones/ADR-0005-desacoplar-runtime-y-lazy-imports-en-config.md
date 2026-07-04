@@ -1,8 +1,14 @@
 # ADR-0005 – Desacoplamiento runtime y lazy imports en config (Runtime desacoplado)
 
-Fecha: 2026-01-27
-Estado: Aprobado
-Contexto: Migración IaC server_monitoring_2509
+Status: APPROVED
+Date: 2026-01-27
+Scope: Runtime
+Category: RUNTIME
+Tags: REVIEW_REQUIRED
+Related ADRs: ADR-0003, ADR-0025
+Supersedes: NONE
+Superseded By: NONE
+Validation Reference: NONE
 
 ## Contexto
 

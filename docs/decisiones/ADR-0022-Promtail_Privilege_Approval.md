@@ -1,8 +1,14 @@
 # ADR-0022 — Promtail Privilege Approval
 
-Fecha: 2026-05-08
-Estado: Aprobado
-Contexto: server_monitoring_2509
+Status: APPROVED
+Date: 2026-05-08
+Scope: Runtime
+Category: SECURITY
+Tags: REVIEW_REQUIRED
+Related ADRs: ADR-0018, ADR-0020, ADR-0021
+Supersedes: NONE
+Superseded By: NONE
+Validation Reference: NONE
 
 ## Contexto
 

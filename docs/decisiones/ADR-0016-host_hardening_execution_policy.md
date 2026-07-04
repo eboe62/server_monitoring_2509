@@ -1,8 +1,14 @@
 # ADR-0016 — Política de aislamiento y segmentación de redes Docker
 
-Fecha: 2026-05-06
-Estado: Aprobado
-Ámbito: server_monitoring_2509
+Status: APPROVED
+Date: 2026-05-06
+Scope: Infrastructure
+Category: SECURITY
+Tags: REVIEW_REQUIRED
+Related ADRs: ADR-0015, ADR-0021
+Supersedes: NONE
+Superseded By: NONE
+Validation Reference: NONE
 
 ## Contexto
 

@@ -1,8 +1,14 @@
 # ADR-0018 – Modelo de Seguridad Runtime Docker y Requisitos de Resiliencia
 
-Fecha: 2026-04-05
-Estado: Aprobado
-Contexto: server_monitoring_2509
+Status: APPROVED
+Date: 2026-04-05
+Scope: Runtime
+Category: SECURITY
+Tags: REVIEW_REQUIRED
+Related ADRs: ADR-0017, ADR-0020, ADR-0024
+Supersedes: NONE
+Superseded By: NONE
+Validation Reference: make test-security-runtime
 
 ## Contexto
 Durante la FASE 5 se valida el comportamiento del sistema bajo condiciones reales de operación:

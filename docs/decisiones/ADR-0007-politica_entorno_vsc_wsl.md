@@ -1,8 +1,14 @@
 # ADR-0007 – Política oficial de entorno VS Code + WSL para proyectos Linux/DevOps
 
-Fecha: 2026-02-16
-Estado: Aprobado
-Contexto: Estandarización del entorno de desarrollo PRO – Modelo híbrido Windows UI / WSL Runtime
+Status: APPROVED
+Date: 2026-02-16
+Scope: System
+Category: GOVERNANCE
+Tags: REVIEW_REQUIRED
+Related ADRs: NONE
+Supersedes: NONE
+Superseded By: NONE
+Validation Reference: NONE
 
 ## Contexto
 Durante la evolución del entorno PRO se detectaron inconsistencias derivadas de:

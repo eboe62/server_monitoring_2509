@@ -1,8 +1,14 @@
 # ADR-0009 – Estrategia de Backups PostgreSQL
 
-Estado: Aprobado
-Fecha: 2026-03-05
-Contexto: server_monitoring_2509
+Status: APPROVED
+Date: 2026-03-05
+Scope: Database
+Category: DATABASE
+Tags: REVIEW_REQUIRED
+Related ADRs: ADR-0008, ADR-0010
+Supersedes: NONE
+Superseded By: NONE
+Validation Reference: NONE
 
 ## Contexto
 El sistema de monitorización utiliza PostgreSQL como micro-stack autónomo para persistencia de datos.

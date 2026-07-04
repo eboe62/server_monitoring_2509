@@ -1,8 +1,14 @@
 # ADR-0027 — Tipología oficial de contenedores y política de healthchecks
 
-Fecha: 2026-05-17
-Estado: Aprobado
-Contexto: server_monitoring_2509 — Hardening runtime, validación CI/CD y normalización de healthchecks
+Status: APPROVED
+Date: 2026-05-17
+Scope: Runtime
+Category: RUNTIME
+Tags: REVIEW_REQUIRED
+Related ADRs: ADR-0008, ADR-0020
+Supersedes: NONE
+Superseded By: NONE
+Validation Reference: make test-python-health
 
 ## Contexto
 

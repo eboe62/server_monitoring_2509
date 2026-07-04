@@ -1,8 +1,14 @@
 # ADR-0032 – Endurecimiento de gestión de secretos PostgreSQL y validaciones CI
 
-Fecha: 2026-05-31
-Estado: Aprobado
-Contexto: Proyecto server_monitoring_2509
+Status: APPROVED
+Date: 2026-05-31
+Scope: Database
+Category: SECURITY
+Tags: REVIEW_REQUIRED
+Related ADRs: ADR-0013
+Supersedes: NONE
+Superseded By: NONE
+Validation Reference: make verify-security
 
 ## Contexto
 

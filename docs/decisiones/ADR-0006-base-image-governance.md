@@ -1,8 +1,14 @@
-ADR-0006 – Gobernanza de imagen base monitoring-base (Rechazado)
+# ADR-0006 – Gobernanza de imagen base monitoring-base (Rechazado)
 
-Fecha: 2026-05-04
-Estado: Rechazado
-Contexto: Migración PRO server_monitoring_2602 – Modelo micro-stack autónomo
+Status: DEPRECATED
+Date: 2026-05-04
+Scope: Infrastructure
+Category: GOVERNANCE
+Tags: REVIEW_REQUIRED
+Related ADRs: NONE
+Supersedes: NONE
+Superseded By: NONE
+Validation Reference: NONE
 
 ## Contexto
 Durante la definición del entorno PRO 260214 se adopta el modelo: “micro-stack autónomo con red compartida”.

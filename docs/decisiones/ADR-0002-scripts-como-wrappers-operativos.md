@@ -1,8 +1,14 @@
 # ADR-0002 – Scripts como wrappers operativos
 
-Fecha: 2026-01-25
-Estado: Aprobado
-Contexto: Migración IaC server_monitoring_2509
+Status: APPROVED
+Date: 2026-01-25
+Scope: Runtime
+Category: ARCHITECTURE
+Tags: REVIEW_REQUIRED
+Related ADRs: ADR-0003, ADR-0011
+Supersedes: NONE
+Superseded By: NONE
+Validation Reference: NONE
 
 ## Contexto
 

@@ -1,8 +1,14 @@
 # ADR-0030 – Auditoría Runtime HostConfig y Visibilidad de Privilegios Docker
 
-Fecha: 2026-05-23
-Estado: Aprobado
-Contexto: server_monitoring_2509 - Hardening runtime y auditoría Host-Controlled IaC
+Status: APPROVED
+Date: 2026-05-23
+Scope: Runtime
+Category: GOVERNANCE
+Tags: REVIEW_REQUIRED
+Related ADRs: ADR-0020, ADR-0029
+Supersedes: NONE
+Superseded By: NONE
+Validation Reference: make audit-runtime
 
 ## Contexto
 

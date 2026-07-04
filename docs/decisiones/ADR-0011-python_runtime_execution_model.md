@@ -1,8 +1,14 @@
 # ADR-0011 - Python Runtime Execution Model (Determinismo)
 
-Fecha: 2026-03-05
-Estado: Propuesto
-Ámbito: server_monitoring_2509
+Status: APPROVED
+Date: 2026-03-05
+Scope: Runtime
+Category: RUNTIME
+Tags: REVIEW_REQUIRED
+Related ADRs: ADR-0002, ADR-0003, ADR-0012
+Supersedes: NONE
+Superseded By: NONE
+Validation Reference: NONE
 
 ## Contexto
 El sistema server_monitoring incluye scripts operativos escritos en Python para:
