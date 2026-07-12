@@ -1,5 +1,29 @@
 #!/usr/bin/env python3
-"""Comprobaciones de políticas estructuradas de Compose para auditoría.
+"""
+------------------------------------------------------------
+Propósito:
+    Realizar comprobaciones estructuradas de Docker Compose desde el host.
+
+Rol dentro de la arquitectura:
+    Es el motor principal de auditoría de Compose que genera resultados legibles por máquina.
+
+Entradas principales:
+    Archivos Compose bajo ops/ y, cuando está disponible, la salida de docker compose config.
+
+Salidas principales:
+    Mensajes de consola, JSON estructurado y datos de políticas detectadas.
+
+Relación con otros componentes:
+    Lo invoca audit_repo_host.sh y otros scripts host-side de auditoría para obtener análisis Compose.
+
+Relación con la gobernanza:
+    Soporta ADR-0029 y ADR-0018 al validar políticas de Compose, imágenes, privileged y mounts.
+
+Observaciones:
+    No es un motor runtime de contenedores; su foco es el análisis declarativo de Compose y el control de estado host-side.
+------------------------------------------------------------
+
+Comprobaciones de políticas estructuradas de Compose para auditoría.
 
 Modelo de ejecución (host-side):
 

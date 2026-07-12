@@ -1,6 +1,29 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# ------------------------------------------------------------
+# Propósito:
+#     Verificar de forma directa las configuraciones HostConfig de contenedores Docker en ejecución.
+#
+# Rol dentro de la arquitectura:
+#     Es el validador runtime que aplica políticas de seguridad en tiempo de ejecución por contenedor.
+#
+# Entradas principales:
+#     Contenedores en ejecución listados por ops/runtime_containers.sh y salida de docker inspect.
+#
+# Salidas principales:
+#     Mensajes de consola con FAIL/WARN/INFO y código de salida 0/1.
+#
+# Relación con otros componentes:
+#     Se invoca desde Makefile y puede integrarse en pipelines de seguridad runtime.
+#
+# Relación con la gobernanza:
+#     Soporta ADR-0030 y ADR-0031 mediante validaciones de Privileged, SecurityOpt, Capabilities, ReadonlyRootfs y montajes.
+#
+# Observaciones:
+#     No es un analizador de Compose estático; valida el estado real del host en contenedores en ejecución.
+# ------------------------------------------------------------
+
 # ==========================================
 # HostConfig Runtime Audit
 # FAIL = violaciones estructurales
