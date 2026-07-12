@@ -40,6 +40,12 @@ docker-compose.override.yml
 /*.bak
 *.tmp
 
+# === Herramientas / AI ===
+ai/
+
+# === Documentation working copies ===
+* copy*
+
 # === Backups de base de datos ===
 /backups/
 /backups_old/
