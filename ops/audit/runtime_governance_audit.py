@@ -1,5 +1,28 @@
 #!/usr/bin/env python3
 """
+------------------------------------------------------------
+Propósito:
+    Detectar y correlacionar inventarios Compose y contenedores Docker en ejecución.
+
+Rol dentro de la arquitectura:
+    Es el generador de informe runtime de gobernanza Docker/Compose.
+
+Entradas principales:
+    Archivos Compose en ops/stacks y ops/services y contenedores Docker en ejecución.
+
+Salidas principales:
+    JSON y Markdown con hallazgos de HostConfig, montajes, capacidades y excepciones.
+
+Relación con otros componentes:
+    Se usa como herramienta de informe independiente para validar el estado runtime frente a Compose.
+
+Relación con la gobernanza:
+    Soporta ADR-0030 y ADR-0031 al documentar cumplimiento de políticas runtime y excepciones permitidas.
+
+Observaciones:
+    No modifica contenedores; solo inspecciona runtime y produce evidencia reportable.
+------------------------------------------------------------
+
 Runtime Governance Audit
 
 Discover compose files under ops/stacks and ops/services, inspect running

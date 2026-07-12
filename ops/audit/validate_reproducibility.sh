@@ -1,6 +1,29 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# ------------------------------------------------------------
+# Propósito:
+#     Verificar la reproducibilidad de los archivos Compose y la trazabilidad de imágenes.
+#
+# Rol dentro de la arquitectura:
+#     Es el validador de coherencia Compose/imágenes que detecta tags latest y falta de digest.
+#
+# Entradas principales:
+#     Archivos Compose bajo ops/ y el estado de Docker Compose en el host.
+#
+# Salidas principales:
+#     Mensajes de consola con FAIL/WARN/OK y código de salida 0/1.
+#
+# Relación con otros componentes:
+#     Se invoca desde audit_repo_host.sh y puede ejecutarse como comprobación independiente.
+#
+# Relación con la gobernanza:
+#     Soporta ADR-0028 y ADR-0029 al validar la reproducibilidad de imágenes y Compose.
+#
+# Observaciones:
+#     No ejecuta builds ni transforma imágenes; solo evalúa la definición declarativa y sus referencias.
+# ------------------------------------------------------------
+
 FAILED=0
 
 info(){ echo "[INFO] $1"; }

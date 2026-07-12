@@ -40,8 +40,8 @@ docker-compose.override.yml
 /*.bak
 *.tmp
 
-# === Herramientas / AI ===
-ai/
+# === AI Governance (must be versioned independently) ===
+ai/*.*
 
 # === Documentation working copies ===
 * copy*
@@ -60,12 +60,6 @@ ai/
 *.p12
 *.crt
 
-# === AI Governance (must be versioned independently) ===
-ai/*.*
-
-# === Documentation working copies ===
-* copy*
-
 # === Documentation Podcast, Slides, etc ===
 docs/Project_ADRs/*
 docs/Project_Corrections/*
@@ -75,33 +69,3 @@ docs/Project_Corrections/*
 *.xls
 *.pptx
 *.ppt
-
-.
-|____ai
-| |____claude_code-gemini
-| | |____compose.yml
-| | |____Dockerfile.claude
-| | |____Dockerfile.proxy
-| | |____proxy-start-ia.py
-| |____governance
-| |____opencode-nvidia
-| | |____box-opencode.sh
-| | |____compose.yml
-| | |____Dockerfile.proxy
-| | |____Dockerfile.runtime
-| |____skills
-| | |____backend
-| | |____common
-| | |____frontend
-| | |____infrastructure
-| |____templates
-|____AI_ENTRYPOINT.md
-|____CLAUDE.md
-|____compose.dev.yml
-|____docs
-| |____arquitectura
-| |____decisiones
-| |____Project_ADRs
-| |____Project_Corrections
-| |____Project_Definition
-| |____Project_Implementation
