@@ -1,0 +1,93 @@
+# .understandignore — patterns for files/dirs to exclude from analysis
+# Syntax: same as .gitignore (globs, # comments, ! negation, trailing / for dirs)
+# Lines below are suggestions — uncomment to activate.
+# Use ! prefix to force-include something excluded by defaults.
+#
+# Built-in defaults (always excluded unless negated):
+#   node_modules/, .git/, dist/, build/, obj/, *.lock, *.min.js, etc.
+#
+
+# --- From .gitignore (uncomment to exclude) ---
+
+# ops/services/smtp_relay/secrets/*
+# !ops/services/smtp_relay/secrets/.gitkeep
+# ops/services/smtp_relay/config/sasl_passwd
+# ops/services/smtp_relay/config/sasl_passwd.db
+# ops/services/**/secrets/*
+# **/secrets/**
+# !**/secrets/.gitkeep
+# src/log_ingestor/venv/
+# **/venv/
+# *.pyc
+# /var/log/*
+# resources/logs/*.log
+# resources/logs/*.txt
+# *.swp
+# *.swo
+# *~
+# .DS_Store
+# *.pid
+# *.sock
+# .env
+# .env.*
+# docker-compose.override.yml
+# !.env.template
+# !**/.env.template
+# /*.bak
+# *.tmp
+# ai/*.*
+# .ua/
+# * copy*
+# /backups/
+# /backups_old/
+# *.backup
+# *.bak
+# *.dump
+# *.sql
+# *.pem
+# *.key
+# *.p12
+# *.crt
+# docs/Project_ADRs/*
+# docs/Project_Corrections/*
+# *.m4a
+# *.xlsx
+# *.xls
+# *.pptx
+# *.ppt
+
+# --- Detected directories (uncomment to exclude) ---
+
+# docs/
+# scripts/
+# tests/
+
+# --- Test file patterns (uncomment to exclude) ---
+
+# JS / TS
+# *.test.*
+# *.spec.*
+# *.snap
+# C# / .NET
+# **/*Tests.cs
+# **/*Test.cs
+# **/*Fixture.cs
+# **/*.Tests.csproj
+# Java / Kotlin
+# **/src/test/**
+# **/*Test.java
+# **/*IT.java
+# **/*Spec.kt
+# Go
+# **/*_test.go
+# C++
+# **/*_test.cc
+# **/*_test.cpp
+# **/*_test.cxx
+# **/*Test.cc
+# **/*Test.cpp
+# **/*_unittest.cc
+# **/*_unittest.cpp
+# **/*_browsertest.cc
+# **/*_benchmark.cc
+# **/*Benchmark.cpp

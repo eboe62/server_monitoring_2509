@@ -43,6 +43,14 @@ docker-compose.override.yml
 # === AI Governance (must be versioned independently) ===
 ai/*.*
 
+# === Understand-Anything: Conservar el Grafo y la Configuración ===
+!.ua/
+
+# === Understand-Anything datos temporales (must be versioned independently) ===
+.ua/intermediate/
+.ua/tmp/
+.ua/diff-overlay.json
+
 # === Documentation working copies ===
 * copy*
 

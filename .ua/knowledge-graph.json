@@ -1,0 +1,1253 @@
+{
+  "version": "1.0.0",
+  "project": {
+    "name": "server_monitoring_2509",
+    "languages": [
+      "docker-compose",
+      "dockerfile",
+      "makefile",
+      "markdown",
+      "plaintext",
+      "python",
+      "shell",
+      "yaml"
+    ],
+    "frameworks": [],
+    "description": "",
+    "analyzedAt": "2026-07-13T18:28:45.474Z",
+    "gitCommitHash": "1a7fb4af85a86b0bb5dec85e2b0f7f611f9e7afc"
+  },
+  "nodes": [
+    {
+      "id": "file:__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "__init__.py",
+      "summary": "",
+      "tags": [],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:.claudecodeignore",
+      "type": "file",
+      "name": ".claudecodeignore",
+      "filePath": ".claudecodeignore",
+      "summary": "",
+      "tags": [],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:.dockerignore",
+      "type": "file",
+      "name": ".dockerignore",
+      "filePath": ".dockerignore",
+      "summary": "",
+      "tags": [],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:.gitattributes",
+      "type": "file",
+      "name": ".gitattributes",
+      "filePath": ".gitattributes",
+      "summary": "",
+      "tags": [],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:.github/copilot-instructions.md",
+      "type": "file",
+      "name": "copilot-instructions.md",
+      "filePath": ".github/copilot-instructions.md",
+      "summary": "",
+      "tags": [],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:.github/workflows/audit-runtime.yml",
+      "type": "file",
+      "name": "audit-runtime.yml",
+      "filePath": ".github/workflows/audit-runtime.yml",
+      "summary": "",
+      "tags": [],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:.github/workflows/ci.yml",
+      "type": "file",
+      "name": "ci.yml",
+      "filePath": ".github/workflows/ci.yml",
+      "summary": "",
+      "tags": [],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:AI_ENTRYPOINT.md",
+      "type": "file",
+      "name": "AI_ENTRYPOINT.md",
+      "filePath": "AI_ENTRYPOINT.md",
+      "summary": "",
+      "tags": [],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:CLAUDE.md",
+      "type": "file",
+      "name": "CLAUDE.md",
+      "filePath": "CLAUDE.md",
+      "summary": "",
+      "tags": [],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:compose.dev.yml",
+      "type": "file",
+      "name": "compose.dev.yml",
+      "filePath": "compose.dev.yml",
+      "summary": "",
+      "tags": [],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:docs/arquitectura/cron_host.txt",
+      "type": "file",
+      "name": "cron_host.txt",
+      "filePath": "docs/arquitectura/cron_host.txt",
+      "summary": "",
+      "tags": [],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:docs/arquitectura/README.md",
+      "type": "file",
+      "name": "README.md",
+      "filePath": "docs/arquitectura/README.md",
+      "summary": "",
+      "tags": [],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:docs/decisiones/adr_template.md",
+      "type": "file",
+      "name": "adr_template.md",
+      "filePath": "docs/decisiones/adr_template.md",
+      "summary": "",
+      "tags": [],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0000-trabajo-paralelo-fuera-git.md",
+      "type": "file",
+      "name": "ADR-0000-trabajo-paralelo-fuera-git.md",
+      "filePath": "docs/decisiones/ADR-0000-trabajo-paralelo-fuera-git.md",
+      "summary": "",
+      "tags": [],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0001-verificar-imports-en-fase-migacion.md",
+      "type": "file",
+      "name": "ADR-0001-verificar-imports-en-fase-migacion.md",
+      "filePath": "docs/decisiones/ADR-0001-verificar-imports-en-fase-migacion.md",
+      "summary": "",
+      "tags": [],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0002-scripts-como-wrappers-operativos.md",
+      "type": "file",
+      "name": "ADR-0002-scripts-como-wrappers-operativos.md",
+      "filePath": "docs/decisiones/ADR-0002-scripts-como-wrappers-operativos.md",
+      "summary": "",
+      "tags": [],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0003-desacoplar-configuracion-y-ejecución-en-runtime.md",
+      "type": "file",
+      "name": "ADR-0003-desacoplar-configuracion-y-ejecución-en-runtime.md",
+      "filePath": "docs/decisiones/ADR-0003-desacoplar-configuracion-y-ejecución-en-runtime.md",
+      "summary": "",
+      "tags": [],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0004-eliminar-version-en-docker-compose.md",
+      "type": "file",
+      "name": "ADR-0004-eliminar-version-en-docker-compose.md",
+      "filePath": "docs/decisiones/ADR-0004-eliminar-version-en-docker-compose.md",
+      "summary": "",
+      "tags": [],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0005-desacoplar-runtime-y-lazy-imports-en-config.md",
+      "type": "file",
+      "name": "ADR-0005-desacoplar-runtime-y-lazy-imports-en-config.md",
+      "filePath": "docs/decisiones/ADR-0005-desacoplar-runtime-y-lazy-imports-en-config.md",
+      "summary": "",
+      "tags": [],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0006-base-image-governance.md",
+      "type": "file",
+      "name": "ADR-0006-base-image-governance.md",
+      "filePath": "docs/decisiones/ADR-0006-base-image-governance.md",
+      "summary": "",
+      "tags": [],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0007-politica_entorno_vsc_wsl.md",
+      "type": "file",
+      "name": "ADR-0007-politica_entorno_vsc_wsl.md",
+      "filePath": "docs/decisiones/ADR-0007-politica_entorno_vsc_wsl.md",
+      "summary": "",
+      "tags": [],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0008-servicios_micro-stack _vs_infra-stack.md",
+      "type": "file",
+      "name": "ADR-0008-servicios_micro-stack _vs_infra-stack.md",
+      "filePath": "docs/decisiones/ADR-0008-servicios_micro-stack _vs_infra-stack.md",
+      "summary": "",
+      "tags": [],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0009-estrategia_backups_postgresql.md",
+      "type": "file",
+      "name": "ADR-0009-estrategia_backups_postgresql.md",
+      "filePath": "docs/decisiones/ADR-0009-estrategia_backups_postgresql.md",
+      "summary": "",
+      "tags": [],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0010-arquitectura_de_runtime_cron.md",
+      "type": "file",
+      "name": "ADR-0010-arquitectura_de_runtime_cron.md",
+      "filePath": "docs/decisiones/ADR-0010-arquitectura_de_runtime_cron.md",
+      "summary": "",
+      "tags": [],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0011-python_runtime_execution_model.md",
+      "type": "file",
+      "name": "ADR-0011-python_runtime_execution_model.md",
+      "filePath": "docs/decisiones/ADR-0011-python_runtime_execution_model.md",
+      "summary": "",
+      "tags": [],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0012-separation_of_host_cron_vs_monitoring _cron.md",
+      "type": "file",
+      "name": "ADR-0012-separation_of_host_cron_vs_monitoring _cron.md",
+      "filePath": "docs/decisiones/ADR-0012-separation_of_host_cron_vs_monitoring _cron.md",
+      "summary": "",
+      "tags": [],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0013-credential_management_policy.md",
+      "type": "file",
+      "name": "ADR-0013-credential_management_policy.md",
+      "filePath": "docs/decisiones/ADR-0013-credential_management_policy.md",
+      "summary": "",
+      "tags": [],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0014-docker_port_exposure_policy.md",
+      "type": "file",
+      "name": "ADR-0014-docker_port_exposure_policy.md",
+      "filePath": "docs/decisiones/ADR-0014-docker_port_exposure_policy.md",
+      "summary": "",
+      "tags": [],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0015-docker_network _exposure_model.md",
+      "type": "file",
+      "name": "ADR-0015-docker_network _exposure_model.md",
+      "filePath": "docs/decisiones/ADR-0015-docker_network _exposure_model.md",
+      "summary": "",
+      "tags": [],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0016-host_hardening_execution_policy.md",
+      "type": "file",
+      "name": "ADR-0016-host_hardening_execution_policy.md",
+      "filePath": "docs/decisiones/ADR-0016-host_hardening_execution_policy.md",
+      "summary": "",
+      "tags": [],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0017-resilience-model-at-docker-single-node.md",
+      "type": "file",
+      "name": "ADR-0017-resilience-model-at-docker-single-node.md",
+      "filePath": "docs/decisiones/ADR-0017-resilience-model-at-docker-single-node.md",
+      "summary": "",
+      "tags": [],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0018-docker_security_runtime_and_resilience_requirements.md",
+      "type": "file",
+      "name": "ADR-0018-docker_security_runtime_and_resilience_requirements.md",
+      "filePath": "docs/decisiones/ADR-0018-docker_security_runtime_and_resilience_requirements.md",
+      "summary": "",
+      "tags": [],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0019-Resilience_Testing_Strategy.md",
+      "type": "file",
+      "name": "ADR-0019-Resilience_Testing_Strategy.md",
+      "filePath": "docs/decisiones/ADR-0019-Resilience_Testing_Strategy.md",
+      "summary": "",
+      "tags": [],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0020-Container_Execution_Model_Privilege_Strategy.md",
+      "type": "file",
+      "name": "ADR-0020-Container_Execution_Model_Privilege_Strategy.md",
+      "filePath": "docs/decisiones/ADR-0020-Container_Execution_Model_Privilege_Strategy.md",
+      "summary": "",
+      "tags": [],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0021-Network_Segmentation_Strategy.md",
+      "type": "file",
+      "name": "ADR-0021-Network_Segmentation_Strategy.md",
+      "filePath": "docs/decisiones/ADR-0021-Network_Segmentation_Strategy.md",
+      "summary": "",
+      "tags": [],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0022-Promtail_Privilege_Approval.md",
+      "type": "file",
+      "name": "ADR-0022-Promtail_Privilege_Approval.md",
+      "filePath": "docs/decisiones/ADR-0022-Promtail_Privilege_Approval.md",
+      "summary": "",
+      "tags": [],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0023-RestrictedNet_Egress_Control.md",
+      "type": "file",
+      "name": "ADR-0023-RestrictedNet_Egress_Control.md",
+      "filePath": "docs/decisiones/ADR-0023-RestrictedNet_Egress_Control.md",
+      "summary": "",
+      "tags": [],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0024-Container_Privilege_Exception_Policy.md",
+      "type": "file",
+      "name": "ADR-0024-Container_Privilege_Exception_Policy.md",
+      "filePath": "docs/decisiones/ADR-0024-Container_Privilege_Exception_Policy.md",
+      "summary": "",
+      "tags": [],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0025-SMTP_endurecimiento.md",
+      "type": "file",
+      "name": "ADR-0025-SMTP_endurecimiento.md",
+      "filePath": "docs/decisiones/ADR-0025-SMTP_endurecimiento.md",
+      "summary": "",
+      "tags": [],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0026-estrategia_testing_SMTP.md",
+      "type": "file",
+      "name": "ADR-0026-estrategia_testing_SMTP.md",
+      "filePath": "docs/decisiones/ADR-0026-estrategia_testing_SMTP.md",
+      "summary": "",
+      "tags": [],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0027-tipologia_contenedores_politica_healthchecks.md",
+      "type": "file",
+      "name": "ADR-0027-tipologia_contenedores_politica_healthchecks.md",
+      "filePath": "docs/decisiones/ADR-0027-tipologia_contenedores_politica_healthchecks.md",
+      "summary": "",
+      "tags": [],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0028-politica_reproducibilidad_endurecimiento_validaciones.md",
+      "type": "file",
+      "name": "ADR-0028-politica_reproducibilidad_endurecimiento_validaciones.md",
+      "filePath": "docs/decisiones/ADR-0028-politica_reproducibilidad_endurecimiento_validaciones.md",
+      "summary": "",
+      "tags": [],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0029-structured_compose_policy_audit.md",
+      "type": "file",
+      "name": "ADR-0029-structured_compose_policy_audit.md",
+      "filePath": "docs/decisiones/ADR-0029-structured_compose_policy_audit.md",
+      "summary": "",
+      "tags": [],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0030-auditoría_runtime_HostConfig_y_visibilidad_privilegios.md",
+      "type": "file",
+      "name": "ADR-0030-auditoría_runtime_HostConfig_y_visibilidad_privilegios.md",
+      "filePath": "docs/decisiones/ADR-0030-auditoría_runtime_HostConfig_y_visibilidad_privilegios.md",
+      "summary": "",
+      "tags": [],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0031-gobernanza_runtime_y_clasificacion_dependencias_host.md",
+      "type": "file",
+      "name": "ADR-0031-gobernanza_runtime_y_clasificacion_dependencias_host.md",
+      "filePath": "docs/decisiones/ADR-0031-gobernanza_runtime_y_clasificacion_dependencias_host.md",
+      "summary": "",
+      "tags": [],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0032-endurecimiento_secretos_PostgreSQL_y_validaciones_CI.md",
+      "type": "file",
+      "name": "ADR-0032-endurecimiento_secretos_PostgreSQL_y_validaciones_CI.md",
+      "filePath": "docs/decisiones/ADR-0032-endurecimiento_secretos_PostgreSQL_y_validaciones_CI.md",
+      "summary": "",
+      "tags": [],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0033-Taxonomia_ADRs.md",
+      "type": "file",
+      "name": "ADR-0033-Taxonomia_ADRs.md",
+      "filePath": "docs/decisiones/ADR-0033-Taxonomia_ADRs.md",
+      "summary": "",
+      "tags": [],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0600-estrategia-despliegue.md",
+      "type": "file",
+      "name": "ADR-0600-estrategia-despliegue.md",
+      "filePath": "docs/decisiones/ADR-0600-estrategia-despliegue.md",
+      "summary": "",
+      "tags": [],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0601-desacoplamiento-modulo-commons.md",
+      "type": "file",
+      "name": "ADR-0601-desacoplamiento-modulo-commons.md",
+      "filePath": "docs/decisiones/ADR-0601-desacoplamiento-modulo-commons.md",
+      "summary": "",
+      "tags": [],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0602-comunicacion-interservicios.md",
+      "type": "file",
+      "name": "ADR-0602-comunicacion-interservicios.md",
+      "filePath": "docs/decisiones/ADR-0602-comunicacion-interservicios.md",
+      "summary": "",
+      "tags": [],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0603-gestion-bbdd.md",
+      "type": "file",
+      "name": "ADR-0603-gestion-bbdd.md",
+      "filePath": "docs/decisiones/ADR-0603-gestion-bbdd.md",
+      "summary": "",
+      "tags": [],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0801-estrategia-empaquetado-despliegue.md",
+      "type": "file",
+      "name": "ADR-0801-estrategia-empaquetado-despliegue.md",
+      "filePath": "docs/decisiones/ADR-0801-estrategia-empaquetado-despliegue.md",
+      "summary": "",
+      "tags": [],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0802-integracion-front-back.md",
+      "type": "file",
+      "name": "ADR-0802-integracion-front-back.md",
+      "filePath": "docs/decisiones/ADR-0802-integracion-front-back.md",
+      "summary": "",
+      "tags": [],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0803-seguridad-secretos.md",
+      "type": "file",
+      "name": "ADR-0803-seguridad-secretos.md",
+      "filePath": "docs/decisiones/ADR-0803-seguridad-secretos.md",
+      "summary": "",
+      "tags": [],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:docs/Project_Definition/Servidor_DigitalOcean_Definicion_Proyecto.txt",
+      "type": "file",
+      "name": "Servidor_DigitalOcean_Definicion_Proyecto.txt",
+      "filePath": "docs/Project_Definition/Servidor_DigitalOcean_Definicion_Proyecto.txt",
+      "summary": "",
+      "tags": [],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:docs/Project_Implementation/Servidor_DigitalOcean_Implementacion.txt",
+      "type": "file",
+      "name": "Servidor_DigitalOcean_Implementacion.txt",
+      "filePath": "docs/Project_Implementation/Servidor_DigitalOcean_Implementacion.txt",
+      "summary": "",
+      "tags": [],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:Makefile",
+      "type": "file",
+      "name": "Makefile",
+      "filePath": "Makefile",
+      "summary": "",
+      "tags": [],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:ops/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "ops/__init__.py",
+      "summary": "",
+      "tags": [],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:ops/audit/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "ops/audit/__init__.py",
+      "summary": "",
+      "tags": [],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:ops/audit/audit_repo_host.sh",
+      "type": "file",
+      "name": "audit_repo_host.sh",
+      "filePath": "ops/audit/audit_repo_host.sh",
+      "summary": "",
+      "tags": [],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:ops/audit/check_hostconfig.sh",
+      "type": "file",
+      "name": "check_hostconfig.sh",
+      "filePath": "ops/audit/check_hostconfig.sh",
+      "summary": "",
+      "tags": [],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:ops/audit/compose_policy_checks.py",
+      "type": "file",
+      "name": "compose_policy_checks.py",
+      "filePath": "ops/audit/compose_policy_checks.py",
+      "summary": "",
+      "tags": [],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:ops/audit/parse_compose_json.py",
+      "type": "file",
+      "name": "parse_compose_json.py",
+      "filePath": "ops/audit/parse_compose_json.py",
+      "summary": "",
+      "tags": [],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:ops/audit/runtime_governance_audit.py",
+      "type": "file",
+      "name": "runtime_governance_audit.py",
+      "filePath": "ops/audit/runtime_governance_audit.py",
+      "summary": "",
+      "tags": [],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:ops/audit/validate_dockerfiles.sh",
+      "type": "file",
+      "name": "validate_dockerfiles.sh",
+      "filePath": "ops/audit/validate_dockerfiles.sh",
+      "summary": "",
+      "tags": [],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:ops/audit/validate_reproducibility.sh",
+      "type": "file",
+      "name": "validate_reproducibility.sh",
+      "filePath": "ops/audit/validate_reproducibility.sh",
+      "summary": "",
+      "tags": [],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:ops/deployment/configure_docker_limits.sh",
+      "type": "file",
+      "name": "configure_docker_limits.sh",
+      "filePath": "ops/deployment/configure_docker_limits.sh",
+      "summary": "",
+      "tags": [],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:ops/deployment/docker_resources.sh",
+      "type": "file",
+      "name": "docker_resources.sh",
+      "filePath": "ops/deployment/docker_resources.sh",
+      "summary": "",
+      "tags": [],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:ops/deployment/setup_symlinks.sh",
+      "type": "file",
+      "name": "setup_symlinks.sh",
+      "filePath": "ops/deployment/setup_symlinks.sh",
+      "summary": "",
+      "tags": [],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:ops/README_runtime_containers.md",
+      "type": "file",
+      "name": "README_runtime_containers.md",
+      "filePath": "ops/README_runtime_containers.md",
+      "summary": "",
+      "tags": [],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:ops/runtime_containers.sh",
+      "type": "file",
+      "name": "runtime_containers.sh",
+      "filePath": "ops/runtime_containers.sh",
+      "summary": "",
+      "tags": [],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:ops/runtime_containers.yml",
+      "type": "file",
+      "name": "runtime_containers.yml",
+      "filePath": "ops/runtime_containers.yml",
+      "summary": "",
+      "tags": [],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:ops/services/postgres/.env.template",
+      "type": "file",
+      "name": ".env.template",
+      "filePath": "ops/services/postgres/.env.template",
+      "summary": "",
+      "tags": [],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:ops/services/postgres/compose.yml",
+      "type": "file",
+      "name": "compose.yml",
+      "filePath": "ops/services/postgres/compose.yml",
+      "summary": "",
+      "tags": [],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:ops/services/postgres/Makefile",
+      "type": "file",
+      "name": "Makefile",
+      "filePath": "ops/services/postgres/Makefile",
+      "summary": "",
+      "tags": [],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:ops/services/postgres/README.md",
+      "type": "file",
+      "name": "README.md",
+      "filePath": "ops/services/postgres/README.md",
+      "summary": "",
+      "tags": [],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:ops/services/postgres/scripts/backup_postgres.py",
+      "type": "file",
+      "name": "backup_postgres.py",
+      "filePath": "ops/services/postgres/scripts/backup_postgres.py",
+      "summary": "",
+      "tags": [],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:ops/services/postgres/scripts/backup_restore.py",
+      "type": "file",
+      "name": "backup_restore.py",
+      "filePath": "ops/services/postgres/scripts/backup_restore.py",
+      "summary": "",
+      "tags": [],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:ops/services/postgres/scripts/backup_restore.sh",
+      "type": "file",
+      "name": "backup_restore.sh",
+      "filePath": "ops/services/postgres/scripts/backup_restore.sh",
+      "summary": "",
+      "tags": [],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:ops/services/postgres/scripts/check_postgres_secret.sh",
+      "type": "file",
+      "name": "check_postgres_secret.sh",
+      "filePath": "ops/services/postgres/scripts/check_postgres_secret.sh",
+      "summary": "",
+      "tags": [],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:ops/services/smtp_relay/.env.template",
+      "type": "file",
+      "name": ".env.template",
+      "filePath": "ops/services/smtp_relay/.env.template",
+      "summary": "",
+      "tags": [],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:ops/services/smtp_relay/compose.yml",
+      "type": "file",
+      "name": "compose.yml",
+      "filePath": "ops/services/smtp_relay/compose.yml",
+      "summary": "",
+      "tags": [],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:ops/services/smtp_relay/config/patch-postfix.sh",
+      "type": "file",
+      "name": "patch-postfix.sh",
+      "filePath": "ops/services/smtp_relay/config/patch-postfix.sh",
+      "summary": "",
+      "tags": [],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:ops/services/smtp_relay/Dockerfile",
+      "type": "file",
+      "name": "Dockerfile",
+      "filePath": "ops/services/smtp_relay/Dockerfile",
+      "summary": "",
+      "tags": [],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:ops/services/smtp_relay/Makefile",
+      "type": "file",
+      "name": "Makefile",
+      "filePath": "ops/services/smtp_relay/Makefile",
+      "summary": "",
+      "tags": [],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:ops/services/smtp_relay/README.md",
+      "type": "file",
+      "name": "README.md",
+      "filePath": "ops/services/smtp_relay/README.md",
+      "summary": "",
+      "tags": [],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:ops/stacks/cron/compose.yml",
+      "type": "file",
+      "name": "compose.yml",
+      "filePath": "ops/stacks/cron/compose.yml",
+      "summary": "",
+      "tags": [],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:ops/stacks/cron/docker-entrypoint.sh",
+      "type": "file",
+      "name": "docker-entrypoint.sh",
+      "filePath": "ops/stacks/cron/docker-entrypoint.sh",
+      "summary": "",
+      "tags": [],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:ops/stacks/cron/Dockerfile",
+      "type": "file",
+      "name": "Dockerfile",
+      "filePath": "ops/stacks/cron/Dockerfile",
+      "summary": "",
+      "tags": [],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:ops/stacks/cron/monitoring.cron",
+      "type": "file",
+      "name": "monitoring.cron",
+      "filePath": "ops/stacks/cron/monitoring.cron",
+      "summary": "",
+      "tags": [],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:ops/stacks/observability/.env.template",
+      "type": "file",
+      "name": ".env.template",
+      "filePath": "ops/stacks/observability/.env.template",
+      "summary": "",
+      "tags": [],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:ops/stacks/observability/compose.yml",
+      "type": "file",
+      "name": "compose.yml",
+      "filePath": "ops/stacks/observability/compose.yml",
+      "summary": "",
+      "tags": [],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:ops/stacks/observability/config/datasource.yml",
+      "type": "file",
+      "name": "datasource.yml",
+      "filePath": "ops/stacks/observability/config/datasource.yml",
+      "summary": "",
+      "tags": [],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:ops/stacks/observability/config/loki-config.yml",
+      "type": "file",
+      "name": "loki-config.yml",
+      "filePath": "ops/stacks/observability/config/loki-config.yml",
+      "summary": "",
+      "tags": [],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:ops/stacks/observability/config/promtail-config.yml",
+      "type": "file",
+      "name": "promtail-config.yml",
+      "filePath": "ops/stacks/observability/config/promtail-config.yml",
+      "summary": "",
+      "tags": [],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:ops/stacks/python/compose.yml",
+      "type": "file",
+      "name": "compose.yml",
+      "filePath": "ops/stacks/python/compose.yml",
+      "summary": "",
+      "tags": [],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:ops/stacks/python/docker-entrypoint.sh",
+      "type": "file",
+      "name": "docker-entrypoint.sh",
+      "filePath": "ops/stacks/python/docker-entrypoint.sh",
+      "summary": "",
+      "tags": [],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:ops/stacks/python/Dockerfile",
+      "type": "file",
+      "name": "Dockerfile",
+      "filePath": "ops/stacks/python/Dockerfile",
+      "summary": "",
+      "tags": [],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:README.md",
+      "type": "file",
+      "name": "README.md",
+      "filePath": "README.md",
+      "summary": "",
+      "tags": [],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:requirements.txt",
+      "type": "file",
+      "name": "requirements.txt",
+      "filePath": "requirements.txt",
+      "summary": "",
+      "tags": [],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:scripts/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "scripts/__init__.py",
+      "summary": "",
+      "tags": [],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:scripts/apply_ssh_ratelimit.sh",
+      "type": "file",
+      "name": "apply_ssh_ratelimit.sh",
+      "filePath": "scripts/apply_ssh_ratelimit.sh",
+      "summary": "",
+      "tags": [],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:scripts/auditoria_binarios.sh",
+      "type": "file",
+      "name": "auditoria_binarios.sh",
+      "filePath": "scripts/auditoria_binarios.sh",
+      "summary": "",
+      "tags": [],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:scripts/auditoria_requirements.sh",
+      "type": "file",
+      "name": "auditoria_requirements.sh",
+      "filePath": "scripts/auditoria_requirements.sh",
+      "summary": "",
+      "tags": [],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:scripts/check_postgres_ready.py",
+      "type": "file",
+      "name": "check_postgres_ready.py",
+      "filePath": "scripts/check_postgres_ready.py",
+      "summary": "",
+      "tags": [],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:scripts/cleanup_docker.sh",
+      "type": "file",
+      "name": "cleanup_docker.sh",
+      "filePath": "scripts/cleanup_docker.sh",
+      "summary": "",
+      "tags": [],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:scripts/healthcheck.py",
+      "type": "file",
+      "name": "healthcheck.py",
+      "filePath": "scripts/healthcheck.py",
+      "summary": "",
+      "tags": [],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:scripts/test_mail.py",
+      "type": "file",
+      "name": "test_mail.py",
+      "filePath": "scripts/test_mail.py",
+      "summary": "",
+      "tags": [],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:scripts/wait_for_health.sh",
+      "type": "file",
+      "name": "wait_for_health.sh",
+      "filePath": "scripts/wait_for_health.sh",
+      "summary": "",
+      "tags": [],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/log_ingestor/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "src/log_ingestor/__init__.py",
+      "summary": "",
+      "tags": [],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/log_ingestor/alert_risk.py",
+      "type": "file",
+      "name": "alert_risk.py",
+      "filePath": "src/log_ingestor/alert_risk.py",
+      "summary": "",
+      "tags": [],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:src/log_ingestor/log_fail2ban_batch.py",
+      "type": "file",
+      "name": "log_fail2ban_batch.py",
+      "filePath": "src/log_ingestor/log_fail2ban_batch.py",
+      "summary": "",
+      "tags": [],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/log_ingestor/log_honeypot_geolocation.py",
+      "type": "file",
+      "name": "log_honeypot_geolocation.py",
+      "filePath": "src/log_ingestor/log_honeypot_geolocation.py",
+      "summary": "",
+      "tags": [],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/log_ingestor/log_ingest_batch.py",
+      "type": "file",
+      "name": "log_ingest_batch.py",
+      "filePath": "src/log_ingestor/log_ingest_batch.py",
+      "summary": "",
+      "tags": [],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/log_ingestor/log_ip_geolocation.py",
+      "type": "file",
+      "name": "log_ip_geolocation.py",
+      "filePath": "src/log_ingestor/log_ip_geolocation.py",
+      "summary": "",
+      "tags": [],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/log_ingestor/log_kern_batch.py",
+      "type": "file",
+      "name": "log_kern_batch.py",
+      "filePath": "src/log_ingestor/log_kern_batch.py",
+      "summary": "",
+      "tags": [],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:src/monitoring/common/config.py",
+      "type": "file",
+      "name": "config.py",
+      "filePath": "src/monitoring/common/config.py",
+      "summary": "",
+      "tags": [],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:src/monitoring/common/secrets.py",
+      "type": "file",
+      "name": "secrets.py",
+      "filePath": "src/monitoring/common/secrets.py",
+      "summary": "",
+      "tags": [],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/monitoring/common/utils.py",
+      "type": "file",
+      "name": "utils.py",
+      "filePath": "src/monitoring/common/utils.py",
+      "summary": "",
+      "tags": [],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/resource_monitor/docker_resources.py",
+      "type": "file",
+      "name": "docker_resources.py",
+      "filePath": "src/resource_monitor/docker_resources.py",
+      "summary": "",
+      "tags": [],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:tests/integration/test_init_config_modes.py",
+      "type": "file",
+      "name": "test_init_config_modes.py",
+      "filePath": "tests/integration/test_init_config_modes.py",
+      "summary": "",
+      "tags": [],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tests/runtime_containers_test.sh",
+      "type": "file",
+      "name": "runtime_containers_test.sh",
+      "filePath": "tests/runtime_containers_test.sh",
+      "summary": "",
+      "tags": [],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tests/unit/test_compose_policy.py",
+      "type": "file",
+      "name": "test_compose_policy.py",
+      "filePath": "tests/unit/test_compose_policy.py",
+      "summary": "",
+      "tags": [],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tests/unit/test_config.py",
+      "type": "file",
+      "name": "test_config.py",
+      "filePath": "tests/unit/test_config.py",
+      "summary": "",
+      "tags": [],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:tests/unit/test_init_config_placement.py",
+      "type": "file",
+      "name": "test_init_config_placement.py",
+      "filePath": "tests/unit/test_init_config_placement.py",
+      "summary": "",
+      "tags": [],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:tests/unit/test_invalid_smtp_mode.py",
+      "type": "file",
+      "name": "test_invalid_smtp_mode.py",
+      "filePath": "tests/unit/test_invalid_smtp_mode.py",
+      "summary": "",
+      "tags": [],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tests/unit/test_send_email.py",
+      "type": "file",
+      "name": "test_send_email.py",
+      "filePath": "tests/unit/test_send_email.py",
+      "summary": "",
+      "tags": [],
+      "complexity": "moderate"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:ops/services/postgres/scripts/backup_postgres.py",
+      "target": "file:src/monitoring/common/config.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:ops/services/postgres/scripts/backup_restore.py",
+      "target": "file:src/monitoring/common/config.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/log_ingestor/alert_risk.py",
+      "target": "file:src/monitoring/common/config.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/log_ingestor/log_fail2ban_batch.py",
+      "target": "file:src/monitoring/common/config.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/log_ingestor/log_honeypot_geolocation.py",
+      "target": "file:src/monitoring/common/config.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/log_ingestor/log_ingest_batch.py",
+      "target": "file:src/monitoring/common/config.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/log_ingestor/log_ip_geolocation.py",
+      "target": "file:src/monitoring/common/config.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/log_ingestor/log_kern_batch.py",
+      "target": "file:src/monitoring/common/config.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/monitoring/common/config.py",
+      "target": "file:src/monitoring/common/secrets.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/monitoring/common/config.py",
+      "target": "file:src/monitoring/common/utils.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/monitoring/common/secrets.py",
+      "target": "file:src/monitoring/common/utils.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/resource_monitor/docker_resources.py",
+      "target": "file:src/monitoring/common/config.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    }
+  ],
+  "layers": [],
+  "tour": []
+}
