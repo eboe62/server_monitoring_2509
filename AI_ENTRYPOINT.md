@@ -10,8 +10,9 @@ Before performing any analysis, review, recommendation, or implementation task, 
 
 ## Context Resolution & Path Constraints
 
-* **Strict Relative Resolution:** AI assistants MUST NOT expect or attempt to access absolute OS filesystem paths (e.g., `C:\WorkSpace\...`). All internal governance references, skills, templates, and codebase analysis MUST be executed using relative workspace paths (`./`) or files explicitly attached to the active session via chat references (`#` or `@`).
-* **Path Alignment:** Any absolute path mentioned in prompts or configurations must be automatically translated by the AI to its equivalent relative position within the active VS Code workspace root.
+*   **Strict Relative Resolution:**  AI assistants MUST NOT expect or attempt to access absolute OS filesystem paths (e.g., C:\WorkSpace\...). All internal governance references, skills, templates, and codebase analysis MUST be executed using relative workspace paths (./) or files explicitly attached to the active session via chat references (# or @).
+*   **Semantic Indexing:** To avoid expensive re-analysis and optimize token usage, AI assistants SHOULD prioritize the use of the pre-computed knowledge graph at `./.ua/knowledge-graph.json`. This file serves as the authoritative structural and semantic index of the repository.
+*   **Path Alignment:**  Any absolute path mentioned in prompts or configurations must be automatically translated by the AI to its equivalent relative position within the active VS Code workspace root.
 
 ---
 
@@ -371,7 +372,8 @@ When multiple versions exist, the user must explicitly identify the authoritativ
 
 ### Tooling
 
-* Active tooling inventory documentation (e.g., `tooling_*.txt` or equivalent project tooling registry)
+*   Active tooling inventory documentation (e.g., tooling_*.txt or equivalent project tooling registry)
+*   **Codebase Knowledge Graph:** `./.ua/knowledge-graph.json` (Source of truth for codebase structure, dependencies, and semantic summaries).
 
 ### Infrastructure
 
