@@ -11,7 +11,7 @@ Before performing any analysis, review, recommendation, or implementation task, 
 ## Context Resolution & Path Constraints
 
 *   **Strict Relative Resolution:**  AI assistants MUST NOT expect or attempt to access absolute OS filesystem paths (e.g., C:\WorkSpace\...). All internal governance references, skills, templates, and codebase analysis MUST be executed using relative workspace paths (./) or files explicitly attached to the active session via chat references (# or @).
-*   **Semantic Indexing:** To avoid expensive re-analysis and optimize token usage, AI assistants SHOULD prioritize the use of the pre-computed knowledge graph at `./.ua/knowledge-graph.json`. This file serves as the authoritative structural and semantic index of the repository.
+*   **Semantic Indexing:** To avoid expensive re-analysis and optimize token usage, AI assistants MUST read the pre-computed knowledge graph at `./.ua/knowledge-graph.json` as their first step during the context collection phase. This file serves as the authoritative structural and semantic index of the repository and is mandatory for understanding the environment.
 *   **Path Alignment:**  Any absolute path mentioned in prompts or configurations must be automatically translated by the AI to its equivalent relative position within the active VS Code workspace root.
 
 ---
