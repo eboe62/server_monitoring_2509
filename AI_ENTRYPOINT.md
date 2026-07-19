@@ -373,7 +373,7 @@ When multiple versions exist, the user must explicitly identify the authoritativ
 ### Tooling
 
 *   Active tooling inventory documentation (e.g., tooling_*.txt or equivalent project tooling registry)
-*   **Codebase Knowledge Graph:** `./.ua/knowledge-graph.json` (Source of truth for codebase structure, dependencies, and semantic summaries).
+*   **Codebase Knowledge Graph:** `./docs/arquitectura/.ua/knowledge-graph.json` (Source of truth for codebase structure, dependencies, and semantic summaries - accessed via root symlink ./.ua/)
 
 ### Infrastructure
 

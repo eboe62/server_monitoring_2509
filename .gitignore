@@ -41,15 +41,18 @@ docker-compose.override.yml
 *.tmp
 
 # === AI Governance (must be versioned independently) ===
-ai/*.*
+ai/
 
-# === Understand-Anything: Conservar el Grafo y la Configuración ===
-!.ua/
+# === Understand-Anything Governance ===
+# Permitir la persistencia del enlace simbólico, el grafo y la carpeta de datos
+!.ua
+!docs/arquitectura/.ua/knowledge-graph.json
+!docs/arquitectura/.ua/config.json
 
-# === Understand-Anything datos temporales (must be versioned independently) ===
-.ua/intermediate/
-.ua/tmp/
-.ua/diff-overlay.json
+# === Understand-Anything ignorar estrictamente los datos temporales y de procesamiento local ===
+docs/arquitectura/.ua/intermediate/
+docs/arquitectura/.ua/tmp/
+docs/arquitectura/.ua/diff-overlay.json
 
 # === Documentation working copies ===
 * copy*
