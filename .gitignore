@@ -48,6 +48,7 @@ ai/
 !.ua
 !docs/arquitectura/.ua/knowledge-graph.json
 !docs/arquitectura/.ua/config.json
+!docs/arquitectura/.ua/.understandignore
 
 # === Understand-Anything ignorar estrictamente los datos temporales y de procesamiento local ===
 docs/arquitectura/.ua/intermediate/
