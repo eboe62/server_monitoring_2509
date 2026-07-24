@@ -112,6 +112,68 @@ Decisiones relacionadas con:
 * Auditoría.
 * Verificación automatizada.
 
+#### KNOWLEDGE
+
+Decisiones relacionadas con:
+
+* Organización del conocimiento.
+* Modelado del conocimiento.
+* Activos de conocimiento.
+* Taxonomías.
+* Ontologías.
+* Estrategias de aprendizaje.
+
+#### DOCUMENTATION
+
+Decisiones relacionadas con:
+
+* Organización documental.
+* Convenciones editoriales.
+* Plantillas.
+* Estructura documental.
+* Gestión de documentación.
+
+#### PROCESS
+
+Decisiones relacionadas con:
+
+* Procesos de trabajo.
+* Flujos operativos.
+* Procedimientos.
+* Ciclos de revisión.
+* Métodos organizativos.
+
+#### METHODOLOGY
+
+Decisiones relacionadas con:
+
+* Métodos de investigación.
+* Métodos de aprendizaje.
+* Estrategias metodológicas.
+* Marcos de trabajo.
+* Criterios metodológicos.
+
+## Domain (Optional)
+
+The Domain field provides optional contextual classification.
+
+Unlike Category, Domain does not determine the nature of the decision.
+
+A Domain identifies the primary knowledge or application area in which the decision applies.
+
+Examples:
+
+* Language
+* Culture
+* History
+* Engineering
+* Infrastructure
+* Research
+* Governance
+* Documentation
+* Alpinism
+* Hiking
+
 ## Política de Tags
 
 Los tags constituyen un vocabulario controlado.
@@ -175,13 +237,30 @@ Gobernanza:
 * adr
 * standards
 
+Knowledge:
+
+* language
+* linguistics
+* grammar
+* hanzi
+* pinyin
+* curriculum
+* learning
+* research
+* classification
+* taxonomy
+* ontology
+* history
+* culture
+* translation
+
 ## Reglas de Gobernanza
 
 1. Todo ADR nuevo deberá incluir un único `Category`.
 
 2. Todo ADR nuevo deberá incluir entre uno y cinco tags.
 
-3. Los tags deberán proceder preferentemente del catálogo aprobado.
+3. Los tags deberán proceder preferentemente del catálogo aprobado. Cuando no exista un tag adecuado, podrán incorporarse nuevos conceptos estables siguiendo la política de ampliación del vocabulario.
 
 4. La creación de nuevas Categorías requerirá un ADR específico.
 

@@ -160,14 +160,11 @@ Prefer proportional governance over maximum governance.
 
 Use templates when appropriate:
 
-* ai/templates/repo_commit_message.md
-* ai/templates/repo_pull_request.md
-* ai/templates/request_adr_review.md
-* ai/templates/request_analysis.md
-* ai/templates/request_audit.md
-* ai/templates/request_execution.md
-* ai/templates/request_incident_review.md
-* ai/templates/request_priority_analysis.md
+* ai/templates/repository_event.md
+* ai/templates/review_template.md
+* ai/templates/analysis_template.md
+* ai/templates/execution_template.md
+* ai/templates/skill_definition.md
 
 ---
 

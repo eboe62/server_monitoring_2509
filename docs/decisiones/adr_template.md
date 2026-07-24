@@ -5,10 +5,14 @@ Status: [PROPOSED | APPROVED | SUPERSEDED | DEPRECATED]
 Date: [YYYY-MM-DD]
 
 Scope:
-[System | Host | Runtime | Infrastructure | Database]
+[System | Host | Runtime | Infrastructure | Database | Knowledge | Documentation | Process]
 
 Category:
-[GOVERNANCE | ARCHITECTURE | INFRASTRUCTURE | RUNTIME | SECURITY | DATABASE | DEPLOYMENT | TESTING]
+[GOVERNANCE | ARCHITECTURE | INFRASTRUCTURE | RUNTIME | SECURITY | DATABASE | DEPLOYMENT | TESTING | KNOWLEDGE | DOCUMENTATION | PROCESS | METHODOLOGY]
+
+Domain: (Optional)
+Examples:
+[LANGUAGE | CULTURE | HISTORY | ENGINEERING | RESEARCH | GOVERNANCE | DOCUMENTATION | ALPINISM | HIKING]
 
 Tags:
 [tag1, tag2, tag3]
@@ -63,3 +67,6 @@ Optional references:
 * Project documentation
 * Validation procedures
 * External standards
+* Knowledge assets
+* Research sources
+* Reference documents
