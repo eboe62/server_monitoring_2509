@@ -163,16 +163,35 @@ A Domain identifies the primary knowledge or application area in which the decis
 
 Examples:
 
-* Language
+* Anthropology
+* Astronomy
 * Culture
-* History
-* Engineering
-* Infrastructure
-* Research
-* Governance
 * Documentation
-* Alpinism
+* Ecology
+* Economics
+* Education
+* Engineering
+* Geography
+* Governance
 * Hiking
+* History
+* Infrastructure
+* Language
+* Literature
+* Megaprojects
+* Mountaineering
+* Politics
+* Research
+* Society
+* Study_Planning
+* Technology
+* TFG
+* Translation
+* Travel
+
+**Relación con las Entity Types de `03_ONTOLOGY.md`**: `Domain` y las familias de Entity Types de la ontología responden a preguntas distintas y operan en niveles distintos. `Domain` clasifica un Knowledge Asset, Relationship Record o ADR completo por su área temática general. Las Entity Types clasifican entidades individuales dentro del grafo de conocimiento (p. ej. un puente concreto, una dinastía concreta). El `Domain` de una ficha no tiene por qué corresponder 1:1 con las Entity Types que referencie o en las que eventualmente se descomponga.
+
+Algunos términos existen a la vez como Entity Type anidada dentro de una familia (p. ej. `Infrastructure` dentro de `ENGINEERING`, `Literature` dentro de `CULTURE`) y como término `Domain` independiente. Son dos conceptos distintos que comparten nombre — se distinguen por el contexto: pertenencia a una familia de Entity Types frente a valor del campo `Domain:`.
 
 ## Política de Tags
 
@@ -253,6 +272,36 @@ Knowledge:
 * history
 * culture
 * translation
+* knowledge-asset
+* knowledge-repository
+
+Estructura de Repositorio:
+
+* repository-structure
+* migration
+* sources
+* branch-policy
+
+China Studies:
+
+* china-africa-relations
+* neocolonialism
+* south-china-sea
+* silk-road
+* rare-earths
+* xinjiang
+* terracotta-army
+* genghis-khan
+* mongolia
+* great-wall
+* immigration-diaspora
+* food-safety
+* five-year-plan
+* space-exploration
+* ecosystem-services
+* education-pisa
+* meritocracy-keju
+* tech-war
 
 ## Reglas de Gobernanza
 
@@ -284,6 +333,6 @@ Negativas:
 
 ## Estado de Implementación
 
-Pendiente de aprobación.
+Aprobado
 
 Una vez aprobado este ADR podrá iniciarse la Fase 2 de clasificación semántica de los ADRs existentes.
