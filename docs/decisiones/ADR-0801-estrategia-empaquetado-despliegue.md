@@ -1,7 +1,7 @@
 # ADR-0801: Estrategia de Empaquetado y Despliegue con Contenedores Docker
 
 Status: APPROVED
-Date: 2026-06-11
+Date: 2026-06-11 (revisado 2026-07-16 para reflejar la implementación real vigente en el backend GDA)
 Scope: Infrastructure
 Category: DEPLOYMENT
 Tags: REVIEW_REQUIRED
@@ -11,22 +11,24 @@ Superseded By: NONE
 Validation Reference: NONE
 
 ## Contexto
-En un Monorrepo Maven Multi-Module con microservicios independientes, es necesario definir una estrategia de empaquetado y despliegue que garantice consistencia, eficiencia y portabilidad. Actualmente, no se han establecido lineamientos claros sobre cómo se deben construir y desplegar los contenedores Docker para cada microservicio.
+En un Monorrepo Maven Multi-Module con microservicios independientes, es necesario definir una estrategia de empaquetado y despliegue. Este ADR se ha revisado tras verificar que ningún módulo del backend GDA (incluido `gda-finance/gda-admingade`, que aloja Guards) tiene actualmente un `Dockerfile`, y que su pipeline de CI (`.gitlab-ci.yml`) no realiza build ni publicación de imágenes Docker.
 
 ## Decisión
-Adoptar una estrategia de empaquetado basada en los siguientes principios:
-1. **Dockerfiles Independientes:** Cada módulo Maven tendrá su propio Dockerfile, ubicado en la raíz del módulo.
-2. **Builds Multi-Etapa:** Se utilizarán builds multi-etapa para optimizar el tamaño de las imágenes y mejorar la seguridad.
-3. **Etiquetado Consistente:** Las imágenes Docker deberán seguir un esquema de etiquetado consistente que incluya el número de versión del servicio y el entorno de despliegue.
-4. **Orquestación:** Se utilizarán herramientas de orquestación (ej. Kubernetes) para gestionar el despliegue de los contenedores.
+Adoptar como estrategia vigente el empaquetado como artefacto Maven ejecutable (JAR Spring Boot) con versionado y release gestionados por CI, en lugar de la contenerización Docker por módulo originalmente propuesta:
+
+1. **Empaquetado como JAR ejecutable:** cada módulo (`packaging: jar` + `spring-boot-maven-plugin`) se empaqueta como un JAR autocontenido ejecutable con `java -jar`, sin Dockerfile propio.
+2. **Versionado y release vía GitLab CI:** el pipeline (`stage: release`, disparo manual sobre `master`) retira el sufijo `-SNAPSHOT`, etiqueta la versión (`git tag`), publica a `master` y sube automáticamente la versión `minor` en `develop`. No incluye pasos de `docker build` ni publicación a un registry de imágenes.
+3. **Sin builds multi-etapa por ahora:** al no existir Dockerfile, no aplica la estrategia de builds multi-etapa originalmente propuesta.
+
+## Deuda técnica / mejoras pendientes (no bloqueantes para nuevos módulos)
+- **Contenerización:** si en el futuro se decide migrar a despliegue vía contenedores/Kubernetes, se deberá crear un `Dockerfile` multi-etapa por módulo y añadir los pasos `docker build`/`push` al pipeline existente. Ningún módulo lo tiene hoy, por lo que no se exige a los módulos nuevos (p. ej. Vendors) incorporarlo antes que el resto del backend.
 
 ## Consecuencias
 
 ### Positivas (+)
-- Garantiza consistencia y portabilidad en los despliegues.
-- Optimiza el tamaño de las imágenes Docker, reduciendo el tiempo de despliegue.
-- Facilita la gestión de múltiples servicios en entornos distribuidos.
+- Refleja la práctica real y ya probada en producción (release Maven vía GitLab CI), sin introducir una exigencia (Dockerfile) que ningún módulo backend cumple hoy.
+- Simplifica el pipeline actual: no depende de un registry de imágenes ni de infraestructura de orquestación de contenedores.
 
 ### Negativas (-)
-- Requiere un esfuerzo inicial para configurar y mantener los Dockerfiles.
-- Introduce complejidad en la gestión de múltiples imágenes y su orquestación.
+- Sin contenerización, el despliegue depende del entorno de ejecución del JAR (JVM, systemd, etc.) gestionado fuera de este repositorio, con menor portabilidad y aislamiento que un contenedor.
+- Si en el futuro se decide contenerizar, será un esfuerzo de migración retroactivo sobre todos los módulos existentes, no solo sobre los nuevos.

@@ -1,6 +1,6 @@
 # ADR-0803: Estrategias de Seguridad y Gestión de Secretos en Microservicios
 
-Status: APPROVED
+Status: PROPOSED
 Date: 2026-06-11
 Scope: Infrastructure
 Category: SECURITY
