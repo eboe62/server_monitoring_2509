@@ -4,7 +4,7 @@ Status: APPROVED
 Date: 2026-03-05
 Scope: Runtime
 Category: RUNTIME
-Tags: REVIEW_REQUIRED
+Tags: runtime, python, container
 Related ADRs: ADR-0002, ADR-0003, ADR-0012
 Supersedes: NONE
 Superseded By: NONE

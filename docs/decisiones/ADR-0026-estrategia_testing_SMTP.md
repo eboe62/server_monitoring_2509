@@ -4,7 +4,7 @@ Status: APPROVED
 Date: 2026-05-13
 Scope: Runtime
 Category: TESTING
-Tags: REVIEW_REQUIRED
+Tags: testing, validation
 Related ADRs: ADR-0025
 Supersedes: NONE
 Superseded By: NONE

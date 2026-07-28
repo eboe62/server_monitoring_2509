@@ -4,7 +4,7 @@ Status: APPROVED
 Date: 2025-12-09
 Scope: Runtime
 Category: ARCHITECTURE
-Tags: REVIEW_REQUIRED
+Tags: architecture, migration, python
 Related ADRs: ADR-0002
 Supersedes: NONE
 Superseded By: NONE

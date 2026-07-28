@@ -4,7 +4,7 @@ Status: APPROVED
 Date: 2026-01-27
 Scope: Runtime
 Category: RUNTIME
-Tags: REVIEW_REQUIRED
+Tags: runtime, python, configuration
 Related ADRs: ADR-0003, ADR-0025
 Supersedes: NONE
 Superseded By: NONE

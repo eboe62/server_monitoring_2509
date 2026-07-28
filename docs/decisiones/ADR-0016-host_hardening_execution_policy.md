@@ -4,7 +4,7 @@ Status: APPROVED
 Date: 2026-05-06
 Scope: Infrastructure
 Category: SECURITY
-Tags: REVIEW_REQUIRED
+Tags: security, hardening, network
 Related ADRs: ADR-0015, ADR-0021
 Supersedes: NONE
 Superseded By: NONE

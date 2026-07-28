@@ -4,7 +4,7 @@ Status: APPROVED
 Date: 2026-02-16
 Scope: System
 Category: GOVERNANCE
-Tags: REVIEW_REQUIRED
+Tags: governance, policy, standards
 Related ADRs: NONE
 Supersedes: NONE
 Superseded By: NONE

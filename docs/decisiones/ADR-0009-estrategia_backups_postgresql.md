@@ -4,7 +4,7 @@ Status: APPROVED
 Date: 2026-03-05
 Scope: Database
 Category: DATABASE
-Tags: REVIEW_REQUIRED
+Tags: database, postgresql, backup
 Related ADRs: ADR-0008, ADR-0010
 Supersedes: NONE
 Superseded By: NONE

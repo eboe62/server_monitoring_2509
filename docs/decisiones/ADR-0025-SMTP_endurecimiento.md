@@ -4,7 +4,7 @@ Status: APPROVED
 Date: 2026-05-13
 Scope: Runtime
 Category: SECURITY
-Tags: REVIEW_REQUIRED
+Tags: security, hardening, configuration
 Related ADRs: ADR-0005, ADR-0003, ADR-0026
 Supersedes: NONE
 Superseded By: NONE
@@ -255,4 +255,4 @@ No obstante, se recomienda definirlo explícitamente en todos los stacks.
 
 ## Estado
 
-Propuesta consolidada basada en la implementación actual.
+Aprobado.

@@ -4,7 +4,7 @@ Status: APPROVED
 Date: 2026-01-24
 Scope: System
 Category: GOVERNANCE
-Tags: REVIEW_REQUIRED
+Tags: governance, policy, migration
 Related ADRs: NONE
 Supersedes: NONE
 Superseded By: NONE

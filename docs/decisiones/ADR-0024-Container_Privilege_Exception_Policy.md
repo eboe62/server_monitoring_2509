@@ -4,7 +4,7 @@ Status: APPROVED
 Date: 2026-05-09
 Scope: Runtime
 Category: SECURITY
-Tags: REVIEW_REQUIRED
+Tags: security, privilege, hardening
 Related ADRs: ADR-0020, ADR-0018
 Supersedes: NONE
 Superseded By: NONE

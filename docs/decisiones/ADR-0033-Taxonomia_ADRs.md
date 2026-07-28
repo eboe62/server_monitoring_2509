@@ -221,6 +221,8 @@ Runtime:
 * healthcheck
 * resilience
 * container
+* python
+* configuration
 
 Seguridad:
 
