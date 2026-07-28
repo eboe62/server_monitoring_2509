@@ -4,7 +4,7 @@ Status: APPROVED
 Date: 2026-04-01
 Scope: Runtime
 Category: RUNTIME
-Tags: REVIEW_REQUIRED
+Tags: runtime, resilience, container
 Related ADRs: ADR-0018, ADR-0019
 Supersedes: NONE
 Superseded By: NONE

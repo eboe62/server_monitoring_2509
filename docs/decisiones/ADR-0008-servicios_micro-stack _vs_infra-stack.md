@@ -4,7 +4,7 @@ Status: APPROVED
 Date: 2026-02-17
 Scope: Infrastructure
 Category: ARCHITECTURE
-Tags: REVIEW_REQUIRED
+Tags: architecture, microservices, docker
 Related ADRs: ADR-0009, ADR-0010, ADR-0020
 Supersedes: NONE
 Superseded By: NONE

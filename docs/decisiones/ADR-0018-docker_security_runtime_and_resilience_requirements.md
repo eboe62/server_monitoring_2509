@@ -4,7 +4,7 @@ Status: APPROVED
 Date: 2026-04-05
 Scope: Runtime
 Category: SECURITY
-Tags: REVIEW_REQUIRED
+Tags: security, hardening, resilience
 Related ADRs: ADR-0017, ADR-0020, ADR-0024
 Supersedes: NONE
 Superseded By: NONE

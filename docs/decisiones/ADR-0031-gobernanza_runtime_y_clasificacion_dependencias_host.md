@@ -4,7 +4,7 @@ Status: APPROVED
 Date: 2026-05-26
 Scope: Runtime
 Category: GOVERNANCE
-Tags: REVIEW_REQUIRED
+Tags: governance, policy, container
 Related ADRs: ADR-0030, ADR-0018, ADR-0029, ADR-0020, ADR-0024
 Supersedes: NONE
 Superseded By: NONE

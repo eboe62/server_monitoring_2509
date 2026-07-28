@@ -4,7 +4,7 @@ Status: APPROVED
 Date: 2026-03-12
 Scope: Runtime
 Category: RUNTIME
-Tags: REVIEW_REQUIRED
+Tags: runtime, cron, container
 Related ADRs: ADR-0010, ADR-0011
 Supersedes: NONE
 Superseded By: NONE

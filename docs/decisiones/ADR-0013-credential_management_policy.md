@@ -4,7 +4,7 @@ Status: APPROVED
 Date: 2026-03-14
 Scope: Infrastructure
 Category: SECURITY
-Tags: REVIEW_REQUIRED
+Tags: security, secrets
 Related ADRs: ADR-0032
 Supersedes: NONE
 Superseded By: NONE

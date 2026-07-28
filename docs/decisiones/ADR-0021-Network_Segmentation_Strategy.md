@@ -4,7 +4,7 @@ Status: APPROVED
 Date: 2026-05-04
 Scope: Infrastructure
 Category: SECURITY
-Tags: REVIEW_REQUIRED
+Tags: security, network, docker
 Related ADRs: ADR-0015, ADR-0016, ADR-0022
 Supersedes: NONE
 Superseded By: NONE
