@@ -41,7 +41,20 @@ docker-compose.override.yml
 *.tmp
 
 # === AI Governance (must be versioned independently) ===
-ai/*.*
+ai/
+
+# === Understand-Anything Governance ===
+# Permitir la persistencia del enlace simbólico, el grafo y la carpeta de datos
+!.ua
+!docs/arquitectura/.ua/knowledge-graph.json
+!docs/arquitectura/.ua/config.json
+!docs/arquitectura/.ua/.understandignore
+
+# === Understand-Anything ignorar estrictamente los datos temporales y de procesamiento local ===
+docs/arquitectura/.ua/intermediate/
+docs/arquitectura/.ua/tmp/
+docs/arquitectura/.ua/diff-overlay.json
+docs/arquitectura/.ua/.trash-*/
 
 # === Documentation working copies ===
 * copy*

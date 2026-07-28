@@ -4,3 +4,9 @@ dist/
 build/
 .cache/
 *.log
+
+# === Documentation working copies ===
+* copy*
+
+# === Temporary files or files marked for deletion ===
+*_BORRAR*
