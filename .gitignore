@@ -54,6 +54,7 @@ ai/
 docs/arquitectura/.ua/intermediate/
 docs/arquitectura/.ua/tmp/
 docs/arquitectura/.ua/diff-overlay.json
+docs/arquitectura/.ua/.trash-*/
 
 # === Documentation working copies ===
 * copy*
