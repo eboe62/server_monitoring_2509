@@ -1571,6 +1571,23 @@ Estado verificado y defecto de test detectado (StatusQuo 260816):
     `{ echo "..."; exit 1; }` — un brace group corre en el mismo shell, por
     lo que el `exit` sí se propaga y detiene el recipe correctamente.
 
+    Hallazgo derivado (17/08/2026): al arreglar lo anterior, el pipeline de
+    CI empezó a fallar realmente en el paso "esperando degradación (health)".
+    Causa raíz: el healthcheck de monitoring-python (scripts/healthcheck.py)
+    es deliberadamente trivial (`sys.exit(0)` incondicional, comentario
+    explícito "evita falsos negativos en CI") — nunca puede reportar
+    `unhealthy`, así que esperar ese estado es una condición imposible por
+    diseño, no un problema de timing. El bug de subshell llevaba años
+    enmascarando este segundo problema.
+
+    Decisión: eliminados ambos pasos de espera de healthcheck de Docker
+    ("esperando degradación (health)" y su simétrico "esperando recuperación
+    (health)"), ya que ambos dependían de un healthcheck que nunca cambia de
+    estado. El target conserva las comprobaciones TCP directas (`nc -z`)
+    que ya validaban aislamiento y recuperación reales, y que son la señal
+    correcta para este propósito. Actualizado también el comentario de
+    cabecera del target para reflejar el comportamiento real.
+
 ==========================================
 FASE 6 – INICIALIZACIÓN DECLARATIVA DEL MICRO-STACK POSTGRES
 ==========================================

@@ -415,9 +415,15 @@ test-resilience-network:
 	# ----------------------------------------
 ## Testea:
 ## - disconnect network
-## - espera unhealthy
+## - verifica aislamiento real (TCP) hacia el servicio dependiente
 ## - reconnect network
-## - espera healthy
+## - verifica recuperación real (TCP) hacia el servicio dependiente
+## Nota: no se espera un cambio de estado en el healthcheck de Docker de
+## monitoring-python porque su healthcheck es deliberadamente trivial
+## (scripts/healthcheck.py: sys.exit(0) incondicional, para evitar falsos
+## negativos en CI) y nunca refleja conectividad de red ni de base de datos.
+## La señal real de aislamiento/recuperación es la comprobación TCP directa
+## (nc -z) contra monitoring-postgres.
 ## Dependencias:
 ## [ red ]
 ##     monitoring-networks conecta TODO
@@ -445,14 +451,6 @@ test-resilience-network:
 	\
 	echo "[OK] aislamiento de red confirmado"; \
 	\
-	echo "esperando degradación (health)..."; \
-	timeout 60 sh -c '\
-	until [ "$$(docker inspect monitoring-python --format="{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}")" = "unhealthy" ]; do \
-		sleep 2; \
-	done' || { echo "[FAIL] no degrada por red"; exit 1; }; \
-	\
-	echo "[OK] degradación por red OK"; \
-	\
 	echo "[STEP] reconectando red..."; \
 	if ! docker network connect $$NETWORK monitoring-postgres; then \
 		echo "[FAIL] error al reconectar red"; \
@@ -464,12 +462,6 @@ test-resilience-network:
 	until docker exec monitoring-python sh -c "nc -z monitoring-postgres 5432" >/dev/null 2>&1; do \
 		sleep 2; \
 	done' || { echo "[FAIL] no recupera conectividad TCP"; exit 1; }; \
-	\
-	echo "esperando recuperación (health)..."; \
-	timeout 60 sh -c '\
-	until [ "$$(docker inspect monitoring-python --format="{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}")" = "healthy" ]; do \
-		sleep 2; \
-	done' || { echo "[FAIL] no recupera tras red"; exit 1; }; \
 	\
 	echo "[OK] red restaurada"
 	@echo ""
