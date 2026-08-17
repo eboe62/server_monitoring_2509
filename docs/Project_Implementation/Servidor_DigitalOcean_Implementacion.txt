@@ -1983,11 +1983,11 @@ Principios:
         (File "/opt/monitoring/src/log_ingestor/log_fail2ban_batch.py", line 6,
          in <module> ... import pytz)
 
-    Alcance no determinado: no se ha confirmado si el defecto afecta
-    únicamente a log_fail2ban_batch o también a otros jobs de log_ingestor
-    que puedan compartir la misma dependencia o cadena de importación.
-    Determinar el alcance exacto es el primer paso obligatorio antes de
-    cualquier corrección de código.
+    Alcance confirmado (17/08/2026): `grep -rn "import pytz\|from pytz" src/
+    scripts/` confirma que `pytz` se usa únicamente en
+    src/log_ingestor/log_fail2ban_batch.py (dos usos, ambos para marcar
+    timestamps como UTC-aware). Ningún otro job de log_ingestor lo importa
+    — el defecto está acotado a este único job, no es sistémico.
 
     Relación con la pausa de migración de FASE 6.0: este defecto es
     INDEPENDIENTE de la pausa de migración de tablas documentada en 6.0. El
@@ -1996,20 +1996,24 @@ Principios:
     no depende de si `monitoring_db` tiene tablas o no, y no debe esperar a
     que se levante dicha pausa para corregirse.
 
-    Nota anticipada (hipótesis, no confirmada): una vez corregida la
+    Nota anticipada, ahora confirmada a nivel de código (17/08/2026): al
+    leer el script se confirma que sí ejecuta
+    `INSERT INTO fail2ban_logs (...)`. Por tanto, una vez corregida la
     dependencia `pytz`, es razonablemente esperable que el job pase a fallar
-    por un error distinto del tipo "relation ... does not exist" si
-    efectivamente inserta en una tabla (p.ej. fail2ban_logs) que todavía no
-    existe por la pausa de 6.0. Si ese fallo aparece, debe atribuirse a 6.0
-    (consecuencia esperada de la migración pendiente), no tratarse como un
-    defecto nuevo.
+    por un error distinto del tipo "relation \"fail2ban_logs\" does not
+    exist", ya que esa tabla todavía no existe por la pausa de 6.0. Si ese
+    fallo aparece tras el fix, debe atribuirse a 6.0 (consecuencia esperada
+    de la migración pendiente), no tratarse como un defecto nuevo.
 
     Este hallazgo también invalida, mientras persista, el criterio de cierre
     de FASE 11.3 ("no existen errores en logs tras reinicio").
 
-    La corrección de código (incorporar la dependencia faltante,
-    reconstruir la imagen monitoring-cron, redesplegar) queda fuera del
-    alcance de esta revisión documental.
+    Corregido (17/08/2026): añadida la dependencia faltante
+    (`pytz`, sin versión fijada, mismo criterio que PyYAML en este archivo)
+    a `requirements.txt`. Pendiente de reconstruir la imagen
+    `monitoring-cron` y redesplegar para que el fix tenga efecto en
+    producción; hasta entonces el criterio de cierre de FASE 11.3 sigue sin
+    cumplirse.
 
 Bloques de trabajo:
 8.1. Verificación del scheduler
