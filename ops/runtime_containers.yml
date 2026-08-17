@@ -21,7 +21,7 @@ containers:
 
   promtail:
     type: INFRA_TRUSTED
-    healthcheck_policy: readiness
+    healthcheck_policy: liveness
     enforcement_level: warn
 
   loki:

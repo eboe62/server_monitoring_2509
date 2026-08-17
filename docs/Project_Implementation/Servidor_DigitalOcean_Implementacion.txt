@@ -1296,13 +1296,23 @@ Estado verificado (StatusQuo 260816):
       una contradicción real entre la política declarada
       (healthcheck_policy: readiness) y una restricción técnica de la
       imagen, no en un archivo pendiente de escribir.
-    - Decisión pendiente (del usuario, no técnica): (a) investigar si existe
-      un mecanismo viable sin wget/curl (p.ej. `nc` contra el puerto de
-      métricas, si estuviera disponible en la imagen — no verificable desde
-      este repositorio, requiere comprobación en el contenedor real), o
-      (b) formalizar la excepción en ops/runtime_containers.yml
-      (healthcheck_policy: readiness → none/keepalive), coherente con el
-      tratamiento ya dado a monitoring-python (TOOLBOX_RUNTIME).
+    - Resuelto (17/08/2026): verificado en el contenedor real
+      (`docker exec promtail sh -c "which wget curl nc pgrep ps grep"`) que
+      la imagen solo dispone de `/bin/grep` — ni wget/curl/nc ni pgrep/ps
+      están presentes. Se descartan por tanto un sondeo HTTP o TCP y una
+      comprobación vía pgrep/ps. Se implementó un healthcheck de liveness
+      usando únicamente /proc (expuesto por el kernel, no requiere binario
+      externo) + grep: `grep -q promtail /proc/1/comm || exit 1`, tras
+      confirmar (`docker exec promtail cat /proc/1/comm` → `promtail`) que
+      el proceso promtail es efectivamente el PID 1 del contenedor. No es
+      un readiness check (no valida que Promtail esté leyendo logs
+      correctamente), pero sí es un liveness real — coherente con que la
+      Visión permite a los INFRA_TRUSTED "requerir readiness o liveness
+      según su función real". Aplicado en
+      ops/stacks/observability/compose.yml. Actualizado también
+      ops/runtime_containers.yml (healthcheck_policy: readiness → liveness),
+      quedando así alineado con smtp-relay, el otro INFRA_TRUSTED del
+      proyecto, que ya usaba liveness.
 
 5.2. Seguridad Runtime y Automatismos Declarados
 Trilogía de Hardening de Infraestructura (ADR-0029, 0030, 0031)

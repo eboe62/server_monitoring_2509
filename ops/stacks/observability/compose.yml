@@ -25,7 +25,17 @@ services:
     cap_drop:
       - ALL
 
-    # Sin healthcheck: la imagen oficial (upstream) carece de wget/curl; los healthchecks que utilicen herramientas externas producirían falsos negativos.
+    # Healthcheck de liveness (no readiness): la imagen oficial (upstream) carece de
+    # wget/curl/nc/pgrep/ps (verificado en runtime, 17/08/2026) — cualquier healthcheck
+    # basado en herramientas de red o de inspección de procesos produciría falsos
+    # negativos. Se usa /proc/1/comm (expuesto por el kernel, no requiere binario
+    # externo) para confirmar que el proceso promtail (PID 1) sigue vivo.
+    healthcheck:
+      test: ["CMD-SHELL", "grep -q promtail /proc/1/comm || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
     deploy:
       resources:
