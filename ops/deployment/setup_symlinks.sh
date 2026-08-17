@@ -1,15 +1,16 @@
 #!/bin/bash
 set -e
 
-BASE_DIR="/opt/monitoring/resource_monitor"
-SCRIPTS=(
-    "configure_docker_limits.sh"
-    "docker_resources.py"
-    "docker_resources.sh"
+DEPLOY_DIR="/opt/monitoring/ops/deployment"
+RESOURCE_MONITOR_DIR="/opt/monitoring/src/resource_monitor"
+SOURCES=(
+    "$DEPLOY_DIR/configure_docker_limits.sh"
+    "$RESOURCE_MONITOR_DIR/docker_resources.py"
+    "$DEPLOY_DIR/docker_resources.sh"
 )
 
-for script in "${SCRIPTS[@]}"; do
-    SRC="$BASE_DIR/$script"
+for SRC in "${SOURCES[@]}"; do
+    script="$(basename "$SRC")"
     DEST="/usr/local/bin/$script"
 
     if [ ! -f "$SRC" ]; then

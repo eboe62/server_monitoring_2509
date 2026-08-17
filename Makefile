@@ -441,7 +441,7 @@ test-resilience-network:
 	timeout 20 sh -c '\
 	until ! docker exec monitoring-python sh -c "nc -z monitoring-postgres 5432" >/dev/null 2>&1; do \
 		sleep 2; \
-	done' || (echo "[FAIL] el aislamiento de red NO es efectivo" && exit 1); \
+	done' || { echo "[FAIL] el aislamiento de red NO es efectivo"; exit 1; }; \
 	\
 	echo "[OK] aislamiento de red confirmado"; \
 	\
@@ -449,7 +449,7 @@ test-resilience-network:
 	timeout 60 sh -c '\
 	until [ "$$(docker inspect monitoring-python --format="{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}")" = "unhealthy" ]; do \
 		sleep 2; \
-	done' || (echo "[FAIL] no degrada por red" && exit 1); \
+	done' || { echo "[FAIL] no degrada por red"; exit 1; }; \
 	\
 	echo "[OK] degradación por red OK"; \
 	\
@@ -463,13 +463,13 @@ test-resilience-network:
 	timeout 60 sh -c '\
 	until docker exec monitoring-python sh -c "nc -z monitoring-postgres 5432" >/dev/null 2>&1; do \
 		sleep 2; \
-	done' || (echo "[FAIL] no recupera conectividad TCP" && exit 1); \
+	done' || { echo "[FAIL] no recupera conectividad TCP"; exit 1; }; \
 	\
 	echo "esperando recuperación (health)..."; \
 	timeout 60 sh -c '\
 	until [ "$$(docker inspect monitoring-python --format="{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}")" = "healthy" ]; do \
 		sleep 2; \
-	done' || (echo "[FAIL] no recupera tras red" && exit 1); \
+	done' || { echo "[FAIL] no recupera tras red"; exit 1; }; \
 	\
 	echo "[OK] red restaurada"
 	@echo ""
