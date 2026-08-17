@@ -1,6 +1,29 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# ------------------------------------------------------------
+# Propósito:
+#     Validar prácticas de Dockerfile orientadas a reproducibilidad y seguridad.
+#
+# Rol dentro de la arquitectura:
+#     Es el validador estático de instrucciones Dockerfile que alimenta auditorías de build y hardening.
+#
+# Entradas principales:
+#     Todos los Dockerfile del repositorio.
+#
+# Salidas principales:
+#     Mensajes de consola con FAIL/WARN/OK y código de salida 0/1.
+#
+# Relación con otros componentes:
+#     Se invoca desde Makefile en validaciones de build.
+#
+# Relación con la gobernanza:
+#     Soporta ADR-0018 y ADR-0028 al verificar tags, requisitos y versiones de base de imagen.
+#
+# Observaciones:
+#     No construye imágenes ni altera Dockerfiles; solo reporta hallazgos estáticos.
+# ------------------------------------------------------------
+
 FAILED=0
 
 info(){ echo "[INFO] $1"; }

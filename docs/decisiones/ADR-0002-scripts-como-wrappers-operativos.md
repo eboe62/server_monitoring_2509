@@ -4,7 +4,7 @@ Status: APPROVED
 Date: 2026-01-25
 Scope: Runtime
 Category: ARCHITECTURE
-Tags: REVIEW_REQUIRED
+Tags: architecture, python, runtime
 Related ADRs: ADR-0003, ADR-0011
 Supersedes: NONE
 Superseded By: NONE

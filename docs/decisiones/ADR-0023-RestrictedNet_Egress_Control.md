@@ -1,10 +1,10 @@
-# ADR-0023 — Egress Control for restricted-net (Propuesto)
+# ADR-0023 — Egress Control for restricted-net
 
 Status: APPROVED
 Date: 2026-05-08
 Scope: Infrastructure
 Category: SECURITY
-Tags: REVIEW_REQUIRED
+Tags: security, network, hardening
 Related ADRs: ADR-0021
 Supersedes: NONE
 Superseded By: NONE
@@ -18,7 +18,7 @@ El objetivo de `restricted-net` es alojar contenedores o cargas con confianza re
 
 Sin controles de egress, un contenedor comprometido en `restricted-net` puede establecer conexiones salientes hacia Internet u otras redes, exponiendo datos o recibiendo instrucciones de control remoto.
 
-## Propuesta / Decisión (Propuesto)
+## Propuesta / Decisión
 
 Se propone aplicar un modelo de egress-control basado en defensa en profundidad con las siguientes medidas recomendadas:
 
@@ -72,4 +72,4 @@ Se propone aplicar un modelo de egress-control basado en defensa en profundidad 
 
 ## Estado
 
-Propuesto
+Aprobado.

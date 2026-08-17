@@ -41,10 +41,11 @@ Including:
 
 Available specialist skills are located in:
 
-* ai/skills/common/
-* ai/skills/infraestructure/
 * ai/skills/backend/
-* ai/skills/frontend/
+* ai/skills/common/
+* ai/skills//
+* ai/skills/frontend/documentation
+* ai/skills/infrastructure/
 
 Apply the skills relevant to the current task.
 

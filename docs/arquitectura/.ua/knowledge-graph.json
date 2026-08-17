@@ -1,0 +1,3438 @@
+{
+  "nodes": [
+    {
+      "id": "file:ops/services/postgres/scripts/backup_postgres.py",
+      "type": "file",
+      "name": "backup_postgres.py",
+      "filePath": "ops/services/postgres/scripts/backup_postgres.py",
+      "summary": "Source file ops/services/postgres/scripts/backup_postgres.py",
+      "tags": [
+        "code"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:ops/services/postgres/scripts/backup_restore.py",
+      "type": "file",
+      "name": "backup_restore.py",
+      "filePath": "ops/services/postgres/scripts/backup_restore.py",
+      "summary": "Source file ops/services/postgres/scripts/backup_restore.py",
+      "tags": [
+        "code"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:ops/services/postgres/scripts/backup_restore.py:exec_in_postgres",
+      "type": "function",
+      "name": "exec_in_postgres",
+      "filePath": "ops/services/postgres/scripts/backup_restore.py",
+      "summary": "Function exec_in_postgres in ops/services/postgres/scripts/backup_restore.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/log_ingestor/alert_risk.py",
+      "type": "file",
+      "name": "alert_risk.py",
+      "filePath": "src/log_ingestor/alert_risk.py",
+      "summary": "Source file src/log_ingestor/alert_risk.py",
+      "tags": [
+        "code"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/log_ingestor/alert_risk.py:process_alert",
+      "type": "function",
+      "name": "process_alert",
+      "filePath": "src/log_ingestor/alert_risk.py",
+      "summary": "Function process_alert in src/log_ingestor/alert_risk.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:src/log_ingestor/log_fail2ban_batch.py",
+      "type": "file",
+      "name": "log_fail2ban_batch.py",
+      "filePath": "src/log_ingestor/log_fail2ban_batch.py",
+      "summary": "Source file src/log_ingestor/log_fail2ban_batch.py",
+      "tags": [
+        "code"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/log_ingestor/log_fail2ban_batch.py:update_attacking_no",
+      "type": "function",
+      "name": "update_attacking_no",
+      "filePath": "src/log_ingestor/log_fail2ban_batch.py",
+      "summary": "Function update_attacking_no in src/log_ingestor/log_fail2ban_batch.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/log_ingestor/log_fail2ban_batch.py:get_last_timestamp",
+      "type": "function",
+      "name": "get_last_timestamp",
+      "filePath": "src/log_ingestor/log_fail2ban_batch.py",
+      "summary": "Function get_last_timestamp in src/log_ingestor/log_fail2ban_batch.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/log_ingestor/log_fail2ban_batch.py:parse_timestamp",
+      "type": "function",
+      "name": "parse_timestamp",
+      "filePath": "src/log_ingestor/log_fail2ban_batch.py",
+      "summary": "Function parse_timestamp in src/log_ingestor/log_fail2ban_batch.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/log_ingestor/log_fail2ban_batch.py:get_log_lines",
+      "type": "function",
+      "name": "get_log_lines",
+      "filePath": "src/log_ingestor/log_fail2ban_batch.py",
+      "summary": "Function get_log_lines in src/log_ingestor/log_fail2ban_batch.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/log_ingestor/log_fail2ban_batch.py:insert_into_db",
+      "type": "function",
+      "name": "insert_into_db",
+      "filePath": "src/log_ingestor/log_fail2ban_batch.py",
+      "summary": "Function insert_into_db in src/log_ingestor/log_fail2ban_batch.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/log_ingestor/log_fail2ban_batch.py:process_logs",
+      "type": "function",
+      "name": "process_logs",
+      "filePath": "src/log_ingestor/log_fail2ban_batch.py",
+      "summary": "Function process_logs in src/log_ingestor/log_fail2ban_batch.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/log_ingestor/log_honeypot_geolocation.py",
+      "type": "file",
+      "name": "log_honeypot_geolocation.py",
+      "filePath": "src/log_ingestor/log_honeypot_geolocation.py",
+      "summary": "Source file src/log_ingestor/log_honeypot_geolocation.py",
+      "tags": [
+        "code"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/log_ingestor/log_honeypot_geolocation.py:extract_ips_from_loki",
+      "type": "function",
+      "name": "extract_ips_from_loki",
+      "filePath": "src/log_ingestor/log_honeypot_geolocation.py",
+      "summary": "Function extract_ips_from_loki in src/log_ingestor/log_honeypot_geolocation.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/log_ingestor/log_honeypot_geolocation.py:update_database",
+      "type": "function",
+      "name": "update_database",
+      "filePath": "src/log_ingestor/log_honeypot_geolocation.py",
+      "summary": "Function update_database in src/log_ingestor/log_honeypot_geolocation.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/log_ingestor/log_ingest_batch.py",
+      "type": "file",
+      "name": "log_ingest_batch.py",
+      "filePath": "src/log_ingestor/log_ingest_batch.py",
+      "summary": "Source file src/log_ingestor/log_ingest_batch.py",
+      "tags": [
+        "code"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/log_ingestor/log_ingest_batch.py:update_attacking_no",
+      "type": "function",
+      "name": "update_attacking_no",
+      "filePath": "src/log_ingestor/log_ingest_batch.py",
+      "summary": "Function update_attacking_no in src/log_ingestor/log_ingest_batch.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/log_ingestor/log_ingest_batch.py:get_last_timestamp",
+      "type": "function",
+      "name": "get_last_timestamp",
+      "filePath": "src/log_ingestor/log_ingest_batch.py",
+      "summary": "Function get_last_timestamp in src/log_ingestor/log_ingest_batch.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/log_ingestor/log_ingest_batch.py:parse_timestamp",
+      "type": "function",
+      "name": "parse_timestamp",
+      "filePath": "src/log_ingestor/log_ingest_batch.py",
+      "summary": "Function parse_timestamp in src/log_ingestor/log_ingest_batch.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/log_ingestor/log_ingest_batch.py:get_log_lines",
+      "type": "function",
+      "name": "get_log_lines",
+      "filePath": "src/log_ingestor/log_ingest_batch.py",
+      "summary": "Function get_log_lines in src/log_ingestor/log_ingest_batch.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/log_ingestor/log_ingest_batch.py:insert_into_db",
+      "type": "function",
+      "name": "insert_into_db",
+      "filePath": "src/log_ingestor/log_ingest_batch.py",
+      "summary": "Function insert_into_db in src/log_ingestor/log_ingest_batch.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/log_ingestor/log_ingest_batch.py:process_logs",
+      "type": "function",
+      "name": "process_logs",
+      "filePath": "src/log_ingestor/log_ingest_batch.py",
+      "summary": "Function process_logs in src/log_ingestor/log_ingest_batch.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/log_ingestor/log_ip_geolocation.py",
+      "type": "file",
+      "name": "log_ip_geolocation.py",
+      "filePath": "src/log_ingestor/log_ip_geolocation.py",
+      "summary": "Source file src/log_ingestor/log_ip_geolocation.py",
+      "tags": [
+        "code"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/log_ingestor/log_ip_geolocation.py:extract_ips_from_bbdd",
+      "type": "function",
+      "name": "extract_ips_from_bbdd",
+      "filePath": "src/log_ingestor/log_ip_geolocation.py",
+      "summary": "Function extract_ips_from_bbdd in src/log_ingestor/log_ip_geolocation.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/log_ingestor/log_ip_geolocation.py:update_database",
+      "type": "function",
+      "name": "update_database",
+      "filePath": "src/log_ingestor/log_ip_geolocation.py",
+      "summary": "Function update_database in src/log_ingestor/log_ip_geolocation.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/log_ingestor/log_kern_batch.py",
+      "type": "file",
+      "name": "log_kern_batch.py",
+      "filePath": "src/log_ingestor/log_kern_batch.py",
+      "summary": "Source file src/log_ingestor/log_kern_batch.py",
+      "tags": [
+        "code"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/log_ingestor/log_kern_batch.py:update_attacking_no",
+      "type": "function",
+      "name": "update_attacking_no",
+      "filePath": "src/log_ingestor/log_kern_batch.py",
+      "summary": "Function update_attacking_no in src/log_ingestor/log_kern_batch.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/log_ingestor/log_kern_batch.py:get_last_timestamp",
+      "type": "function",
+      "name": "get_last_timestamp",
+      "filePath": "src/log_ingestor/log_kern_batch.py",
+      "summary": "Function get_last_timestamp in src/log_ingestor/log_kern_batch.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/log_ingestor/log_kern_batch.py:parse_timestamp",
+      "type": "function",
+      "name": "parse_timestamp",
+      "filePath": "src/log_ingestor/log_kern_batch.py",
+      "summary": "Function parse_timestamp in src/log_ingestor/log_kern_batch.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/log_ingestor/log_kern_batch.py:get_log_lines",
+      "type": "function",
+      "name": "get_log_lines",
+      "filePath": "src/log_ingestor/log_kern_batch.py",
+      "summary": "Function get_log_lines in src/log_ingestor/log_kern_batch.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/log_ingestor/log_kern_batch.py:insert_into_db",
+      "type": "function",
+      "name": "insert_into_db",
+      "filePath": "src/log_ingestor/log_kern_batch.py",
+      "summary": "Function insert_into_db in src/log_ingestor/log_kern_batch.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/log_ingestor/log_kern_batch.py:process_logs",
+      "type": "function",
+      "name": "process_logs",
+      "filePath": "src/log_ingestor/log_kern_batch.py",
+      "summary": "Function process_logs in src/log_ingestor/log_kern_batch.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:src/monitoring/common/config.py",
+      "type": "file",
+      "name": "config.py",
+      "filePath": "src/monitoring/common/config.py",
+      "summary": "Source file src/monitoring/common/config.py",
+      "tags": [
+        "code"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/monitoring/common/config.py:get_smtp_mode",
+      "type": "function",
+      "name": "get_smtp_mode",
+      "filePath": "src/monitoring/common/config.py",
+      "summary": "Function get_smtp_mode in src/monitoring/common/config.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/monitoring/common/config.py:init_config",
+      "type": "function",
+      "name": "init_config",
+      "filePath": "src/monitoring/common/config.py",
+      "summary": "Function init_config in src/monitoring/common/config.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/monitoring/common/config.py:connect_db",
+      "type": "function",
+      "name": "connect_db",
+      "filePath": "src/monitoring/common/config.py",
+      "summary": "Function connect_db in src/monitoring/common/config.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/monitoring/common/config.py:close_db",
+      "type": "function",
+      "name": "close_db",
+      "filePath": "src/monitoring/common/config.py",
+      "summary": "Function close_db in src/monitoring/common/config.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/monitoring/common/config.py:send_email",
+      "type": "function",
+      "name": "send_email",
+      "filePath": "src/monitoring/common/config.py",
+      "summary": "Function send_email in src/monitoring/common/config.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/monitoring/common/config.py:to_snake_case",
+      "type": "function",
+      "name": "to_snake_case",
+      "filePath": "src/monitoring/common/config.py",
+      "summary": "Function to_snake_case in src/monitoring/common/config.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/monitoring/common/config.py:normalize_date",
+      "type": "function",
+      "name": "normalize_date",
+      "filePath": "src/monitoring/common/config.py",
+      "summary": "Function normalize_date in src/monitoring/common/config.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/monitoring/common/config.py:get_month_gap",
+      "type": "function",
+      "name": "get_month_gap",
+      "filePath": "src/monitoring/common/config.py",
+      "summary": "Function get_month_gap in src/monitoring/common/config.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/monitoring/common/config.py:log_info",
+      "type": "function",
+      "name": "log_info",
+      "filePath": "src/monitoring/common/config.py",
+      "summary": "Function log_info in src/monitoring/common/config.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/monitoring/common/config.py:format_date",
+      "type": "function",
+      "name": "format_date",
+      "filePath": "src/monitoring/common/config.py",
+      "summary": "Function format_date in src/monitoring/common/config.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/monitoring/common/config.py:safe",
+      "type": "function",
+      "name": "safe",
+      "filePath": "src/monitoring/common/config.py",
+      "summary": "Function safe in src/monitoring/common/config.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/monitoring/common/config.py:build_html_table",
+      "type": "function",
+      "name": "build_html_table",
+      "filePath": "src/monitoring/common/config.py",
+      "summary": "Function build_html_table in src/monitoring/common/config.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/monitoring/common/config.py:get_ip_info",
+      "type": "function",
+      "name": "get_ip_info",
+      "filePath": "src/monitoring/common/config.py",
+      "summary": "Function get_ip_info in src/monitoring/common/config.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:src/resource_monitor/docker_resources.py",
+      "type": "file",
+      "name": "docker_resources.py",
+      "filePath": "src/resource_monitor/docker_resources.py",
+      "summary": "Source file src/resource_monitor/docker_resources.py",
+      "tags": [
+        "code"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/resource_monitor/docker_resources.py:get_docker_stats",
+      "type": "function",
+      "name": "get_docker_stats",
+      "filePath": "src/resource_monitor/docker_resources.py",
+      "summary": "Function get_docker_stats in src/resource_monitor/docker_resources.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/resource_monitor/docker_resources.py:parse_percentage",
+      "type": "function",
+      "name": "parse_percentage",
+      "filePath": "src/resource_monitor/docker_resources.py",
+      "summary": "Function parse_percentage in src/resource_monitor/docker_resources.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/resource_monitor/docker_resources.py:parse_memory",
+      "type": "function",
+      "name": "parse_memory",
+      "filePath": "src/resource_monitor/docker_resources.py",
+      "summary": "Function parse_memory in src/resource_monitor/docker_resources.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/resource_monitor/docker_resources.py:to_megabytes",
+      "type": "function",
+      "name": "to_megabytes",
+      "filePath": "src/resource_monitor/docker_resources.py",
+      "summary": "Function to_megabytes in src/resource_monitor/docker_resources.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/resource_monitor/docker_resources.py:build_table",
+      "type": "function",
+      "name": "build_table",
+      "filePath": "src/resource_monitor/docker_resources.py",
+      "summary": "Function build_table in src/resource_monitor/docker_resources.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/resource_monitor/docker_resources.py:build_html_report",
+      "type": "function",
+      "name": "build_html_report",
+      "filePath": "src/resource_monitor/docker_resources.py",
+      "summary": "Function build_html_report in src/resource_monitor/docker_resources.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/resource_monitor/docker_resources.py:log_stats",
+      "type": "function",
+      "name": "log_stats",
+      "filePath": "src/resource_monitor/docker_resources.py",
+      "summary": "Function log_stats in src/resource_monitor/docker_resources.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/resource_monitor/docker_resources.py:load_state",
+      "type": "function",
+      "name": "load_state",
+      "filePath": "src/resource_monitor/docker_resources.py",
+      "summary": "Function load_state in src/resource_monitor/docker_resources.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/resource_monitor/docker_resources.py:save_state",
+      "type": "function",
+      "name": "save_state",
+      "filePath": "src/resource_monitor/docker_resources.py",
+      "summary": "Function save_state in src/resource_monitor/docker_resources.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/resource_monitor/docker_resources.py:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "src/resource_monitor/docker_resources.py",
+      "summary": "Function main in src/resource_monitor/docker_resources.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:ops/services/smtp_relay/Dockerfile",
+      "type": "file",
+      "name": "Dockerfile",
+      "filePath": "ops/services/smtp_relay/Dockerfile",
+      "tags": [
+        "infrastructure"
+      ],
+      "complexity": "simple",
+      "summary": "Source file ops/services/smtp_relay/Dockerfile"
+    },
+    {
+      "id": "file:ops/stacks/cron/Dockerfile",
+      "type": "file",
+      "name": "Dockerfile",
+      "filePath": "ops/stacks/cron/Dockerfile",
+      "tags": [
+        "infrastructure"
+      ],
+      "complexity": "moderate",
+      "summary": "Source file ops/stacks/cron/Dockerfile"
+    },
+    {
+      "id": "file:ops/stacks/python/Dockerfile",
+      "type": "file",
+      "name": "Dockerfile",
+      "filePath": "ops/stacks/python/Dockerfile",
+      "tags": [
+        "infrastructure"
+      ],
+      "complexity": "moderate",
+      "summary": "Source file ops/stacks/python/Dockerfile"
+    },
+    {
+      "id": "file:.github/workflows/audit-runtime.yml",
+      "type": "file",
+      "name": "audit-runtime.yml",
+      "filePath": ".github/workflows/audit-runtime.yml",
+      "tags": [
+        "infrastructure"
+      ],
+      "complexity": "simple",
+      "summary": "Source file .github/workflows/audit-runtime.yml"
+    },
+    {
+      "id": "file:.github/workflows/ci.yml",
+      "type": "file",
+      "name": "ci.yml",
+      "filePath": ".github/workflows/ci.yml",
+      "tags": [
+        "infrastructure"
+      ],
+      "complexity": "complex",
+      "summary": "Source file .github/workflows/ci.yml"
+    },
+    {
+      "id": "file:.dockerignore",
+      "type": "file",
+      "name": ".dockerignore",
+      "filePath": ".dockerignore",
+      "tags": [
+        "infrastructure"
+      ],
+      "complexity": "moderate",
+      "summary": "Source file .dockerignore"
+    },
+    {
+      "id": "file:AI_ENTRYPOINT.md",
+      "type": "file",
+      "name": "AI_ENTRYPOINT.md",
+      "filePath": "AI_ENTRYPOINT.md",
+      "tags": [
+        "documentation"
+      ],
+      "complexity": "complex",
+      "summary": "Source file AI_ENTRYPOINT.md"
+    },
+    {
+      "id": "file:CLAUDE.md",
+      "type": "file",
+      "name": "CLAUDE.md",
+      "filePath": "CLAUDE.md",
+      "tags": [
+        "documentation"
+      ],
+      "complexity": "simple",
+      "summary": "Source file CLAUDE.md"
+    },
+    {
+      "id": "file:Makefile",
+      "type": "file",
+      "name": "Makefile",
+      "filePath": "Makefile",
+      "tags": [
+        "infrastructure"
+      ],
+      "complexity": "complex",
+      "summary": "Source file Makefile"
+    },
+    {
+      "id": "file:README.md",
+      "type": "file",
+      "name": "README.md",
+      "filePath": "README.md",
+      "tags": [
+        "documentation"
+      ],
+      "complexity": "complex",
+      "summary": "Source file README.md"
+    },
+    {
+      "id": "file:compose.dev.yml",
+      "type": "file",
+      "name": "compose.dev.yml",
+      "filePath": "compose.dev.yml",
+      "tags": [
+        "configuration"
+      ],
+      "complexity": "simple",
+      "summary": "Source file compose.dev.yml"
+    },
+    {
+      "id": "file:requirements.txt",
+      "type": "file",
+      "name": "requirements.txt",
+      "filePath": "requirements.txt",
+      "tags": [
+        "documentation"
+      ],
+      "complexity": "simple",
+      "summary": "Source file requirements.txt"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0000-trabajo-paralelo-fuera-git.md",
+      "type": "file",
+      "name": "ADR-0000-trabajo-paralelo-fuera-git.md",
+      "filePath": "docs/decisiones/ADR-0000-trabajo-paralelo-fuera-git.md",
+      "tags": [
+        "documentation"
+      ],
+      "complexity": "simple",
+      "summary": "Source file docs/decisiones/ADR-0000-trabajo-paralelo-fuera-git.md"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0001-verificar-imports-en-fase-migacion.md",
+      "type": "file",
+      "name": "ADR-0001-verificar-imports-en-fase-migacion.md",
+      "filePath": "docs/decisiones/ADR-0001-verificar-imports-en-fase-migacion.md",
+      "tags": [
+        "documentation"
+      ],
+      "complexity": "moderate",
+      "summary": "Source file docs/decisiones/ADR-0001-verificar-imports-en-fase-migacion.md"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0002-scripts-como-wrappers-operativos.md",
+      "type": "file",
+      "name": "ADR-0002-scripts-como-wrappers-operativos.md",
+      "filePath": "docs/decisiones/ADR-0002-scripts-como-wrappers-operativos.md",
+      "tags": [
+        "documentation"
+      ],
+      "complexity": "moderate",
+      "summary": "Source file docs/decisiones/ADR-0002-scripts-como-wrappers-operativos.md"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0003-desacoplar-configuracion-y-ejecución-en-runtime.md",
+      "type": "file",
+      "name": "ADR-0003-desacoplar-configuracion-y-ejecución-en-runtime.md",
+      "filePath": "docs/decisiones/ADR-0003-desacoplar-configuracion-y-ejecución-en-runtime.md",
+      "tags": [
+        "documentation"
+      ],
+      "complexity": "moderate",
+      "summary": "Source file docs/decisiones/ADR-0003-desacoplar-configuracion-y-ejecución-en-runtime.md"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0004-eliminar-version-en-docker-compose.md",
+      "type": "file",
+      "name": "ADR-0004-eliminar-version-en-docker-compose.md",
+      "filePath": "docs/decisiones/ADR-0004-eliminar-version-en-docker-compose.md",
+      "tags": [
+        "documentation"
+      ],
+      "complexity": "moderate",
+      "summary": "Source file docs/decisiones/ADR-0004-eliminar-version-en-docker-compose.md"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0005-desacoplar-runtime-y-lazy-imports-en-config.md",
+      "type": "file",
+      "name": "ADR-0005-desacoplar-runtime-y-lazy-imports-en-config.md",
+      "filePath": "docs/decisiones/ADR-0005-desacoplar-runtime-y-lazy-imports-en-config.md",
+      "tags": [
+        "documentation"
+      ],
+      "complexity": "simple",
+      "summary": "Source file docs/decisiones/ADR-0005-desacoplar-runtime-y-lazy-imports-en-config.md"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0006-base-image-governance.md",
+      "type": "file",
+      "name": "ADR-0006-base-image-governance.md",
+      "filePath": "docs/decisiones/ADR-0006-base-image-governance.md",
+      "tags": [
+        "documentation"
+      ],
+      "complexity": "moderate",
+      "summary": "Source file docs/decisiones/ADR-0006-base-image-governance.md"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0007-politica_entorno_vsc_wsl.md",
+      "type": "file",
+      "name": "ADR-0007-politica_entorno_vsc_wsl.md",
+      "filePath": "docs/decisiones/ADR-0007-politica_entorno_vsc_wsl.md",
+      "tags": [
+        "documentation"
+      ],
+      "complexity": "moderate",
+      "summary": "Source file docs/decisiones/ADR-0007-politica_entorno_vsc_wsl.md"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0008-servicios_micro-stack _vs_infra-stack.md",
+      "type": "file",
+      "name": "ADR-0008-servicios_micro-stack _vs_infra-stack.md",
+      "filePath": "docs/decisiones/ADR-0008-servicios_micro-stack _vs_infra-stack.md",
+      "tags": [
+        "documentation"
+      ],
+      "complexity": "moderate",
+      "summary": "Source file docs/decisiones/ADR-0008-servicios_micro-stack _vs_infra-stack.md"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0009-estrategia_backups_postgresql.md",
+      "type": "file",
+      "name": "ADR-0009-estrategia_backups_postgresql.md",
+      "filePath": "docs/decisiones/ADR-0009-estrategia_backups_postgresql.md",
+      "tags": [
+        "documentation"
+      ],
+      "complexity": "moderate",
+      "summary": "Source file docs/decisiones/ADR-0009-estrategia_backups_postgresql.md"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0010-arquitectura_de_runtime_cron.md",
+      "type": "file",
+      "name": "ADR-0010-arquitectura_de_runtime_cron.md",
+      "filePath": "docs/decisiones/ADR-0010-arquitectura_de_runtime_cron.md",
+      "tags": [
+        "documentation"
+      ],
+      "complexity": "moderate",
+      "summary": "Source file docs/decisiones/ADR-0010-arquitectura_de_runtime_cron.md"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0011-python_runtime_execution_model.md",
+      "type": "file",
+      "name": "ADR-0011-python_runtime_execution_model.md",
+      "filePath": "docs/decisiones/ADR-0011-python_runtime_execution_model.md",
+      "tags": [
+        "documentation"
+      ],
+      "complexity": "complex",
+      "summary": "Source file docs/decisiones/ADR-0011-python_runtime_execution_model.md"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0012-separation_of_host_cron_vs_monitoring _cron.md",
+      "type": "file",
+      "name": "ADR-0012-separation_of_host_cron_vs_monitoring _cron.md",
+      "filePath": "docs/decisiones/ADR-0012-separation_of_host_cron_vs_monitoring _cron.md",
+      "tags": [
+        "documentation"
+      ],
+      "complexity": "moderate",
+      "summary": "Source file docs/decisiones/ADR-0012-separation_of_host_cron_vs_monitoring _cron.md"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0013-credential_management_policy.md",
+      "type": "file",
+      "name": "ADR-0013-credential_management_policy.md",
+      "filePath": "docs/decisiones/ADR-0013-credential_management_policy.md",
+      "tags": [
+        "documentation"
+      ],
+      "complexity": "moderate",
+      "summary": "Source file docs/decisiones/ADR-0013-credential_management_policy.md"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0014-docker_port_exposure_policy.md",
+      "type": "file",
+      "name": "ADR-0014-docker_port_exposure_policy.md",
+      "filePath": "docs/decisiones/ADR-0014-docker_port_exposure_policy.md",
+      "tags": [
+        "documentation"
+      ],
+      "complexity": "moderate",
+      "summary": "Source file docs/decisiones/ADR-0014-docker_port_exposure_policy.md"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0015-docker_network _exposure_model.md",
+      "type": "file",
+      "name": "ADR-0015-docker_network _exposure_model.md",
+      "filePath": "docs/decisiones/ADR-0015-docker_network _exposure_model.md",
+      "tags": [
+        "documentation"
+      ],
+      "complexity": "moderate",
+      "summary": "Source file docs/decisiones/ADR-0015-docker_network _exposure_model.md"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0016-host_hardening_execution_policy.md",
+      "type": "file",
+      "name": "ADR-0016-host_hardening_execution_policy.md",
+      "filePath": "docs/decisiones/ADR-0016-host_hardening_execution_policy.md",
+      "tags": [
+        "documentation"
+      ],
+      "complexity": "moderate",
+      "summary": "Source file docs/decisiones/ADR-0016-host_hardening_execution_policy.md"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0017-resilience-model-at-docker-single-node.md",
+      "type": "file",
+      "name": "ADR-0017-resilience-model-at-docker-single-node.md",
+      "filePath": "docs/decisiones/ADR-0017-resilience-model-at-docker-single-node.md",
+      "tags": [
+        "documentation"
+      ],
+      "complexity": "moderate",
+      "summary": "Source file docs/decisiones/ADR-0017-resilience-model-at-docker-single-node.md"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0018-docker_security_runtime_and_resilience_requirements.md",
+      "type": "file",
+      "name": "ADR-0018-docker_security_runtime_and_resilience_requirements.md",
+      "filePath": "docs/decisiones/ADR-0018-docker_security_runtime_and_resilience_requirements.md",
+      "tags": [
+        "documentation"
+      ],
+      "complexity": "complex",
+      "summary": "Source file docs/decisiones/ADR-0018-docker_security_runtime_and_resilience_requirements.md"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0019-Resilience_Testing_Strategy.md",
+      "type": "file",
+      "name": "ADR-0019-Resilience_Testing_Strategy.md",
+      "filePath": "docs/decisiones/ADR-0019-Resilience_Testing_Strategy.md",
+      "tags": [
+        "documentation"
+      ],
+      "complexity": "moderate",
+      "summary": "Source file docs/decisiones/ADR-0019-Resilience_Testing_Strategy.md"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0020-Container_Execution_Model_Privilege_Strategy.md",
+      "type": "file",
+      "name": "ADR-0020-Container_Execution_Model_Privilege_Strategy.md",
+      "filePath": "docs/decisiones/ADR-0020-Container_Execution_Model_Privilege_Strategy.md",
+      "tags": [
+        "documentation"
+      ],
+      "complexity": "moderate",
+      "summary": "Source file docs/decisiones/ADR-0020-Container_Execution_Model_Privilege_Strategy.md"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0021-Network_Segmentation_Strategy.md",
+      "type": "file",
+      "name": "ADR-0021-Network_Segmentation_Strategy.md",
+      "filePath": "docs/decisiones/ADR-0021-Network_Segmentation_Strategy.md",
+      "tags": [
+        "documentation"
+      ],
+      "complexity": "moderate",
+      "summary": "Source file docs/decisiones/ADR-0021-Network_Segmentation_Strategy.md"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0022-Promtail_Privilege_Approval.md",
+      "type": "file",
+      "name": "ADR-0022-Promtail_Privilege_Approval.md",
+      "filePath": "docs/decisiones/ADR-0022-Promtail_Privilege_Approval.md",
+      "tags": [
+        "documentation"
+      ],
+      "complexity": "moderate",
+      "summary": "Source file docs/decisiones/ADR-0022-Promtail_Privilege_Approval.md"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0023-RestrictedNet_Egress_Control.md",
+      "type": "file",
+      "name": "ADR-0023-RestrictedNet_Egress_Control.md",
+      "filePath": "docs/decisiones/ADR-0023-RestrictedNet_Egress_Control.md",
+      "tags": [
+        "documentation"
+      ],
+      "complexity": "moderate",
+      "summary": "Source file docs/decisiones/ADR-0023-RestrictedNet_Egress_Control.md"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0024-Container_Privilege_Exception_Policy.md",
+      "type": "file",
+      "name": "ADR-0024-Container_Privilege_Exception_Policy.md",
+      "filePath": "docs/decisiones/ADR-0024-Container_Privilege_Exception_Policy.md",
+      "tags": [
+        "documentation"
+      ],
+      "complexity": "moderate",
+      "summary": "Source file docs/decisiones/ADR-0024-Container_Privilege_Exception_Policy.md"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0025-SMTP_endurecimiento.md",
+      "type": "file",
+      "name": "ADR-0025-SMTP_endurecimiento.md",
+      "filePath": "docs/decisiones/ADR-0025-SMTP_endurecimiento.md",
+      "tags": [
+        "documentation"
+      ],
+      "complexity": "complex",
+      "summary": "Source file docs/decisiones/ADR-0025-SMTP_endurecimiento.md"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0026-estrategia_testing_SMTP.md",
+      "type": "file",
+      "name": "ADR-0026-estrategia_testing_SMTP.md",
+      "filePath": "docs/decisiones/ADR-0026-estrategia_testing_SMTP.md",
+      "tags": [
+        "documentation"
+      ],
+      "complexity": "complex",
+      "summary": "Source file docs/decisiones/ADR-0026-estrategia_testing_SMTP.md"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0027-tipologia_contenedores_politica_healthchecks.md",
+      "type": "file",
+      "name": "ADR-0027-tipologia_contenedores_politica_healthchecks.md",
+      "filePath": "docs/decisiones/ADR-0027-tipologia_contenedores_politica_healthchecks.md",
+      "tags": [
+        "documentation"
+      ],
+      "complexity": "complex",
+      "summary": "Source file docs/decisiones/ADR-0027-tipologia_contenedores_politica_healthchecks.md"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0028-politica_reproducibilidad_endurecimiento_validaciones.md",
+      "type": "file",
+      "name": "ADR-0028-politica_reproducibilidad_endurecimiento_validaciones.md",
+      "filePath": "docs/decisiones/ADR-0028-politica_reproducibilidad_endurecimiento_validaciones.md",
+      "tags": [
+        "documentation"
+      ],
+      "complexity": "complex",
+      "summary": "Source file docs/decisiones/ADR-0028-politica_reproducibilidad_endurecimiento_validaciones.md"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0029-structured_compose_policy_audit.md",
+      "type": "file",
+      "name": "ADR-0029-structured_compose_policy_audit.md",
+      "filePath": "docs/decisiones/ADR-0029-structured_compose_policy_audit.md",
+      "tags": [
+        "documentation"
+      ],
+      "complexity": "complex",
+      "summary": "Source file docs/decisiones/ADR-0029-structured_compose_policy_audit.md"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0030-auditoría_runtime_HostConfig_y_visibilidad_privilegios.md",
+      "type": "file",
+      "name": "ADR-0030-auditoría_runtime_HostConfig_y_visibilidad_privilegios.md",
+      "filePath": "docs/decisiones/ADR-0030-auditoría_runtime_HostConfig_y_visibilidad_privilegios.md",
+      "tags": [
+        "documentation"
+      ],
+      "complexity": "moderate",
+      "summary": "Source file docs/decisiones/ADR-0030-auditoría_runtime_HostConfig_y_visibilidad_privilegios.md"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0031-gobernanza_runtime_y_clasificacion_dependencias_host.md",
+      "type": "file",
+      "name": "ADR-0031-gobernanza_runtime_y_clasificacion_dependencias_host.md",
+      "filePath": "docs/decisiones/ADR-0031-gobernanza_runtime_y_clasificacion_dependencias_host.md",
+      "tags": [
+        "documentation"
+      ],
+      "complexity": "complex",
+      "summary": "Source file docs/decisiones/ADR-0031-gobernanza_runtime_y_clasificacion_dependencias_host.md"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0032-endurecimiento_secretos_PostgreSQL_y_validaciones_CI.md",
+      "type": "file",
+      "name": "ADR-0032-endurecimiento_secretos_PostgreSQL_y_validaciones_CI.md",
+      "filePath": "docs/decisiones/ADR-0032-endurecimiento_secretos_PostgreSQL_y_validaciones_CI.md",
+      "tags": [
+        "documentation"
+      ],
+      "complexity": "moderate",
+      "summary": "Source file docs/decisiones/ADR-0032-endurecimiento_secretos_PostgreSQL_y_validaciones_CI.md"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0033-Taxonomia_ADRs.md",
+      "type": "file",
+      "name": "ADR-0033-Taxonomia_ADRs.md",
+      "filePath": "docs/decisiones/ADR-0033-Taxonomia_ADRs.md",
+      "tags": [
+        "documentation"
+      ],
+      "complexity": "complex",
+      "summary": "Source file docs/decisiones/ADR-0033-Taxonomia_ADRs.md"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0600-estrategia-despliegue.md",
+      "type": "file",
+      "name": "ADR-0600-estrategia-despliegue.md",
+      "filePath": "docs/decisiones/ADR-0600-estrategia-despliegue.md",
+      "tags": [
+        "documentation"
+      ],
+      "complexity": "simple",
+      "summary": "Source file docs/decisiones/ADR-0600-estrategia-despliegue.md"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0601-desacoplamiento-modulo-commons.md",
+      "type": "file",
+      "name": "ADR-0601-desacoplamiento-modulo-commons.md",
+      "filePath": "docs/decisiones/ADR-0601-desacoplamiento-modulo-commons.md",
+      "tags": [
+        "documentation"
+      ],
+      "complexity": "simple",
+      "summary": "Source file docs/decisiones/ADR-0601-desacoplamiento-modulo-commons.md"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0602-comunicacion-interservicios.md",
+      "type": "file",
+      "name": "ADR-0602-comunicacion-interservicios.md",
+      "filePath": "docs/decisiones/ADR-0602-comunicacion-interservicios.md",
+      "tags": [
+        "documentation"
+      ],
+      "complexity": "simple",
+      "summary": "Source file docs/decisiones/ADR-0602-comunicacion-interservicios.md"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0603-gestion-bbdd.md",
+      "type": "file",
+      "name": "ADR-0603-gestion-bbdd.md",
+      "filePath": "docs/decisiones/ADR-0603-gestion-bbdd.md",
+      "tags": [
+        "documentation"
+      ],
+      "complexity": "simple",
+      "summary": "Source file docs/decisiones/ADR-0603-gestion-bbdd.md"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0801-estrategia-empaquetado-despliegue.md",
+      "type": "file",
+      "name": "ADR-0801-estrategia-empaquetado-despliegue.md",
+      "filePath": "docs/decisiones/ADR-0801-estrategia-empaquetado-despliegue.md",
+      "tags": [
+        "documentation"
+      ],
+      "complexity": "simple",
+      "summary": "Source file docs/decisiones/ADR-0801-estrategia-empaquetado-despliegue.md"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0802-integracion-front-back.md",
+      "type": "file",
+      "name": "ADR-0802-integracion-front-back.md",
+      "filePath": "docs/decisiones/ADR-0802-integracion-front-back.md",
+      "tags": [
+        "documentation"
+      ],
+      "complexity": "simple",
+      "summary": "Source file docs/decisiones/ADR-0802-integracion-front-back.md"
+    },
+    {
+      "id": "file:ops/README_runtime_containers.md",
+      "type": "file",
+      "name": "README_runtime_containers.md",
+      "filePath": "ops/README_runtime_containers.md",
+      "tags": [
+        "documentation"
+      ],
+      "complexity": "simple",
+      "summary": "Source file ops/README_runtime_containers.md"
+    },
+    {
+      "id": "file:ops/runtime_containers.sh",
+      "type": "file",
+      "name": "runtime_containers.sh",
+      "filePath": "ops/runtime_containers.sh",
+      "tags": [
+        "script"
+      ],
+      "complexity": "moderate",
+      "summary": "Source file ops/runtime_containers.sh"
+    },
+    {
+      "id": "file:ops/runtime_containers.yml",
+      "type": "file",
+      "name": "runtime_containers.yml",
+      "filePath": "ops/runtime_containers.yml",
+      "tags": [
+        "configuration"
+      ],
+      "complexity": "simple",
+      "summary": "Source file ops/runtime_containers.yml"
+    },
+    {
+      "id": "file:ops/audit/audit_repo_host.sh",
+      "type": "file",
+      "name": "audit_repo_host.sh",
+      "filePath": "ops/audit/audit_repo_host.sh",
+      "tags": [
+        "script"
+      ],
+      "complexity": "complex",
+      "summary": "Source file ops/audit/audit_repo_host.sh"
+    },
+    {
+      "id": "file:ops/audit/check_hostconfig.sh",
+      "type": "file",
+      "name": "check_hostconfig.sh",
+      "filePath": "ops/audit/check_hostconfig.sh",
+      "tags": [
+        "script"
+      ],
+      "complexity": "complex",
+      "summary": "Source file ops/audit/check_hostconfig.sh"
+    },
+    {
+      "id": "file:ops/audit/validate_dockerfiles.sh",
+      "type": "file",
+      "name": "validate_dockerfiles.sh",
+      "filePath": "ops/audit/validate_dockerfiles.sh",
+      "tags": [
+        "script"
+      ],
+      "complexity": "moderate",
+      "summary": "Source file ops/audit/validate_dockerfiles.sh"
+    },
+    {
+      "id": "file:ops/audit/validate_reproducibility.sh",
+      "type": "file",
+      "name": "validate_reproducibility.sh",
+      "filePath": "ops/audit/validate_reproducibility.sh",
+      "tags": [
+        "script"
+      ],
+      "complexity": "moderate",
+      "summary": "Source file ops/audit/validate_reproducibility.sh"
+    },
+    {
+      "id": "file:ops/deployment/configure_docker_limits.sh",
+      "type": "file",
+      "name": "configure_docker_limits.sh",
+      "filePath": "ops/deployment/configure_docker_limits.sh",
+      "tags": [
+        "script"
+      ],
+      "complexity": "moderate",
+      "summary": "Source file ops/deployment/configure_docker_limits.sh"
+    },
+    {
+      "id": "file:ops/deployment/docker_resources.sh",
+      "type": "file",
+      "name": "docker_resources.sh",
+      "filePath": "ops/deployment/docker_resources.sh",
+      "tags": [
+        "script"
+      ],
+      "complexity": "moderate",
+      "summary": "Source file ops/deployment/docker_resources.sh"
+    },
+    {
+      "id": "file:ops/deployment/setup_symlinks.sh",
+      "type": "file",
+      "name": "setup_symlinks.sh",
+      "filePath": "ops/deployment/setup_symlinks.sh",
+      "tags": [
+        "script"
+      ],
+      "complexity": "simple",
+      "summary": "Source file ops/deployment/setup_symlinks.sh"
+    },
+    {
+      "id": "file:ops/services/postgres/.env.template",
+      "type": "file",
+      "name": ".env.template",
+      "filePath": "ops/services/postgres/.env.template",
+      "tags": [
+        "configuration"
+      ],
+      "complexity": "simple",
+      "summary": "Source file ops/services/postgres/.env.template"
+    },
+    {
+      "id": "file:ops/services/postgres/Makefile",
+      "type": "file",
+      "name": "Makefile",
+      "filePath": "ops/services/postgres/Makefile",
+      "tags": [
+        "infrastructure"
+      ],
+      "complexity": "moderate",
+      "summary": "Source file ops/services/postgres/Makefile"
+    },
+    {
+      "id": "file:ops/services/postgres/README.md",
+      "type": "file",
+      "name": "README.md",
+      "filePath": "ops/services/postgres/README.md",
+      "tags": [
+        "documentation"
+      ],
+      "complexity": "moderate",
+      "summary": "Source file ops/services/postgres/README.md"
+    },
+    {
+      "id": "file:ops/services/postgres/compose.yml",
+      "type": "file",
+      "name": "compose.yml",
+      "filePath": "ops/services/postgres/compose.yml",
+      "tags": [
+        "infrastructure"
+      ],
+      "complexity": "simple",
+      "summary": "Source file ops/services/postgres/compose.yml"
+    },
+    {
+      "id": "file:ops/services/smtp_relay/.env.template",
+      "type": "file",
+      "name": ".env.template",
+      "filePath": "ops/services/smtp_relay/.env.template",
+      "tags": [
+        "configuration"
+      ],
+      "complexity": "simple",
+      "summary": "Source file ops/services/smtp_relay/.env.template"
+    },
+    {
+      "id": "file:ops/services/smtp_relay/Makefile",
+      "type": "file",
+      "name": "Makefile",
+      "filePath": "ops/services/smtp_relay/Makefile",
+      "tags": [
+        "infrastructure"
+      ],
+      "complexity": "moderate",
+      "summary": "Source file ops/services/smtp_relay/Makefile"
+    },
+    {
+      "id": "file:ops/services/smtp_relay/README.md",
+      "type": "file",
+      "name": "README.md",
+      "filePath": "ops/services/smtp_relay/README.md",
+      "tags": [
+        "documentation"
+      ],
+      "complexity": "simple",
+      "summary": "Source file ops/services/smtp_relay/README.md"
+    },
+    {
+      "id": "file:ops/services/smtp_relay/compose.yml",
+      "type": "file",
+      "name": "compose.yml",
+      "filePath": "ops/services/smtp_relay/compose.yml",
+      "tags": [
+        "infrastructure"
+      ],
+      "complexity": "moderate",
+      "summary": "Source file ops/services/smtp_relay/compose.yml"
+    },
+    {
+      "id": "file:ops/stacks/observability/config/datasource.yml",
+      "type": "file",
+      "name": "datasource.yml",
+      "filePath": "ops/stacks/observability/config/datasource.yml",
+      "tags": [
+        "configuration"
+      ],
+      "complexity": "simple",
+      "summary": "Source file ops/stacks/observability/config/datasource.yml"
+    },
+    {
+      "id": "file:ops/stacks/observability/config/loki-config.yml",
+      "type": "file",
+      "name": "loki-config.yml",
+      "filePath": "ops/stacks/observability/config/loki-config.yml",
+      "tags": [
+        "configuration"
+      ],
+      "complexity": "moderate",
+      "summary": "Source file ops/stacks/observability/config/loki-config.yml"
+    },
+    {
+      "id": "file:ops/stacks/observability/config/promtail-config.yml",
+      "type": "file",
+      "name": "promtail-config.yml",
+      "filePath": "ops/stacks/observability/config/promtail-config.yml",
+      "tags": [
+        "configuration"
+      ],
+      "complexity": "moderate",
+      "summary": "Source file ops/stacks/observability/config/promtail-config.yml"
+    },
+    {
+      "id": "file:scripts/apply_ssh_ratelimit.sh",
+      "type": "file",
+      "name": "apply_ssh_ratelimit.sh",
+      "filePath": "scripts/apply_ssh_ratelimit.sh",
+      "tags": [
+        "script"
+      ],
+      "complexity": "simple",
+      "summary": "Source file scripts/apply_ssh_ratelimit.sh"
+    },
+    {
+      "id": "file:scripts/auditoria_binarios.sh",
+      "type": "file",
+      "name": "auditoria_binarios.sh",
+      "filePath": "scripts/auditoria_binarios.sh",
+      "tags": [
+        "script"
+      ],
+      "complexity": "simple",
+      "summary": "Source file scripts/auditoria_binarios.sh"
+    },
+    {
+      "id": "file:scripts/auditoria_requirements.sh",
+      "type": "file",
+      "name": "auditoria_requirements.sh",
+      "filePath": "scripts/auditoria_requirements.sh",
+      "tags": [
+        "script"
+      ],
+      "complexity": "moderate",
+      "summary": "Source file scripts/auditoria_requirements.sh"
+    },
+    {
+      "id": "file:scripts/cleanup_docker.sh",
+      "type": "file",
+      "name": "cleanup_docker.sh",
+      "filePath": "scripts/cleanup_docker.sh",
+      "tags": [
+        "script"
+      ],
+      "complexity": "moderate",
+      "summary": "Source file scripts/cleanup_docker.sh"
+    },
+    {
+      "id": "file:scripts/wait_for_health.sh",
+      "type": "file",
+      "name": "wait_for_health.sh",
+      "filePath": "scripts/wait_for_health.sh",
+      "tags": [
+        "script"
+      ],
+      "complexity": "moderate",
+      "summary": "Source file scripts/wait_for_health.sh"
+    },
+    {
+      "id": "file:__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "__init__.py",
+      "summary": "Source file __init__.py",
+      "tags": [
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:.claudecodeignore",
+      "type": "file",
+      "name": ".claudecodeignore",
+      "filePath": ".claudecodeignore",
+      "summary": "Source file .claudecodeignore",
+      "tags": [
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:.gitattributes",
+      "type": "file",
+      "name": ".gitattributes",
+      "filePath": ".gitattributes",
+      "summary": "Source file .gitattributes",
+      "tags": [
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:.github/copilot-instructions.md",
+      "type": "file",
+      "name": "copilot-instructions.md",
+      "filePath": ".github/copilot-instructions.md",
+      "tags": [
+        "documentation"
+      ],
+      "complexity": "moderate",
+      "summary": "Source file .github/copilot-instructions.md"
+    },
+    {
+      "id": "file:docs/arquitectura/cron_host.txt",
+      "type": "file",
+      "name": "cron_host.txt",
+      "filePath": "docs/arquitectura/cron_host.txt",
+      "tags": [
+        "documentation"
+      ],
+      "complexity": "simple",
+      "summary": "Source file docs/arquitectura/cron_host.txt"
+    },
+    {
+      "id": "file:docs/arquitectura/README.md",
+      "type": "file",
+      "name": "README.md",
+      "filePath": "docs/arquitectura/README.md",
+      "tags": [
+        "documentation"
+      ],
+      "complexity": "moderate",
+      "summary": "Source file docs/arquitectura/README.md"
+    },
+    {
+      "id": "file:docs/decisiones/adr_template.md",
+      "type": "file",
+      "name": "adr_template.md",
+      "filePath": "docs/decisiones/adr_template.md",
+      "tags": [
+        "documentation"
+      ],
+      "complexity": "moderate",
+      "summary": "Source file docs/decisiones/adr_template.md"
+    },
+    {
+      "id": "file:docs/decisiones/ADR-0803-seguridad-secretos.md",
+      "type": "file",
+      "name": "ADR-0803-seguridad-secretos.md",
+      "filePath": "docs/decisiones/ADR-0803-seguridad-secretos.md",
+      "tags": [
+        "documentation"
+      ],
+      "complexity": "simple",
+      "summary": "Source file docs/decisiones/ADR-0803-seguridad-secretos.md"
+    },
+    {
+      "id": "file:docs/Project_Definition/Servidor_DigitalOcean_Definicion_Proyecto.txt",
+      "type": "file",
+      "name": "Servidor_DigitalOcean_Definicion_Proyecto.txt",
+      "filePath": "docs/Project_Definition/Servidor_DigitalOcean_Definicion_Proyecto.txt",
+      "tags": [
+        "documentation"
+      ],
+      "complexity": "complex",
+      "summary": "Source file docs/Project_Definition/Servidor_DigitalOcean_Definicion_Proyecto.txt"
+    },
+    {
+      "id": "file:docs/Project_Implementation/Servidor_DigitalOcean_Implementacion.txt",
+      "type": "file",
+      "name": "Servidor_DigitalOcean_Implementacion.txt",
+      "filePath": "docs/Project_Implementation/Servidor_DigitalOcean_Implementacion.txt",
+      "tags": [
+        "documentation"
+      ],
+      "complexity": "complex",
+      "summary": "Source file docs/Project_Implementation/Servidor_DigitalOcean_Implementacion.txt"
+    },
+    {
+      "id": "file:ops/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "ops/__init__.py",
+      "summary": "Source file ops/__init__.py",
+      "tags": [
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:ops/audit/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "ops/audit/__init__.py",
+      "summary": "Source file ops/audit/__init__.py",
+      "tags": [
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:ops/audit/compose_policy_checks.py",
+      "type": "file",
+      "name": "compose_policy_checks.py",
+      "filePath": "ops/audit/compose_policy_checks.py",
+      "summary": "Source file ops/audit/compose_policy_checks.py",
+      "tags": [
+        "code"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:ops/audit/compose_policy_checks.py:ok",
+      "type": "function",
+      "name": "ok",
+      "filePath": "ops/audit/compose_policy_checks.py",
+      "summary": "Function ok in ops/audit/compose_policy_checks.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:ops/audit/compose_policy_checks.py:warn",
+      "type": "function",
+      "name": "warn",
+      "filePath": "ops/audit/compose_policy_checks.py",
+      "summary": "Function warn in ops/audit/compose_policy_checks.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:ops/audit/compose_policy_checks.py:fail",
+      "type": "function",
+      "name": "fail",
+      "filePath": "ops/audit/compose_policy_checks.py",
+      "summary": "Function fail in ops/audit/compose_policy_checks.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:ops/audit/compose_policy_checks.py:load_compose_via_docker",
+      "type": "function",
+      "name": "load_compose_via_docker",
+      "filePath": "ops/audit/compose_policy_checks.py",
+      "summary": "Function load_compose_via_docker in ops/audit/compose_policy_checks.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:ops/audit/compose_policy_checks.py:check_docker_runtime",
+      "type": "function",
+      "name": "check_docker_runtime",
+      "filePath": "ops/audit/compose_policy_checks.py",
+      "summary": "Function check_docker_runtime in ops/audit/compose_policy_checks.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:ops/audit/compose_policy_checks.py:find_compose_files",
+      "type": "function",
+      "name": "find_compose_files",
+      "filePath": "ops/audit/compose_policy_checks.py",
+      "summary": "Function find_compose_files in ops/audit/compose_policy_checks.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:ops/audit/compose_policy_checks.py:load_compose_from_files",
+      "type": "function",
+      "name": "load_compose_from_files",
+      "filePath": "ops/audit/compose_policy_checks.py",
+      "summary": "Function load_compose_from_files in ops/audit/compose_policy_checks.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:ops/audit/compose_policy_checks.py:get_compose_dict",
+      "type": "function",
+      "name": "get_compose_dict",
+      "filePath": "ops/audit/compose_policy_checks.py",
+      "summary": "Function get_compose_dict in ops/audit/compose_policy_checks.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:ops/audit/compose_policy_checks.py:_service_ports",
+      "type": "function",
+      "name": "_service_ports",
+      "filePath": "ops/audit/compose_policy_checks.py",
+      "summary": "Function _service_ports in ops/audit/compose_policy_checks.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:ops/audit/compose_policy_checks.py:detect_published_ports",
+      "type": "function",
+      "name": "detect_published_ports",
+      "filePath": "ops/audit/compose_policy_checks.py",
+      "summary": "Function detect_published_ports in ops/audit/compose_policy_checks.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:ops/audit/compose_policy_checks.py:detect_docker_sock",
+      "type": "function",
+      "name": "detect_docker_sock",
+      "filePath": "ops/audit/compose_policy_checks.py",
+      "summary": "Function detect_docker_sock in ops/audit/compose_policy_checks.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:ops/audit/compose_policy_checks.py:detect_images_latest_and_no_digest",
+      "type": "function",
+      "name": "detect_images_latest_and_no_digest",
+      "filePath": "ops/audit/compose_policy_checks.py",
+      "summary": "Function detect_images_latest_and_no_digest in ops/audit/compose_policy_checks.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:ops/audit/compose_policy_checks.py:detect_privileged",
+      "type": "function",
+      "name": "detect_privileged",
+      "filePath": "ops/audit/compose_policy_checks.py",
+      "summary": "Function detect_privileged in ops/audit/compose_policy_checks.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:ops/audit/compose_policy_checks.py:detect_mounts_rw_sensitive",
+      "type": "function",
+      "name": "detect_mounts_rw_sensitive",
+      "filePath": "ops/audit/compose_policy_checks.py",
+      "summary": "Function detect_mounts_rw_sensitive in ops/audit/compose_policy_checks.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:ops/audit/compose_policy_checks.py:detect_cap_add",
+      "type": "function",
+      "name": "detect_cap_add",
+      "filePath": "ops/audit/compose_policy_checks.py",
+      "summary": "Function detect_cap_add in ops/audit/compose_policy_checks.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:ops/audit/compose_policy_checks.py:detect_runtime_hostconfig",
+      "type": "function",
+      "name": "detect_runtime_hostconfig",
+      "filePath": "ops/audit/compose_policy_checks.py",
+      "summary": "Function detect_runtime_hostconfig in ops/audit/compose_policy_checks.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:ops/audit/compose_policy_checks.py:detect_read_only_false",
+      "type": "function",
+      "name": "detect_read_only_false",
+      "filePath": "ops/audit/compose_policy_checks.py",
+      "summary": "Function detect_read_only_false in ops/audit/compose_policy_checks.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:ops/audit/compose_policy_checks.py:run_all_checks",
+      "type": "function",
+      "name": "run_all_checks",
+      "filePath": "ops/audit/compose_policy_checks.py",
+      "summary": "Function run_all_checks in ops/audit/compose_policy_checks.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:ops/audit/compose_policy_checks.py:pretty_print",
+      "type": "function",
+      "name": "pretty_print",
+      "filePath": "ops/audit/compose_policy_checks.py",
+      "summary": "Function pretty_print in ops/audit/compose_policy_checks.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:ops/audit/compose_policy_checks.py:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "ops/audit/compose_policy_checks.py",
+      "summary": "Function main in ops/audit/compose_policy_checks.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:ops/audit/parse_compose_json.py",
+      "type": "file",
+      "name": "parse_compose_json.py",
+      "filePath": "ops/audit/parse_compose_json.py",
+      "summary": "Source file ops/audit/parse_compose_json.py",
+      "tags": [
+        "code"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:ops/audit/parse_compose_json.py:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "ops/audit/parse_compose_json.py",
+      "summary": "Function main in ops/audit/parse_compose_json.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:ops/audit/runtime_governance_audit.py",
+      "type": "file",
+      "name": "runtime_governance_audit.py",
+      "filePath": "ops/audit/runtime_governance_audit.py",
+      "summary": "Source file ops/audit/runtime_governance_audit.py",
+      "tags": [
+        "code"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:ops/audit/runtime_governance_audit.py:run",
+      "type": "function",
+      "name": "run",
+      "filePath": "ops/audit/runtime_governance_audit.py",
+      "summary": "Function run in ops/audit/runtime_governance_audit.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:ops/audit/runtime_governance_audit.py:discover_compose_files",
+      "type": "function",
+      "name": "discover_compose_files",
+      "filePath": "ops/audit/runtime_governance_audit.py",
+      "summary": "Function discover_compose_files in ops/audit/runtime_governance_audit.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:ops/audit/runtime_governance_audit.py:load_compose_inventory",
+      "type": "function",
+      "name": "load_compose_inventory",
+      "filePath": "ops/audit/runtime_governance_audit.py",
+      "summary": "Function load_compose_inventory in ops/audit/runtime_governance_audit.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:ops/audit/runtime_governance_audit.py:list_containers",
+      "type": "function",
+      "name": "list_containers",
+      "filePath": "ops/audit/runtime_governance_audit.py",
+      "summary": "Function list_containers in ops/audit/runtime_governance_audit.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:ops/audit/runtime_governance_audit.py:inspect_container",
+      "type": "function",
+      "name": "inspect_container",
+      "filePath": "ops/audit/runtime_governance_audit.py",
+      "summary": "Function inspect_container in ops/audit/runtime_governance_audit.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:ops/audit/runtime_governance_audit.py:correlate",
+      "type": "function",
+      "name": "correlate",
+      "filePath": "ops/audit/runtime_governance_audit.py",
+      "summary": "Function correlate in ops/audit/runtime_governance_audit.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:ops/audit/runtime_governance_audit.py:analyze_container",
+      "type": "function",
+      "name": "analyze_container",
+      "filePath": "ops/audit/runtime_governance_audit.py",
+      "summary": "Function analyze_container in ops/audit/runtime_governance_audit.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:ops/audit/runtime_governance_audit.py:generate_report",
+      "type": "function",
+      "name": "generate_report",
+      "filePath": "ops/audit/runtime_governance_audit.py",
+      "summary": "Function generate_report in ops/audit/runtime_governance_audit.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:ops/audit/runtime_governance_audit.py:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "ops/audit/runtime_governance_audit.py",
+      "summary": "Function main in ops/audit/runtime_governance_audit.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:ops/services/postgres/scripts/backup_restore.sh",
+      "type": "file",
+      "name": "backup_restore.sh",
+      "filePath": "ops/services/postgres/scripts/backup_restore.sh",
+      "tags": [
+        "script"
+      ],
+      "complexity": "simple",
+      "summary": "Source file ops/services/postgres/scripts/backup_restore.sh"
+    },
+    {
+      "id": "file:ops/services/postgres/scripts/check_postgres_secret.sh",
+      "type": "file",
+      "name": "check_postgres_secret.sh",
+      "filePath": "ops/services/postgres/scripts/check_postgres_secret.sh",
+      "tags": [
+        "script"
+      ],
+      "complexity": "moderate",
+      "summary": "Source file ops/services/postgres/scripts/check_postgres_secret.sh"
+    },
+    {
+      "id": "file:ops/services/smtp_relay/config/patch-postfix.sh",
+      "type": "file",
+      "name": "patch-postfix.sh",
+      "filePath": "ops/services/smtp_relay/config/patch-postfix.sh",
+      "tags": [
+        "script"
+      ],
+      "complexity": "moderate",
+      "summary": "Source file ops/services/smtp_relay/config/patch-postfix.sh"
+    },
+    {
+      "id": "file:ops/stacks/cron/compose.yml",
+      "type": "file",
+      "name": "compose.yml",
+      "filePath": "ops/stacks/cron/compose.yml",
+      "tags": [
+        "infrastructure"
+      ],
+      "complexity": "moderate",
+      "summary": "Source file ops/stacks/cron/compose.yml"
+    },
+    {
+      "id": "file:ops/stacks/cron/docker-entrypoint.sh",
+      "type": "file",
+      "name": "docker-entrypoint.sh",
+      "filePath": "ops/stacks/cron/docker-entrypoint.sh",
+      "tags": [
+        "script"
+      ],
+      "complexity": "simple",
+      "summary": "Source file ops/stacks/cron/docker-entrypoint.sh"
+    },
+    {
+      "id": "file:ops/stacks/cron/monitoring.cron",
+      "type": "file",
+      "name": "monitoring.cron",
+      "filePath": "ops/stacks/cron/monitoring.cron",
+      "summary": "Source file ops/stacks/cron/monitoring.cron",
+      "tags": [
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:ops/stacks/observability/.env.template",
+      "type": "file",
+      "name": ".env.template",
+      "filePath": "ops/stacks/observability/.env.template",
+      "tags": [
+        "configuration"
+      ],
+      "complexity": "simple",
+      "summary": "Source file ops/stacks/observability/.env.template"
+    },
+    {
+      "id": "file:ops/stacks/observability/compose.yml",
+      "type": "file",
+      "name": "compose.yml",
+      "filePath": "ops/stacks/observability/compose.yml",
+      "tags": [
+        "infrastructure"
+      ],
+      "complexity": "moderate",
+      "summary": "Source file ops/stacks/observability/compose.yml"
+    },
+    {
+      "id": "file:ops/stacks/python/compose.yml",
+      "type": "file",
+      "name": "compose.yml",
+      "filePath": "ops/stacks/python/compose.yml",
+      "tags": [
+        "infrastructure"
+      ],
+      "complexity": "moderate",
+      "summary": "Source file ops/stacks/python/compose.yml"
+    },
+    {
+      "id": "file:ops/stacks/python/docker-entrypoint.sh",
+      "type": "file",
+      "name": "docker-entrypoint.sh",
+      "filePath": "ops/stacks/python/docker-entrypoint.sh",
+      "tags": [
+        "script"
+      ],
+      "complexity": "moderate",
+      "summary": "Source file ops/stacks/python/docker-entrypoint.sh"
+    },
+    {
+      "id": "file:scripts/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "scripts/__init__.py",
+      "summary": "Source file scripts/__init__.py",
+      "tags": [
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:scripts/check_postgres_ready.py",
+      "type": "file",
+      "name": "check_postgres_ready.py",
+      "filePath": "scripts/check_postgres_ready.py",
+      "summary": "Source file scripts/check_postgres_ready.py",
+      "tags": [
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:scripts/check_postgres_ready.py:check",
+      "type": "function",
+      "name": "check",
+      "filePath": "scripts/check_postgres_ready.py",
+      "summary": "Function check in scripts/check_postgres_ready.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:scripts/check_postgres_ready.py:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "scripts/check_postgres_ready.py",
+      "summary": "Function main in scripts/check_postgres_ready.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:scripts/healthcheck.py",
+      "type": "file",
+      "name": "healthcheck.py",
+      "filePath": "scripts/healthcheck.py",
+      "summary": "Source file scripts/healthcheck.py",
+      "tags": [
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:scripts/test_mail.py",
+      "type": "file",
+      "name": "test_mail.py",
+      "filePath": "scripts/test_mail.py",
+      "summary": "Source file scripts/test_mail.py",
+      "tags": [
+        "code"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/log_ingestor/__init__.py",
+      "type": "file",
+      "name": "__init__.py",
+      "filePath": "src/log_ingestor/__init__.py",
+      "summary": "Source file src/log_ingestor/__init__.py",
+      "tags": [
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/monitoring/common/secrets.py",
+      "type": "file",
+      "name": "secrets.py",
+      "filePath": "src/monitoring/common/secrets.py",
+      "summary": "Source file src/monitoring/common/secrets.py",
+      "tags": [
+        "code"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/monitoring/common/secrets.py:load_secret",
+      "type": "function",
+      "name": "load_secret",
+      "filePath": "src/monitoring/common/secrets.py",
+      "summary": "Function load_secret in src/monitoring/common/secrets.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/monitoring/common/utils.py",
+      "type": "file",
+      "name": "utils.py",
+      "filePath": "src/monitoring/common/utils.py",
+      "summary": "Source file src/monitoring/common/utils.py",
+      "tags": [
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/monitoring/common/utils.py:log_info",
+      "type": "function",
+      "name": "log_info",
+      "filePath": "src/monitoring/common/utils.py",
+      "summary": "Function log_info in src/monitoring/common/utils.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tests/integration/test_init_config_modes.py",
+      "type": "file",
+      "name": "test_init_config_modes.py",
+      "filePath": "tests/integration/test_init_config_modes.py",
+      "summary": "Source file tests/integration/test_init_config_modes.py",
+      "tags": [
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tests/integration/test_init_config_modes.py:test_init_config_modes_ci",
+      "type": "function",
+      "name": "test_init_config_modes_ci",
+      "filePath": "tests/integration/test_init_config_modes.py",
+      "summary": "Function test_init_config_modes_ci in tests/integration/test_init_config_modes.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tests/runtime_containers_test.sh",
+      "type": "file",
+      "name": "runtime_containers_test.sh",
+      "filePath": "tests/runtime_containers_test.sh",
+      "tags": [
+        "script"
+      ],
+      "complexity": "simple",
+      "summary": "Source file tests/runtime_containers_test.sh"
+    },
+    {
+      "id": "file:tests/unit/test_compose_policy.py",
+      "type": "file",
+      "name": "test_compose_policy.py",
+      "filePath": "tests/unit/test_compose_policy.py",
+      "summary": "Source file tests/unit/test_compose_policy.py",
+      "tags": [
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tests/unit/test_compose_policy.py:load_yaml",
+      "type": "function",
+      "name": "load_yaml",
+      "filePath": "tests/unit/test_compose_policy.py",
+      "summary": "Function load_yaml in tests/unit/test_compose_policy.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tests/unit/test_compose_policy.py:test_auth_mode_requires_secrets_mount",
+      "type": "function",
+      "name": "test_auth_mode_requires_secrets_mount",
+      "filePath": "tests/unit/test_compose_policy.py",
+      "summary": "Function test_auth_mode_requires_secrets_mount in tests/unit/test_compose_policy.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tests/unit/test_compose_policy.py:test_relay_mode_does_not_require_secrets",
+      "type": "function",
+      "name": "test_relay_mode_does_not_require_secrets",
+      "filePath": "tests/unit/test_compose_policy.py",
+      "summary": "Function test_relay_mode_does_not_require_secrets in tests/unit/test_compose_policy.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tests/unit/test_config.py",
+      "type": "file",
+      "name": "test_config.py",
+      "filePath": "tests/unit/test_config.py",
+      "summary": "Source file tests/unit/test_config.py",
+      "tags": [
+        "code"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:tests/unit/test_config.py:test_relay_mode_no_secrets",
+      "type": "function",
+      "name": "test_relay_mode_no_secrets",
+      "filePath": "tests/unit/test_config.py",
+      "summary": "Function test_relay_mode_no_secrets in tests/unit/test_config.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:tests/unit/test_config.py:test_auth_mode_with_files",
+      "type": "function",
+      "name": "test_auth_mode_with_files",
+      "filePath": "tests/unit/test_config.py",
+      "summary": "Function test_auth_mode_with_files in tests/unit/test_config.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:tests/unit/test_config.py:test_auth_mode_missing_raises",
+      "type": "function",
+      "name": "test_auth_mode_missing_raises",
+      "filePath": "tests/unit/test_config.py",
+      "summary": "Function test_auth_mode_missing_raises in tests/unit/test_config.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:tests/unit/test_init_config_placement.py",
+      "type": "file",
+      "name": "test_init_config_placement.py",
+      "filePath": "tests/unit/test_init_config_placement.py",
+      "summary": "Source file tests/unit/test_init_config_placement.py",
+      "tags": [
+        "code"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:tests/unit/test_init_config_placement.py:test_init_config_calls_are_in_main_block",
+      "type": "function",
+      "name": "test_init_config_calls_are_in_main_block",
+      "filePath": "tests/unit/test_init_config_placement.py",
+      "summary": "Function test_init_config_calls_are_in_main_block in tests/unit/test_init_config_placement.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:tests/unit/test_init_config_placement.py:InitConfigVisitor",
+      "type": "class",
+      "name": "InitConfigVisitor",
+      "filePath": "tests/unit/test_init_config_placement.py",
+      "summary": "Class InitConfigVisitor in tests/unit/test_init_config_placement.py",
+      "tags": [
+        "class"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:tests/unit/test_invalid_smtp_mode.py",
+      "type": "file",
+      "name": "test_invalid_smtp_mode.py",
+      "filePath": "tests/unit/test_invalid_smtp_mode.py",
+      "summary": "Source file tests/unit/test_invalid_smtp_mode.py",
+      "tags": [
+        "code"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:tests/unit/test_invalid_smtp_mode.py:test_invalid_smtp_mode",
+      "type": "function",
+      "name": "test_invalid_smtp_mode",
+      "filePath": "tests/unit/test_invalid_smtp_mode.py",
+      "summary": "Function test_invalid_smtp_mode in tests/unit/test_invalid_smtp_mode.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:tests/unit/test_send_email.py",
+      "type": "file",
+      "name": "test_send_email.py",
+      "filePath": "tests/unit/test_send_email.py",
+      "summary": "Source file tests/unit/test_send_email.py",
+      "tags": [
+        "code"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:tests/unit/test_send_email.py:test_send_relay_no_login",
+      "type": "function",
+      "name": "test_send_relay_no_login",
+      "filePath": "tests/unit/test_send_email.py",
+      "summary": "Function test_send_relay_no_login in tests/unit/test_send_email.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:tests/unit/test_send_email.py:test_send_auth_login",
+      "type": "function",
+      "name": "test_send_auth_login",
+      "filePath": "tests/unit/test_send_email.py",
+      "summary": "Function test_send_auth_login in tests/unit/test_send_email.py",
+      "tags": [
+        "function"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:tests/unit/test_send_email.py:DummySMTP",
+      "type": "class",
+      "name": "DummySMTP",
+      "filePath": "tests/unit/test_send_email.py",
+      "summary": "Class DummySMTP in tests/unit/test_send_email.py",
+      "tags": [
+        "class"
+      ],
+      "complexity": "moderate"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:ops/services/postgres/scripts/backup_restore.py",
+      "target": "function:ops/services/postgres/scripts/backup_restore.py:exec_in_postgres",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/log_ingestor/alert_risk.py",
+      "target": "function:src/log_ingestor/alert_risk.py:process_alert",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/log_ingestor/log_fail2ban_batch.py",
+      "target": "function:src/log_ingestor/log_fail2ban_batch.py:update_attacking_no",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/log_ingestor/log_fail2ban_batch.py",
+      "target": "function:src/log_ingestor/log_fail2ban_batch.py:get_last_timestamp",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/log_ingestor/log_fail2ban_batch.py",
+      "target": "function:src/log_ingestor/log_fail2ban_batch.py:parse_timestamp",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/log_ingestor/log_fail2ban_batch.py",
+      "target": "function:src/log_ingestor/log_fail2ban_batch.py:get_log_lines",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/log_ingestor/log_fail2ban_batch.py",
+      "target": "function:src/log_ingestor/log_fail2ban_batch.py:insert_into_db",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/log_ingestor/log_fail2ban_batch.py",
+      "target": "function:src/log_ingestor/log_fail2ban_batch.py:process_logs",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/log_ingestor/log_honeypot_geolocation.py",
+      "target": "function:src/log_ingestor/log_honeypot_geolocation.py:extract_ips_from_loki",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/log_ingestor/log_honeypot_geolocation.py",
+      "target": "function:src/log_ingestor/log_honeypot_geolocation.py:update_database",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/log_ingestor/log_ingest_batch.py",
+      "target": "function:src/log_ingestor/log_ingest_batch.py:update_attacking_no",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/log_ingestor/log_ingest_batch.py",
+      "target": "function:src/log_ingestor/log_ingest_batch.py:get_last_timestamp",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/log_ingestor/log_ingest_batch.py",
+      "target": "function:src/log_ingestor/log_ingest_batch.py:parse_timestamp",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/log_ingestor/log_ingest_batch.py",
+      "target": "function:src/log_ingestor/log_ingest_batch.py:get_log_lines",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/log_ingestor/log_ingest_batch.py",
+      "target": "function:src/log_ingestor/log_ingest_batch.py:insert_into_db",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/log_ingestor/log_ingest_batch.py",
+      "target": "function:src/log_ingestor/log_ingest_batch.py:process_logs",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/log_ingestor/log_ip_geolocation.py",
+      "target": "function:src/log_ingestor/log_ip_geolocation.py:extract_ips_from_bbdd",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/log_ingestor/log_ip_geolocation.py",
+      "target": "function:src/log_ingestor/log_ip_geolocation.py:update_database",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/log_ingestor/log_kern_batch.py",
+      "target": "function:src/log_ingestor/log_kern_batch.py:update_attacking_no",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/log_ingestor/log_kern_batch.py",
+      "target": "function:src/log_ingestor/log_kern_batch.py:get_last_timestamp",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/log_ingestor/log_kern_batch.py",
+      "target": "function:src/log_ingestor/log_kern_batch.py:parse_timestamp",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/log_ingestor/log_kern_batch.py",
+      "target": "function:src/log_ingestor/log_kern_batch.py:get_log_lines",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/log_ingestor/log_kern_batch.py",
+      "target": "function:src/log_ingestor/log_kern_batch.py:insert_into_db",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/log_ingestor/log_kern_batch.py",
+      "target": "function:src/log_ingestor/log_kern_batch.py:process_logs",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/monitoring/common/config.py",
+      "target": "function:src/monitoring/common/config.py:get_smtp_mode",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/monitoring/common/config.py",
+      "target": "function:src/monitoring/common/config.py:init_config",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/monitoring/common/config.py",
+      "target": "function:src/monitoring/common/config.py:connect_db",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/monitoring/common/config.py",
+      "target": "function:src/monitoring/common/config.py:close_db",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/monitoring/common/config.py",
+      "target": "function:src/monitoring/common/config.py:send_email",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/monitoring/common/config.py",
+      "target": "function:src/monitoring/common/config.py:to_snake_case",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/monitoring/common/config.py",
+      "target": "function:src/monitoring/common/config.py:normalize_date",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/monitoring/common/config.py",
+      "target": "function:src/monitoring/common/config.py:get_month_gap",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/monitoring/common/config.py",
+      "target": "function:src/monitoring/common/config.py:log_info",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/monitoring/common/config.py",
+      "target": "function:src/monitoring/common/config.py:format_date",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/monitoring/common/config.py",
+      "target": "function:src/monitoring/common/config.py:safe",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/monitoring/common/config.py",
+      "target": "function:src/monitoring/common/config.py:build_html_table",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/monitoring/common/config.py",
+      "target": "function:src/monitoring/common/config.py:get_ip_info",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/resource_monitor/docker_resources.py",
+      "target": "function:src/resource_monitor/docker_resources.py:get_docker_stats",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/resource_monitor/docker_resources.py",
+      "target": "function:src/resource_monitor/docker_resources.py:parse_percentage",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/resource_monitor/docker_resources.py",
+      "target": "function:src/resource_monitor/docker_resources.py:parse_memory",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/resource_monitor/docker_resources.py",
+      "target": "function:src/resource_monitor/docker_resources.py:to_megabytes",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/resource_monitor/docker_resources.py",
+      "target": "function:src/resource_monitor/docker_resources.py:build_table",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/resource_monitor/docker_resources.py",
+      "target": "function:src/resource_monitor/docker_resources.py:build_html_report",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/resource_monitor/docker_resources.py",
+      "target": "function:src/resource_monitor/docker_resources.py:log_stats",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/resource_monitor/docker_resources.py",
+      "target": "function:src/resource_monitor/docker_resources.py:load_state",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/resource_monitor/docker_resources.py",
+      "target": "function:src/resource_monitor/docker_resources.py:save_state",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/resource_monitor/docker_resources.py",
+      "target": "function:src/resource_monitor/docker_resources.py:main",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ops/services/postgres/scripts/backup_postgres.py",
+      "target": "file:src/monitoring/common/config.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:ops/services/postgres/scripts/backup_restore.py",
+      "target": "file:src/monitoring/common/config.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/log_ingestor/alert_risk.py",
+      "target": "file:src/monitoring/common/config.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/log_ingestor/log_fail2ban_batch.py",
+      "target": "file:src/monitoring/common/config.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/log_ingestor/log_honeypot_geolocation.py",
+      "target": "file:src/monitoring/common/config.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/log_ingestor/log_ingest_batch.py",
+      "target": "file:src/monitoring/common/config.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/log_ingestor/log_ip_geolocation.py",
+      "target": "file:src/monitoring/common/config.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/log_ingestor/log_kern_batch.py",
+      "target": "file:src/monitoring/common/config.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/monitoring/common/config.py",
+      "target": "file:src/monitoring/common/secrets.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/monitoring/common/config.py",
+      "target": "file:src/monitoring/common/utils.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/resource_monitor/docker_resources.py",
+      "target": "file:src/monitoring/common/config.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:ops/audit/compose_policy_checks.py",
+      "target": "function:ops/audit/compose_policy_checks.py:ok",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ops/audit/compose_policy_checks.py",
+      "target": "function:ops/audit/compose_policy_checks.py:warn",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ops/audit/compose_policy_checks.py",
+      "target": "function:ops/audit/compose_policy_checks.py:fail",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ops/audit/compose_policy_checks.py",
+      "target": "function:ops/audit/compose_policy_checks.py:load_compose_via_docker",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ops/audit/compose_policy_checks.py",
+      "target": "function:ops/audit/compose_policy_checks.py:check_docker_runtime",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ops/audit/compose_policy_checks.py",
+      "target": "function:ops/audit/compose_policy_checks.py:find_compose_files",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ops/audit/compose_policy_checks.py",
+      "target": "function:ops/audit/compose_policy_checks.py:load_compose_from_files",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ops/audit/compose_policy_checks.py",
+      "target": "function:ops/audit/compose_policy_checks.py:get_compose_dict",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ops/audit/compose_policy_checks.py",
+      "target": "function:ops/audit/compose_policy_checks.py:_service_ports",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ops/audit/compose_policy_checks.py",
+      "target": "function:ops/audit/compose_policy_checks.py:detect_published_ports",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ops/audit/compose_policy_checks.py",
+      "target": "function:ops/audit/compose_policy_checks.py:detect_docker_sock",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ops/audit/compose_policy_checks.py",
+      "target": "function:ops/audit/compose_policy_checks.py:detect_images_latest_and_no_digest",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ops/audit/compose_policy_checks.py",
+      "target": "function:ops/audit/compose_policy_checks.py:detect_privileged",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ops/audit/compose_policy_checks.py",
+      "target": "function:ops/audit/compose_policy_checks.py:detect_mounts_rw_sensitive",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ops/audit/compose_policy_checks.py",
+      "target": "function:ops/audit/compose_policy_checks.py:detect_cap_add",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ops/audit/compose_policy_checks.py",
+      "target": "function:ops/audit/compose_policy_checks.py:detect_runtime_hostconfig",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ops/audit/compose_policy_checks.py",
+      "target": "function:ops/audit/compose_policy_checks.py:detect_read_only_false",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ops/audit/compose_policy_checks.py",
+      "target": "function:ops/audit/compose_policy_checks.py:run_all_checks",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ops/audit/compose_policy_checks.py",
+      "target": "function:ops/audit/compose_policy_checks.py:pretty_print",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ops/audit/compose_policy_checks.py",
+      "target": "function:ops/audit/compose_policy_checks.py:main",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ops/audit/parse_compose_json.py",
+      "target": "function:ops/audit/parse_compose_json.py:main",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ops/audit/runtime_governance_audit.py",
+      "target": "function:ops/audit/runtime_governance_audit.py:run",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ops/audit/runtime_governance_audit.py",
+      "target": "function:ops/audit/runtime_governance_audit.py:discover_compose_files",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ops/audit/runtime_governance_audit.py",
+      "target": "function:ops/audit/runtime_governance_audit.py:load_compose_inventory",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ops/audit/runtime_governance_audit.py",
+      "target": "function:ops/audit/runtime_governance_audit.py:list_containers",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ops/audit/runtime_governance_audit.py",
+      "target": "function:ops/audit/runtime_governance_audit.py:inspect_container",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ops/audit/runtime_governance_audit.py",
+      "target": "function:ops/audit/runtime_governance_audit.py:correlate",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ops/audit/runtime_governance_audit.py",
+      "target": "function:ops/audit/runtime_governance_audit.py:analyze_container",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ops/audit/runtime_governance_audit.py",
+      "target": "function:ops/audit/runtime_governance_audit.py:generate_report",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:ops/audit/runtime_governance_audit.py",
+      "target": "function:ops/audit/runtime_governance_audit.py:main",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:scripts/check_postgres_ready.py",
+      "target": "function:scripts/check_postgres_ready.py:check",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:scripts/check_postgres_ready.py",
+      "target": "function:scripts/check_postgres_ready.py:main",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/monitoring/common/secrets.py",
+      "target": "function:src/monitoring/common/secrets.py:load_secret",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/monitoring/common/utils.py",
+      "target": "function:src/monitoring/common/utils.py:log_info",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/integration/test_init_config_modes.py",
+      "target": "function:tests/integration/test_init_config_modes.py:test_init_config_modes_ci",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/test_compose_policy.py",
+      "target": "function:tests/unit/test_compose_policy.py:load_yaml",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/test_compose_policy.py",
+      "target": "function:tests/unit/test_compose_policy.py:test_auth_mode_requires_secrets_mount",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/test_compose_policy.py",
+      "target": "function:tests/unit/test_compose_policy.py:test_relay_mode_does_not_require_secrets",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/test_config.py",
+      "target": "function:tests/unit/test_config.py:test_relay_mode_no_secrets",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/test_config.py",
+      "target": "function:tests/unit/test_config.py:test_auth_mode_with_files",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/test_config.py",
+      "target": "function:tests/unit/test_config.py:test_auth_mode_missing_raises",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/test_init_config_placement.py",
+      "target": "function:tests/unit/test_init_config_placement.py:test_init_config_calls_are_in_main_block",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/test_init_config_placement.py",
+      "target": "class:tests/unit/test_init_config_placement.py:InitConfigVisitor",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/test_invalid_smtp_mode.py",
+      "target": "function:tests/unit/test_invalid_smtp_mode.py:test_invalid_smtp_mode",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/test_send_email.py",
+      "target": "function:tests/unit/test_send_email.py:test_send_relay_no_login",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/test_send_email.py",
+      "target": "function:tests/unit/test_send_email.py:test_send_auth_login",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:tests/unit/test_send_email.py",
+      "target": "class:tests/unit/test_send_email.py:DummySMTP",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/monitoring/common/secrets.py",
+      "target": "file:src/monitoring/common/utils.py",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    }
+  ],
+  "project": {
+    "name": "server_monitoring_2509",
+    "languages": [
+      "docker-compose",
+      "dockerfile",
+      "makefile",
+      "markdown",
+      "plaintext",
+      "python",
+      "shell",
+      "yaml"
+    ],
+    "frameworks": [],
+    "description": "",
+    "analyzedAt": "2026-07-13T18:28:45.474Z",
+    "gitCommitHash": "1a7fb4af85a86b0bb5dec85e2b0f7f611f9e7afc"
+  },
+  "version": "1.0.0",
+  "kind": "codebase",
+  "layers": [
+    {
+      "id": "layer:application-core",
+      "name": "Application Core",
+      "description": "Implements core functionalities including log ingestion, resource monitoring, and common utilities.",
+      "nodeIds": [
+        "file:src/log_ingestor/alert_risk.py",
+        "file:src/log_ingestor/log_fail2ban_batch.py",
+        "file:src/log_ingestor/log_honeypot_geolocation.py",
+        "file:src/log_ingestor/log_ingest_batch.py",
+        "file:src/log_ingestor/log_ip_geolocation.py",
+        "file:src/log_ingestor/log_kern_batch.py",
+        "file:src/monitoring/common/config.py",
+        "file:src/resource_monitor/docker_resources.py",
+        "file:src/log_ingestor/__init__.py",
+        "file:src/monitoring/common/secrets.py",
+        "file:src/monitoring/common/utils.py"
+      ]
+    },
+    {
+      "id": "layer:infrastructure-&-services",
+      "name": "Infrastructure & Services",
+      "description": "Defines containerized infrastructure services, orchestration stacks, and service-specific configurations.",
+      "nodeIds": [
+        "file:ops/services/postgres/scripts/backup_postgres.py",
+        "file:ops/services/postgres/scripts/backup_restore.py",
+        "file:ops/services/smtp_relay/Dockerfile",
+        "file:ops/stacks/cron/Dockerfile",
+        "file:ops/stacks/python/Dockerfile",
+        "file:compose.dev.yml",
+        "file:ops/README_runtime_containers.md",
+        "file:ops/runtime_containers.sh",
+        "file:ops/runtime_containers.yml",
+        "file:ops/services/postgres/.env.template",
+        "file:ops/services/postgres/Makefile",
+        "file:ops/services/postgres/README.md",
+        "file:ops/services/postgres/compose.yml",
+        "file:ops/services/smtp_relay/.env.template",
+        "file:ops/services/smtp_relay/Makefile",
+        "file:ops/services/smtp_relay/README.md",
+        "file:ops/services/smtp_relay/compose.yml",
+        "file:ops/stacks/observability/config/datasource.yml",
+        "file:ops/stacks/observability/config/loki-config.yml",
+        "file:ops/stacks/observability/config/promtail-config.yml",
+        "file:ops/services/postgres/scripts/backup_restore.sh",
+        "file:ops/services/postgres/scripts/check_postgres_secret.sh",
+        "file:ops/services/smtp_relay/config/patch-postfix.sh",
+        "file:ops/stacks/cron/compose.yml",
+        "file:ops/stacks/cron/docker-entrypoint.sh",
+        "file:ops/stacks/cron/monitoring.cron",
+        "file:ops/stacks/observability/.env.template",
+        "file:ops/stacks/observability/compose.yml",
+        "file:ops/stacks/python/compose.yml",
+        "file:ops/stacks/python/docker-entrypoint.sh"
+      ]
+    },
+    {
+      "id": "layer:operations-&-auditing",
+      "name": "Operations & Auditing",
+      "description": "Manages system auditing, host configuration, security hardening, and operational helper scripts.",
+      "nodeIds": [
+        "file:ops/audit/audit_repo_host.sh",
+        "file:ops/audit/check_hostconfig.sh",
+        "file:ops/audit/validate_dockerfiles.sh",
+        "file:ops/audit/validate_reproducibility.sh",
+        "file:ops/deployment/configure_docker_limits.sh",
+        "file:ops/deployment/docker_resources.sh",
+        "file:ops/deployment/setup_symlinks.sh",
+        "file:scripts/apply_ssh_ratelimit.sh",
+        "file:scripts/auditoria_binarios.sh",
+        "file:scripts/auditoria_requirements.sh",
+        "file:scripts/cleanup_docker.sh",
+        "file:scripts/wait_for_health.sh",
+        "file:ops/__init__.py",
+        "file:ops/audit/__init__.py",
+        "file:ops/audit/compose_policy_checks.py",
+        "file:ops/audit/parse_compose_json.py",
+        "file:ops/audit/runtime_governance_audit.py",
+        "file:scripts/__init__.py",
+        "file:scripts/check_postgres_ready.py",
+        "file:scripts/healthcheck.py",
+        "file:scripts/test_mail.py"
+      ]
+    },
+    {
+      "id": "layer:documentation-&-decision-records",
+      "name": "Documentation & Decision Records",
+      "description": "Maintains architectural design records, project definitions, operational manuals, and guidelines.",
+      "nodeIds": [
+        "file:AI_ENTRYPOINT.md",
+        "file:CLAUDE.md",
+        "file:README.md",
+        "file:docs/decisiones/ADR-0000-trabajo-paralelo-fuera-git.md",
+        "file:docs/decisiones/ADR-0001-verificar-imports-en-fase-migacion.md",
+        "file:docs/decisiones/ADR-0002-scripts-como-wrappers-operativos.md",
+        "file:docs/decisiones/ADR-0003-desacoplar-configuracion-y-ejecución-en-runtime.md",
+        "file:docs/decisiones/ADR-0004-eliminar-version-en-docker-compose.md",
+        "file:docs/decisiones/ADR-0005-desacoplar-runtime-y-lazy-imports-en-config.md",
+        "file:docs/decisiones/ADR-0006-base-image-governance.md",
+        "file:docs/decisiones/ADR-0007-politica_entorno_vsc_wsl.md",
+        "file:docs/decisiones/ADR-0008-servicios_micro-stack _vs_infra-stack.md",
+        "file:docs/decisiones/ADR-0009-estrategia_backups_postgresql.md",
+        "file:docs/decisiones/ADR-0010-arquitectura_de_runtime_cron.md",
+        "file:docs/decisiones/ADR-0011-python_runtime_execution_model.md",
+        "file:docs/decisiones/ADR-0012-separation_of_host_cron_vs_monitoring _cron.md",
+        "file:docs/decisiones/ADR-0013-credential_management_policy.md",
+        "file:docs/decisiones/ADR-0014-docker_port_exposure_policy.md",
+        "file:docs/decisiones/ADR-0015-docker_network _exposure_model.md",
+        "file:docs/decisiones/ADR-0016-host_hardening_execution_policy.md",
+        "file:docs/decisiones/ADR-0017-resilience-model-at-docker-single-node.md",
+        "file:docs/decisiones/ADR-0018-docker_security_runtime_and_resilience_requirements.md",
+        "file:docs/decisiones/ADR-0019-Resilience_Testing_Strategy.md",
+        "file:docs/decisiones/ADR-0020-Container_Execution_Model_Privilege_Strategy.md",
+        "file:docs/decisiones/ADR-0021-Network_Segmentation_Strategy.md",
+        "file:docs/decisiones/ADR-0022-Promtail_Privilege_Approval.md",
+        "file:docs/decisiones/ADR-0023-RestrictedNet_Egress_Control.md",
+        "file:docs/decisiones/ADR-0024-Container_Privilege_Exception_Policy.md",
+        "file:docs/decisiones/ADR-0025-SMTP_endurecimiento.md",
+        "file:docs/decisiones/ADR-0026-estrategia_testing_SMTP.md",
+        "file:docs/decisiones/ADR-0027-tipologia_contenedores_politica_healthchecks.md",
+        "file:docs/decisiones/ADR-0028-politica_reproducibilidad_endurecimiento_validaciones.md",
+        "file:docs/decisiones/ADR-0029-structured_compose_policy_audit.md",
+        "file:docs/decisiones/ADR-0030-auditoría_runtime_HostConfig_y_visibilidad_privilegios.md",
+        "file:docs/decisiones/ADR-0031-gobernanza_runtime_y_clasificacion_dependencias_host.md",
+        "file:docs/decisiones/ADR-0032-endurecimiento_secretos_PostgreSQL_y_validaciones_CI.md",
+        "file:docs/decisiones/ADR-0033-Taxonomia_ADRs.md",
+        "file:docs/decisiones/ADR-0600-estrategia-despliegue.md",
+        "file:docs/decisiones/ADR-0601-desacoplamiento-modulo-commons.md",
+        "file:docs/decisiones/ADR-0602-comunicacion-interservicios.md",
+        "file:docs/decisiones/ADR-0603-gestion-bbdd.md",
+        "file:docs/decisiones/ADR-0801-estrategia-empaquetado-despliegue.md",
+        "file:docs/decisiones/ADR-0802-integracion-front-back.md",
+        "file:docs/arquitectura/cron_host.txt",
+        "file:docs/arquitectura/README.md",
+        "file:docs/decisiones/adr_template.md",
+        "file:docs/decisiones/ADR-0803-seguridad-secretos.md",
+        "file:docs/Project_Definition/Servidor_DigitalOcean_Definicion_Proyecto.txt",
+        "file:docs/Project_Implementation/Servidor_DigitalOcean_Implementacion.txt"
+      ]
+    },
+    {
+      "id": "layer:testing-&-workflows",
+      "name": "Testing & Workflows",
+      "description": "Contains integration and unit tests, CI/CD pipelines, package dependencies, repository ignores, and build configurations.",
+      "nodeIds": [
+        "file:.github/workflows/audit-runtime.yml",
+        "file:.github/workflows/ci.yml",
+        "file:.dockerignore",
+        "file:Makefile",
+        "file:requirements.txt",
+        "file:__init__.py",
+        "file:.claudecodeignore",
+        "file:.gitattributes",
+        "file:.github/copilot-instructions.md",
+        "file:tests/integration/test_init_config_modes.py",
+        "file:tests/runtime_containers_test.sh",
+        "file:tests/unit/test_compose_policy.py",
+        "file:tests/unit/test_config.py",
+        "file:tests/unit/test_init_config_placement.py",
+        "file:tests/unit/test_invalid_smtp_mode.py",
+        "file:tests/unit/test_send_email.py"
+      ]
+    }
+  ],
+  "tour": [
+    {
+      "order": 1,
+      "title": "Welcome & Architectural Vision",
+      "description": "Start your journey with the high-level entry points that establish the project as a secure VPS monitoring framework. Read the foundational architecture records documenting execution models, security policies, and hardening rules.",
+      "nodeIds": [
+        "file:README.md",
+        "file:AI_ENTRYPOINT.md",
+        "file:CLAUDE.md",
+        "file:docs/decisiones/ADR-0033-Taxonomia_ADRs.md",
+        "file:docs/decisiones/ADR-0011-python_runtime_execution_model.md"
+      ]
+    },
+    {
+      "order": 2,
+      "title": "Configuration Engine & Shared Security Defaults",
+      "description": "Explore the heart of the application's configuration layer, which controls runtime modes (CI vs. production), handles database connections, parses mail configs, and manages decryption or loading of system secrets.",
+      "nodeIds": [
+        "file:src/monitoring/common/config.py",
+        "file:src/monitoring/common/secrets.py",
+        "file:src/monitoring/common/utils.py"
+      ],
+      "languageLesson": "The codebase leverages lazy importing and decoupling of configuration checks to prevent runtime failures during the import stage in environments lacking certain local credentials."
+    },
+    {
+      "order": 3,
+      "title": "Batch Log Ingestion and Threat Analysis",
+      "description": "Understand how security event logs (Fail2ban, kernel blocks, honeypot triggers) are systematically parsed, mapped to geo-location, stored in the database, and checked against potential threat levels.",
+      "nodeIds": [
+        "file:src/log_ingestor/log_ingest_batch.py",
+        "file:src/log_ingestor/log_fail2ban_batch.py",
+        "file:src/log_ingestor/log_kern_batch.py",
+        "file:src/log_ingestor/log_ip_geolocation.py",
+        "file:src/log_ingestor/alert_risk.py"
+      ]
+    },
+    {
+      "order": 4,
+      "title": "Docker Resource Telemetry",
+      "description": "Learn how host resources and container health statistics are retrieved from the Docker API. The metric values are processed into structured reports and formatted into HTML alerts.",
+      "nodeIds": [
+        "file:src/resource_monitor/docker_resources.py"
+      ]
+    },
+    {
+      "order": 5,
+      "title": "Containerized Infrastructure and Scheduling",
+      "description": "Inspect the multi-stack orchestration layer. You'll see compose manifests and custom configurations for PostgreSQL database operations, postfix relays, and localized cron jobs driving the automated monitoring process.",
+      "nodeIds": [
+        "file:ops/services/postgres/compose.yml",
+        "file:ops/services/smtp_relay/compose.yml",
+        "file:ops/stacks/cron/compose.yml",
+        "file:ops/stacks/cron/monitoring.cron"
+      ]
+    },
+    {
+      "order": 6,
+      "title": "Automated Security Policy Audits",
+      "description": "Examine the custom Python and shell script suite that automatically audits the workspace runtime. It analyzes configuration patterns, reports privilege escalation risks, and validates Dockerfile security boundaries.",
+      "nodeIds": [
+        "file:ops/audit/compose_policy_checks.py",
+        "file:ops/audit/runtime_governance_audit.py",
+        "file:ops/audit/validate_dockerfiles.sh"
+      ]
+    },
+    {
+      "order": 7,
+      "title": "Validating the Architecture",
+      "description": "Conclude by exploring unit and integration tests. These verify configuration behavior, check Docker Compose security enforcement policies, and validate SMTP relay configurations to guarantee system resilience.",
+      "nodeIds": [
+        "file:tests/unit/test_config.py",
+        "file:tests/unit/test_compose_policy.py",
+        "file:tests/integration/test_init_config_modes.py"
+      ]
+    }
+  ]
+}

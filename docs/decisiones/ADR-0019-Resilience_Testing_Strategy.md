@@ -4,7 +4,7 @@ Status: APPROVED
 Date: 2026-04-25
 Scope: Runtime
 Category: TESTING
-Tags: REVIEW_REQUIRED
+Tags: testing, validation, resilience
 Related ADRs: ADR-0017
 Supersedes: NONE
 Superseded By: NONE

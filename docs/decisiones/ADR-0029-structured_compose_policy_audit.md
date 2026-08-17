@@ -3,8 +3,8 @@
 Status: APPROVED
 Date: 2026-05-20
 Scope: Infrastructure
-Category: GOVERNANCE
-Tags: REVIEW_REQUIRED
+Category: TESTING
+Tags: testing, audit, compose
 Related ADRs: ADR-0027
 Supersedes: NONE
 Superseded By: NONE

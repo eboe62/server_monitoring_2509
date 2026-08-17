@@ -4,7 +4,7 @@ Status: APPROVED
 Date: 2026-01-27
 Scope: Infrastructure
 Category: INFRASTRUCTURE
-Tags: REVIEW_REQUIRED
+Tags: docker, compose
 Related ADRs: NONE
 Supersedes: NONE
 Superseded By: NONE

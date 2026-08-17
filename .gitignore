@@ -45,10 +45,10 @@ ai/
 
 # === Understand-Anything Governance ===
 # Permitir la persistencia del enlace simbólico, el grafo y la carpeta de datos
-# !.ua
-# !docs/arquitectura/.ua/knowledge-graph.json
-# !docs/arquitectura/.ua/config.json
-# !docs/arquitectura/.ua/.understandignore
+!.ua
+!docs/arquitectura/.ua/knowledge-graph.json
+!docs/arquitectura/.ua/config.json
+!docs/arquitectura/.ua/.understandignore
 
 # === Understand-Anything ignorar estrictamente los datos temporales y de procesamiento local ===
 docs/arquitectura/.ua/intermediate/

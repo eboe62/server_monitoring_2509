@@ -1,5 +1,28 @@
 #!/usr/bin/env bash
 
+# ------------------------------------------------------------
+# Propósito:
+#     Orquestar la auditoría host-side del repositorio y del entorno Docker/Compose.
+#
+# Rol dentro de la arquitectura:
+#     Es el auditor principal que ejecuta comprobaciones de estructura, Compose, docker.sock y reproducibilidad.
+#
+# Entradas principales:
+#     Repositorio Git, archivos bajo ops/, entorno host, y salida de compose_policy_checks.py.
+#
+# Salidas principales:
+#     Diagnóstico en consola con estados OK/WARN/FAIL y resultados de validaciones asociadas.
+#
+# Relación con otros componentes:
+#     Invoca compose_policy_checks.py, parse_compose_json.py y validate_reproducibility.sh.
+#
+# Relación con la gobernanza:
+#     Soporta ADR-0029 y ADR-0028 al ejecutar auditoría estructurada y revisar políticas host-side.
+#
+# Observaciones:
+#     No es un motor de ejecución runtime; se ejecuta desde el host y no modifica el comportamiento de los contenedores.
+# ------------------------------------------------------------
+
 # ==========================================
 # AUDITORÍA SERVIDOR
 # Repositorio + Host

@@ -4,7 +4,7 @@ Status: APPROVED
 Date: 2026-03-14
 Scope: Infrastructure
 Category: INFRASTRUCTURE
-Tags: REVIEW_REQUIRED
+Tags: docker, network, infrastructure
 Related ADRs: ADR-0014, ADR-0021
 Supersedes: NONE
 Superseded By: NONE

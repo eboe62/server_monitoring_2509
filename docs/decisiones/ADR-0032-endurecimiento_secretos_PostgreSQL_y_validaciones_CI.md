@@ -4,7 +4,7 @@ Status: APPROVED
 Date: 2026-05-31
 Scope: Database
 Category: SECURITY
-Tags: REVIEW_REQUIRED
+Tags: security, secrets, postgresql
 Related ADRs: ADR-0013
 Supersedes: NONE
 Superseded By: NONE

@@ -112,6 +112,87 @@ Decisiones relacionadas con:
 * Auditoría.
 * Verificación automatizada.
 
+#### KNOWLEDGE
+
+Decisiones relacionadas con:
+
+* Organización del conocimiento.
+* Modelado del conocimiento.
+* Activos de conocimiento.
+* Taxonomías.
+* Ontologías.
+* Estrategias de aprendizaje.
+
+#### DOCUMENTATION
+
+Decisiones relacionadas con:
+
+* Organización documental.
+* Convenciones editoriales.
+* Plantillas.
+* Estructura documental.
+* Gestión de documentación.
+
+#### PROCESS
+
+Decisiones relacionadas con:
+
+* Procesos de trabajo.
+* Flujos operativos.
+* Procedimientos.
+* Ciclos de revisión.
+* Métodos organizativos.
+
+#### METHODOLOGY
+
+Decisiones relacionadas con:
+
+* Métodos de investigación.
+* Métodos de aprendizaje.
+* Estrategias metodológicas.
+* Marcos de trabajo.
+* Criterios metodológicos.
+
+## Domain (Optional)
+
+The Domain field provides optional contextual classification.
+
+Unlike Category, Domain does not determine the nature of the decision.
+
+A Domain identifies the primary knowledge or application area in which the decision applies.
+
+Examples:
+
+* Anthropology
+* Astronomy
+* Culture
+* Documentation
+* Ecology
+* Economics
+* Education
+* Engineering
+* Geography
+* Governance
+* Hiking
+* History
+* Infrastructure
+* Language
+* Literature
+* Megaprojects
+* Mountaineering
+* Politics
+* Research
+* Society
+* Study_Planning
+* Technology
+* TFG
+* Translation
+* Travel
+
+**Relación con las Entity Types de `03_ONTOLOGY.md`**: `Domain` y las familias de Entity Types de la ontología responden a preguntas distintas y operan en niveles distintos. `Domain` clasifica un Knowledge Asset, Relationship Record o ADR completo por su área temática general. Las Entity Types clasifican entidades individuales dentro del grafo de conocimiento (p. ej. un puente concreto, una dinastía concreta). El `Domain` de una ficha no tiene por qué corresponder 1:1 con las Entity Types que referencie o en las que eventualmente se descomponga.
+
+Algunos términos existen a la vez como Entity Type anidada dentro de una familia (p. ej. `Infrastructure` dentro de `ENGINEERING`, `Literature` dentro de `CULTURE`) y como término `Domain` independiente. Son dos conceptos distintos que comparten nombre — se distinguen por el contexto: pertenencia a una familia de Entity Types frente a valor del campo `Domain:`.
+
 ## Política de Tags
 
 Los tags constituyen un vocabulario controlado.
@@ -140,6 +221,8 @@ Runtime:
 * healthcheck
 * resilience
 * container
+* python
+* configuration
 
 Seguridad:
 
@@ -175,13 +258,60 @@ Gobernanza:
 * adr
 * standards
 
+Knowledge:
+
+* language
+* linguistics
+* grammar
+* hanzi
+* pinyin
+* curriculum
+* learning
+* research
+* classification
+* taxonomy
+* ontology
+* history
+* culture
+* translation
+* knowledge-asset
+* knowledge-repository
+
+Estructura de Repositorio:
+
+* repository-structure
+* migration
+* sources
+* branch-policy
+
+China Studies:
+
+* china-africa-relations
+* neocolonialism
+* south-china-sea
+* silk-road
+* rare-earths
+* xinjiang
+* terracotta-army
+* genghis-khan
+* mongolia
+* great-wall
+* immigration-diaspora
+* food-safety
+* five-year-plan
+* space-exploration
+* ecosystem-services
+* education-pisa
+* meritocracy-keju
+* tech-war
+
 ## Reglas de Gobernanza
 
 1. Todo ADR nuevo deberá incluir un único `Category`.
 
 2. Todo ADR nuevo deberá incluir entre uno y cinco tags.
 
-3. Los tags deberán proceder preferentemente del catálogo aprobado.
+3. Los tags deberán proceder preferentemente del catálogo aprobado. Cuando no exista un tag adecuado, podrán incorporarse nuevos conceptos estables siguiendo la política de ampliación del vocabulario.
 
 4. La creación de nuevas Categorías requerirá un ADR específico.
 
@@ -205,6 +335,6 @@ Negativas:
 
 ## Estado de Implementación
 
-Pendiente de aprobación.
+Aprobado
 
 Una vez aprobado este ADR podrá iniciarse la Fase 2 de clasificación semántica de los ADRs existentes.

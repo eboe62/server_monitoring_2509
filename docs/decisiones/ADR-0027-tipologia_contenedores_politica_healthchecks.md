@@ -4,7 +4,7 @@ Status: APPROVED
 Date: 2026-05-17
 Scope: Runtime
 Category: RUNTIME
-Tags: REVIEW_REQUIRED
+Tags: runtime, healthcheck, container
 Related ADRs: ADR-0008, ADR-0020
 Supersedes: NONE
 Superseded By: NONE

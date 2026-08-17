@@ -1,5 +1,29 @@
 #!/usr/bin/env python3
-"""Helper to parse compose checker JSON output from file.
+"""
+------------------------------------------------------------
+Propósito:
+    Formatear la salida JSON de compose_policy_checks.py para uso en scripts shell.
+
+Rol dentro de la arquitectura:
+    Es el convertidor auxiliar que extrae valores específicos de auditoría Compose.
+
+Entradas principales:
+    Archivo JSON generado por compose_policy_checks.py y la clave solicitada.
+
+Salidas principales:
+    Listado formateado en consola y códigos de salida adaptados.
+
+Relación con otros componentes:
+    Lo invoca audit_repo_host.sh cuando jq no está disponible para parsear resultados JSON.
+
+Relación con la gobernanza:
+    Soporta ADR-0029 al permitir que scripts host-side consuman salidas estructuradas.
+
+Observaciones:
+    No realiza comprobaciones de seguridad; solo formatea resultados ya generados.
+------------------------------------------------------------
+
+Helper to parse compose checker JSON output from file.
 
 Usage: parse_compose_json.py <json_file> <key>
 

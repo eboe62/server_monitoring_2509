@@ -3,8 +3,8 @@
 Status: DEPRECATED
 Date: 2026-05-04
 Scope: Infrastructure
-Category: GOVERNANCE
-Tags: REVIEW_REQUIRED
+Category: INFRASTRUCTURE
+Tags: docker, infrastructure, governance
 Related ADRs: NONE
 Supersedes: NONE
 Superseded By: NONE
