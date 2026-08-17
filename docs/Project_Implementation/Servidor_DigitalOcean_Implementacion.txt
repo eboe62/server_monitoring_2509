@@ -1281,6 +1281,39 @@ Validación automática en CI:
         - No inclusión de secretos en imágenes.
         - Uso de imágenes base oficiales y mantenidas.
 
+Estado verificado (StatusQuo 260816):
+    - Promtail está clasificado INFRA_TRUSTED con healthcheck_policy: readiness
+      en ops/runtime_containers.yml, pero no tiene healthcheck definido en su
+      compose (confirmado por `make audit`: "[WARN] promtail: healthcheck
+      ABSENT"; confirmado también por `make test-security-runtime`: "[WARN]
+      promtail sin healthcheck"). Incumple la política que el propio proyecto
+      se ha impuesto para este contenedor.
+    - Matiz importante (17/08/2026): la ausencia de healthcheck NO es un
+      descuido — está justificada explícitamente en el propio
+      ops/stacks/observability/compose.yml: "la imagen oficial (upstream)
+      carece de wget/curl; los healthchecks que utilicen herramientas
+      externas producirían falsos negativos". Esto convierte el hallazgo en
+      una contradicción real entre la política declarada
+      (healthcheck_policy: readiness) y una restricción técnica de la
+      imagen, no en un archivo pendiente de escribir.
+    - Resuelto (17/08/2026): verificado en el contenedor real
+      (`docker exec promtail sh -c "which wget curl nc pgrep ps grep"`) que
+      la imagen solo dispone de `/bin/grep` — ni wget/curl/nc ni pgrep/ps
+      están presentes. Se descartan por tanto un sondeo HTTP o TCP y una
+      comprobación vía pgrep/ps. Se implementó un healthcheck de liveness
+      usando únicamente /proc (expuesto por el kernel, no requiere binario
+      externo) + grep: `grep -q promtail /proc/1/comm || exit 1`, tras
+      confirmar (`docker exec promtail cat /proc/1/comm` → `promtail`) que
+      el proceso promtail es efectivamente el PID 1 del contenedor. No es
+      un readiness check (no valida que Promtail esté leyendo logs
+      correctamente), pero sí es un liveness real — coherente con que la
+      Visión permite a los INFRA_TRUSTED "requerir readiness o liveness
+      según su función real". Aplicado en
+      ops/stacks/observability/compose.yml. Actualizado también
+      ops/runtime_containers.yml (healthcheck_policy: readiness → liveness),
+      quedando así alineado con smtp-relay, el otro INFRA_TRUSTED del
+      proyecto, que ya usaba liveness.
+
 5.2. Seguridad Runtime y Automatismos Declarados
 Trilogía de Hardening de Infraestructura (ADR-0029, 0030, 0031)
 
@@ -1323,10 +1356,18 @@ Antes de la ejecución de automatismos en el Host, el sistema rige su cumplimien
     1. Bloqueo Activo Punitivo: Cualquier hallazgo crítico calificado como prohibido ('forbidden') —tales como la presencia de 'privileged=true', 'network_mode=host', montajes mutables en rutas sensibles o fugas del plano de control mediante 'docker.sock'— provocará de forma determinista la caída del pipeline y el fallo del despliegue.
     2. Matriz Oficial de Excepciones Aprobadas ('ALLOWLIST'): Codifica las tolerancias operacionales necesarias para la estabilidad de la infraestructura. Aprueba de forma explícita que 'monitoring-smtp-relay' retenga capabilities específicas de red ejecutando como root, que 'monitoring-postgres' mantenga 'read_only: false' para su transaccionalidad WAL, y que 'promtail' acceda exclusivamente en modo lectura a las rutas logs del host (/var/log y /var/lib/docker/containers) para el shipping correlacionado del stack de observabilidad.
 
+Estado verificado (StatusQuo 260816):
+    Esta capa no es solo diseño: se ha verificado operativa en producción.
+    `make audit`, `make audit-runtime`, `make audit-runtime-json` y
+    `make audit-runtime-ci` (modo CI, fail-closed) se ejecutaron sin
+    hallazgos "forbidden". La ALLOWLIST descrita arriba coincide exactamente
+    con lo observado vía `docker inspect`/`check_hostconfig.sh` para
+    smtp-relay, postgres y promtail.
+
 - Ajuste automático de límites Docker
     Script declarado: configure_docker_limits.sh
     El script configure_docker_limits.sh forma parte del repositorio en:
-        scripts/configure_docker_limits.sh
+        ops/deployment/configure_docker_limits.sh
     Debe instalarse en:
         /usr/local/bin/
     durante la FASE 4 mediante copia explícita.
@@ -1367,6 +1408,24 @@ Antes de la ejecución de automatismos en el Host, el sistema rige su cumplimien
         - Debe ser reproducible desde VPS limpia.
         - No debe depender de estado manual externo al repositorio.
 
+Estado verificado (StatusQuo 260816):
+    - La plantilla declarativa del crontab de host descrita arriba existe y
+      está versionada en `docs/arquitectura/cron_host.txt`, coherente con
+      lo indicado en README.md. Queda resuelta la incertidumbre sobre si
+      existía un fichero declarativo de referencia.
+    - Pendiente de confirmar: si esas líneas están efectivamente instaladas
+      en el crontab real de root del servidor (la comprobación se omitió
+      por falta de privilegios de root durante la auditoría: "Comprobación
+      de crontab root requiere privilegios de root (omitido)").
+    - Corregido (17/08/2026): `ops/deployment/setup_symlinks.sh` usaba un
+      único `BASE_DIR="/opt/monitoring/resource_monitor"` que no contenía
+      ninguno de los tres scripts a enlazar en la estructura actual del
+      repositorio. Sustituido por rutas explícitas por script
+      (`ops/deployment/` para configure_docker_limits.sh y
+      docker_resources.sh; `src/resource_monitor/` para
+      docker_resources.py), manteniendo intacta el resto de la lógica del
+      script.
+
 5.3. Validación de Persistencia y BackUp
 - Persistencia de Datos
     - Simular recreación total de contenedores manteniendo volúmenes.
@@ -1376,6 +1435,26 @@ Antes de la ejecución de automatismos en el Host, el sistema rige su cumplimien
     - Ejecutar prueba completa de backup de PostgreSQL.
     - Ejecutar restore en entorno controlado.
     - Validar integridad de datos restaurados.
+
+Estado verificado (StatusQuo 260816):
+    - Corrección de ruta: el backup NO se persiste en /opt/backups (ruta de
+      host mencionada en fases anteriores). El volumen real es el named
+      volume `postgres-backups`, montado en /backups dentro del contenedor
+      `postgres` y compartido con `monitoring-cron` (ver
+      ops/services/postgres/compose.yml y ops/stacks/cron/compose.yml).
+    - Hallazgo pendiente de cierre: el único backup encontrado
+      (monitoring_db-202603262205.backup, ~14.8MB) está fechado 27/03/2026,
+      pese a existir un job diario programado (`5 22 * * *
+      python3 scripts/backup_postgres.py`). No hay evidencia de backups más
+      recientes. Pendiente: confirmar si la ejecución programada de esta
+      noche genera un fichero nuevo y, si no, diagnosticar la causa (podría
+      compartir la misma clase de defecto de dependencias que el hallazgo de
+      FASE 8).
+    - Hallazgo pendiente de cierre: la prueba de restore en entorno
+      controlado y la validación de integridad de datos restaurados, ambas
+      ya exigidas por este apartado, NO se han ejecutado nunca hasta la
+      fecha. Debe realizarse contra una instancia de Postgres efímera y
+      aislada, nunca contra `monitoring-postgres` de producción.
 
 5.4. Observabilidad Funcional End-to-End
     - Validar envío real de logs desde Promtail a Loki.
@@ -1418,11 +1497,20 @@ Todo cambio en el repositorio debe poder validarse automáticamente mediante un 
         - fallo real de DB (DNS + TCP)
         - fallo de red (disconnect/reconnect)
         - validación de observabilidad (Loki)
-    - make test-observability
+    - make test-observability-core
     - make test-cron-execution
     - make test-python-health
     - make test-smtp-ci (entorno CI sin credenciales reales)
     - make test-smtp-all (validación completa en entorno real)
+
+Estado verificado (StatusQuo 260816):
+    Confirmados operativos y en PASS: test-resilience-completo,
+    test-observability-core, test-cron-execution, test-python-health,
+    test-smtp-ci, test-smtp-all. La referencia anterior de este documento a
+    `make test-observability` era un nombre desactualizado; el target real y
+    existente es `make test-observability-core` (Makefile:591). Divergencia
+    resuelta — no requiere cambios de código, solo esta corrección
+    documental.
 
 - Verificación de cumplimiento de seguridad runtime:
     Delegada de forma exclusiva en el motor estructurado ops/audit/compose_policy_checks.py para auditar de forma determinista:
@@ -1460,6 +1548,56 @@ Estos tests reflejan el comportamiento real de Docker Compose (single-node, sin 
 Nota:
 Esta fase no introduce despliegue automático (CD), sino validación previa obligatoria antes de cualquier promoción de cambios.
 
+Estado verificado y defecto de test detectado (StatusQuo 260816):
+    Durante la ejecución de `make test-resilience-completo` se observó un
+    patrón anómalo en el paso de fallo de red: se imprime "[FAIL] no degrada
+    por red" inmediatamente seguido de "[OK] degradación por red OK", y el
+    test continúa como si hubiera pasado. Localizado el código exacto en el
+    target `test-resilience-network` del Makefile:
+
+        timeout 60 sh -c '...' || (echo "[FAIL] no degrada por red" && exit 1); \
+        echo "[OK] degradación por red OK"; \
+
+    El `exit 1` está dentro de un subshell `(...)`; en shell, `exit` dentro
+    de `(...)` solo termina ese subshell, no el script que lo contiene. Por
+    tanto, aunque el chequeo de degradación falle o expire por timeout, la
+    ejecución continúa igualmente a la línea siguiente, que imprime "[OK]"
+    de forma incondicional. Este paso del test NUNCA puede reportar un
+    fallo real, independientemente del comportamiento real del sistema —
+    explica el comportamiento "no determinista" ya señalado en PRIORIDAD 11
+    del documento de Corrección.
+
+    Al revisar el resto del Makefile se confirmó que el mismo patrón se
+    repetía 4 veces dentro de este mismo target (aislamiento de red,
+    degradación por red, recuperación TCP, recuperación por health) — es
+    decir, ninguno de los 4 chequeos de este target podía fallar realmente.
+    Las otras 4 apariciones del patrón `|| (echo ... && exit 1)` en el
+    Makefile (comprobación de HostConfig, relay SMTP, Loki) son líneas de
+    recipe independientes sin continuación `\`, por lo que en esas el
+    subshell no atrapa nada — no comparten el defecto.
+
+    Corregido (17/08/2026): las 4 ocurrencias dentro de
+    `test-resilience-network` sustituidas de `(echo "..." && exit 1)` a
+    `{ echo "..."; exit 1; }` — un brace group corre en el mismo shell, por
+    lo que el `exit` sí se propaga y detiene el recipe correctamente.
+
+    Hallazgo derivado (17/08/2026): al arreglar lo anterior, el pipeline de
+    CI empezó a fallar realmente en el paso "esperando degradación (health)".
+    Causa raíz: el healthcheck de monitoring-python (scripts/healthcheck.py)
+    es deliberadamente trivial (`sys.exit(0)` incondicional, comentario
+    explícito "evita falsos negativos en CI") — nunca puede reportar
+    `unhealthy`, así que esperar ese estado es una condición imposible por
+    diseño, no un problema de timing. El bug de subshell llevaba años
+    enmascarando este segundo problema.
+
+    Decisión: eliminados ambos pasos de espera de healthcheck de Docker
+    ("esperando degradación (health)" y su simétrico "esperando recuperación
+    (health)"), ya que ambos dependían de un healthcheck que nunca cambia de
+    estado. El target conserva las comprobaciones TCP directas (`nc -z`)
+    que ya validaban aislamiento y recuperación reales, y que son la señal
+    correcta para este propósito. Actualizado también el comentario de
+    cabecera del target para reflejar el comportamiento real.
+
 ==========================================
 FASE 6 – INICIALIZACIÓN DECLARATIVA DEL MICRO-STACK POSTGRES
 ==========================================
@@ -1474,6 +1612,40 @@ Toda inicialización debe ejecutarse mediante:
     - archivos versionados
 
     La inicialización debe ser reproducible y no depender del estado manual previo del entorno.
+
+6.0. Estado verificado y decisión de migración de datos pausada (StatusQuo 260816)
+    Estado: la base de datos de aplicación `monitoring_db` existe (confirmada
+    mediante `docker exec monitoring-postgres psql -U postgres -l`), pero
+    actualmente no contiene ninguna tabla (`docker exec monitoring-postgres
+    psql -U postgres -d monitoring_db -c "\dt"` → "Did not find any
+    relations").
+
+    Esto NO es un defecto sin diagnosticar: es consecuencia de una decisión
+    deliberada. La migración de tablas y datos desde el servidor anterior
+    queda pausada intencionadamente hasta tener la certeza de que el nuevo
+    servidor ofrece garantías de seguridad suficientes.
+
+    Condición de activación (criterio propuesto — pendiente de confirmación
+    explícita del usuario sobre su formalización exacta): se entiende
+    cumplida cuando el plan de hardening priorizado de FASE 5 (PRIORIDADES
+    1–15, documento de Corrección) se dé por cerrado, dado que es el
+    instrumento con el que este proyecto mide y certifica el nivel de
+    seguridad del entorno.
+
+    Verificación pendiente (no ejecutada en esta revisión documental,
+    orientada a confirmar que el estado actual es el intencionado y no un
+    fallo adicional):
+        1. Confirmar que ops/services/postgres/init/ está deliberadamente
+           vacío o mínimo (sin creación de esquema), y no incompleto por
+           error.
+        2. Si el diseño previsto es que el esquema llegue junto con los
+           datos migrados (p. ej. vía restore de un dump del servidor
+           anterior) en lugar de crearse por separado de antemano,
+           documentarlo explícitamente aquí una vez confirmado.
+
+    Nota: este hallazgo es independiente del defecto documentado en FASE 8.0
+    (fallo del job log_fail2ban_batch por dependencia `pytz` faltante), que
+    sigue siendo un defecto activo a corregir, no sujeto a esta pausa.
 
 Bloques de trabajo:
 
@@ -1512,6 +1684,14 @@ Criterio de cierre:
     - La inicialización es idempotente y reproducible.
     - No requiere intervención manual.
     - Cumple autonomía arquitectónica definida en ADR-0008.
+    - La base de datos de aplicación contiene el esquema y los datos
+      migrados desde el servidor anterior (validado con `\dt` no vacío
+      contra `monitoring_db`), una vez cumplida la condición de activación
+      de 6.0.
+
+    Estado actual: esta fase permanece abierta de forma intencionada,
+    pendiente de la condición de activación documentada en 6.0 — no es un
+    fallo pendiente de corregir, sino una migración pendiente de autorizar.
 
 6.5. Implementación manual pre-IaC (no vigente)
     A efectos exclusivamente históricos se documenta el procedimiento anterior empleado antes de la adopción del modelo declarativo.
@@ -1600,7 +1780,17 @@ Secuencia recomendada por stack:
             Nombre: smtp-relay
             Estado: healthy
             Red: redes monitoring-network (Makefile)
-            Puerto publicado: 127.0.0.1:2526->587
+            Puerto publicado: ninguno (sin exposición al host)
+
+        Estado verificado (StatusQuo 260816): en el modelo actual, el bloque
+        `ports:` de ops/services/smtp_relay/compose.yml está comentado
+        explícitamente ("SMTP relay no necesita exposición, acceso solo por
+        red docker"), y `docker inspect monitoring-smtp-relay` confirma
+        `{"587/tcp":null}` — no hay publicación al host. Esta redacción
+        corrige la versión anterior de este documento, que indicaba
+        `127.0.0.1:2526->587` como resultado esperado; la configuración real
+        es más restrictiva (menor exposición) que lo documentado
+        anteriormente, no un defecto.
 
     INFRA-STACKS
 
@@ -1672,6 +1862,13 @@ Validaciones obligatorias:
         docker network inspect <red>
 
     No deben existir redes automáticas no documentadas distintas de la red declarada en la arquitectura.
+
+Estado verificado (StatusQuo 260816):
+    La segmentación backend-net / observability-net / restricted-net está
+    confirmada operativa a nivel de host (`docker network ls`) y validada
+    mediante `make test-aislamiento-red` ("[OK] acceso restringido
+    (esperado)", "[OK] test aislamiento completado"), con evidencia del
+    16/08/2026.
 
 7.3. Validación de estado del runtime
     - Verificar healthchecks declarados.
@@ -1777,6 +1974,47 @@ Principios:
 - Supercronic es el scheduler oficial del proyecto.
 - El host no contiene entradas crontab relacionadas con la aplicación.
 
+8.0. Estado verificado y defecto activo (StatusQuo 260816)
+    Hallazgo: el job `log_fail2ban_batch` (programado cada 10 minutos) falla
+    en cada ejecución desde el arranque del contenedor monitoring-cron, con
+    el siguiente error confirmado en `docker logs monitoring-cron`:
+
+        ModuleNotFoundError: No module named 'pytz'
+        (File "/opt/monitoring/src/log_ingestor/log_fail2ban_batch.py", line 6,
+         in <module> ... import pytz)
+
+    Alcance confirmado (17/08/2026): `grep -rn "import pytz\|from pytz" src/
+    scripts/` confirma que `pytz` se usa únicamente en
+    src/log_ingestor/log_fail2ban_batch.py (dos usos, ambos para marcar
+    timestamps como UTC-aware). Ningún otro job de log_ingestor lo importa
+    — el defecto está acotado a este único job, no es sistémico.
+
+    Relación con la pausa de migración de FASE 6.0: este defecto es
+    INDEPENDIENTE de la pausa de migración de tablas documentada en 6.0. El
+    fallo ocurre en la línea de `import pytz`, antes de que el script llegue
+    a ejecutar lógica alguna o a intentar tocar la base de datos — por tanto
+    no depende de si `monitoring_db` tiene tablas o no, y no debe esperar a
+    que se levante dicha pausa para corregirse.
+
+    Nota anticipada, ahora confirmada a nivel de código (17/08/2026): al
+    leer el script se confirma que sí ejecuta
+    `INSERT INTO fail2ban_logs (...)`. Por tanto, una vez corregida la
+    dependencia `pytz`, es razonablemente esperable que el job pase a fallar
+    por un error distinto del tipo "relation \"fail2ban_logs\" does not
+    exist", ya que esa tabla todavía no existe por la pausa de 6.0. Si ese
+    fallo aparece tras el fix, debe atribuirse a 6.0 (consecuencia esperada
+    de la migración pendiente), no tratarse como un defecto nuevo.
+
+    Este hallazgo también invalida, mientras persista, el criterio de cierre
+    de FASE 11.3 ("no existen errores en logs tras reinicio").
+
+    Corregido (17/08/2026): añadida la dependencia faltante
+    (`pytz`, sin versión fijada, mismo criterio que PyYAML en este archivo)
+    a `requirements.txt`. Pendiente de reconstruir la imagen
+    `monitoring-cron` y redesplegar para que el fix tenga efecto en
+    producción; hasta entonces el criterio de cierre de FASE 11.3 sigue sin
+    cumplirse.
+
 Bloques de trabajo:
 8.1. Verificación del scheduler
 - Confirmar que Supercronic está operativo dentro del contenedor.
@@ -1798,6 +2036,10 @@ Criterio de cierre:
 - Todos los jobs definidos se ejecutan correctamente.
 - No existe dependencia del cron del host.
 - El runtime de tareas es completamente contenido y reproducible.
+- Todos los jobs definidos en monitoring.cron completan al menos un ciclo de
+  ejecución sin trazas de error (Traceback) en `docker logs monitoring-cron`.
+
+Estado actual: esta fase NO puede darse por cerrada (ver 8.0).
 
 ==========================================
 FASE 9 – CONECTIVIDAD EXTERNA
@@ -1831,6 +2073,10 @@ Bloques de trabajo:
 10.1. Verificación de stack de observabilidad
 - Confirmar que Loki, Promtail y Grafana están en estado healthy.
 - Verificar que los contenedores comparten redes monitoring-network (Makefile).
+
+Nota: Promtail no reporta estado "healthy" en `docker ps` (solo "running"),
+porque carece de healthcheck definido pese a su política declarada — ver el
+hallazgo y la acción pendiente documentados en FASE 5.1.
 
 10.2. Ingestión de logs
 - Confirmar que Promtail recoge logs de los contenedores.
@@ -1873,11 +2119,28 @@ Validar que:
 - Validar que no existen errores en logs tras reinicio.
 - Confirmar estado healthy de todos los servicios.
 
+Estado verificado (StatusQuo 260816):
+    Se ejecutó un reinicio controlado real en producción (`sudo reboot`).
+    Tras el reinicio, todos los servicios recuperaron estado operativo
+    (`healthy`, salvo Loki que se observó en "health: starting" durante el
+    arranque) en aproximadamente 38 segundos sin intervención manual, y
+    `sudo ufw status verbose` mostró exactamente las mismas reglas antes y
+    después del reinicio. Esto satisface la mayor parte de 11.2.
+
+    Sin embargo, el sub-punto de 11.3 "validar que no existen errores en
+    logs tras reinicio" NO se cumple actualmente: el defecto documentado en
+    FASE 8.0 (ModuleNotFoundError: pytz en log_fail2ban_batch) genera errores
+    recurrentes en los logs de monitoring-cron cada 10 minutos, incluido
+    tras este reinicio.
+
 Criterio de cierre:
 - El sistema puede levantarse desde repositorio limpio.
 - Puede reiniciarse sin intervención manual.
 - Mantiene aislamiento, persistencia y trazabilidad.
 - Se declara entorno PRO operativo.
+
+Estado actual: esta fase NO puede declararse formalmente cerrada
+("entorno PRO operativo") hasta que se resuelva y revalide FASE 8 (ver 8.0).
 
 ==========================================
 FASE 12 – POSIBLES MEJORAS FUTURAS (NO NORMATIVAS)

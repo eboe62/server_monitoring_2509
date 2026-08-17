@@ -16,3 +16,6 @@ schedule>=1.2.1             # Ejecución periódica dentro de scripts
 
 # testing
 PyYAML
+
+# Timezone handling
+pytz                        # Usado en log_ingestor.log_fail2ban_batch para timestamps UTC-aware
