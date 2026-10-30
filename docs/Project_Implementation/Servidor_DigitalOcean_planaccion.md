@@ -864,8 +864,391 @@ B8  Documentación y ADR
 Fuera del cierre: honeypot, migración de datos reales, backup fuera del droplet,
 alertas en Grafana (línea didáctica), alta disponibilidad.
 
+==========================================
+
+Yo:
+Antes de lanzar el plan vamos a hacer commit en la rama que estamos y vamos a redefinir la política de ramas actual ya que muchas parecen obsoletas. Presentame una propuesta
+
+Respuesta:
+2026/10/30 00:45:25
+
+# Commit hecho
+
+`0c13ce5` en `certificacion_sre_hardening`, solo en local. Incluye el ledger v261029, el StatusQuo 261029 y el plan de acción. Revisé el StatusQuo antes de subirlo: no contiene secretos. Sí aparece tu IP de acceso en la salida de `last`, igual que en los StatusQuo anteriores.
+
+# Propuesta de política de ramas
+
+## 1. Situación actual (verificada)
+
+- **El remoto tiene 19 ramas y el local 17.** Hay un tag, `fase4_cierre`.
+- **`master` no se toca desde el 12/10/2025**: va 425 commits por detrás.
+- **Todo el trabajo real está en `certificacion_sre_hardening`, y producción ejecuta esa rama.** En el servidor aparece bajo el nombre `migracion`, que no corresponde a su contenido.
+- **El CI no se ejecuta en la rama de trabajo.** `ci.yml` solo reacciona a `main`, `develop` y `migracion`, y `audit-runtime.yml` a `main` y `develop`. `main` no existe, y ninguno incluye `certificacion_sre_hardening`.
+- **Ramas sin trabajo pendiente:** 16 de las 17 locales ya están completamente contenidas en HEAD. La excepción es `migracion`, cuyos 3 commits propios repiten contenido que ya está en HEAD: su diff contra el punto de bifurcación sale vacío.
+- **Solo dos ramas tienen commits que no están en HEAD:**
+  - `origin/CORRECCION`: 11 commits de abril de 2026 sobre `Makefile` y el Dockerfile y entrypoint de cron. **Hipótesis:** el trabajo posterior de `certificacion_sre_*` ya los sustituyó.
+  - `origin/gobernanza_ia`: 3 commits sobre `ai/templates`. Hoy `ai/` es un repositorio aparte (`governance_ia_2607`), así que aquí ya no tienen sentido.
+- **ADR-1102 y ADR-1103 no describen este proyecto.** Regulan `develop` como rama solo de gobernanza y ramas de contenido (`fuentes/`, `conocimiento/`, `cbi_260726`), es decir, el repositorio de gobernanza o conocimiento. Aquí `develop` está parada desde enero. Es una incoherencia: esos ADR están en `docs/decisiones` de este repositorio, pero no se aplican a él.
+
+## 2. Modelo propuesto: GitHub Flow con tags de hito
+
+```
+master  ← rama canónica: lo que está en master se puede desplegar en PRO
+  │
+  ├── <tipo>/<aammdd>-<tema>    ramas cortas, una por tarea o bloque del plan
+  │      p. ej. cierre/261030-b1-esquema-postgres
+  │             fix/261102-cron-credenciales
+  │      → PR a master (con CI) → merge → borrar la rama
+  │
+  └── tags de hito: fase5_cierre, fase8_cierre... (continúa con fase4_cierre)
+```
+
+**Reglas:**
+1. `master` es la única rama permanente. Producción despliega `master` o un tag de hito; nunca otra rama.
+2. Tipos de rama: `cierre/`, `fix/`, `feat/`, `docs/` y `ops/`. Llevan sufijo `aammdd`, como pide la Visión para los nombres.
+3. Toda rama corta se integra en `master` mediante PR con CI en verde y se borra después del merge.
+4. En el servidor no se hacen commits. Solo se hace `git pull` de `master` o checkout de un tag.
+5. Antes de borrar una rama con commits que no están en `master`, se le pone un tag `archivo/<rama>`. Así se borra sin perder nada.
+
+**Por qué este modelo y no GitFlow** (`master` + `develop` + ramas de trabajo):
+- Eres el único desarrollador y hay un solo entorno PRO. `develop` solo añade una capa que hay que mantener sincronizada, y aquí ya se quedó abandonada una vez.
+- GitHub Flow se aprende rápido y es transferible a otros proyectos, en línea con tu prioridad de versatilidad.
+- Inconveniente: no hay entorno intermedio de pruebas. Lo compensan el CI de los PR y los tags de hito, que permiten volver atrás.
+
+## 3. Qué pasa con cada rama
+
+| Rama | Local / remota | ¿Algo sin integrar? | Acción |
+|---|---|---|---|
+| `master` | L + R | — | Avance fast-forward hasta HEAD, sin conflictos porque es ancestro directo |
+| `certificacion_sre_hardening` | L + R | No | Pasa a `master`; se borra después |
+| `certificacion_sre_*` (otras 7) | L + R | No | Borrar |
+| `gobernanza_ia_backend`, `_basica`, `_frontend`, `_claude` | L + R | No | Borrar |
+| `gobernanza_ia` | L + R | El remoto tiene 3 commits de `ai/templates` | Tag `archivo/gobernanza_ia`, luego borrar |
+| `comentario_cabecera_archivos` | L | No | Borrar |
+| `understand-anything` | L + R | No | Borrar |
+| `migracion` | L + R | Contenido duplicado | Borrar; el servidor pasa a `master` |
+| `develop` | R | No | Borrar |
+| `copilot_sandbox` | R | No | Borrar |
+| `CORRECCION` | R | 11 commits, 3 ficheros | Tag `archivo/CORRECCION`, luego borrar |
+
+Resultado: de 19 ramas remotas a 1 (`master`), más 2 tags de archivo y el tag `fase4_cierre`.
+
+## 4. Cambios asociados
+
+- **CI:** cambiar los disparadores de `ci.yml` y `audit-runtime.yml` a `push` en `master` y `pull_request` hacia `master`.
+- **Servidor:**
+  ```
+  git fetch --prune
+  git checkout -B master origin/master
+  git branch -D migracion
+  ```
+  y decidir qué hacer con `artifacts/`.
+- **GitHub:**
+  - Comprobar que la rama por defecto es `master`. No he podido verlo con `git remote show`.
+  - Opcional: proteger `master` para que exija CI en verde.
+- **Gobernanza:**
+  - Un ADR nuevo (ADR-0034, "Política de ramas y despliegue"), porque es una regla duradera.
+  - Una nota de alcance en ADR-1102 y ADR-1103 indicando que se aplican al repositorio de gobernanza o conocimiento y no a este. También se podrían llevar allí, pero eso es decisión tuya.
+
+## 5. Orden de ejecución propuesto
+
+Cada paso se puede revertir hasta el borrado de ramas remotas, y las que tienen algo propio quedan cubiertas por su tag de archivo.
+
+```
+1. push de certificacion_sre_hardening (0c13ce5)
+2. tags archivo/CORRECCION y archivo/gobernanza_ia + push de tags
+3. fast-forward de master hasta HEAD + push de master
+4. rama ops/261030-ci-triggers → PR → master
+5. borrado de ramas locales y remotas (tabla 3)
+6. servidor: pasar a master (lo ejecutas tú, comandos del punto 4)
+7. ADR-0034 + nota de alcance en 1102/1103 (dentro del bloque B8 del plan)
+```
+
+Necesito tu confirmación en dos puntos:
+- **¿GitHub Flow, o prefieres conservar `develop`?**
+- **¿Apruebas la tabla 3?** Los pasos 1, 3 y 5 publican y borran en GitHub, así que no los ejecuto sin tu visto bueno.
+
+==========================================
+
+Yo:
+Propuesta para valora
+1.-
+CORRECCION es prescindible
+migracion ha funcionado como una rama develop clasica y ha estado bien (con errores) como prevencion de despliegues anómalos
+CI reacciona al merge con migracion debemos modificarlo para que reaccione al merge con master
+No se si es posible redenominar migracion --> develop
+Para prevenir despliegues anómalos y hacer pruebas, antes de cada despliegue en PRO se ha hecho un snapshot con los contenedores abajo (menos volumen en el snapshot y, en teoria, menos overlays)
+
+2.- Gobernanza
+Antes de hacer un push habría que hacer un pull pero previamente tengo que actualizarlo desde otras fuentes.
+
+Respuesta:
+2026/10/30 12:01:21
+
+# Valoración de tu propuesta
+
+## 1. Ramas
+
+**CORRECCION:** de acuerdo, se borra sin tag de archivo.
+
+**`migracion` como `develop`:** de acuerdo con el modelo. Me parece mejor que mi GitHub Flow por tres razones:
+- Ya lo practicas: una rama de integración y una promoción deliberada a producción.
+- Ha cumplido su papel de filtro antes de producción.
+- Coincide con la jerarquía `master ← develop ← ramas de trabajo` de ADR-1102 y ADR-1103. Los dos repositorios, proyecto y gobernanza, seguirían el mismo modelo, lo que encaja con tu prioridad de versatilidad.
+
+**¿Se puede renombrar?** Sí. En local con `git branch -m`, y en GitHub desde Settings → Branches → Rename, que además redirige los PR abiertos. Pero en este caso no te lo recomiendo:
+- Ya existe un `origin/develop` antiguo (enero de 2026, ya integrado). Habría que borrarlo antes de renombrar.
+- `migracion` va 3 commits por delante y 7 por detrás de HEAD, y esos 3 commits son duplicados. Después de renombrarla habría que alinearla igualmente.
+
+El resultado útil es el mismo y más limpio si se hace así: **borrar `develop` y `migracion`, y crear un `develop` nuevo desde HEAD.** No se pierde nada, porque las dos están contenidas en HEAD.
+
+**CI: una corrección importante a tu propuesta.** Si el CI solo se ejecuta al integrar en `master`, `develop` deja de filtrar: los errores se verían cuando ya están en la rama que se despliega. Propongo:
+- `ci.yml`: en push y PR hacia `develop` y `master`.
+- `audit-runtime.yml`: en push a `master`.
+
+**Snapshot antes de desplegar: sí, pero el motivo es otro.**
+- El tamaño del snapshot depende del disco usado. Los volúmenes y las imágenes siguen ocupando igual con los contenedores parados.
+- Con `docker compose down` solo desaparecen las capas de escritura de los contenedores, que pesan poco.
+- La ventaja real es la **consistencia**: Postgres no está escribiendo mientras se toma el snapshot, y así la copia de sus ficheros de datos es fiable. DigitalOcean recomienda incluso apagar el droplet para una consistencia total.
+
+Conviene dejarlo escrito como paso del procedimiento de despliegue. Cuando funcionen los backups (bloque B2), un `pg_dump` antes de desplegar será una alternativa más ligera.
+
+**Flujo resultante:**
+```
+<tipo>/<aammdd>-<tema> → PR a develop (CI) → validación
+  → PR develop → master (CI) → snapshot con contenedores parados
+  → servidor: git pull master + make deploy → StatusQuo → tag de hito
+```
+
+## 2. Gobernanza
+
+Entiendo que hablas del repositorio `ai/` (`governance_ia_2607`). Lo he comprobado:
+- Está en `develop`, con cambios locales y sin upstream configurado.
+- Desde mi entorno no puedo autenticarme contra él.
+
+**No lo toco:** lo actualizas tú desde las otras fuentes. En cambio, **este repositorio no necesita pull**: el remoto no tiene commits nuevos, solo vamos 1 por delante (`0c13ce5`).
+
+Las notas de alcance en ADR-1102 y ADR-1103 están en `docs/decisiones` de este repositorio. Quedan dentro del ADR-0034 del bloque B8 y no dependen de tu actualización de `ai/`.
+
+## Plan revisado (pendiente de tu aprobación)
+
+```
+1. push certificacion_sre_hardening (0c13ce5)
+2. tag archivo/gobernanza_ia + push del tag
+3. fast-forward de master hasta HEAD + push
+4. borrar origin/develop (antiguo) y migracion (local + remota); crear develop desde master + push
+5. rama ops/261030-ci-triggers desde develop → PR → develop → master
+6. borrar las demás ramas integradas, locales y remotas, CORRECCION incluida
+7. servidor: git fetch --prune; git checkout -B master origin/master;
+   git branch -D migracion   (lo ejecutas tú)
+8. ADR-0034 (ramas, despliegue y snapshot) + nota de alcance en 1102/1103 → bloque B8
+```
+
+Resultado en GitHub: `master` y `develop`, más los tags `fase4_cierre` y `archivo/gobernanza_ia`.
+
+**Una advertencia:** los pasos 1, 3, 4 y 6 publican y borran en GitHub. Lo único que no tiene vuelta atrás es borrar ramas remotas, y todas salvo `gobernanza_ia` (que lleva su tag) están contenidas en `master`.
+
+¿Lo ejecuto así?
+
+==========================================
+
+Yo:
+De momento vamos a revisar y probablemente actualizar las carpetas
+ai
+docs
+comparándolas con sus repositorios respectivos (aunque actualmente es posible que no estén enlazados)
+https://github.com/eboe62-appvisibility/governance_ia_2607.git
+https://github.com/eboe62-appvisibility/governance_ia_docs_2609.git
+Dime si en la situación actual se producirían anomalías si hacemos un pull en cada una de ellas
+
+Respuesta:
+¿Se producirían anomalías con un pull? Sí, en los dos casos, aunque por motivos distintos
+Para comprobarlo cloné los dos repositorios en el scratchpad y ensayé el pull de ai/ sobre una copia. No he modificado ai/ ni docs/.
+
+Situación de partida
+Carpeta	¿Está enlazada?	Estado
+ai/	Sí: es un repositorio anidado con origen governance_ia_2607. Este proyecto lo ignora (.gitignore: ai/)	Rama develop en 1d9f770 (29/07), 6 commits por detrás del remoto (24b4570, 30/10). Tiene 21 cambios sin commit: 20 borrados en claude_code/, opencode/ y opencode-nvidia_BORRAR/, más .gitignore
+docs/	No. No tiene .git propio; sus 62 ficheros los versiona este proyecto	—
+ai/ frente a governance_ia_2607
+A nivel de git, el pull funciona. Es un fast-forward sin conflictos: el remoto solo borra opencode-nvidia_BORRAR/ (que tú ya habías borrado en local) y cambia permisos. Tus 17 borrados restantes seguirían sin commit.
+
+El problema es el contenido. El remoto se ha adaptado al proyecto GDA:
+
+00_CLAUDE.md pasaría a describir GDA. Hablaría de un monorepo Java/Maven y Vue, "Native Windows — no Docker/WSL2". En este proyecto CLAUDE.md es un symlink a ese fichero, así que cualquier asistente de IA recibiría aquí el contexto de otro proyecto.
+14_ADR_INDEX.md perdería los 38 ADR de este proyecto (0000–0032 y 1100–1105) y solo listaría los de GDA (0600–0610 y 0801–0804). La gobernanza dice "Only APPROVED ADRs [in the index] are considered authoritative", así que en la práctica los ADR de este proyecto dejarían de contar como autoritativos.
+El problema también existe al revés. El 00_AI_ENTRYPOINT.md remoto sigue nombrando 8 veces ADR de este proyecto (ADR-0014, ADR-0032...), así que GDA recibe a su vez el contexto de server_monitoring.
+Causa raíz: un repositorio de gobernanza compartido contiene ficheros que son de un proyecto concreto: 00_CLAUDE.md, 14_ADR_INDEX.md y la sección de ADR de 00_AI_ENTRYPOINT.md. Cada proyecto que lo actualiza le cambia el contexto al otro. Mientras no se separe, cualquier pull en cualquiera de los dos proyectos rompe al otro.
+
+docs/ frente a governance_ia_docs_2609
+No son la misma cosa. governance_ia_docs_2609 es la documentación de GDA: Project_Definition con back, front y BBDD de GDA, y decisiones 0600–0610 y 0801–0804. No contiene nada de server_monitoring.
+
+Un pull no es posible tal como están las cosas, y forzarlo causaría dos daños:
+
+Haría falta crear un .git dentro de docs/. Este proyecto pasaría a ver docs/ como un repositorio incrustado y dejaría de seguir bien sus 62 ficheros (Visión, ledger, StatusQuo, ADR).
+Mezclaría la definición de GDA con la de este proyecto en Project_Definition/.
+Lo que sí comparten son copias de ADR de GDA que hoy están en docs/decisiones de este proyecto:
+
+ADR	Comparación con el repositorio de GDA
+04_adr_template, 0601, 0802, 0803	Idénticos
+0033 (3 líneas), 0600 (8), 0602 (6), 0603 (18), 0604 (18), 0605 (24), 0606 (37), 0801 (59)	Distintos: las copias de aquí han ido quedando desfasadas
+0607–0610 y 0804	Solo existen en GDA
+Mi recomendación
+Por ahora, no hacer pull en ninguno de los dos. Antes hay que decidir cómo convive la gobernanza compartida con varios proyectos. Veo dos opciones:
+
+A) Separar lo genérico de lo específico (la que recomiendo).
+ai/ contiene solo gobernanza genérica (01–23, skills y templates) y se puede actualizar sin riesgo desde cualquier proyecto.
+Los ficheros propios de cada proyecto (CLAUDE.md, índice de ADR y sección de ADR del ENTRYPOINT) pasan al repositorio de cada proyecto.
+Encaja con tu prioridad de versatilidad, pero exige reestructurar governance_ia_2607.
+B) Una rama por proyecto en governance_ia_2607 (por ejemplo server_monitoring y gda). Cada proyecto hace pull de su rama y los cambios genéricos se llevan entre ramas con merge. Es más rápido de montar, pero las ramas tenderán a divergir.
+Sobre los ADR de GDA que hay en este proyecto: si quieres conservarlos aquí, deberían sincronizarse con su repositorio de origen, porque 8 están desfasados. La otra posibilidad es referenciarlos en lugar de copiarlos. Decides tú.
+
+Sobre tus 17 borrados sin commit en ai/ (claude_code/ y opencode/): el remoto todavía tiene esos ficheros. Si haces commit y push, los borras para todos los proyectos. Conviene confirmar que es lo que quieres.
+
+¿Prefieres la opción A o la B?
+
+==========================================
+
+Yo:
+El objetivo es dotar de la mayor versatilidad a la gobernanza y a su documentacion.
+Que problema habría en tratar de ejecutar el plan propuesto:
+"1. push certificacion_sre_hardening (0c13ce5)
+2. tag archivo/gobernanza_ia + push del tag
+3. fast-forward de master hasta HEAD + push
+4. borrar origin/develop (antiguo) y migracion (local + remota); crear develop desde master + push
+5. rama ops/261030-ci-triggers desde develop → PR → develop → master
+6. borrar las demás ramas integradas, locales y remotas, CORRECCION incluida
+7. servidor: git fetch --prune; git checkout -B master origin/master;
+   git branch -D migracion   (lo ejecutas tú)
+8. ADR-0034 (ramas, despliegue y snapshot) + nota de alcance en 1102/1103 → bloque B8"
+
+y luego tratar de integrar en la medida de lo posible todo lo que nos aportan los dos repositorios.
+
+Respuesta:
+2026/10/30 16:42:49
+
+¿Qué problemas tendría ejecutar ahora el plan de ramas?
+Respuesta corta: los pasos 1 a 7 se pueden ejecutar ya y no interfieren con ai/ ni con docs/:
+
+ai/ está fuera del git de este proyecto (.gitignore) y tiene su propio repositorio.
+Las ramas no cambian el contenido de docs/.
+El paso 8 sí conviene aplazarlo a la integración de los dos repositorios, porque depende de decisiones que se tomarán allí (punto P7).
+
+Lo he comprobado en GitHub y en local. Estos son los problemas reales:
+
+#	Problema	Evidencia	Cómo resolverlo
+P1	Desde mi entorno no puedo hacer push	could not read Username; gh no está instalado	Hago las operaciones locales y tú ejecutas las remotas con el bloque de comandos que te preparo, o configuras credenciales
+P2	Hay 2 PR abiertos contra migracion: "empiezo el cierre de FASE 5" (desde certificacion_sre_hardening) y "gobernanza_ia"	API de GitHub	Al borrar migracion, GitHub los cierra. Mejor cerrarlos antes a mano con un comentario. El de gobernanza_ia queda cubierto por su tag de archivo
+P3	El repositorio es público	"visibility": "public"	El push de 0c13ce5 publica el StatusQuo con tu IP de acceso, direcciones @appvisibility.es e IPs de atacantes. Ya hay StatusQuo anteriores públicos con datos parecidos. Decide si te parece aceptable
+P4	Hay un intervalo sin CI: los disparadores siguen siendo main, develop y migracion	ci.yml y audit-runtime.yml	Cambiar el orden: primero el commit de los disparadores y después el fast-forward de master. Así master nace con el CI correcto y desaparece el antiguo paso 5
+P5	audit-runtime.yml usa un runner self-hosted y no sé en qué máquina está	runs-on: [self-hosted, linux]	Al crear develop se lanzará. Si no hay runner registrado, se quedará en cola; si está en el droplet de producción, es una auditoría de solo lectura (riesgo bajo). Compruébalo en Settings → Actions → Runners. ci.yml usa ubuntu-latest, una máquina temporal de GitHub, así que sus tests destructivos no afectan a producción
+P6	Mientras no se haga el paso 7, git pull falla en el servidor	Su rama local migracion se quedará sin rama remota	Sin efecto en el runtime: los contenedores siguen funcionando. Basta con ejecutar el paso 7 en cuanto se borre la rama remota
+P7	La numeración de ADR no está regulada entre proyectos	ADR-0033 no define rangos. Hay ADR compartidos (0033, plantilla) en los dos proyectos; GDA usa 06xx/08xx y el conocimiento 11xx	Un ADR-0034 creado aquí podría chocar con otro de GDA. El paso 8 pasa a la integración
+Una ventaja que no tenía en cuenta: el develop antiguo del remoto ya está contenido en master. No hace falta borrarlo; basta con avanzarlo (fast-forward). Un borrado menos.
+
+Plan de ramas revisado
+
+LOCAL (lo hago yo tras tu aprobación)
+1. En certificacion_sre_hardening: commit de los disparadores de CI
+     ci.yml           → push y PR en [develop, master]
+     audit-runtime.yml → push en [master]
+2. tag archivo/gobernanza_ia (sobre origin/gobernanza_ia)
+3. master: fast-forward hasta HEAD
+4. develop: crear o mover a master
+5. borrar las ramas locales ya integradas (comentario_cabecera_archivos,
+   certificacion_sre_*, gobernanza_ia*, understand-anything, migracion)
+
+REMOTO (lo ejecutas tú; te dejo el bloque listo)
+6. cerrar los 2 PR contra migracion (interfaz de GitHub)
+7. git push origin master develop archivo/gobernanza_ia
+8. git push origin --delete migracion CORRECCION copilot_sandbox
+   certificacion_sre_* gobernanza_ia* understand-anything
+   certificacion_sre_hardening
+9. servidor: git fetch --prune && git checkout -B master origin/master
+   && git branch -D migracion
+
+APLAZADO A LA INTEGRACIÓN
+10. ADR-0034 (ramas, despliegue y snapshot) + destino de ADR-1102/1103
+Después: integrar los dos repositorios
+Primero conviene dejar las ramas resueltas. Así la integración se hace ya con el modelo nuevo: una rama docs/<aammdd>-... con PR a develop.
+
+Lo que aporta cada repositorio:
+
+governance_ia_2607:
+Gobernanza genérica (01–23), skills y templates. Es la parte reutilizable.
+También contiene ficheros específicos de GDA (00_CLAUDE.md, índice de ADR) que hay que separar.
+governance_ia_docs_2609:
+Documentación y ADR de GDA.
+Versiones más recientes de los ADR 06xx/08xx que este proyecto tiene copiados y desfasados.
+Los ADR compartidos (0033, plantilla).
+Para la máxima versatilidad, el diseño de partida sería este:
 
 
+governance_ia_2607 ......... solo gobernanza genérica
+                              (cada proyecto fija una versión: submódulo o subtree)
+governance_ia_docs_2609 .... ADR transversales a todos los proyectos
+                              (plantilla, taxonomía 0033, rangos de numeración,
+                               procesos de ramas)
+cada proyecto .............. su CLAUDE.md, su índice de ADR y sus ADR propios
+Esto implica decidir qué hacer con los ADR de GDA en governance_ia_docs_2609, que quizá deberían ir a un repositorio de GDA. Lo analizaré con detalle cuando lleguemos, porque toca otros dos repositorios y otro proyecto.
+
+Lo que necesito de ti
+¿Apruebas el plan de ramas revisado (pasos 1–9)?
+¿Aceptas publicar 0c13ce5 en el repositorio público tal como está (P3)?
+
+==========================================
+
+Yo:
+De momento vamos adelante con 1.- Plan de ramas revisado
+
+Respuesta:
+2026/10/30 — pasos locales terminados
+
+Lo que he hecho (solo en local)
+Paso	Resultado
+1. Disparadores de CI	Commit 8f8c69f. ci.yml se ejecuta en push y PR a develop y master; audit-runtime.yml solo en push a master. YAML validado
+2. Tag de archivo	archivo/gobernanza_ia, sobre origin/gobernanza_ia (sus 3 commits de ai/templates)
+3. master	Fast-forward hasta 8f8c69f (426 commits por delante de origin/master)
+4. develop	Creada en 8f8c69f. Avanza sobre el origin/develop antiguo sin necesidad de borrarlo (410 por delante)
+5. Ramas locales	16 ramas borradas. Ahora solo quedan master y develop, y estás en develop
+Tus cambios en planaccion.md siguen sin commit en develop; no los he tocado.
+
+Lo que te toca ejecutar a ti (pasos 6 a 9)
+6. En GitHub: cierra antes los dos PR abiertos contra migracion ("empiezo el cierre de FASE 5 con Claude Code" y "gobernanza_ia").
+
+7 y 8. En tu WSL, desde la raíz del proyecto:
+
+
+# 7. Publicar master, develop y el tag (lanza el CI en master y develop)
+git push origin master develop archivo/gobernanza_ia
+
+# 8. Borrar las ramas remotas obsoletas (todas contenidas en master, salvo
+#    gobernanza_ia, que queda cubierta por su tag)
+git push origin --delete migracion CORRECCION copilot_sandbox \
+  certificacion_sre_hardening certificacion_sre_control_egress \
+  certificacion_sre_docker_capabilities certificacion_sre_enforcement_ci \
+  certificacion_sre_healthchecks certificacion_sre_reproducibilidad \
+  certificacion_sre_validacion_privilegios certificacion_sre_validaciones_heuristicas \
+  gobernanza_ia gobernanza_ia_backend gobernanza_ia_basica \
+  gobernanza_ia_claude gobernanza_ia_frontend understand-anything
+
+git fetch --prune && git branch -a     # debe mostrar solo master y develop
+Recuerda (P3): el repositorio es público. El push de master publica el StatusQuo 261029, con tu IP de acceso y las direcciones @appvisibility.es. Si no lo quieres así, avísame antes del push y lo saneo.
+
+9. En el servidor:
+
+
+cd /opt/monitoring
+git fetch --prune && git checkout -B master origin/master && git branch -D migracion
+git status -sb     # debe decir: ## master...origin/master
+Esto no afecta a los contenedores, porque no reconstruye nada. El directorio artifacts/ sin seguimiento sigue ahí, pendiente de que decidas qué hacer con él.
+
+Qué comprobar después del push en la pestaña Actions:
+
+ci.yml debería ejecutarse dos veces, una por master y otra por develop.
+audit-runtime se ejecutará en el runner self-hosted. Si se queda en cola indefinidamente, es que no hay runner registrado (P5).
+Cuando me confirmes que los pasos 7 a 9 han ido bien, pasamos a la integración de ai/ y de los repositorios de gobernanza.
+
+==========================================
 ==========================================
 ==========================================
 ==========================================
