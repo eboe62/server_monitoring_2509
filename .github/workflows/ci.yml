@@ -347,6 +347,14 @@ jobs:
           pytest tests/unit/test_compose_policy.py -q
 
       # ------------------------------------------
+      # Auditoría de gobernanza runtime (ADR-0031)
+      # Falla ante hallazgos "forbidden". Sustituye a audit-runtime.yml
+      # (runner self-hosted nunca registrado). Requiere pyyaml (paso anterior).
+      # ------------------------------------------
+      - name: Runtime governance audit (ADR-0031)
+        run: make audit-runtime-ci
+
+      # ------------------------------------------
       # SEGURIDAD EN RUNTIME (ADR-0018)
       # ------------------------------------------
       - name: Test security runtime

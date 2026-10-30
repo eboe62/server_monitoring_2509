@@ -756,9 +756,7 @@ test-smtp-ci: \
 	test-smtp-queue \
 	test-smtp-logs-clean
 
-test-smtp-all: test-smtp-connect test-smtp-banner test-smtp-protocol test-smtp-config-auth test-smtp-relay-flow test-smtp-delivery test-smtp-queue test-smtp-logs-clean
-
-.PHONY: \
+.PHONY: test-smtp-all
 
 test-smtp-all: \
 	test-smtp-connect \
