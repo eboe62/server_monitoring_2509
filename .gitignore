@@ -40,6 +40,9 @@ docker-compose.override.yml
 /*.bak
 *.tmp
 
+# === Informes generados por make audit-runtime* (ADR-0030/0031) ===
+/artifacts/
+
 # === AI Governance (must be versioned independently) ===
 ai/
 
