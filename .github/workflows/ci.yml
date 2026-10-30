@@ -2,9 +2,9 @@ name: CI - Monitoring Stack
 
 on:
   push:
-    branches: [ "main", "develop", "migracion" ]
+    branches: [ "develop", "master" ]
   pull_request:
-    branches: [ "main", "develop", "migracion" ]
+    branches: [ "develop", "master" ]
 
 jobs:
 
