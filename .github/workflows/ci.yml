@@ -23,8 +23,12 @@ jobs:
       # ------------------------------------------
       # Setup Docker
       # ------------------------------------------
+      # driver "docker": construye con el daemon, sin contenedor BuildKit auxiliar
+      # (el driver docker-container lo arranca privileged y lo marca audit-runtime-ci)
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+        with:
+          driver: docker
 
       - name: Verify Docker
         run: docker version
@@ -351,8 +355,18 @@ jobs:
       # Falla ante hallazgos "forbidden". Sustituye a audit-runtime.yml
       # (runner self-hosted nunca registrado). Requiere pyyaml (paso anterior).
       # ------------------------------------------
+      - name: Remove debug toolbox before audit
+        run: make debug-toolbox-down || true
+
       - name: Runtime governance audit (ADR-0031)
         run: make audit-runtime-ci
+
+      - name: Upload runtime audit report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: runtime-audit
+          path: artifacts/runtime_audit.*
 
       # ------------------------------------------
       # SEGURIDAD EN RUNTIME (ADR-0018)
