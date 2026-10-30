@@ -79,6 +79,11 @@ docs/arquitectura/.ua/.trash-*/
 # === Documentation Podcast, Slides, etc ===
 docs/Project_ADRs/*
 docs/Project_Corrections/*
+
+# === Documentos de trabajo locales (no versionados) ===
+# StatusQuo: logs del servidor (IPs, direcciones de correo). Plan de acción: registro de trabajo.
+docs/Project_Implementation/*StatusQuo*
+docs/Project_Implementation/*planaccion*
 *.m4a
 *.pdf
 *.xlsx
