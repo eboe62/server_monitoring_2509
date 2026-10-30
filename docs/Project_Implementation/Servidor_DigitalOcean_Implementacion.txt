@@ -771,9 +771,10 @@ No diseña arquitectura (FASE 4) ni valida resiliencia profunda (FASE 5).
 7.4. Reproducibilidad
         make test-reproducibilidad
     Elimina contenedores, imágenes, volúmenes y redes, y reconstruye todo.
-    ATENCIÓN: ejecuta "down -v" y "docker system prune -af --volumes" sin pedir
-    confirmación. Borra la BBDD y los backups. Aceptable hoy (datos de prueba).
-    [PENDIENTE] Añadir una protección (p. ej. CONFIRM=yes) antes de tener datos reales.
+    ATENCIÓN: ejecuta "down -v" y "docker system prune -af --volumes": borra la
+    BBDD y los backups. Aceptable hoy (datos de prueba).
+    Protegido (30/10/2026): sin CONFIRM=yes aborta antes de borrar nada; también
+    detiene test-SRE-completo. Uso fuera de PRO: make test-reproducibilidad CONFIRM=yes
     No incluir en rutinas de verificación de producción (forma parte de test-SRE-completo).
 
 7.5. Reinicio controlado
@@ -1016,7 +1017,7 @@ A.8. "$$" en un script bash (29/10/2026)                          [PENDIENTE]
     en bash es el PID del proceso. La expresión nunca coincide.
     Lección: la sintaxis copiada entre Makefile y shell cambia de significado.
 
-A.9. test-reproducibilidad destructivo (17/08, 29/10 y 30/10/2026) [PENDIENTE]
+A.9. test-reproducibilidad destructivo (17/08, 29/10 y 30/10/2026) [RESUELTO]
     Borra volúmenes de datos y backups sin confirmación. Explica la pérdida del
     backup del 27/03. Sin consecuencias hoy (datos de prueba).
     30/10/2026: make test-SRE-completo (que empieza por test-reproducibilidad) se
@@ -1024,7 +1025,7 @@ A.9. test-reproducibilidad destructivo (17/08, 29/10 y 30/10/2026) [PENDIENTE]
     de observabilidad, las imágenes y las redes; el stack se reconstruyó en verde,
     pero con la BBDD vacía.
     Lección: una prohibición escrita no protege si el comando no la aplica. La
-    protección (CONFIRM=yes) debe estar en el propio target.
+    protección (CONFIRM=yes) debe estar en el propio target. Aplicada el 30/10/2026.
 
 A.10. Cron sin credenciales, sin correo y sin permisos (29/10/2026) [PENDIENTE]
     Ver tabla 8.0. Lección: "healthy" solo indica que supercronic está vivo, no
