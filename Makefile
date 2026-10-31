@@ -1258,7 +1258,7 @@ test-SRE:
 	@echo "=== Bateria de Test de Certificación (SRE + IaC) ==="
 	@echo ""
 	@echo "CORE:"
-	@echo "  test-reproducibilidad"
+	@echo "  test-reproducibilidad   (DESTRUCTIVO: requiere CONFIRM=yes; prohibido en PRO)"
 	@echo "  test-aislamiento-red"
 	@echo "  test-dependencias-host"
 	@echo "  test-permisos"
@@ -1280,6 +1280,12 @@ force-recreate:
 .PHONY: test-reproducibilidad
 
 test-reproducibilidad:
+	@if [ "$(CONFIRM)" != "yes" ]; then \
+		echo "[ABORT] test-reproducibilidad es DESTRUCTIVO: borra volúmenes (BBDD, backups),"; \
+		echo "        imágenes y redes. Prohibido en PRO (ADR-0034 §5)."; \
+		echo "        Fuera de PRO: make test-reproducibilidad CONFIRM=yes"; \
+		exit 1; \
+	fi
 	@echo "\n=== TEST REPRODUCIBILIDAD ==="
 
 	@echo "[1] Eliminando entorno completo"

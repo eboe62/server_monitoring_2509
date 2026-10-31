@@ -1,12 +1,12 @@
-//Servidor_DigitalOcean_Implementacion_261029
-Versión 261029 (reconstrucción simplificada de la versión 260227)
+//Servidor_DigitalOcean_Implementacion_261030
+Versión 261030 (sobre la reconstrucción simplificada 261029 de la versión 260227)
 Estado: Normativo (entorno PRO)
 Ámbito: server_monitoring_2509
 Proveedor: DigitalOcean
 Droplet: eob-260131
 Sistema Operativo: Ubuntu 24.04.3 LTS (x64)
-Última evidencia de producción: StatusQuo 261029
-    (docs/Project_Implementation/Servidor_DigitalOcean_StatusQuo_261029.md)
+Última evidencia de producción: StatusQuo 261029 (ampliado con las pruebas del 30/10/2026)
+    (copia local, no versionada: ver Apéndice B)
 
 ==========================================
 0. ESTE DOCUMENTO
@@ -15,8 +15,9 @@ Qué es:
 - Documento normativo y operativo: define el "cómo".
 - La Visión (docs/Project_Definition/00_PROJECT_VISION_...) define el "qué" y el "por qué".
 - Los ADR (docs/decisiones/) definen las reglas de arquitectura vigentes.
-- El plan de corrección (docs/Project_Corrections/Servidor_DigitalOcean_Correccion_260712.txt)
-  recoge el plan priorizado de hardening (PRIORIDADES 1-15).
+- El plan de corrección (Servidor_DigitalOcean_Correccion_260712.txt) recogió el plan
+  priorizado de hardening (PRIORIDADES 1-15). Es un histórico local, no versionado:
+  su estado normativo está resumido en 5.8.
 - Los StatusQuo son la evidencia: capturas reales del servidor.
 
 Cómo leerlo:
@@ -43,6 +44,14 @@ Cambios respecto a la versión 260227:
 - Eliminada la autorización a infra-stacks para usar docker.sock (contradice ADR-0018).
 - Incorporada la evidencia del StatusQuo 261029 y las decisiones del 29/10/2026.
 - Las narrativas de diagnóstico se han condensado en el Apéndice A.
+
+Cambios en la versión 261030:
+- FASE 3 cerrada: PRO despliega master según ADR-0034 (política de ramas).
+- 5.7: el CI se concentra en ci.yml e incluye el gate de ADR-0031 (audit-runtime-ci).
+- 5.8: estado de las PRIORIDADES 1-15; el plan de corrección pasa a histórico local.
+- FASE 6 y A.9: incidente del 30/10/2026 (test-SRE-completo ejecutado en PRO).
+- Apéndice A: lecciones A.14-A.16.
+- Apéndice B: batería sin redundancias; el StatusQuo se conserva solo en local.
 
 ==========================================
 1. OBJETIVO Y ALCANCE
@@ -272,16 +281,16 @@ Los servicios solo se comunican mediante:
 - Snapshots del droplet: solo contingencia; no sustituyen la reconstrucción declarativa.
 
 ==========================================
-5. ESTADO ACTUAL (29/10/2026)
+5. ESTADO ACTUAL (30/10/2026)
 ==========================================
     FASE  DESCRIPCIÓN                          ESTADO     BLOQUEO PRINCIPAL
     1     Sistema operativo y acceso           CERRADA    -
     2     Runtime base del host                PARCIAL    68 paquetes pendientes; buildx no instalado
     2B    Firewall UFW                         PARCIAL    80/443 abiertos sin servicio
-    3     Despliegue del repositorio           PARCIAL    rama del servidor divergente
+    3     Despliegue del repositorio           CERRADA    -
     4     Configuración de entorno             CERRADA    -
     5     Hardening y resiliencia              ABIERTA    backups, restore, fail2ban, automatismos host
-    6     Inicialización Postgres              ABIERTA    sin esquema declarativo (init/ no existe)
+    6     Inicialización Postgres              ABIERTA    sin esquema declarativo; BBDD recreada vacía (30/10)
     7     Activación runtime PRO               CERRADA    -
     8     Cron y jobs                          ABIERTA    6 jobs con error (ver 8.0)
     9     Conectividad externa                 ABIERTA    envío SMTP real falla (timeout RCPT TO)
@@ -429,14 +438,23 @@ Estado (StatusQuo 261029):
                     sudo ufw delete allow 443/tcp
 
 ==========================================
-FASE 3 – DESPLIEGUE DEL REPOSITORIO                                   [PARCIAL]
+FASE 3 – DESPLIEGUE DEL REPOSITORIO                                   [CERRADA]
 ==========================================
 Objetivo: código en el host desde la rama canónica, sin modificaciones locales.
+
+Rama canónica: master (ADR-0034). El servidor sigue origin/master y no hace commits.
+Las ramas de trabajo se integran en develop y se promocionan a master por PR.
 
 Acciones:
         sudo mkdir -p /opt/monitoring && sudo chown eboe62:eboe62 /opt/monitoring
         cd /opt/monitoring
-        git clone -b <rama_canónica> https://github.com/eboe62/server_monitoring_2509.git .
+        git clone -b master https://github.com/eboe62/server_monitoring_2509.git .
+
+Actualización (procedimiento de ADR-0034 §5):
+        snapshot del droplet con los contenedores parados
+        git pull --ff-only
+        make deploy          (solo si el cambio afecta al runtime)
+        StatusQuo (Apéndice B)
 
 Validación:
         git branch -vv
@@ -445,12 +463,12 @@ Validación:
 
 Restricciones: en esta fase no se crean .env ni se arrancan servicios.
 
-Estado (StatusQuo 261029):
-    El servidor ejecuta el commit 954164f (rama certificacion_sre_hardening) sobre
-    la rama local "migracion", que ha divergido de origin/migracion
-    (6 commits por delante, 3 por detrás). Existe un directorio artifacts/ sin seguimiento.
-    [PENDIENTE] Definir la rama canónica de producción, alinear la rama del
-                servidor con ella y decidir el destino de artifacts/.
+Estado (30/10/2026): servidor en master, alineado con origin/master.
+    artifacts/ (informes de make audit-runtime*) ignorado por .gitignore.
+
+[HISTÓRICO] Estado del 29/10/2026: el servidor ejecutaba el commit 954164f (rama
+    certificacion_sre_hardening) sobre la rama local "migracion", divergente de
+    origin/migracion (6 commits por delante, 3 por detrás).
     Didáctico: "git reset --hard origin/<otra_rama>" sobre una rama local mueve
     su contenido pero no su nombre ni su seguimiento remoto: el nombre deja de
     describir lo que hay desplegado.
@@ -618,12 +636,48 @@ verificable y resiliente. Esta fase no añade arquitectura: valida y endurece.
     durante meses impidió que el bloque [3] pudiera fallar.
 
 5.7. Validación continua (CI)
-    GitHub Actions (.github/workflows/ci.yml, audit-runtime.yml):
+    GitHub Actions (.github/workflows/ci.yml), en push y pull_request sobre develop
+    y master (ADR-0034):
     build de imágenes, validación de compose, test-resilience-completo,
     test-observability-core, test-cron-execution, test-python-health,
-    test-smtp-ci (sin credenciales reales), auditoría de :latest, docker.sock y puertos.
+    test-smtp-ci (sin credenciales reales), auditoría de :latest, docker.sock y puertos,
+    y make audit-runtime-ci (gate de ADR-0031: un hallazgo forbidden bloquea el merge).
+    Solo runners alojados por GitHub (repositorio público). audit-runtime.yml, que
+    dependía de un runner self-hosted nunca registrado, se eliminó el 30/10/2026.
     En el servidor se completa con test-smtp-all (credenciales reales).
     Esta fase no introduce CD: valida antes de promocionar cambios.
+
+5.8. Plan de corrección: estado de las PRIORIDADES 1-15 (30/10/2026)
+    Resumen del plan de corrección 260712 (histórico local). Cada prioridad
+    pendiente remite a la fase o al bloque del plan de cierre que la resuelve.
+
+    P   TEMA                                ESTADO     EVIDENCIA / PENDIENTE
+    1   Reproducibilidad                    CERRADA    sin bind mounts de código; test-reproducibilidad (30/10)
+    2   Aislamiento de stacks               CERRADA    micro-stacks e infra-stacks (ADR-0008)
+    3   Dependencia del host                PARCIAL    cron monta /var/lib/docker/containers (5.2);
+                                                       automatismos del host (5.3)
+    4   Seguridad runtime                   CERRADA    tipología de contenedores (ADR-0027); non-root
+    5   Secretos SMTP y config. runtime     PARCIAL    *_FILE (ADR-0032); falta envío real (FASE 9)
+                                                       y secretos/entorno de cron (FASE 8)
+    6   Certificación SRE                   PARCIAL    6.4, 6.5 y 6.6 atendidas (gate CI desde 30/10);
+                                                       6.1 healthcheck de python trivial por diseño;
+                                                       6.3 heurísticos de auditoría (A.6, A.8, A.16)
+    7   Limitación de recursos              CERRADA    límites declarados en compose y validados
+    8   Hardening del filesystem            CERRADA    cierre documental: matriz de readonly rootfs
+    9   Linux capabilities                  CERRADA    cierre documental: inventario vigente
+    10  Aislamiento de red                  PARCIAL    3 redes (ADR-0021), test-aislamiento-red OK;
+                                                       "internal: true" sin evaluar (mejora futura)
+    11  Resiliencia de red                  CERRADA    test-resilience-network determinista, en CI
+    12  Consistencia de healthchecks        PARCIAL    todos healthy; el de python es trivial (6.1)
+    13  Exposición de puertos               PARCIAL    Grafana y Loki solo en 127.0.0.1;
+                                                       UFW con 80/443 abiertos (FASE 2B)
+    14  Observabilidad                      CERRADA    ingesta en Loki en PASS; /var/log en solo lectura
+                                                       (carácter didáctico, 1.2)
+    15  Contenedor debug                    CERRADA    efímero: se crea para los tests y se elimina
+
+    Didáctico: "cerrada desde la gobernanza" (P8, P9) significa que se documentó
+    el estado real y se aceptaron las excepciones, no que se endureciera más. Es
+    un cierre legítimo si la excepción queda escrita y justificada.
 
 Criterio de cierre FASE 5:
     - Perímetro y seguridad runtime sin hallazgos prohibidos.          [cumplido]
@@ -631,7 +685,7 @@ Criterio de cierre FASE 5:
     - Backup diario generado + un restore probado.                     [pendiente]
     - fail2ban bloqueando según la política versionada.                [pendiente]
     - Automatismos del host resueltos (5.3).                           [pendiente]
-    - Plan de corrección (PRIORIDADES 1-15) con estado actualizado.     [pendiente]
+    - Plan de corrección (PRIORIDADES 1-15) con estado actualizado.     [cumplido: 5.8]
 
 ==========================================
 FASE 6 – INICIALIZACIÓN DECLARATIVA DE POSTGRES                       [ABIERTA]
@@ -653,19 +707,30 @@ volumen o aplicar una migración.
     - fail2ban_logs   (destino de log_fail2ban_batch)
     - kern_logs       (destino de log_kern_batch)
     - función PL/pgSQL update_attacking_no()
-    - honeypot_logs: fuera de alcance.
+    - honeypot_logs: el honeypot está fuera de alcance, pero la tabla se crea
+      vacía porque update_attacking_no() escribe en ella (decisión 31/10/2026).
     Los datos actuales son de prueba: recrear postgres_postgres-data es aceptable.
 
+    Implementado (31/10/2026):
+        ops/services/postgres/init/01_schema.sql      4 tablas (IF NOT EXISTS)
+        ops/services/postgres/init/02_functions.sql   update_attacking_no()
+    Origen: esquema recuperado del dump local monitoring_db-202601172205.backup.
+    update_attacking_no() fija attacking_no = número de registros de cada
+    attacking_octets en su tabla, y propaga a honeypot_logs el log_type más grave.
+    Didáctico: un pg_dump en formato custom guarda las definiciones (DDL) en
+    texto plano en su cabecera; los datos van comprimidos aparte. El esquema
+    puede leerse sin restaurar nada.
+
 6.2. Requisito de versionado
-    [PENDIENTE] .gitignore excluye *.sql. Añadir la excepción:
+    Resuelto (31/10/2026): .gitignore excluye *.sql y la excepción
         !ops/services/postgres/init/*.sql
-    Sin ella, git ignoraría los scripts de inicialización sin avisar.
-    Además, el directorio ops/services/postgres/init/ no existe: el compose lo
-    monta y Docker crea en el host un directorio vacío.
+    va después de esa regla (en .gitignore gana la última regla que coincide).
+    El CI levanta Postgres con un volumen vacío: ejecuta los scripts de init/ y
+    detecta errores de sintaxis antes de llegar a PRO.
 
 Validación:
-        docker exec monitoring-postgres psql -U postgres -l
-        docker exec monitoring-postgres psql -U postgres -d monitoring_db -c '\dt'
+        docker exec monitoring-postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "\dt"'
+        docker exec monitoring-postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "\df update_attacking_no"'
         reinicio y recreación del contenedor (sin borrar el volumen) → esquema intacto
 
 Criterio de cierre:
@@ -674,6 +739,8 @@ Criterio de cierre:
     - Cumple la autonomía de micro-stack (ADR-0008).
 
 Estado (261029): monitoring_db existe y está vacía ("Did not find any relations").
+Estado (30/10/2026): make test-SRE-completo se ejecutó en PRO y borró
+    postgres_postgres-data (ver A.9). El volumen se recreó vacío: sigue sin esquema.
 
 [HISTÓRICO] Procedimiento manual pre-IaC (no usar):
     docker exec -it monitoring-postgres psql -U postgres
@@ -715,9 +782,10 @@ No diseña arquitectura (FASE 4) ni valida resiliencia profunda (FASE 5).
 7.4. Reproducibilidad
         make test-reproducibilidad
     Elimina contenedores, imágenes, volúmenes y redes, y reconstruye todo.
-    ATENCIÓN: ejecuta "down -v" y "docker system prune -af --volumes" sin pedir
-    confirmación. Borra la BBDD y los backups. Aceptable hoy (datos de prueba).
-    [PENDIENTE] Añadir una protección (p. ej. CONFIRM=yes) antes de tener datos reales.
+    ATENCIÓN: ejecuta "down -v" y "docker system prune -af --volumes": borra la
+    BBDD y los backups. Aceptable hoy (datos de prueba).
+    Protegido (30/10/2026): sin CONFIRM=yes aborta antes de borrar nada; también
+    detiene test-SRE-completo. Uso fuera de PRO: make test-reproducibilidad CONFIRM=yes
     No incluir en rutinas de verificación de producción (forma parte de test-SRE-completo).
 
 7.5. Reinicio controlado
@@ -960,9 +1028,15 @@ A.8. "$$" en un script bash (29/10/2026)                          [PENDIENTE]
     en bash es el PID del proceso. La expresión nunca coincide.
     Lección: la sintaxis copiada entre Makefile y shell cambia de significado.
 
-A.9. test-reproducibilidad destructivo (17/08 y 29/10/2026)       [PENDIENTE]
+A.9. test-reproducibilidad destructivo (17/08, 29/10 y 30/10/2026) [RESUELTO]
     Borra volúmenes de datos y backups sin confirmación. Explica la pérdida del
     backup del 27/03. Sin consecuencias hoy (datos de prueba).
+    30/10/2026: make test-SRE-completo (que empieza por test-reproducibilidad) se
+    ejecutó en PRO durante un StatusQuo. Borró la BBDD, los backups, los volúmenes
+    de observabilidad, las imágenes y las redes; el stack se reconstruyó en verde,
+    pero con la BBDD vacía.
+    Lección: una prohibición escrita no protege si el comando no la aplica. La
+    protección (CONFIRM=yes) debe estar en el propio target. Aplicada el 30/10/2026.
 
 A.10. Cron sin credenciales, sin correo y sin permisos (29/10/2026) [PENDIENTE]
     Ver tabla 8.0. Lección: "healthy" solo indica que supercronic está vivo, no
@@ -977,16 +1051,45 @@ A.12. Automatismos de host no instalados (29/10/2026)              [PENDIENTE]
     apply_ssh_ratelimit.sh depende de un fichero iptables no versionado.
 
 A.13. Envío SMTP real con timeout en RCPT TO (29/10/2026)          [PENDIENTE]
-    Ver FASE 9. Causa por determinar.
+    Ver FASE 9. Causa por determinar. Persiste el 30/10/2026.
+
+A.14. BuildKit privilegiado en el CI (30/10/2026)                  [RESUELTO]
+    Al añadir audit-runtime-ci al CI, la auditoría falló con un hallazgo forbidden
+    que no venía del proyecto: setup-buildx-action, con su driver por defecto
+    (docker-container), arranca un contenedor buildx_buildkit_* privilegiado.
+    Solución: driver: docker (construye con el daemon, sin contenedor auxiliar).
+    Lección: una auditoría de runtime ve todo lo que corre en el host, también
+    las herramientas del propio pipeline.
+
+A.15. Ficheros ignorados sobrescritos al cambiar de rama (30/10/2026) [RESUELTO]
+    Tras dejar de versionar planaccion y StatusQuo (.gitignore), un checkout a una
+    rama que aún los versionaba los sobrescribió sin aviso. Se recuperaron del
+    historial local del editor.
+    Lección: git trata los ficheros ignorados como prescindibles. Hacer copia antes
+    de cambiar a una rama o commit anterior al cambio (ADR-0034).
+
+A.16. Tests que no pueden fallar (30/10/2026)                      [PENDIENTE]
+    test-cron-execution escribe un fichero con docker exec y lo lee a continuación:
+    no ejecuta cron y siempre da OK. Lo mismo ocurría con el bloque [3] de
+    resiliencia (ver "exit dentro de subshell").
+    Lección: un test que nunca ha fallado debe comprobarse provocando el fallo.
 
 ==========================================
 APÉNDICE B – PROCEDIMIENTO DE VERIFICACIÓN (StatusQuo)
 ==========================================
 Ejecutar en el servidor y archivar la salida como
 docs/Project_Implementation/Servidor_DigitalOcean_StatusQuo_<aammdd>.md
+Ese fichero se conserva solo en local (ignorado por .gitignore): contiene IPs y
+direcciones de correo y el repositorio es público.
 
-NO ejecutar en producción con datos reales: make test-SRE-completo y
-make test-reproducibilidad (borran volúmenes).
+NO ejecutar en producción: make test-SRE-completo ni make test-reproducibilidad
+(borran volúmenes, imágenes y redes; ver A.9).
+
+Este script es la batería completa. No hace falta lanzar otros targets a mano:
+make audit ya incluye test-policy-structured, test-security-runtime,
+audit-runtime-ci y verify-security; test-resilience-completo incluye la
+comprobación de Loki y la conectividad con PostgreSQL. Para comprobar cron se usan
+sus logs (sección CRON), no test-cron-execution (ver A.16).
 
     cd /opt/monitoring
     OUT=~/StatusQuo_$(date +%y%m%d).txt
@@ -1011,10 +1114,8 @@ make test-reproducibilidad (borran volúmenes).
     for c in $(docker ps --format '{{.Names}}'); do
       echo "$c: $(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}sin-healthcheck{{end}} restarts={{.RestartCount}}' $c)"; done
     echo "=== MAKE ==="
-    make status; make audit; make test-policy-structured; make test-security-runtime
-    make verify-security; make audit-runtime-ci; make test-observability-core
-    make test-cron-execution; make test-python-health; make test-smtp-ci
-    make test-aislamiento-red; make test-dependencias-host; make test-permisos; make test-aislamiento-fs
+    make status; make audit
+    make test-aislamiento-red; make test-dependencias-host
     } 2>&1 | tee "$OUT"
 
     { echo "=== HOST (root) ==="
@@ -1027,7 +1128,8 @@ make test-reproducibilidad (borran volúmenes).
 
     Opcionales (interrumpen el servicio unos minutos y se recuperan solos):
     make test-resilience-completo 2>&1 | tee -a "$OUT"
-    make test-smtp-all 2>&1 | tee -a "$OUT"; make debug-toolbox-down
+    make -k test-smtp-all 2>&1 | tee -a "$OUT"; make debug-toolbox-down
+    (-k: continúa con el resto de pasos SMTP aunque falle uno)
 
 ==========================================
 APÉNDICE C – EVOLUCIÓN FUERA DEL ALCANCE ACTUAL
