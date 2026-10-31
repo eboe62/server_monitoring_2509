@@ -70,7 +70,8 @@ help:
 	@echo "Stacks disponibles: $(STACKS)"
 	@echo ""
 	@echo "GOBERNANZA IA:"
-	@echo "  make ai-setup     → Clona/configura ai/ (checkout parcial, ADR-0035)"
+	@echo "  make ai-setup     → Clona/configura ai/ y ai-docs/ (checkout parcial, ADR-0035)"
+	@echo "  make adr-check    → Compara docs/decisiones con el repositorio central de ADR"
 	@echo ""
 
 # ------------------------------------------
@@ -1473,13 +1474,15 @@ logs:
 # ------------------------------------------
 # Gobernanza IA (ADR-0035)
 # ------------------------------------------
-## Clona ai/ si no existe y fija el checkout parcial. Idempotente.
+## Clona ai/ y ai-docs/ si no existen y fija su checkout parcial. Idempotente.
 
 AI_DIR ?= ai
 AI_REPO ?= https://github.com/eboe62-appvisibility/governance_ia_2607.git
 AI_BRANCH ?= develop
+AI_DOCS_DIR ?= ai-docs
+AI_DOCS_REPO ?= https://github.com/eboe62-appvisibility/governance_ia_docs_2609.git
 
-.PHONY: ai-setup
+.PHONY: ai-setup adr-check
 
 ai-setup:
 	@if [ ! -d "$(AI_DIR)/.git" ]; then \
@@ -1491,3 +1494,15 @@ ai-setup:
 	@git -C $(AI_DIR) checkout -q $(AI_BRANCH)
 	@test -e AI_ENTRYPOINT.md || echo "[WARN] AI_ENTRYPOINT.md no resuelve"
 	@echo "[OK] ai/ en $$(git -C $(AI_DIR) rev-parse --abbrev-ref HEAD) con checkout parcial (ADR-0035)"
+	@if [ ! -d "$(AI_DOCS_DIR)/.git" ]; then \
+		echo "[INFO] Clonando $(AI_DOCS_REPO) ($(AI_BRANCH)) en $(AI_DOCS_DIR)"; \
+		git clone --no-checkout --branch $(AI_BRANCH) $(AI_DOCS_REPO) $(AI_DOCS_DIR) || exit 1; \
+	fi
+	@git -C $(AI_DOCS_DIR) sparse-checkout set --no-cone '/decisiones/'
+	@git -C $(AI_DOCS_DIR) checkout -q $(AI_BRANCH)
+	@echo "[OK] ai-docs/ en $$(git -C $(AI_DOCS_DIR) rev-parse --abbrev-ref HEAD) con checkout parcial (ADR-0035)"
+
+## Compara las ADR versionadas en docs/decisiones con ai-docs/decisiones (ADR-0035 §2.2).
+## No modifica nada; actualizar antes con: git -C ai-docs pull --ff-only
+adr-check:
+	@bash scripts/adr_check.sh "$(AI_DOCS_DIR)"
