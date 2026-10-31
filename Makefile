@@ -70,8 +70,7 @@ help:
 	@echo "Stacks disponibles: $(STACKS)"
 	@echo ""
 	@echo "GOBERNANZA IA:"
-	@echo "  make ai-setup     → Clona/configura ai/ y ai-docs/ (checkout parcial, ADR-0035)"
-	@echo "  make adr-check    → Compara docs/decisiones con el repositorio central de ADR"
+	@echo "  make ai-setup     → Monta ai/ y docs/ y enlaza los puntos de entrada (ADR-0035)"
 	@echo ""
 
 # ------------------------------------------
@@ -1474,15 +1473,25 @@ logs:
 # ------------------------------------------
 # Gobernanza IA (ADR-0035)
 # ------------------------------------------
-## Clona ai/ y ai-docs/ si no existen y fija su checkout parcial. Idempotente.
+## Monta la gobernanza (ai/) y la documentación IA (docs/) y enlaza los
+## puntos de entrada en la raíz. Idempotente. Nada de esto se versiona aquí.
 
 AI_DIR ?= ai
 AI_REPO ?= https://github.com/eboe62-appvisibility/governance_ia_2607.git
 AI_BRANCH ?= develop
-AI_DOCS_DIR ?= ai-docs
-AI_DOCS_REPO ?= https://github.com/eboe62-appvisibility/governance_ia_docs_2609.git
+DOCS_DIR ?= docs
+DOCS_REPO ?= https://github.com/eboe62-appvisibility/governance_ia_docs_2609.git
+AI_PROJECT ?= monitoring
 
-.PHONY: ai-setup adr-check
+# enlace en la raíz -> destino
+AI_LINKS = \
+	CLAUDE.md:$(AI_DIR)/governance/projects/$(AI_PROJECT)/CLAUDE.md \
+	AI_ENTRYPOINT.md:$(AI_DIR)/governance/00_AI_ENTRYPOINT.md \
+	.github/copilot-instructions.md:../$(AI_DIR)/governance/projects/$(AI_PROJECT)/copilot-instructions.md \
+	.claudecodeignore:$(AI_DIR)/governance/projects/$(AI_PROJECT)/claudecodeignore \
+	.ua:$(DOCS_DIR)/arquitectura/$(AI_PROJECT)/.ua
+
+.PHONY: ai-setup
 
 ai-setup:
 	@if [ ! -d "$(AI_DIR)/.git" ]; then \
@@ -1492,17 +1501,21 @@ ai-setup:
 	@git -C $(AI_DIR) sparse-checkout set --no-cone \
 		'/*' '!/claude_code/' '!/opencode/' '!/governance/00_CLAUDE.md'
 	@git -C $(AI_DIR) checkout -q $(AI_BRANCH)
-	@test -e AI_ENTRYPOINT.md || echo "[WARN] AI_ENTRYPOINT.md no resuelve"
-	@echo "[OK] ai/ en $$(git -C $(AI_DIR) rev-parse --abbrev-ref HEAD) con checkout parcial (ADR-0035)"
-	@if [ ! -d "$(AI_DOCS_DIR)/.git" ]; then \
-		echo "[INFO] Clonando $(AI_DOCS_REPO) ($(AI_BRANCH)) en $(AI_DOCS_DIR)"; \
-		git clone --no-checkout --branch $(AI_BRANCH) $(AI_DOCS_REPO) $(AI_DOCS_DIR) || exit 1; \
+	@echo "[OK] $(AI_DIR)/ en $$(git -C $(AI_DIR) rev-parse --abbrev-ref HEAD) con checkout parcial"
+	@if [ ! -d "$(DOCS_DIR)/.git" ]; then \
+		if [ -e "$(DOCS_DIR)" ]; then \
+			echo "[ABORT] $(DOCS_DIR)/ existe y no es un clon de $(DOCS_REPO): apártalo antes (ADR-0035)"; exit 1; \
+		fi; \
+		echo "[INFO] Clonando $(DOCS_REPO) ($(AI_BRANCH)) en $(DOCS_DIR)"; \
+		git clone --branch $(AI_BRANCH) $(DOCS_REPO) $(DOCS_DIR) || exit 1; \
 	fi
-	@git -C $(AI_DOCS_DIR) sparse-checkout set --no-cone '/decisiones/'
-	@git -C $(AI_DOCS_DIR) checkout -q $(AI_BRANCH)
-	@echo "[OK] ai-docs/ en $$(git -C $(AI_DOCS_DIR) rev-parse --abbrev-ref HEAD) con checkout parcial (ADR-0035)"
-
-## Compara las ADR versionadas en docs/decisiones con ai-docs/decisiones (ADR-0035 §2.2).
-## No modifica nada; actualizar antes con: git -C ai-docs pull --ff-only
-adr-check:
-	@bash scripts/adr_check.sh "$(AI_DOCS_DIR)"
+	@echo "[OK] $(DOCS_DIR)/ en $$(git -C $(DOCS_DIR) rev-parse --abbrev-ref HEAD)"
+	@for l in $(AI_LINKS); do \
+		link=$${l%%:*}; target=$${l#*:}; \
+		if [ -e "$$link" ] && [ ! -L "$$link" ]; then \
+			echo "[WARN] $$link es un fichero real: no se sustituye"; continue; \
+		fi; \
+		mkdir -p "$$(dirname "$$link")"; \
+		ln -sfn "$$target" "$$link"; \
+		[ -e "$$link" ] && echo "[OK] $$link -> $$target" || echo "[WARN] $$link -> $$target no resuelve"; \
+	done

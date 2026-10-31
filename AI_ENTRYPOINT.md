@@ -1,1 +1,0 @@
-ai/governance/00_AI_ENTRYPOINT.md

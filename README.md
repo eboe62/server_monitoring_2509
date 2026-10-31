@@ -100,9 +100,9 @@ Rama: `develop`
     server_monitoring/
     ├ Makefile                  # Tareas de build/despliegue
     ├ requirements.txt          # Dependencias Python
-    ├ ai/                       # Prompts / requisitos generados con IA
+    ├ ai/                       # Gobernanza IA (repo governance_ia_2607, make ai-setup)
     ├ config/                   # Configuración (Loki, Promtail…)
-    ├ docs/                     # Documentación técnica y ADRs
+    ├ docs/                     # Documentación técnica y ADRs (repo governance_ia_docs_2609, make ai-setup)
     ├ ops/                      # Infraestructura como código / DevOps
     │ ├ deployment/             # setup_symlinks
     │ ├ images/
@@ -422,8 +422,10 @@ Esto permite detectar intentos de reconexión, redirecciones fraudulentas o modi
 
 ## 📜 Documentación adicional
 
-La documentación técnica completa se encuentra en:
-    docs/decisiones/
+La documentación técnica completa se encuentra en el repositorio
+governance_ia_docs_2609, que `make ai-setup` monta en `docs/` (ADR-0035):
+    docs/decisiones/                      (ADR de todos los proyectos)
+    docs/<Tipo>/monitoring/               (documentos de este proyecto)
 Incluye:
 -   Definición del proyecto\
 -   Implementación inicial\
