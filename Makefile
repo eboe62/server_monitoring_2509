@@ -1499,17 +1499,23 @@ ai-setup:
 		git clone --no-checkout --branch $(AI_BRANCH) $(AI_REPO) $(AI_DIR) || exit 1; \
 	fi
 	@git -C $(AI_DIR) sparse-checkout set --no-cone \
-		'/*' '!/claude_code/' '!/opencode/' '!/governance/00_CLAUDE.md'
-	@git -C $(AI_DIR) checkout -q $(AI_BRANCH)
+		'/*' '!/claude_code/' '!/opencode/' \
+		'!/governance/projects/*/' '/governance/projects/$(AI_PROJECT)/'
+	@# Solo tras un clon nuevo (índice vacío): no cambia la rama de un clon en uso
+	@[ -n "$$(git -C $(AI_DIR) ls-files | head -1)" ] || git -C $(AI_DIR) checkout -q $(AI_BRANCH)
 	@echo "[OK] $(AI_DIR)/ en $$(git -C $(AI_DIR) rev-parse --abbrev-ref HEAD) con checkout parcial"
 	@if [ ! -d "$(DOCS_DIR)/.git" ]; then \
 		if [ -e "$(DOCS_DIR)" ]; then \
 			echo "[ABORT] $(DOCS_DIR)/ existe y no es un clon de $(DOCS_REPO): apártalo antes (ADR-0035)"; exit 1; \
 		fi; \
 		echo "[INFO] Clonando $(DOCS_REPO) ($(AI_BRANCH)) en $(DOCS_DIR)"; \
-		git clone --branch $(AI_BRANCH) $(DOCS_REPO) $(DOCS_DIR) || exit 1; \
+		git clone --no-checkout --branch $(AI_BRANCH) $(DOCS_REPO) $(DOCS_DIR) || exit 1; \
 	fi
-	@echo "[OK] $(DOCS_DIR)/ en $$(git -C $(DOCS_DIR) rev-parse --abbrev-ref HEAD)"
+	@git -C $(DOCS_DIR) sparse-checkout set --no-cone \
+		'/*' '!/*/' '/decisiones/' '/*/$(AI_PROJECT)/'
+	@# Solo tras un clon nuevo (índice vacío): no cambia la rama de un clon en uso
+	@[ -n "$$(git -C $(DOCS_DIR) ls-files | head -1)" ] || git -C $(DOCS_DIR) checkout -q $(AI_BRANCH)
+	@echo "[OK] $(DOCS_DIR)/ en $$(git -C $(DOCS_DIR) rev-parse --abbrev-ref HEAD) con checkout parcial"
 	@for l in $(AI_LINKS); do \
 		link=$${l%%:*}; target=$${l#*:}; \
 		if [ -e "$$link" ] && [ ! -L "$$link" ]; then \
