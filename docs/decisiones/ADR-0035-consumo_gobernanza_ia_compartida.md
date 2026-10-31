@@ -1,66 +1,89 @@
-# ADR-0035 – Consumo de la gobernanza IA compartida
+# ADR-0035 – Consumo de la gobernanza y la documentación IA compartidas
 
 Status: APPROVED
 Date: 2026-10-31
-Scope: Process
+Scope: System
 Category: GOVERNANCE
-Tags: governance, ai, sparse-checkout, adr-index, reproducibility
+Tags: governance, ai, cross-project, sparse-checkout, adr-index, reproducibility
 Related ADRs: ADR-0033, ADR-0034
 Supersedes: NONE
 Superseded By: NONE
-Validation Reference: make ai-setup; §Verification de ai/governance/14_ADR_INDEX.md
+Validation Reference: herramienta de configuración de cada proyecto (§3); §Verification de governance/14_ADR_INDEX.md
 
 ---
 
 ## Context
 
-La gobernanza IA (protocolos, skills, plantillas, índice de ADR) vive en el repositorio compartido `governance_ia_2607`, que consumen varios proyectos (server_monitoring_2509, GDA). Las ADR de otros proyectos se publican en `governance_ia_docs_2609`.
+Varios proyectos (server_monitoring_2509, GDA y, más adelante, Chino) comparten dos repositorios:
 
-Hasta el 31/10/2026 la forma en que este proyecto consumía esa gobernanza no estaba escrita:
+* `governance_ia_2607`: la gobernanza IA (protocolos, skills, plantillas, índice de ADR).
+* `governance_ia_docs_2609`: la documentación IA.
 
-* Qué partes del repositorio compartido se traen a local y cuáles no se decidió en sesión, y solo quedó reflejado en `ai/.git/info/sparse-checkout`, que no se versiona. Un clon nuevo de `ai/` trae el repositorio completo.
-* Los puntos de entrada (`CLAUDE.md`, `AI_ENTRYPOINT.md`) habían ido cambiando entre fichero propio y enlace simbólico.
-* El índice de ADR pasó a ser integral (todos los proyectos) y su comprobación de coherencia dejó de ser válida para cualquier proyecto consumidor.
+Hasta el 31/10/2026 cada proyecto resolvía por su cuenta cómo consumirlos:
+
+* Qué partes se traen a local solo quedaba en la configuración de git de cada copia (`.git/info/sparse-checkout`), que no se versiona. Un clon nuevo trae el repositorio completo.
+* Los puntos de entrada (`CLAUDE.md`, `AI_ENTRYPOINT.md`) cambiaban entre fichero propio y enlace simbólico.
+* Las ADR se copiaban entre proyectos sin un repositorio de referencia ni una comprobación de que las copias coincidieran. ADR-0033 acabó con versiones distintas en server_monitoring_2509 y en governance_ia_docs_2609 sin que nada avisara.
+
+Este ADR es transversal: se aplica a todo proyecto que consuma estos repositorios.
 
 ---
 
 ## Decision
 
-### 1. Ubicación
+### 1. Papel de cada repositorio
 
-* `ai/` es un clon de `https://github.com/eboe62-appvisibility/governance_ia_2607.git` en la rama `develop`.
-* Está ignorado por este repositorio (`.gitignore`: `ai/`) y se versiona de forma independiente.
-* Los cambios en la gobernanza compartida se hacen en `ai/` con ramas cortas y PR hacia `develop` del repositorio compartido, con el mismo modelo que ADR-0034. Nunca se editan copias en este repositorio.
-
-### 2. Checkout parcial (sparse-checkout, modo no-cone)
-
-| Patrón | Motivo |
+| Repositorio | Contenido |
 |---|---|
-| `/*` | Todo lo demás se trae a local |
-| `!/claude_code/` | Infraestructura de la jaula de Claude Code: se conserva solo en el remoto |
-| `!/opencode/` | Configuración de opencode: se conserva solo en el remoto |
-| `!/governance/00_CLAUDE.md` | Cada proyecto tiene su propio `CLAUDE.md` (punto 3) |
+| `governance_ia_2607` | Gobernanza común: protocolos, skills, plantillas e índice integral de ADR (`governance/14_ADR_INDEX.md`) |
+| `governance_ia_docs_2609` | Repositorio único de la documentación IA de todos los proyectos: `decisiones/` (todas las ADR, propias de cada proyecto y transversales) y `Project_Definition/<proyecto>/` |
+| Repositorio de cada proyecto | Código, infraestructura y documentación operativa propia |
 
-`04_ARCHITECTURE_GUIDELINES.md` sí se trae: lo citan `00_AI_ENTRYPOINT.md` y las skills, y el propio documento limita su alcance al desarrollo de aplicaciones backend/frontend, de modo que en este proyecto no aplica pero las referencias no quedan rotas.
+### 2. ADR
 
-La configuración se aplica con `make ai-setup` (idempotente), que clona `ai/` si no existe y fija estos patrones.
+1. **Conjunto completo en cada entorno.** Cada entorno mantiene todas las ADR de todos los proyectos en su `docs/decisiones/` y usa solo las que le aplican: las suyas, las transversales y, dentro de estas, la sección de su perfil.
+2. **Referencia.** `governance_ia_docs_2609/decisiones/` es la referencia. El `docs/decisiones/` de cada entorno debe ser idéntico a ella (§Verification del índice).
+3. **Propiedad.** Cada ADR la modifica solo el entorno al que pertenece, según su rango: 00xx server_monitoring_2509, 06xx y 08xx GDA, 11xx Knowledge/Chino. Una ADR transversal la comparten todos, pero cada entorno modifica solo su propia sección.
+4. **Transversales.** Una ADR transversal es un único fichero, igual para todos. Las diferencias entre entornos van en secciones por entorno dentro de ella, nunca en variantes con el mismo número.
+5. **Cambios.** Crear o modificar una ADR incluye, en el mismo bloque de trabajo:
+   * Publicarla en `governance_ia_docs_2609` (rama corta y PR).
+   * Si el entorno guarda `docs/decisiones/` en su propio repositorio, actualizar esa copia en el mismo bloque.
+   * Actualizar `governance/14_ADR_INDEX.md` en `governance_ia_2607` (rama corta y PR).
+   * Ejecutar §Verification desde la raíz del proyecto.
+   * Los demás entornos actualizan su copia desde `governance_ia_docs_2609`.
 
-### 3. Puntos de entrada
+### 3. Reglas comunes de consumo
 
-* `CLAUDE.md`: fichero propio de este proyecto, versionado aquí. No se sincroniza desde el remoto.
-* `AI_ENTRYPOINT.md`: enlace simbólico versionado a `ai/governance/00_AI_ENTRYPOINT.md`.
-* `.github/copilot-instructions.md`: fichero propio de este proyecto.
+1. **Ubicación.** La gobernanza se clona en `ai/`, en la raíz del proyecto, como repositorio git independiente. El repositorio del proyecto la ignora o no la contiene.
+2. **Rama.** Los repositorios compartidos se siguen en `develop` y se actualizan solo con `git pull --ff-only`.
+3. **Checkout parcial.** Cada proyecto puede excluir partes que no use. Requisitos:
+   * Nunca se excluyen `governance/`, `skills/` ni `templates/` de `governance_ia_2607`: ahí están el punto de entrada, el índice y los ficheros que estos citan.
+   * Los patrones y su motivo se documentan en el perfil del proyecto (§4).
+4. **Punto de entrada.** Cada proyecto tiene su propio `CLAUDE.md`. El punto de entrada común es `governance/00_AI_ENTRYPOINT.md`. Cómo lo enlaza cada proyecto (symlink, fichero, `@include`) consta en su perfil.
+5. **Finales de línea.** LF obligatorio, impuesto por `.gitattributes` (`* text=auto eol=lf`; pdf/pptx binarios), según `Configuracion_Equipo_2608`. Se recomienda `core.autocrlf=false`.
+6. **Reproducibilidad.** Cada proyecto tiene una herramienta idempotente (target de make, script) que clona los repositorios compartidos si no existen y aplica su checkout parcial. Volver a ejecutarla no cambia nada.
+7. **Cambios en los repositorios compartidos.** Nunca se edita directamente en `develop`:
+   * Antes de empezar, `git pull --ff-only`.
+   * Rama corta `<tipo>/<aammdd>-<tema>` desde `develop` y PR a `develop`.
+   * Promoción `develop → master` mediante PR ("Create a merge commit"). Después, fast-forward de `develop` a `master`.
 
-### 4. Finales de línea
+### 4. Perfiles de proyecto
 
-`ai/.gitattributes` impone LF (`* text=auto eol=lf`; pdf/pptx binarios), según `Configuracion_Equipo_2608`.
+Añadir un proyecto consiste en añadir su columna; no requiere un ADR nuevo.
 
-### 5. ADR
-
-* Las ADR de este proyecto (0000–0035) se escriben en `docs/decisiones/`.
-* Las ADR de GDA (06xx, 08xx) y de Knowledge (11xx) se copian desde `governance_ia_docs_2609` para mantenerlas actualizadas aunque no sean de este proyecto. En caso de divergencia prevalece la versión del remoto.
-* Excepción: ADR-0033 conserva la versión local hasta que se comparen ambas.
-* `ai/governance/14_ADR_INDEX.md` es un registro integral de todos los proyectos. Las filas sin fichero local son esperables. La coherencia se comprueba con §Verification (1a: toda ADR local tiene fila; 1b: sin filas duplicadas; 2: toda ADR aprobada aparece en el resumen por categoría).
+| | server_monitoring_2509 | GDA |
+|---|---|---|
+| `docs/decisiones/` | Copia versionada en el repositorio del proyecto, comparada con `ai-docs/decisiones/` (`make adr-check`) | Es el propio clon de `governance_ia_docs_2609` (`docs/`) ⚠️ pendiente de confirmar |
+| Clon de `governance_ia_docs_2609` | `ai-docs/`, ignorado, checkout parcial solo de `/decisiones/` | `docs/` ⚠️ pendiente de confirmar |
+| Checkout parcial de `ai/` (modo) | no-cone | ⚠️ pendiente de confirmar (cone o no-cone) |
+| Patrones de `ai/` | `/*`, `!/claude_code/`, `!/opencode/`, `!/governance/00_CLAUDE.md` | `governance/`, `skills/`, `templates/` ⚠️ pendiente de confirmar los patrones literales |
+| Motivo de las exclusiones | `claude_code/` y `opencode/` se conservan solo en el remoto; `00_CLAUDE.md` porque el proyecto tiene su propio `CLAUDE.md` | `claude_code/` (Docker) no aplica: GDA se desarrolla en Windows sin Docker. ⚠️ pendiente de confirmar el resto |
+| `CLAUDE.md` | Fichero propio versionado en el proyecto | Fichero en la raíz con `@ai/governance/00_CLAUDE.md` ⚠️ pendiente de valorar: el `CLAUDE.md` efectivo de GDA vive en el repositorio compartido |
+| Punto de entrada | `AI_ENTRYPOINT.md` → symlink versionado a `ai/governance/00_AI_ENTRYPOINT.md` | `ai/governance/00_AI_ENTRYPOINT.md`, sin enlace en la raíz ⚠️ pendiente de confirmar |
+| Copilot | `.github/copilot-instructions.md` propio | No existe ⚠️ pendiente de decidir |
+| Herramienta de configuración | `make ai-setup` | ⚠️ pendiente (script de Git Bash; `make` puede no estar disponible en Windows) |
+| `core.autocrlf` | `false` (WSL) | `true` en la configuración de sistema ⚠️ pendiente de alinear |
+| Necesita las ADR en PRO | No: el servidor no las usa; `make audit` solo comprueba que exista `docs/decisiones/` | No aplica |
 
 ---
 
@@ -68,27 +91,30 @@ La configuración se aplica con `make ai-setup` (idempotente), que clona `ai/` s
 
 ### Positive
 
-* Un clon nuevo reproduce el mismo entorno de gobernanza con un solo comando.
-* Queda escrito qué se excluye y por qué, en lugar de depender de la configuración local de git.
-* Un único índice de ADR para todos los proyectos, con una verificación válida en cualquiera de ellos.
+* Un repositorio de referencia para todas las ADR y una comprobación que detecta cualquier copia divergente, la que faltó con ADR-0033.
+* Cada entorno ve todas las decisiones de los demás, aunque solo aplique las suyas.
+* Reglas comunes para todos los proyectos. Lo que es propio de cada proyecto queda escrito en su perfil, no en su configuración local de git.
+* Un clon nuevo reproduce el entorno con un solo comando.
 
 ### Negative
 
-* `ai/` no queda fijado a un commit concreto (no es submódulo): cada proyecto avanza con `git pull --ff-only` cuando decide.
-* La copia de ADR de otros proyectos en `docs/decisiones/` es manual hasta que exista un mecanismo de sincronización.
+* Las ADR existen en más de un sitio (el repositorio central y la copia de cada proyecto que la versiona en su propio repositorio). La coherencia depende de la regla §2.5 y de la comprobación del índice.
+* Un cambio de ADR requiere varios PR (repositorio central, copia del proyecto si la hay, índice).
+* Los repositorios compartidos no quedan fijados a un commit concreto (no son submódulos): cada proyecto avanza cuando decide.
 
 ### Risks Mitigated
 
-* Pérdida de la configuración de checkout parcial al reclonar `ai/`.
-* Sobrescritura del `CLAUDE.md` del proyecto con el de otro proyecto.
-* Falsos positivos de la verificación del índice integral.
+* Divergencia silenciosa de ADR copiadas entre proyectos.
+* Pérdida de la configuración de checkout parcial al reclonar.
+* Sobrescritura del `CLAUDE.md` de un proyecto con el de otro.
+* Conflictos al editar el índice desde varios proyectos a la vez.
 
 ---
 
 ## References
 
-* Makefile: `ai-setup`
-* ai/governance/14_ADR_INDEX.md (§ADR Registry, §Verification)
-* ai/.gitattributes
-* ADR-0033 (taxonomía de ADR), ADR-0034 (política de ramas)
-* /mnt/d/WorkSpace/Proyectos/Configuracion_Equipo_2510/Configuracion_Equipo_2608.txt
+* governance/14_ADR_INDEX.md (§ADR Registry, §Verification)
+* .gitattributes de `governance_ia_2607`
+* server_monitoring_2509: Makefile, targets `ai-setup` y `adr-check`
+* ADR-0033 (taxonomía de ADR), ADR-0034 (política de ramas de server_monitoring_2509; mismo modelo de ramas)
+* Configuracion_Equipo_2608
