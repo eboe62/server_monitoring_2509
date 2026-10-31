@@ -72,6 +72,8 @@ docs/arquitectura/.ua/.trash-*/
 *.bak
 *.dump
 *.sql
+# Excepción: esquema declarativo de Postgres (FASE 6). Debe ir después de *.sql
+!ops/services/postgres/init/*.sql
 
 # === Certificados ===
 *.pem
