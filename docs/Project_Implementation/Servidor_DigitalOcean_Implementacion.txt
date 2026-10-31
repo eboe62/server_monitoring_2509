@@ -290,18 +290,18 @@ Los servicios solo se comunican mediante:
     3     Despliegue del repositorio           CERRADA    -
     4     Configuración de entorno             CERRADA    -
     5     Hardening y resiliencia              ABIERTA    backups, restore, fail2ban, automatismos host
-    6     Inicialización Postgres              ABIERTA    sin esquema declarativo; BBDD recreada vacía (30/10)
+    6     Inicialización Postgres              CERRADA    -
     7     Activación runtime PRO               CERRADA    -
     8     Cron y jobs                          ABIERTA    6 jobs con error (ver 8.0)
     9     Conectividad externa                 ABIERTA    envío SMTP real falla (timeout RCPT TO)
     10    Observabilidad (didáctica)           PARCIAL    consulta desde Grafana no evidenciada
-    11    Validación final PRO                 ABIERTA    depende de 5, 6, 8 y 9
+    11    Validación final PRO                 ABIERTA    depende de 5, 8 y 9
     12    Mejoras futuras                      -          no normativa
 
     Resumen: el sistema está bien protegido (perímetro, aislamiento, privilegios,
     resiliencia validados), pero la cadena funcional de detección y alerta (1.1)
-    todavía no opera: no hay esquema, cron no puede autenticarse en la BBDD ni
-    enviar correo, y no se generan backups.
+    todavía no opera: el esquema ya existe (FASE 6, 31/10), pero cron no puede
+    autenticarse en la BBDD ni enviar correo, y no se generan backups.
 
 ==========================================
 FASE 1 – SISTEMA OPERATIVO Y ACCESO                                  [CERRADA]
@@ -688,7 +688,7 @@ Criterio de cierre FASE 5:
     - Plan de corrección (PRIORIDADES 1-15) con estado actualizado.     [cumplido: 5.8]
 
 ==========================================
-FASE 6 – INICIALIZACIÓN DECLARATIVA DE POSTGRES                       [ABIERTA]
+FASE 6 – INICIALIZACIÓN DECLARATIVA DE POSTGRES                       [CERRADA]
 ==========================================
 Objetivo: base de datos creada automáticamente, de forma idempotente y
 reproducible, sin configuración manual dentro del contenedor.
@@ -741,6 +741,16 @@ Criterio de cierre:
 Estado (261029): monitoring_db existe y está vacía ("Did not find any relations").
 Estado (30/10/2026): make test-SRE-completo se ejecutó en PRO y borró
     postgres_postgres-data (ver A.9). El volumen se recreó vacío: sigue sin esquema.
+Estado (31/10/2026): CERRADA. En PRO, tras git pull de master y recreación del volumen
+    (docker compose -f ops/services/postgres/compose.yml down -v / up -d):
+    - el entrypoint ejecutó 01_schema.sql y 02_functions.sql, sin errores;
+    - \dt muestra attacking_logs, fail2ban_logs, honeypot_logs y kern_logs;
+    - SELECT update_attacking_no() responde sin error.
+    Didáctico: con un volumen vacío Postgres inicializa el clúster, ejecuta init/,
+    se reinicia y solo entonces acepta conexiones. Consultar antes de "healthy"
+    da "No such file or directory" en el socket: no es un fallo.
+    Lección operativa: si un bind mount no existe, Docker crea el directorio en el
+    host como root y un git pull posterior no puede escribir en él (chown previo).
 
 [HISTÓRICO] Procedimiento manual pre-IaC (no usar):
     docker exec -it monitoring-postgres psql -U postgres
