@@ -69,6 +69,9 @@ help:
 	@echo ""
 	@echo "Stacks disponibles: $(STACKS)"
 	@echo ""
+	@echo "GOBERNANZA IA:"
+	@echo "  make ai-setup     → Clona/configura ai/ (checkout parcial, ADR-0035)"
+	@echo ""
 
 # ------------------------------------------
 # AUDIT (build-time)
@@ -1466,3 +1469,25 @@ logs:
 		fi; \
 	done
 	@echo ""
+
+# ------------------------------------------
+# Gobernanza IA (ADR-0035)
+# ------------------------------------------
+## Clona ai/ si no existe y fija el checkout parcial. Idempotente.
+
+AI_DIR ?= ai
+AI_REPO ?= https://github.com/eboe62-appvisibility/governance_ia_2607.git
+AI_BRANCH ?= develop
+
+.PHONY: ai-setup
+
+ai-setup:
+	@if [ ! -d "$(AI_DIR)/.git" ]; then \
+		echo "[INFO] Clonando $(AI_REPO) ($(AI_BRANCH)) en $(AI_DIR)"; \
+		git clone --no-checkout --branch $(AI_BRANCH) $(AI_REPO) $(AI_DIR) || exit 1; \
+	fi
+	@git -C $(AI_DIR) sparse-checkout set --no-cone \
+		'/*' '!/claude_code/' '!/opencode/' '!/governance/00_CLAUDE.md'
+	@git -C $(AI_DIR) checkout -q $(AI_BRANCH)
+	@test -e AI_ENTRYPOINT.md || echo "[WARN] AI_ENTRYPOINT.md no resuelve"
+	@echo "[OK] ai/ en $$(git -C $(AI_DIR) rev-parse --abbrev-ref HEAD) con checkout parcial (ADR-0035)"
