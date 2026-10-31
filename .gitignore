@@ -43,21 +43,16 @@ docker-compose.override.yml
 # === Informes generados por make audit-runtime* (ADR-0030/0031) ===
 /artifacts/
 
-# === AI Governance (must be versioned independently) ===
+# === Gobernanza y documentación IA (ADR-0035): repositorios independientes ===
+# ai/   = governance_ia_2607       docs/ = governance_ia_docs_2609
+# Puntos de entrada: enlaces creados por make ai-setup, no versionados.
 ai/
-
-# === Understand-Anything Governance ===
-# Permitir la persistencia del enlace simbólico, el grafo y la carpeta de datos
-!.ua
-!docs/arquitectura/.ua/knowledge-graph.json
-!docs/arquitectura/.ua/config.json
-!docs/arquitectura/.ua/.understandignore
-
-# === Understand-Anything ignorar estrictamente los datos temporales y de procesamiento local ===
-docs/arquitectura/.ua/intermediate/
-docs/arquitectura/.ua/tmp/
-docs/arquitectura/.ua/diff-overlay.json
-docs/arquitectura/.ua/.trash-*/
+docs/
+CLAUDE.md
+AI_ENTRYPOINT.md
+.github/copilot-instructions.md
+.claudecodeignore
+.ua
 
 # === Documentation working copies ===
 * copy*
@@ -82,19 +77,9 @@ docs/arquitectura/.ua/.trash-*/
 *.crt
 
 # === Documentation Podcast, Slides, etc ===
-docs/Project_ADRs/*
-docs/Project_Corrections/*
-
-# === Documentos de trabajo locales (no versionados) ===
-# StatusQuo: logs del servidor (IPs, direcciones de correo). Plan de acción: registro de trabajo.
-docs/Project_Implementation/*StatusQuo*
-docs/Project_Implementation/*planaccion*
 *.m4a
 *.pdf
 *.xlsx
 *.xls
 *.pptx
 *.ppt
-
-# === Documentación IA compartida (ADR-0035), clon independiente ===
-ai-docs/
