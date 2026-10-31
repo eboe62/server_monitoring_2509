@@ -95,3 +95,6 @@ docs/Project_Implementation/*planaccion*
 *.xls
 *.pptx
 *.ppt
+
+# === Documentación IA compartida (ADR-0035), clon independiente ===
+ai-docs/
