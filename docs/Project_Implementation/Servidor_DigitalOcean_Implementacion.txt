@@ -707,19 +707,30 @@ volumen o aplicar una migración.
     - fail2ban_logs   (destino de log_fail2ban_batch)
     - kern_logs       (destino de log_kern_batch)
     - función PL/pgSQL update_attacking_no()
-    - honeypot_logs: fuera de alcance.
+    - honeypot_logs: el honeypot está fuera de alcance, pero la tabla se crea
+      vacía porque update_attacking_no() escribe en ella (decisión 31/10/2026).
     Los datos actuales son de prueba: recrear postgres_postgres-data es aceptable.
 
+    Implementado (31/10/2026):
+        ops/services/postgres/init/01_schema.sql      4 tablas (IF NOT EXISTS)
+        ops/services/postgres/init/02_functions.sql   update_attacking_no()
+    Origen: esquema recuperado del dump local monitoring_db-202601172205.backup.
+    update_attacking_no() fija attacking_no = número de registros de cada
+    attacking_octets en su tabla, y propaga a honeypot_logs el log_type más grave.
+    Didáctico: un pg_dump en formato custom guarda las definiciones (DDL) en
+    texto plano en su cabecera; los datos van comprimidos aparte. El esquema
+    puede leerse sin restaurar nada.
+
 6.2. Requisito de versionado
-    [PENDIENTE] .gitignore excluye *.sql. Añadir la excepción:
+    Resuelto (31/10/2026): .gitignore excluye *.sql y la excepción
         !ops/services/postgres/init/*.sql
-    Sin ella, git ignoraría los scripts de inicialización sin avisar.
-    Además, el directorio ops/services/postgres/init/ no existe: el compose lo
-    monta y Docker crea en el host un directorio vacío.
+    va después de esa regla (en .gitignore gana la última regla que coincide).
+    El CI levanta Postgres con un volumen vacío: ejecuta los scripts de init/ y
+    detecta errores de sintaxis antes de llegar a PRO.
 
 Validación:
-        docker exec monitoring-postgres psql -U postgres -l
-        docker exec monitoring-postgres psql -U postgres -d monitoring_db -c '\dt'
+        docker exec monitoring-postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "\dt"'
+        docker exec monitoring-postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "\df update_attacking_no"'
         reinicio y recreación del contenedor (sin borrar el volumen) → esquema intacto
 
 Criterio de cierre:
