@@ -13,5 +13,5 @@
   - **Database Status:** `docker compose -f infra/db/docker-compose.yml ps` (Adjust path if needed)
 
   ## Development Guidelines
-  - Always prioritize user instructions and approved ADRs over general defaults.
+  - Always prioritize user instructions and approved ADRs that apply to this project over general defaults. `docs/decisiones/` holds the ADRs of every project (ADR-0035): only the server_monitoring_2509 ones (00xx) and the cross-project ones are binding here; the rest (e.g. GDA 06xx/08xx, Knowledge 11xx) are reference only.
   - Adhere to the principles in `.ai/governance/05_ANALYSIS_PROTOCOL.md` and `ai/governance/20_EXECUTION_PROTOCOL.md`.

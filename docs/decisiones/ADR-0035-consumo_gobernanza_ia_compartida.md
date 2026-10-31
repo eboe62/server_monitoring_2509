@@ -73,17 +73,17 @@ Añadir un proyecto consiste en añadir su columna; no requiere un ADR nuevo.
 
 | | server_monitoring_2509 | GDA |
 |---|---|---|
-| `docs/decisiones/` | Copia versionada en el repositorio del proyecto, comparada con `ai-docs/decisiones/` (`make adr-check`) | Es el propio clon de `governance_ia_docs_2609` (`docs/`) ⚠️ pendiente de confirmar |
-| Clon de `governance_ia_docs_2609` | `ai-docs/`, ignorado, checkout parcial solo de `/decisiones/` | `docs/` ⚠️ pendiente de confirmar |
-| Checkout parcial de `ai/` (modo) | no-cone | ⚠️ pendiente de confirmar (cone o no-cone) |
-| Patrones de `ai/` | `/*`, `!/claude_code/`, `!/opencode/`, `!/governance/00_CLAUDE.md` | `governance/`, `skills/`, `templates/` ⚠️ pendiente de confirmar los patrones literales |
-| Motivo de las exclusiones | `claude_code/` y `opencode/` se conservan solo en el remoto; `00_CLAUDE.md` porque el proyecto tiene su propio `CLAUDE.md` | `claude_code/` (Docker) no aplica: GDA se desarrolla en Windows sin Docker. ⚠️ pendiente de confirmar el resto |
-| `CLAUDE.md` | Fichero propio versionado en el proyecto | Fichero en la raíz con `@ai/governance/00_CLAUDE.md` ⚠️ pendiente de valorar: el `CLAUDE.md` efectivo de GDA vive en el repositorio compartido |
-| Punto de entrada | `AI_ENTRYPOINT.md` → symlink versionado a `ai/governance/00_AI_ENTRYPOINT.md` | `ai/governance/00_AI_ENTRYPOINT.md`, sin enlace en la raíz ⚠️ pendiente de confirmar |
-| Copilot | `.github/copilot-instructions.md` propio | No existe ⚠️ pendiente de decidir |
-| Herramienta de configuración | `make ai-setup` | ⚠️ pendiente (script de Git Bash; `make` puede no estar disponible en Windows) |
-| `core.autocrlf` | `false` (WSL) | `true` en la configuración de sistema ⚠️ pendiente de alinear |
-| Necesita las ADR en PRO | No: el servidor no las usa; `make audit` solo comprueba que exista `docs/decisiones/` | No aplica |
+| `docs/decisiones/` | Copia versionada en el repositorio del proyecto, comparada con `ai-docs/decisiones/` (`make adr-check`) | Es el propio clon de `governance_ia_docs_2609` (`docs/decisiones/`) |
+| Clon de `governance_ia_docs_2609` | `ai-docs/`, ignorado, checkout parcial solo de `/decisiones/` | `docs/`, clon completo sin checkout parcial (incluye `Project_Definition/`) |
+| Checkout parcial de `ai/` (modo) | no-cone | cone |
+| Patrones de `ai/` | `/*`, `!/claude_code/`, `!/opencode/`, `!/governance/00_CLAUDE.md` | `/*`, `!/*/`, `/governance/`, `/skills/`, `/templates/` (los ficheros de la raíz sí entran) |
+| Motivo de las exclusiones | `claude_code/` y `opencode/` se conservan solo en el remoto; `00_CLAUDE.md` porque el proyecto tiene su propio `CLAUDE.md` | `claude_code/` (Docker) y `opencode/` no aplican: GDA se desarrolla en Windows sin Docker. `00_CLAUDE.md` se incluye porque es el `CLAUDE.md` efectivo de GDA |
+| `CLAUDE.md` | Fichero propio versionado en el proyecto | Fichero sin versionar en la raíz del workspace (no es repositorio git) con `@ai/governance/00_CLAUDE.md`. ⚠️ pendiente de valorar: el `CLAUDE.md` efectivo de GDA vive en el repositorio compartido |
+| Punto de entrada | `AI_ENTRYPOINT.md` → symlink versionado a `ai/governance/00_AI_ENTRYPOINT.md` | Sin fichero en la raíz: `00_CLAUDE.md` remite a `ai/governance/00_AI_ENTRYPOINT.md` |
+| Copilot | `.github/copilot-instructions.md` propio | No existe `.github/` ⚠️ pendiente de decidir |
+| Herramienta de configuración | `make ai-setup` | ⚠️ pendiente: script de Git Bash (`make` no está disponible) |
+| `core.autocrlf` | `false` (WSL) | `true` solo en la configuración de sistema de Git for Windows; afecta a `ai/` y `docs/` ⚠️ pendiente de alinear |
+| Necesita las ADR en PRO | No: el servidor no las usa; `make audit` solo comprueba que exista `docs/decisiones/` | No: el despliegue no las usa |
 
 ---
 
