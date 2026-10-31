@@ -88,7 +88,6 @@ dirs=(
     "ops/stacks"
     "ops/services"
     "scripts"
-    "docs/decisiones"
 )
 
 for d in "${dirs[@]}"; do
@@ -98,6 +97,14 @@ for d in "${dirs[@]}"; do
         fail "Directorio faltante: $d"
     fi
 done
+
+# docs/ es el repositorio de documentación IA (ADR-0035), no forma parte del
+# proyecto: en PRO puede no existir.
+if [ -d "docs/decisiones" ]; then
+    ok "Directorio presente: docs/decisiones"
+else
+    warn "docs/decisiones no montado (make ai-setup; no necesario en PRO)"
+fi
 
 echo ""
 # ==========================================
