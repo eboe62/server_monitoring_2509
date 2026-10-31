@@ -6,7 +6,9 @@ a FK real a `gda_persona.persona`; y renombrado `fecha_efecto` → `fecha_modifi
 semántica — ver punto 3. Esa revisión eleva este patrón de "recomendado" a **obligatorio para toda
 tabla nueva** del backend GDA. Revisado de nuevo 2026-07-25: tercer caso real, Licencia — primera
 entidad que aplica el patrón siendo **diseñada desde cero** ya con las 4 columnas presentes en la DDL
-inicial, sin necesitar ningún `ALTER TABLE` correctivo como sí hizo falta para Proveedor)
+inicial, sin necesitar ningún `ALTER TABLE` correctivo como sí hizo falta para Proveedor. Revisado de
+nuevo 2026-08-14: cuarto caso real, Noticia (`gda-comunicacion`) — primera vez que la lógica de
+servicio (no solo la DDL) se verifica por ejecución real, no solo por lectura de código)
 Scope: System
 Category: ARCHITECTURE
 Tags: REVIEW_REQUIRED
@@ -18,7 +20,7 @@ Validation Reference: NONE
 ## Contexto
 `gda_estructura.iniciativa` ya incorpora, desde su creación, un conjunto de columnas para registrar
 quién y cuándo se creó/modificó/dio de baja un registro: `username` (texto libre, sin FK),
-`fecha_alta`, `fecha_baja`, `fecha_efecto`. Al ampliar `gda_persona.proveedor` (módulo Vendors) con el
+`fecha_alta`, `fecha_baja`, `fecha_efecto`. Al ampliar `gda_persona.proveedor` (módulo Suppliers) con el
 mismo tipo de necesidad, se decidió explícitamente replicar ese criterio en vez de inventar uno nuevo
 — pero verificando el comportamiento real del código (no solo la DDL) se encontraron matices
 importantes que la tabla por sí sola no muestra, y se tomaron dos decisiones que divergen
@@ -28,8 +30,8 @@ auditoría sepan qué replicar y qué no, sin tener que releer el código de Ini
 Verificado en código real: `Iniciativa.java`/`IniciativaServiceImpl.java` (backend `gda-estructura` y
 su composición en el API Gateway) y `Proveedor.java`/`ProveedorServiceImpl.java` (backend
 `gda-persona` y su composición en el API Gateway), documentado con detalle en
-`Documentacion_BBDD_GDA_2607_Vendors.md`, `Documentacion_BackEnd_GDA_2607_Vendors.md` §14 y
-`Documentacion_FrontEnd_GDA_2607_Vendors.md` §15.
+`Documentacion_BBDD_GDA_2607_Suppliers.md`, `Documentacion_BackEnd_GDA_2607_Suppliers.md` §14 y
+`Documentacion_FrontEnd_GDA_2607_Suppliers.md` §15.
 
 ## Decisión
 **A partir de esta fecha, toda tabla nueva del backend GDA debe incluir, al final de su esquema, las 4
@@ -53,7 +55,7 @@ y tipos de columna):
      ese valor ya es directamente utilizable, sin pasos adicionales — es exactamente lo que la FK
      espera.
    - **Si en cambio la columna llevara FK real a `gda_autenticacion.usuario(id)` (decisión intermedia
-     que se planteó y descartó para Proveedor el mismo día, ver `Documentacion_BBDD_GDA_2607_Vendors.md`
+     que se planteó y descartó para Proveedor el mismo día, ver `Documentacion_BBDD_GDA_2607_Suppliers.md`
      §7):** hace falta un paso adicional de resolución, **no** una asignación directa del `personaId` —
      de lo contrario la FK se viola en cuanto `persona_id != usuario.id` para ese usuario (caso
      general). Resolver con `gdaAutenticacionApiClient.getUsuarioByPersona(personaId).getBody().getId()`
@@ -66,6 +68,11 @@ y tipos de columna):
      creó" — decisión a tomar explícitamente por entidad, y que debería reflejarse en el propio nombre
      de la columna (p. ej. `usuario_modificacion_id` dice explícitamente lo que `persona_id` no
      decía). Proveedor reasigna en cada edición; Iniciativa no.
+     **Noticia (2026-08-14) sigue el criterio de Proveedor:** `NoticiaServiceImpl` reasigna
+     `usuarioModificacionId` en cada edición (semántica "última persona que modificó"), coherente con
+     ser contenido editable por varios gestores. La resolución real desde el JWT (Gateway,
+     `persona_id` del `SecurityContext`) es trabajo de Fase 4, todavía no implementado — hoy el
+     microservicio persiste el valor tal cual llega en el DTO.
 2. **`fecha_alta` (`date NULL`) — CRITERIO FINAL, corregido tras el primer paso por Proveedor:** a
    diferencia de la primera versión de este ADR (que la trataba como 100% backend, sin frontend, igual
    que `username`/`fechaAlta` en Iniciativa), el criterio final para toda tabla nueva es: **campo
@@ -81,7 +88,7 @@ y tipos de columna):
 3. **`fecha_modificacion` (`date NULL`) — sustituye a `fecha_efecto`/`fecha_baja` como campo 100%
    automático:** se corrigió el nombre de esta columna (antes `fecha_efecto`, un campo de negocio
    editable por el frontend — criterio descartado, ver histórico en
-   `Documentacion_BBDD_GDA_2607_Vendors.md` §8) precisamente para invertir su naturaleza: ahora es
+   `Documentacion_BBDD_GDA_2607_Suppliers.md` §8) precisamente para invertir su naturaleza: ahora es
    **puramente de auditoría, gestionada solo por el backend del microservicio de dominio**, nunca
    expuesta en el `Request` del Gateway ni editable desde el frontend (el frontend solo la muestra en el
    listado, en modo lectura). Se fija a `LocalDate.now()` **tanto en el alta como en cada edición** —
@@ -119,6 +126,16 @@ y tipos de columna):
      ver `Documentacion_BackEnd_GDA_2607_Licenses.md` §7-8 y `Documentacion_FrontEnd_GDA_2607_Licenses.md`
      §11 para el detalle completo, incluida la corrección pendiente de acotar `maestro_estado` por
      `ambito` (hallazgo distinto, en curso).
+   - **Cuarto caso real — Noticia (`gda-comunicacion`), verificado 2026-08-14:** `noticia` también tiene
+     un `estado` propio (`BORRADOR`/`PUBLICADA`, ver ADR-0607 y requisitos v2.2), lo que exige aplicar
+     explícitamente el mismo criterio que en Licencia — no asumir sin más. Confirmado con el requisito
+     funcional ("la eliminación de una noticia es una decisión exclusiva del Administrador", una acción
+     separada de los cambios de estado): **ninguno de los dos valores es terminal**. `Noticia` sigue por
+     tanto el mecanismo de **Proveedor**, no el de Licencia: `fecha_baja` intocable vía `PUT`
+     (`NoticiaServiceImpl.editNoticia` preserva siempre el valor original leído de BD), y se fija
+     únicamente en el `DELETE` de borrado lógico. Verificado por ejecución real end-to-end contra
+     `gda_03_desa` (alta → edición con cambio de `estado` a `PUBLICADA` → `fecha_alta` sin cambios →
+     borrado lógico con `fecha_baja` fijada), no solo por lectura de código.
 5. **Serialización de `LocalDate` en el DTO:** obligatorio anotar cada campo `LocalDate` del DTO de
    `-commons` con `@JsonSerialize`/`@JsonDeserialize` usando una clase serializadora propia del módulo
    (ver `com.ineco.gda.persona.util.LocalDateSerializer`/`LocalDateDeserializer` en `gda-persona-commons`,
@@ -158,12 +175,12 @@ y tipos de columna):
   teórico) durante la decisión intermedia de Proveedor (FK a `gda_autenticacion.usuario(id)`), que
   llevó a corregir la FK definitiva hacia `gda_persona.persona(id)` — el mismo espacio de IDs que ya se
   estaba guardando, eliminando el riesgo por completo en vez de parchearlo con una resolución adicional
-  (ver `Documentacion_BBDD_GDA_2607_Vendors.md` §7 para el histórico completo de la decisión).
+  (ver `Documentacion_BBDD_GDA_2607_Suppliers.md` §7 para el histórico completo de la decisión).
 
 ## Referencias
-- `Documentacion_BBDD_GDA_2607_Vendors.md` §7 (renombrado a `usuario_modificacion_id`, FK real, y riesgo de violación de FK con datos existentes)
-- `Documentacion_BackEnd_GDA_2607_Vendors.md` §14 (implementación backend/Gateway, Fase 4)
-- `Documentacion_FrontEnd_GDA_2607_Vendors.md` §15 (implementación frontend, Fase 7)
+- `Documentacion_BBDD_GDA_2607_Suppliers.md` §7 (renombrado a `usuario_modificacion_id`, FK real, y riesgo de violación de FK con datos existentes)
+- `Documentacion_BackEnd_GDA_2607_Suppliers.md` §14 (implementación backend/Gateway, Fase 4)
+- `Documentacion_FrontEnd_GDA_2607_Suppliers.md` §15 (implementación frontend, Fase 7)
 - `Documentacion_BackEnd_GDA_2607_Licenses.md` §4, §7 (tercer caso real, 2026-07-25 — único hasta ahora diseñado desde cero con las 4 columnas ya en la DDL inicial; decisión explícita de `fecha_baja` intocable pese a tener `estado_id` propio)
 - `Documentacion_FrontEnd_GDA_2607_Licenses.md` §10 (implementación frontend de `fecha_alta` como campo de Añadir)
 - ADR-0601 (patrón módulo-commons — los DTOs de auditoría viven en `-commons`)
