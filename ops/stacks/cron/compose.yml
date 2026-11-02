@@ -34,6 +34,13 @@ services:
       timeout: 10s
       retries: 3
 
+    # Límites de recursos (ADR-0016 P2): declarados en Compose
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: "0.5"
+
     networks:
       - backend-net  # Red backend (DB + aplicaciones autorizadas)
     environment:
