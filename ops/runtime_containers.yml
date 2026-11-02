@@ -14,7 +14,7 @@ containers:
     healthcheck_policy: readiness
     enforcement_level: fail
 
-  smtp-relay:
+  monitoring-smtp-relay:
     type: INFRA_TRUSTED
     healthcheck_policy: liveness
     enforcement_level: warn
