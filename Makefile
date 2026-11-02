@@ -1149,7 +1149,7 @@ build-cron:
 	docker build --no-cache -f ops/stacks/cron/Dockerfile -t monitoring-cron .
 	@echo ""
 
-deploy: monitoring-networks build deploy-infra deploy-services deploy-validate runtime-apply
+deploy: monitoring-networks build deploy-infra deploy-services deploy-validate runtime-apply audit-host-hardening
 	@echo "[OK] build completo"
 	@echo "=== [INFO] Despliegue completo ==="; \
 
@@ -1209,6 +1209,14 @@ runtime-apply:
 	@echo "[RUNTIME] aplicando límites"
 	bash ops/deployment/configure_docker_limits.sh
 	@echo "[OK] runtime aplicado"
+
+.PHONY: audit-host-hardening
+
+## Host hardening (ADR-0016): nada del proyecto en el cron del host,
+## límites de CPU/memoria en los contenedores, fail2ban y UFW activos.
+audit-host-hardening:
+	@echo "=== AUDIT HOST HARDENING (ADR-0016) ==="
+	@bash ops/audit/check_host_hardening.sh
 
 # ------------------------------------------
 # Limpieza
