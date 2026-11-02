@@ -1486,7 +1486,7 @@ AI_PROJECT ?= monitoring
 # enlace en la raíz -> destino
 AI_LINKS = \
 	CLAUDE.md:$(AI_DIR)/governance/projects/$(AI_PROJECT)/CLAUDE.md \
-	AI_ENTRYPOINT.md:$(AI_DIR)/governance/00_AI_ENTRYPOINT.md \
+	AI_ENTRYPOINT.md:$(AI_DIR)/governance/projects/$(AI_PROJECT)/00_AI_ENTRYPOINT.md \
 	.github/copilot-instructions.md:../$(AI_DIR)/governance/projects/$(AI_PROJECT)/copilot-instructions.md \
 	.claudecodeignore:$(AI_DIR)/governance/projects/$(AI_PROJECT)/claudecodeignore \
 	.ua:$(DOCS_DIR)/arquitectura/$(AI_PROJECT)/.ua
