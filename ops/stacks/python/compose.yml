@@ -32,6 +32,13 @@ services:
       retries: 10
       start_period: 30s
 
+    # Límites de recursos (ADR-0016 P2): declarados en Compose
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: "0.25"
+
     networks:
       - backend-net  # Red backend (DB + aplicaciones autorizadas)
       - observability-net # Acceso a la red de observabilidad (Loki)
