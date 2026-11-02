@@ -1512,7 +1512,7 @@ ai-setup:
 		git clone --no-checkout --branch $(AI_BRANCH) $(DOCS_REPO) $(DOCS_DIR) || exit 1; \
 	fi
 	@git -C $(DOCS_DIR) sparse-checkout set --no-cone \
-		'/*' '!/*/' '/decisiones/' '/*/$(AI_PROJECT)/'
+		'/*' '!/*/' '/.ua/' '/decisiones/' '/*/$(AI_PROJECT)/'
 	@# Solo tras un clon nuevo (índice vacío): no cambia la rama de un clon en uso
 	@[ -n "$$(git -C $(DOCS_DIR) ls-files | head -1)" ] || git -C $(DOCS_DIR) checkout -q $(AI_BRANCH)
 	@echo "[OK] $(DOCS_DIR)/ en $$(git -C $(DOCS_DIR) rev-parse --abbrev-ref HEAD) con checkout parcial"
