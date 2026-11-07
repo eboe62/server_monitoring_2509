@@ -86,14 +86,19 @@ except subprocess.CalledProcessError as e:
     raise SystemExit(1)
 
 # ----------------------------------------
-# Eliminar copias con más de 7 días
+# Eliminar copias más antiguas que RETENTION_DAYS
 # ----------------------------------------
+# Se limpia el directorio del contenedor (/backups), que es donde escribe pg_dump.
+# BACKUP_DIR_HOST (postgres/.env) es una ruta del host y no existe dentro de monitoring-cron.
 try:
-    subprocess.run(
-        ["find", BACKUP_DIR_HOST, "-type", "f", "-name", "*.backup", "-mtime", f"+{RETENTION_DAYS}", "-delete"],
-        check=False
+    result = subprocess.run(
+        ["find", BACKUP_DIR_CONTAINER, "-type", "f", "-name", "*.backup", "-mtime", f"+{RETENTION_DAYS}", "-print", "-delete"],
+        check=True, capture_output=True, text=True
     )
-    log_info(f"[OK] Copias antiguas eliminadas (>{RETENTION_DAYS} días).")
+    removed = [l for l in result.stdout.splitlines() if l]
+    log_info(f"[OK] Copias antiguas eliminadas (>{RETENTION_DAYS} días): {len(removed)}")
+except subprocess.CalledProcessError as e:
+    log_info(f"[WARN] Error limpiando backups antiguos: {e.stderr.strip()}")
 except Exception as e:
     log_info(f"[WARN] Error limpiando backups antiguos: {e}")
 
