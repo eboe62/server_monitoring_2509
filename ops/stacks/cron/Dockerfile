@@ -66,6 +66,11 @@ COPY ops/stacks/cron/docker-entrypoint.sh \
  && mkdir -p /opt/monitoring/logs \
  && chown appuser:appuser /opt/monitoring/logs \
  \
+ # Punto de montaje de backups: un volumen nuevo hereda este propietario (appuser)
+ && mkdir -p /backups \
+ && chown appuser:appuser /backups \
+ && chmod 750 /backups \
+ \
  # 🔑 CRÍTICO: logs escribibles
  && chmod 775 /opt/monitoring/logs \
  \
