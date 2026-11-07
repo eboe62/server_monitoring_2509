@@ -160,7 +160,7 @@ def main():
     if alerts:
         log_info(f"[INFO]  Se han detectado contenedores en riesgo, enviando email...")
         html_report = build_html_report(alerts)
-        send_email("[WARN] Alerta: Recursos Docker al límite", html_report)
+        send_email(html_content=html_report, subject="[WARN] Alerta: Recursos Docker al límite")
     else:
         log_info(f"[OK] No se han detectado contenedores en riesgo.")
 

@@ -3,7 +3,7 @@
 # backup_postgres.py
 """
 Realiza un backup completo de la base de datos PostgreSQL dentro del contenedor monitoring-postgres
-y envía notificación por correo usando smtp_relay.
+y envía notificación por correo usando smtp_relay solo si falla.
 """
 
 import sys, os, subprocess
@@ -33,6 +33,8 @@ POSTGRES_CONTAINER_NAME = os.getenv("POSTGRES_CONTAINER_NAME")
 
 # Ruta en contenedor donde se depositarán los backups (debe mapearse a un volume)
 BACKUP_DIR_CONTAINER = os.getenv("BACKUP_DIR_CONTAINER", "/backups")
+# Retención: backup semanal -> 28 días conserva las 4 últimas copias
+RETENTION_DAYS = int(os.getenv("BACKUP_RETENTION_DAYS", "28"))
 
 timestamp = datetime.now().strftime("%Y%m%d%H%M")
 BACKUP_FILE_NAME = f"{POSTGRES_NAME}-{timestamp}.backup"
@@ -73,14 +75,8 @@ try:
     subprocess.run(cmd, check=True, env=env)
     log_info(f"[OK] Backup realizado con éxito: {BACKUP_FILE_CONTAINER}")
 
-# ----------------------------------------
-# Notificar por mail
-# ----------------------------------------
-    send_email(
-        subject=f"Backup exitoso de {POSTGRES_NAME}",
-        html_content=f"Backup completado correctamente.<br>Ubicación: {BACKUP_FILE_HOST}"
-             f" Para restaurar utilice: scripts/backup_restore.py"
-    )
+    # Sin correo en caso de éxito (cuota de correo limitada): solo se notifica el fallo.
+    # Para restaurar: scripts/backup_restore.py
 except subprocess.CalledProcessError as e:
     log_info(f"[ERROR] Error durante el backup de {POSTGRES_NAME}: {e}")
     send_email(
@@ -94,10 +90,10 @@ except subprocess.CalledProcessError as e:
 # ----------------------------------------
 try:
     subprocess.run(
-        ["find", BACKUP_DIR_HOST, "-type", "f", "-name", "*.backup", "-mtime", "+7", "-delete"],
+        ["find", BACKUP_DIR_HOST, "-type", "f", "-name", "*.backup", "-mtime", f"+{RETENTION_DAYS}", "-delete"],
         check=False
     )
-    log_info(f"[OK] Copias antiguas eliminadas (>7 días).")
+    log_info(f"[OK] Copias antiguas eliminadas (>{RETENTION_DAYS} días).")
 except Exception as e:
     log_info(f"[WARN] Error limpiando backups antiguos: {e}")
 

@@ -183,17 +183,11 @@ def process_alert():
             # ==========================================
             # Envio del resultado por correo usando el contenedor smtp-relay que gestiona Postfix
             # ==========================================
+        # Un solo envío (cuota de correo limitada): destinatario y copias desde EMAIL_TO / CC_LIST
         subject = "🚨 Alerta: Ataques de alto riesgo"
-        send_email(subject, html_body)
-        email_to=""
         try:
-            send_email(
-                subject,
-                html_body,
-                email_to,
-                cc_list=[""]
-            )
-            log_info(f"[📧]: Enviado a ...{email_to} con CC a ...")
+            send_email(html_content=html_body, subject=subject)
+            log_info(f"[📧]: Alerta enviada ({len(rows)} amenazas)")
         except Exception as e:
             log_info(f"[ERROR] El envío ha fallado: {e}")
 
