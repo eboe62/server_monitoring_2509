@@ -41,6 +41,7 @@ jobs:
           cp ops/services/postgres/.env.template ops/services/postgres/.env
           cp ops/services/smtp_relay/.env.template ops/services/smtp_relay/.env || true
           cp ops/stacks/observability/.env.template ops/stacks/observability/.env || true
+          cp ops/stacks/cron/.env.template ops/stacks/cron/.env
 
       # ------------------------------------------
       # Secrets for SMTP (CI)
