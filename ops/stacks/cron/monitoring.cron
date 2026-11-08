@@ -1,5 +1,5 @@
 # Horario en UTC (zona horaria del contenedor). 21:00 UTC = 22:00 en España en invierno, 23:00 en verano.
-# Cuota de correo limitada (Postmark gratuito): solo alert_risk diario y backup semanal (solo si falla).
+# Cuota de correo limitada (Postmark gratuito): solo alert_risk diario (prueba de vida) y backup semanal (solo si falla).
 
 # Auditoria de Binarios (con log propio)
 0 11 * * * python3 -m log_ingestor.auditoria_binarios
@@ -9,15 +9,17 @@
 0 22 * * * echo "[CRON][docker_resources][START]" && python3 -m resource_monitor.docker_resources
 
 # Jobs de log_ingestor (cada 10 min): /var/log del host -> attacking_logs
-*/10 * * * * python3 -m log_ingestor.log_ingest_batch
-*/10 * * * * python3 -m log_ingestor.log_fail2ban_batch
-*/10 * * * * python3 -m log_ingestor.log_kern_batch
-*/10 * * * * python3 -m log_ingestor.log_ip_geolocation
+# Escalonados (B4): si arrancan a la vez, chocan en update_attacking_no() ("deadlock detected").
+# "2-59/10" = minutos 2, 12, 22, 32, 42 y 52. La geolocalización va la última.
+0-59/10 * * * * python3 -m log_ingestor.log_ingest_batch
+2-59/10 * * * * python3 -m log_ingestor.log_fail2ban_batch
+4-59/10 * * * * python3 -m log_ingestor.log_kern_batch
+6-59/10 * * * * python3 -m log_ingestor.log_ip_geolocation
 # Honeypot desactivado (B2): dependía de Loki (Línea B); se retomará cuando la Línea A funcione
 # */10 * * * * python3 -m log_ingestor.log_honeypot_geolocation
 
-# Alerta de riesgo: una al día, 21:00 UTC
-0 21 * * * python3 -m log_ingestor.alert_risk
+# Alerta de riesgo: una al día, 21:10 UTC (después del ciclo de ingesta y geolocalización de las 21:00)
+10 21 * * * python3 -m log_ingestor.alert_risk
 
 # Prueba de alertas (cada minuto, solo si se necesita debug)
 # * * * * * python3 -m log_ingestor.alert_risk

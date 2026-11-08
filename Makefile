@@ -1200,6 +1200,19 @@ deploy-validate:
 	@echo "[OK] validación completada"
 
 # ------------------------------------------
+# BBDD: aplicar funciones a una BBDD existente (B4)
+# ------------------------------------------
+# init/ solo se ejecuta cuando la BBDD está vacía. Este paso es manual y explícito:
+# carga 02_functions.sql (CREATE OR REPLACE: se puede repetir sin efectos secundarios).
+
+.PHONY: db-apply-functions
+
+db-apply-functions:
+	@echo "[DB] aplicando ops/services/postgres/init/02_functions.sql"
+	docker exec -i monitoring-postgres sh -c 'psql -v ON_ERROR_STOP=1 -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"' < ops/services/postgres/init/02_functions.sql
+	@docker exec monitoring-postgres sh -c 'psql -tA -U "$$POSTGRES_USER" -d "$$POSTGRES_DB" -c "SELECT CASE WHEN prosrc LIKE '"'"'%pg_advisory_xact_lock%'"'"' THEN '"'"'[OK] update_attacking_no() con turno (advisory lock)'"'"' ELSE '"'"'[ERROR] update_attacking_no() sin turno'"'"' END FROM pg_proc WHERE proname = '"'"'update_attacking_no'"'"';"'
+
+# ------------------------------------------
 # Runtime hardening
 # ------------------------------------------
 

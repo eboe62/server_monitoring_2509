@@ -350,6 +350,18 @@ def normalize_date(value):
 # GESTION DEL TIEMPO
 # ==========================================
 
+def log_files_with_rotated(log_file):
+    """
+    Devuelve [log_file.1, log_file] (solo los que existen), en orden cronológico.
+
+    Rotación (logrotate): al rotar, las últimas líneas aún no ingeridas quedan en
+    X.log.1 y X.log empieza vacío. Leyendo los dos, el filtro "más nuevo que el
+    MAX(timestamp) de la BBDD" de cada job recupera esas líneas sin duplicar.
+    Los .2.gz y anteriores no se leen: ya se ingirieron en su día.
+    """
+    return [f for f in (f"{log_file}.1", log_file) if os.path.exists(f)]
+
+
 def get_month_gap(month_gap):
     """
     Devuelve:
