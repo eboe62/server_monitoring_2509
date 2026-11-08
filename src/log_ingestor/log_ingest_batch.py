@@ -4,7 +4,7 @@ import re
 import subprocess
 import os
 from datetime import datetime
-from monitoring.common.config import log_info, connect_db, close_db, init_config
+from monitoring.common.config import log_files_with_rotated, log_info, connect_db, close_db, init_config
 
 LOG_FILE = "/var/log/auth.log"
 
@@ -92,7 +92,8 @@ def get_log_lines():
     last_timestamp = get_last_timestamp()
 
     pattern = r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+[+-][0-9]{2}:[0-9]{2} .*"
-    command = ["grep", "-E", pattern, LOG_FILE]
+    # Incluye X.log.1 para no perder líneas en la rotación (B4)
+    command = ["grep", "-h", "-E", pattern, *log_files_with_rotated(LOG_FILE)]
 
     try:
         result = subprocess.run(
