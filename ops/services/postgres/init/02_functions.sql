@@ -9,11 +9,24 @@
 --   - honeypot_logs recibe attacking_no y el log_type más grave
 --     (06_login_accepted > 04 > 03 > 02 > 08) desde attacking_logs.
 -- alert_risk usa attacking_no para quedarse con un registro por origen.
+--
+-- Concurrencia (B4): varios jobs de ingesta terminan casi a la vez y llaman a
+-- esta función. Sin coordinación, cada uno bloquea filas que el otro necesita y
+-- Postgres aborta uno con "deadlock detected". pg_advisory_xact_lock es un
+-- "turno" con nombre: quien llega segundo espera a que el primero termine su
+-- transacción, en vez de chocar. log_ip_geolocation pide el mismo turno.
+-- La clave es un número fijo acordado por todos: hashtext('monitoring.attacking_logs').
+--
+-- Aplicar en una BBDD existente (init/ solo corre con la BBDD vacía):
+--   make db-apply-functions
 
 CREATE OR REPLACE FUNCTION public.update_attacking_no() RETURNS void
     LANGUAGE plpgsql
     AS $$
 BEGIN
+    -- Turno exclusivo: se libera solo al terminar la transacción
+    PERFORM pg_advisory_xact_lock(hashtext('monitoring.attacking_logs'));
+
     -- Actualiza attacking_logs con su propio conteo
     WITH attack_counts AS (
         SELECT attacking_octets, COUNT(*) AS attack_count

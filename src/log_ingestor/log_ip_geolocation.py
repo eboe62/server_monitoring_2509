@@ -56,6 +56,8 @@ def update_database():
             ip_info = get_ip_info(ip)
             if not ip_info:
                 continue
+            # Mismo turno que update_attacking_no() (02_functions.sql): evita deadlocks
+            cursor.execute("SELECT pg_advisory_xact_lock(hashtext('monitoring.attacking_logs'));")
             cursor.execute("""
                 UPDATE attacking_logs
                 SET attacking_country = %s,

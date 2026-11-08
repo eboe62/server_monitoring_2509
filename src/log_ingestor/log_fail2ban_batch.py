@@ -5,7 +5,7 @@ import subprocess
 import os
 import pytz
 from datetime import datetime
-from monitoring.common.config import log_info, init_config, connect_db, close_db
+from monitoring.common.config import log_files_with_rotated, log_info, init_config, connect_db, close_db
 
 LOG_FILE = "/var/log/fail2ban.log"
 
@@ -93,7 +93,8 @@ def get_log_lines():
         last_timestamp = datetime(1970, 1, 1, tzinfo=pytz.UTC)  # Valor por defecto
 
     pattern = r"^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2},[0-9]+"
-    command = ["grep", "-E", pattern, LOG_FILE]
+    # Incluye X.log.1 para no perder líneas en la rotación (B4)
+    command = ["grep", "-h", "-E", pattern, *log_files_with_rotated(LOG_FILE)]
 
     try:
         result = subprocess.run(
