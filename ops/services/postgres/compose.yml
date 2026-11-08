@@ -14,7 +14,7 @@ services:
       POSTGRES_DB: ${POSTGRES_NAME}
     volumes:
       - postgres-data:/var/lib/postgresql/data  # Persistencia de la BBDD de monitorización
-      - postgres-backups:/backups               # Persistencia de backups (named volume en lugar de bind host)
+      # Sin volumen de backups aquí: el backup lo hace monitoring-cron en el volumen monitoring-backups
       - ./init:/docker-entrypoint-initdb.d:ro
       # Fichero secreto montado en modo solo-lectura. Usar ops/services/postgres/secrets/postgres_password en el host.
       - ./secrets/postgres_password:/run/secrets/postgres_password:ro
@@ -35,8 +35,6 @@ services:
 
 volumes:
   postgres-data:
-    driver: local
-  postgres-backups:
     driver: local
 
 networks:

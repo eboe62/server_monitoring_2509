@@ -4,9 +4,8 @@
 # Auditoria de Binarios (con log propio)
 0 11 * * * python3 -m log_ingestor.auditoria_binarios
 
-# Recursos Docker (sin acceso a Docker desde este contenedor: pendiente B5)
-# */10 * * * * python3 -m resource_monitor.docker_resources PRE-MIGRACION (BORRAR)
-0 22 * * * echo "[CRON][docker_resources][START]" && python3 -m resource_monitor.docker_resources
+# Recursos Docker (B5a): sin job aquí. Este contenedor no tiene acceso a Docker (ni socket ni cliente);
+# la medición la hace el host y se lanza a mano: make docker-resources
 
 # Jobs de log_ingestor (cada 10 min): /var/log del host -> attacking_logs
 # Escalonados (B4): si arrancan a la vez, chocan en update_attacking_no() ("deadlock detected").
@@ -23,7 +22,6 @@
 
 # Prueba de alertas (cada minuto, solo si se necesita debug)
 # * * * * * python3 -m log_ingestor.alert_risk
-# * * * * * python3 -m resource_monitor.docker_resources >> /var/log/docker_resources.log 2>&1
 # * * * * * python3 -m log_ingestor.log_ingest_batch
 
 # Backup de BBDD monitoring-postgres: semanal, viernes 21:05 UTC (correo solo si falla)
