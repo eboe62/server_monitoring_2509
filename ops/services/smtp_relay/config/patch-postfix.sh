@@ -52,7 +52,9 @@ postconf -e "smtp_sasl_security_options = noanonymous"
 # ⚠️ Forzamos mecanismos compatibles
 postconf -e "smtp_sasl_mechanism_filter = plain, login"
 
-# Forzamos TLS obligatorio con STARTTLS (no wrappermode específico para puerto 465)
+# TLS obligatorio con STARTTLS (no wrappermode específico para puerto 465).
+# OJO: /scripts/run.sh de la imagen base vuelve a fijar este valor después; el que
+# manda es POSTFIX_smtp_tls_security_level en compose.yml. Esta línea queda como respaldo.
 # postconf -e "smtp_use_tls = yes"
 postconf -e "smtp_tls_security_level = encrypt"
 postconf -e "smtp_tls_CAfile = /etc/ssl/certs/ca-certificates.crt"

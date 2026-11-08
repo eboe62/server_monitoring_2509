@@ -26,6 +26,9 @@ services:
       LOG_LEVEL: debug
       ALLOWED_SENDER_DOMAINS: ${EMAIL_DOMAIN}
       ALLOW_EMPTY_SENDER_DOMAINS: "true"
+      # TLS obligatorio hacia Postmark: el run.sh de la imagen base aplica 'may'
+      # si no se declara aquí (lo que ponga patch-postfix.sh se sobrescribe)
+      POSTFIX_smtp_tls_security_level: encrypt
 
     volumes:
       - ./config:/config:ro
