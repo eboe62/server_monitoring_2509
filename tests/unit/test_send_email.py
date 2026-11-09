@@ -135,3 +135,40 @@ def test_send_auth_login(monkeypatch, tmp_path):
 
     # auth SÍ debe autenticarse
     assert smtp_instance.logged == ("u123", "p123")
+
+
+def _fake_dns(monkeypatch):
+    monkeypatch.setattr(
+        "socket.getaddrinfo",
+        lambda *a, **k: [(None, None, None, None, ("127.0.0.1", 0))],
+    )
+
+
+def test_relay_logs_no_enganosos(monkeypatch, capsys, tmp_path):
+    """B7: en relay sin credenciales no se escribe 'Autenticando' ni el aviso de .env
+    cuando las variables del correo ya llegan por el entorno (caso de los contenedores)."""
+    monkeypatch.setenv("SMTP_MODE", "relay")
+    monkeypatch.delenv("SMTP_USER", raising=False)
+    monkeypatch.delenv("SMTP_PASS", raising=False)
+    monkeypatch.setenv("EMAIL_FROM", "noreply@test.local")
+    monkeypatch.setenv("EMAIL_TO", "dest@test.local")
+    _fake_dns(monkeypatch)
+    monkeypatch.setattr(smtplib, "SMTP", DummySMTP)
+
+    config.init_config(env_path=str(tmp_path / "no-existe.env"),
+                       secrets_dir=str(tmp_path / "no-secrets"))
+    assert config.send_email(html_content="hola", subject="s", email_to="t@example.com")
+
+    out = capsys.readouterr().out
+    assert ".env no encontrado" not in out
+    assert "Autenticando" not in out
+    assert "Modo relay: envío sin autenticación" in out
+
+
+def test_aviso_env_si_faltan_variables(monkeypatch, capsys, tmp_path):
+    monkeypatch.setenv("SMTP_MODE", "relay")
+    monkeypatch.delenv("EMAIL_FROM", raising=False)
+    monkeypatch.delenv("EMAIL_TO", raising=False)
+    config.init_config(env_path=str(tmp_path / "no-existe.env"),
+                       secrets_dir=str(tmp_path / "no-secrets"))
+    assert "faltan EMAIL_FROM/EMAIL_TO" in capsys.readouterr().out
