@@ -1243,6 +1243,13 @@ restore-backup:
 restore-backup-clean:
 	@docker exec -i -e CLEAN=1 monitoring-cron bash -s < $(RESTORE_SCRIPT)
 
+# Custodia local del último backup (B8, ADR-0009). Se ejecuta en el EQUIPO LOCAL (WSL), no en PRO:
+# descarga por SSH (alias de ~/.ssh/config de Windows), verifica sha256 y conserva los 2 últimos.
+#   make backup-fetch                     (PRO_SSH=vps-server, LOCAL_BACKUP_DIR=/mnt/d/DataBase/BackUps, KEEP=2)
+.PHONY: backup-fetch
+backup-fetch:
+	@bash ops/local/backup_fetch.sh
+
 # ------------------------------------------
 # Recursos de contenedores (B5a): manual
 # ------------------------------------------
