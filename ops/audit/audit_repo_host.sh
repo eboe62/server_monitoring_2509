@@ -283,9 +283,10 @@ echo "A7 Docker socket"
 # ==========================================
 echo ""
 
-info "Buscando uso de docker.sock"
+info "Buscando docker.sock montado en algún compose (se ignoran comentarios)"
 
-SOCK=$(grep -R "docker.sock" -n . || true)
+# Solo compose.yml: buscar en todo el repo marcaba README, ADRs y este script (H6, B7)
+SOCK=$(git ls-files '*compose*.yml' | xargs -r grep -n "docker.sock" | grep -vE '^[^:]+:[0-9]+:[[:space:]]*#' || true)
 
 if [ -z "$SOCK" ]; then
     ok "docker.sock no usado"
@@ -301,7 +302,7 @@ echo ""
 info "Resumiendo HostConfig/runtime (solo visibilidad, no modifica nada)"
 if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
     for c in $(bash ops/runtime_containers.sh list); do
-        if docker ps --format '{{.Names}}' | grep -q "^$c$$"; then
+        if docker ps --format '{{.Names}}' | grep -q "^$c$"; then
             echo "[INFO] Inspecting container: $c"
             docker inspect --format 'Name={{.Name}} Privileged={{.HostConfig.Privileged}} CapAdd={{json .HostConfig.CapAdd}} CapDrop={{json .HostConfig.CapDrop}} SecurityOpt={{json .HostConfig.SecurityOpt}} ReadonlyRootfs={{.HostConfig.ReadonlyRootfs}} AppArmor={{.AppArmorProfile}}' $c 2>/dev/null || echo "  -> inspect failed for $c"
         else
@@ -337,7 +338,8 @@ echo ""
 
 info "Verificando secrets versionados"
 
-TRACKED_SECRETS=$(git ls-files | grep secrets || true)
+# Ficheros dentro de una carpeta secrets/ (secrets.py es código, no un secreto: H6, B7)
+TRACKED_SECRETS=$(git ls-files | grep -E '(^|/)secrets/' || true)
 
 if [ -z "$TRACKED_SECRETS" ]; then
     ok "No hay secretos versionados"

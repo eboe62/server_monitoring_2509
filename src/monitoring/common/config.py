@@ -125,8 +125,10 @@ def init_config(env_path: str = None, secrets_dir: str = None):
                 log_info("[WARN] python-dotenv no instalado; se omite carga .env")
         except Exception as e:
             log_info(f"[WARN] Error cargando .env ({env_path}): {e}")
-    else:
-        log_info(f"[WARN] .env no encontrado en {env_path}; usando variables de entorno actuales")
+    elif not (os.getenv("EMAIL_FROM") and os.getenv("EMAIL_TO")):
+        # En los contenedores no hay .env: las variables llegan por compose. Solo se avisa
+        # si, además de no haber .env, faltan las variables que el correo necesita (B7).
+        log_info(f"[WARN] .env no encontrado en {env_path} y faltan EMAIL_FROM/EMAIL_TO en el entorno")
 
     # Re-lectura de variables que podrían haber cambiado al cargar .env
     EMAIL_FROM = os.getenv("EMAIL_FROM")
@@ -300,7 +302,7 @@ def send_email(html_content: str = None, subject: str = None, email_to: str = No
                 server.starttls()
                 server.ehlo()
 
-                log_info(f"[INFO] Conexión TLS iniciada: Autenticando...")
+                log_info("[INFO] Conexión TLS iniciada")
 
             # En modo 'auth' las credenciales son obligatorias
             mode = get_smtp_mode()
@@ -308,13 +310,17 @@ def send_email(html_content: str = None, subject: str = None, email_to: str = No
                 if not SMTP_USER or not SMTP_PASS:
                     log_info(f"[ERROR] SMTP_MODE= auth pero faltan credenciales SMTP para enviar correo (se requieren smtp_user/smtp_pass)")
                     raise RuntimeError(f"[ERROR] SMTP_MODE= auth requiere credenciales SMTP para enviar correo")
+                log_info("[INFO] Autenticando...")
                 server.login(SMTP_USER, SMTP_PASS)
                 log_info(f"[INFO] Autenticación SMTP exitosa.")
             else:
                 # relay-only: si hay credenciales las usa y si no, continúa sin autenticar
                 if SMTP_USER and SMTP_PASS:
+                    log_info("[INFO] Autenticando...")
                     server.login(SMTP_USER, SMTP_PASS)
                     log_info(f"[INFO] Autenticación SMTP exitosa (creds desde env/secrets).")
+                else:
+                    log_info("[INFO] Modo relay: envío sin autenticación")
 
             # Enviar mensaje
             recipients = [email_to] + cc_list

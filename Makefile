@@ -757,7 +757,8 @@ test-smtp-ci: \
 	test-smtp-config-auth \
 	test-smtp-relay-local \
 	test-smtp-queue \
-	test-smtp-logs-clean
+	test-smtp-logs-clean \
+	debug-toolbox-down
 
 .PHONY: test-smtp-all
 
@@ -769,7 +770,8 @@ test-smtp-all: \
 	test-smtp-relay-flow \
 	test-smtp-delivery \
 	test-smtp-queue \
-	test-smtp-logs-clean
+	test-smtp-logs-clean \
+	debug-toolbox-down
 
 # --- test-smtp-connect
 ## Testea:
@@ -1042,7 +1044,8 @@ debug-exec: ## Ejecutar comando en contenedor (STACK opcional)
 # Debug container (toolbox)
 # ------------------------------------------
 
-DEBUG_IMAGE = nicolaka/netshoot
+# Versión fija, nunca latest (ADR-0006)
+DEBUG_IMAGE = nicolaka/netshoot:v0.16
 DEBUG_CONTAINER = monitoring-debug
 
 DEBUG_NET ?= restricted-net
@@ -1374,7 +1377,7 @@ test-aislamiento-red:
 	@echo "\n=== TEST AISLAMIENTO RED ==="
 
 	@echo "[1] Intentando conexión indebida (desde restricted-net)"
-	@docker run --rm --network restricted-net nicolaka/netshoot sh -c '\
+	@docker run --rm --network restricted-net $(DEBUG_IMAGE) sh -c '\
 		if nc -zv monitoring-postgres 5432 >/dev/null 2>&1; then \
 			echo "[FAIL] acceso permitido (revisar)"; exit 1; \
 		else \
