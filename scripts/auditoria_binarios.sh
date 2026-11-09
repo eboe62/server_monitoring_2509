@@ -3,7 +3,7 @@
 # Auditoría de binarios fuera de control IaC
 
 # --- CONFIGURACIÓN ---
-WHITELIST=("configure_docker_limits.sh" "configura_iptables.sh")
+WHITELIST=("configura_iptables.sh")
 
 echo "==== AUDITORÍA DE BINARIOS ===="
 echo "Fecha: $(date)"

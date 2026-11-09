@@ -1149,7 +1149,7 @@ build-cron:
 	docker build --no-cache -f ops/stacks/cron/Dockerfile -t monitoring-cron .
 	@echo ""
 
-deploy: monitoring-networks build deploy-infra deploy-services containers-map deploy-validate runtime-apply audit-host-hardening
+deploy: monitoring-networks build deploy-infra deploy-services containers-map deploy-validate audit-host-hardening
 	@echo "[OK] build completo"
 	@echo "=== [INFO] Despliegue completo ==="; \
 
@@ -1241,13 +1241,8 @@ docker-resources:
 # ------------------------------------------
 # Runtime hardening
 # ------------------------------------------
-
-.PHONY: runtime-apply
-
-runtime-apply:
-	@echo "[RUNTIME] aplicando límites"
-	bash ops/deployment/configure_docker_limits.sh
-	@echo "[OK] runtime aplicado"
+# Los límites de CPU/memoria se declaran en cada compose.yml (ADR-0016 regla 4);
+# audit-host-hardening comprueba que existen. runtime-apply se retiró en B6.
 
 .PHONY: audit-host-hardening
 

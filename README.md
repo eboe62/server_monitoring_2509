@@ -104,7 +104,7 @@ Rama: `develop`
     ├ config/                   # Configuración (Loki, Promtail…)
     ├ docs/                     # Documentación técnica y ADRs (repo governance_ia_docs_2609, make ai-setup)
     ├ ops/                      # Infraestructura como código / DevOps
-    │ ├ deployment/             # setup_symlinks
+    │ ├ deployment/             # Scripts de despliegue y vistas del host
     │ ├ images/
     │ │ └ base                  # Imagen base común
     │ ├ stacks/                 # Gestión de contenedores
@@ -163,7 +163,6 @@ Tareas programadas en `ops/cron/monitoring.cron`:
 | Diario | `auditoria_binarios.sh` | Verificación de integridad de binarios |
 | Cada 10 min | `log_ingest_batch.sh` | Ingesta de logs del sistema |
 | 10:00 / 22:00 | `alert_risk.sh` | Envío de alertas de riesgo |
-| @reboot | `configure_docker_limits.sh` | Aplicación de límites de CPU/memoria |
 
 
 Modelo de programación de tareas
@@ -226,7 +225,7 @@ Consumo de CPU y memoria de cada contenedor frente a su límite (manual, B5a):
 - Correo diario (B5b): sección "Recursos" en `alert_risk` con memoria, pico, OOM y CPU frenada, leída del kernel (`/sys/fs/cgroup/system.slice:ro`, ADR-0031 §2) por `cgroup_resources.py`
 Scripts:
 - `docker_resources.py` / `.sh`
-- `configure_docker_limits.sh` — Reajuste de límites
+- Los límites se declaran en cada `compose.yml` (ADR-0016); no hay script que los reajuste
 
 ### 🧩 `observability`
 Stack **Promtail + Loki + Grafana** para centralizar logs.
@@ -245,26 +244,12 @@ El proyecto sigue el principio de Infraestructura como Código y no utiliza cron
 
 Todas las tareas programadas relacionadas con la aplicación se ejecutan dentro del contenedor monitoring-cron mediante Supercronic.
 
-Sin embargo, algunas tareas de configuración del sistema se aplican directamente en el host durante el arranque o mediante automatización del sistema.
+El crontab del host (root y usuario) debe estar vacío (ADR-0012, ADR-0016).
 
-Ejemplos:
-- configuración de límites Docker
-- aplicación de rate-limiting SSH
-- endurecimiento del sistema
-
-Estas tareas pueden ejecutarse manualmente o integrarse en el sistema de inicialización del servidor.
-
-Ejemplo de ejecución manual:
-    # Añadir el siguiente código al crontab del servidor
-    [root]$ crontab -e
-    # Configurar permisos y ejecutar configure_docker_limits.sh al reiniciar
-    @reboot chmod +x /usr/local/bin/configure_docker_limits.sh && sleep 60 && /bin/bash /usr/local/bin/configure_docker_limits.sh > /var/log/configure_docker_limits.log 2>&1
-
-    # Ejecutar configure_docker_limits.sh cada 10 minutos
-    */10 * * * * /usr/local/bin/configure_docker_limits.sh > /var/log/configure_docker_limits.log 2>&1
-
-    # Configuramos la prevención de saturación por ataques masivos
-    @reboot /opt/monitoring/scripts/apply_ssh_ratelimit.sh > /var/log/apply_ssh_ratelimit.log 2>&1
+Endurecimiento del host (ADR-0016):
+- límites de CPU/memoria: declarados en cada `compose.yml`, no en scripts del host;
+- SSH: fail2ban (jail sshd) y UFW con política `deny` de entrada;
+- `make deploy` termina con `make audit-host-hardening`, que da FAIL si el crontab del host tiene tareas del proyecto, si algún contenedor no tiene límites o si fail2ban/UFW no están activos.
 
 ---
 
