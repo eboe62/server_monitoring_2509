@@ -60,6 +60,7 @@ require_binary jq
 ALLOWED_READONLY=(
   "/var/log"
   "/var/lib/docker/containers"
+  "/sys/fs/cgroup/system.slice"   # monitoring-cron, recursos del correo (ADR-0031 §2, B5b)
 )
 
 # ==========================================

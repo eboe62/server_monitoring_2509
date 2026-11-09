@@ -83,3 +83,6 @@ AI_ENTRYPOINT.md
 *.xls
 *.pptx
 *.ppt
+
+# Mapa id -> nombre de contenedores que escribe make deploy (B5b)
+ops/stacks/cron/runtime/containers.map

@@ -58,6 +58,10 @@ ALLOWLIST = {
         # promtail may mount host log dirs RO
         "allowed_ro_mounts": ["/var/log", "/var/lib/docker/containers"],
     },
+    "monitoring-cron": {
+        # Línea A lee /var/log; B5b lee contadores cgroup (ADR-0031 §2)
+        "allowed_ro_mounts": ["/var/log", "/sys/fs/cgroup/system.slice"],
+    },
 }
 
 # Services expected to meet a stronger baseline hardening
