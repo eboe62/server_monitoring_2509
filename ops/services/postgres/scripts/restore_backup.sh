@@ -38,9 +38,14 @@ else
 fi
 echo "[INFO] Backup: $(basename "$BACKUP") ($(du -h "$BACKUP" | cut -f1), $(date -r "$BACKUP" '+%Y-%m-%d %H:%M UTC'))"
 
-dropdb --if-exists "$DEST"
+dropdb --if-exists "$DEST" 2>/dev/null
 createdb "$DEST"
-pg_restore --no-owner --exit-on-error -d "$DEST" "$BACKUP"
+# El cliente de monitoring-cron (pg_dump/pg_restore) es más nuevo que el servidor (Postgres 14):
+# su cabecera incluye "SET transaction_timeout", que el 14 no conoce. Se genera el SQL, se quita
+# esa línea y psql lo aplica parando en el primer error (ON_ERROR_STOP).
+pg_restore --no-owner -f - "$BACKUP" \
+    | sed '/^SET transaction_timeout/d' \
+    | psql -q -v ON_ERROR_STOP=1 -d "$DEST" >/dev/null
 echo "[OK] Restaurado en $DEST"
 
 # Verificación: filas por tabla. Producción puede tener más (se han añadido después del backup).
