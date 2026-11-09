@@ -645,20 +645,9 @@ echo "C7 permisos scripts host hardening"
 # ==========================================
 echo ""
 
-info "Verificando scripts de hardening del host"
-
-HARDEN_SCRIPTS=(
-"/opt/monitoring/ops/deployment/configure_docker_limits.sh"
-"/opt/monitoring/scripts/apply_ssh_ratelimit.sh"
-)
-
-for s in "${HARDEN_SCRIPTS[@]}"; do
-    if [ -f "$s" ]; then
-        ok "Script presente: $s"
-    else
-        warn "Script no encontrado: $s"
-    fi
-done
+# B6: configure_docker_limits.sh y apply_ssh_ratelimit.sh retirados (no tenían efecto).
+# Límites en Compose; fail2ban y UFW activos los comprueba make audit-host-hardening.
+info "Sin scripts de hardening en el host (ADR-0016): ver make audit-host-hardening"
 
 echo ""
 echo "------------------------------------------"
