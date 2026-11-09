@@ -1149,7 +1149,7 @@ build-cron:
 	docker build --no-cache -f ops/stacks/cron/Dockerfile -t monitoring-cron .
 	@echo ""
 
-deploy: monitoring-networks build deploy-infra deploy-services deploy-validate runtime-apply audit-host-hardening
+deploy: monitoring-networks build deploy-infra deploy-services containers-map deploy-validate runtime-apply audit-host-hardening
 	@echo "[OK] build completo"
 	@echo "=== [INFO] Despliegue completo ==="; \
 
@@ -1171,6 +1171,15 @@ deploy-services:
 		echo "→ desplegando $$s"; \
 		(cd $(SERVICE_DIR)/$$s && $(COMPOSE) up -d --build); \
 	done
+
+# 🔑 Mapa id -> nombre para la sección "Recursos" del correo (B5b, ADR-0031 §2)
+# El kernel solo conoce el id del contenedor; el host (plano de control) lo traduce aquí.
+# Se reescribe en el mismo fichero (mismo inodo) y el cron lo lee en solo lectura.
+.PHONY: containers-map
+containers-map:
+	@mkdir -p ops/stacks/cron/runtime
+	@docker ps --no-trunc --format '{{.ID}} {{.Names}}' > ops/stacks/cron/runtime/containers.map
+	@echo "[OK] containers.map: $$(wc -l < ops/stacks/cron/runtime/containers.map) contenedores"
 
 # ------------------------------------------
 # Validación post-deploy

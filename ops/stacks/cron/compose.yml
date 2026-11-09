@@ -28,6 +28,12 @@ services:
       # Backups de PostgreSQL (pg_dump por TCP desde este contenedor).
       - monitoring-backups:/backups:rw
 
+      # Recursos de los contenedores (B5b): contadores del kernel (cgroup v2) en solo lectura.
+      # Solo system.slice, nunca /sys/fs/cgroup completo. Excepción auditada: ADR-0031 §2.
+      - /sys/fs/cgroup/system.slice:/host/cgroup:ro
+      # Traducción id -> nombre que escribe el host al final de make deploy (containers.map)
+      - ./runtime:/host/runtime:ro
+
       # ❌ ELIMINADO (B2) → honeypot desactivado hasta que la Línea A funcione
       # - /var/lib/docker/containers:/var/lib/docker/containers:ro
 

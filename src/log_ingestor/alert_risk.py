@@ -7,6 +7,10 @@ Un correo por ejecución, siempre (prueba de vida):
   🚨 asunto de alerta  -> hay IPs de riesgo > 6 que NO son de administración
   ✅ asunto tranquilo  -> solo accesos de administración (o ninguno)
   ⚠️ asunto de aviso   -> no se ha ingerido ninguna fila en 24 h (la cadena está parada)
+  ⚠️ asunto de recursos -> el kernel ha matado (OOM) o reiniciado un contenedor (B5b)
+
+Al final va la sección "Recursos" (memoria, pico, OOM, CPU frenada) leída del kernel:
+resource_monitor/cgroup_resources.py. Si el montaje /host/cgroup no existe, se indica y sigue.
 
 Las IPs de administración se declaran en ADMIN_IPS (.env del cron), nunca en el código.
 No se ocultan: aparecen en su propio bloque, separadas de las amenazas.
@@ -24,6 +28,7 @@ from monitoring.common.config import (
     close_db,
     build_html_table,
 )
+from resource_monitor import cgroup_resources
 
 # Las credenciales SMTP se gestionan exclusivamente desde
 # monitoring.common.config.init_config() en tiempo de ejecución.
@@ -147,12 +152,16 @@ def classify_rows(rows, rules):
     return threats, admins
 
 
-def build_subject(n_threats, rows_last_24h):
+def build_subject(n_threats, rows_last_24h, n_oom=0):
     """Asunto según el caso: se distingue sin abrir el correo."""
+    oom_txt = f"el kernel ha matado o reiniciado {n_oom} contenedor{'es' if n_oom != 1 else ''}"
     if rows_last_24h == 0:
         return "⚠️ Monitorización: sin datos en 24 h"
     if n_threats > 0:
-        return f"🚨 Alerta: {n_threats} amenazas de alto riesgo"
+        subject = f"🚨 Alerta: {n_threats} amenazas de alto riesgo"
+        return f"{subject} · ⚠️ {oom_txt}" if n_oom else subject
+    if n_oom:
+        return f"⚠️ Recursos: {oom_txt}"
     return "✅ Monitorización activa: sin amenazas"
 
 
@@ -160,7 +169,7 @@ def build_subject(n_threats, rows_last_24h):
 # Construcción del correo
 # ==========================================
 
-def build_html_body(threats, admins, rows_last_24h, last_ingest):
+def build_html_body(threats, admins, rows_last_24h, last_ingest, resources_html=""):
     parts = ["<html><body>"]
 
     # Línea de salud: la prueba de que la cadena está viva
@@ -204,6 +213,10 @@ def build_html_body(threats, admins, rows_last_24h, last_ingest):
         parts.append("</div>")
     else:
         parts.append("<p style='color:#7f8c8d;'>Sin accesos de administración en las últimas 24 h.</p>")
+
+    # Bloque 3: recursos de los contenedores (B5b)
+    if resources_html:
+        parts.append(resources_html)
 
     parts.append(
         "<br><p>Un saludo<br>"
@@ -253,8 +266,18 @@ def process_alert():
         f"filas en 24 h: {rows_last_24h}"
     )
 
-    subject = build_subject(len(threats), rows_last_24h)
-    html_body = build_html_body(threats, admins, rows_last_24h, last_ingest)
+    # Recursos (B5b): un fallo aquí no debe impedir el correo de seguridad
+    try:
+        res_rows, map_time = cgroup_resources.collect()
+        resources_html = cgroup_resources.build_html(res_rows, map_time)
+        n_oom = cgroup_resources.count_oom(res_rows)
+        log_info(f"[INFO] Recursos: {len(res_rows or [])} contenedores leídos; OOM/reinicios: {n_oom}")
+    except Exception as e:
+        log_info(f"[WARN] Recursos no disponibles: {e}")
+        resources_html, n_oom = "", 0
+
+    subject = build_subject(len(threats), rows_last_24h, n_oom)
+    html_body = build_html_body(threats, admins, rows_last_24h, last_ingest, resources_html)
 
     # Un solo envío (cuota de correo limitada): destinatario y copias desde EMAIL_TO / CC_LIST
     if send_email(html_content=html_body, subject=subject):

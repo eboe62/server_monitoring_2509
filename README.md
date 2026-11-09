@@ -223,6 +223,7 @@ Scripts destacados:
 Consumo de CPU y memoria de cada contenedor frente a su límite (manual, B5a):
 - `make docker-resources`: el host mide (`docker stats`/`inspect`) y `docker_resources.py` evalúa dentro de monitoring-cron; correo solo si se supera el 80 %
 - `ops/deployment/docker_resources.sh`: vista cruda en el host, sin evaluación
+- Correo diario (B5b): sección "Recursos" en `alert_risk` con memoria, pico, OOM y CPU frenada, leída del kernel (`/sys/fs/cgroup/system.slice:ro`, ADR-0031 §2) por `cgroup_resources.py`
 Scripts:
 - `docker_resources.py` / `.sh`
 - `configure_docker_limits.sh` — Reajuste de límites
