@@ -352,6 +352,12 @@ con retención de 28 días. La restauración corre dentro de monitoring-cron con
 (ops/services/postgres/scripts/restore_backup.sh) y nunca modifica la base de datos de producción:
 quedan las dos (original y _restored) para compararlas o copiar datos de una a otra. Sin correo.
 
+▶️ Custodia local del último backup (en el equipo local, WSL; no en el servidor)
+make backup-fetch                # descarga, verifica sha256 y conserva los 2 últimos en /mnt/d/DataBase/BackUps
+# Variables: PRO_SSH=vps-server (alias de ~/.ssh/config de Windows), LOCAL_BACKUP_DIR, KEEP=2
+# La rotación solo mira monitoring_db-*.backup de esa carpeta: lo que esté en subcarpetas no se toca.
+# Cuándo: después del backup semanal (viernes 21:05 UTC).
+
 ▶️ Sustituir producción por la copia restaurada (manual, a propósito, paso a paso)
 # 0. Antes: make restore-backup terminado en [OK] y un snapshot reciente del droplet
 # 1. Parar a quien escribe en la BBDD
