@@ -1213,6 +1213,23 @@ db-apply-functions:
 	@docker exec monitoring-postgres sh -c 'psql -tA -U "$$POSTGRES_USER" -d "$$POSTGRES_DB" -c "SELECT CASE WHEN prosrc LIKE '"'"'%pg_advisory_xact_lock%'"'"' THEN '"'"'[OK] update_attacking_no() con turno (advisory lock)'"'"' ELSE '"'"'[ERROR] update_attacking_no() sin turno'"'"' END FROM pg_proc WHERE proname = '"'"'update_attacking_no'"'"';"'
 
 # ------------------------------------------
+# Recursos de contenedores (B5a): manual
+# ------------------------------------------
+# El host mide (docker stats + docker inspect: plano de control, ADR-0020) y pasa el JSON
+# por stdin a monitoring-cron, que evalúa y avisa por correo solo si algo supera el umbral.
+# El contenedor no tiene docker.sock (ADR-0018 §1.6, ADR-0031).
+#   make docker-resources              -> tabla + correo si hay alerta
+#   make docker-resources NO_EMAIL=1   -> solo la tabla
+# Vista cruda equivalente, sin evaluación: bash ops/deployment/docker_resources.sh
+
+.PHONY: docker-resources
+
+docker-resources:
+	@{ docker stats --no-stream --format '{{json .}}'; \
+	   docker inspect --format '{"Name":"{{.Name}}","NanoCpus":{{.HostConfig.NanoCpus}},"Memory":{{.HostConfig.Memory}}}' $$(docker ps -q); \
+	 } | docker exec -i monitoring-cron python3 -m resource_monitor.docker_resources --stdin $(if $(NO_EMAIL),--no-email,)
+
+# ------------------------------------------
 # Runtime hardening
 # ------------------------------------------
 
