@@ -161,7 +161,6 @@ Tareas programadas en `ops/cron/monitoring.cron`:
 | Frecuencia | Script | Descripción |
 |-------------|---------|-------------|
 | Diario | `auditoria_binarios.sh` | Verificación de integridad de binarios |
-| Cada 10 min | `docker_resources.sh` | Control de recursos Docker |
 | Cada 10 min | `log_ingest_batch.sh` | Ingesta de logs del sistema |
 | 10:00 / 22:00 | `alert_risk.sh` | Envío de alertas de riesgo |
 | @reboot | `configure_docker_limits.sh` | Aplicación de límites de CPU/memoria |
@@ -221,9 +220,9 @@ Scripts destacados:
 - `alert_risk.py` — Evalúa riesgo y dispara alertas por correo
 
 ### 🧩 `resource_monitor`
-Controla recursos de contenedores Docker en tiempo real:
-- CPU, memoria, swap
-- Límites definidos en `docker-compose.yml`
+Consumo de CPU y memoria de cada contenedor frente a su límite (manual, B5a):
+- `make docker-resources`: el host mide (`docker stats`/`inspect`) y `docker_resources.py` evalúa dentro de monitoring-cron; correo solo si se supera el 80 %
+- `ops/deployment/docker_resources.sh`: vista cruda en el host, sin evaluación
 Scripts:
 - `docker_resources.py` / `.sh`
 - `configure_docker_limits.sh` — Reajuste de límites
