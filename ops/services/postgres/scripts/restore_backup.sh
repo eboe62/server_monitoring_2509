@@ -11,7 +11,7 @@
 #
 # Se ejecuta DENTRO de monitoring-cron (el Makefile lo pasa por stdin con docker exec):
 #   - mismo pg_restore que el pg_dump que hizo el backup (misma versión de cliente);
-#   - conecta a Postgres por TCP, igual que backup_postgres.py; sin docker.sock (ADR-0018).
+#   - conecta a Postgres por TCP, igual que backup_postgres.py; sin socket de Docker (ADR-0018).
 # Nunca modifica la base de datos de producción. Sin correo (cuota limitada).
 set -euo pipefail
 
