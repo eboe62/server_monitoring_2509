@@ -40,11 +40,6 @@ timestamp = datetime.now().strftime("%Y%m%d%H%M")
 BACKUP_FILE_NAME = f"{POSTGRES_NAME}-{timestamp}.backup"
 BACKUP_FILE_CONTAINER = f"{BACKUP_DIR_CONTAINER}/{BACKUP_FILE_NAME}"
 
-# Rutas en host (si se ejecuta desde el host, pueden estar definidas en env);
-# por defecto se usan las rutas de contenedor para evitar NameError en entornos aislados
-BACKUP_DIR_HOST = os.getenv("BACKUP_DIR_HOST", BACKUP_DIR_CONTAINER)
-BACKUP_FILE_HOST = os.getenv("BACKUP_FILE_HOST", BACKUP_FILE_CONTAINER)
-
 log_info(f"[INFO] Iniciando backup de {POSTGRES_NAME} (destino: {BACKUP_FILE_CONTAINER})...")
 
 # Determinar host/puerto para conectar a Postgres por TCP
@@ -76,7 +71,7 @@ try:
     log_info(f"[OK] Backup realizado con éxito: {BACKUP_FILE_CONTAINER}")
 
     # Sin correo en caso de éxito (cuota de correo limitada): solo se notifica el fallo.
-    # Para restaurar: scripts/backup_restore.py
+    # Prueba de restauración: make restore-backup (desde el host, ADR-0009)
 except subprocess.CalledProcessError as e:
     log_info(f"[ERROR] Error durante el backup de {POSTGRES_NAME}: {e}")
     send_email(
@@ -89,7 +84,6 @@ except subprocess.CalledProcessError as e:
 # Eliminar copias más antiguas que RETENTION_DAYS
 # ----------------------------------------
 # Se limpia el directorio del contenedor (/backups), que es donde escribe pg_dump.
-# BACKUP_DIR_HOST (postgres/.env) es una ruta del host y no existe dentro de monitoring-cron.
 try:
     result = subprocess.run(
         ["find", BACKUP_DIR_CONTAINER, "-type", "f", "-name", "*.backup", "-mtime", f"+{RETENTION_DAYS}", "-print", "-delete"],
