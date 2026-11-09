@@ -342,16 +342,27 @@ make logs
 Muestra los logs más recientes del sistema.
 
 ```
-▶️ Restauración de Backups de PostgreSQL
-make restore-backup
+▶️ Restauración de backups de PostgreSQL (ADR-0009)
+make restore-backup                        # último backup -> monitoring_db_restored (verificado)
+make restore-backup FILE=<nombre.backup>   # un backup concreto de /backups
+make restore-backup-clean                  # borra monitoring_db_restored
 
-Internamente ejecuta el script:
-bash /opt/monitoring/scripts/backup_restore.sh
+💡 Los backups los hace monitoring-cron (pg_dump, semanal: viernes 21:05 UTC) en el volumen monitoring-backups (/backups),
+con retención de 28 días. La restauración corre dentro de monitoring-cron con el mismo cliente
+(ops/services/postgres/scripts/restore_backup.sh) y nunca modifica la base de datos de producción:
+quedan las dos (original y _restored) para compararlas o copiar datos de una a otra. Sin correo.
 
-Los resultados y el estado del proceso se registran en:
-cat /var/log/backup_restore.log | tail -n 30
-
-💡 Este proceso realiza la restauración dentro del contenedor monitoring-python, comunicándose con el contenedor monitoring-postgres para reconstruir la base de datos a partir del último backup disponible en /ops/backups/.
+▶️ Sustituir producción por la copia restaurada (manual, a propósito, paso a paso)
+# 0. Antes: make restore-backup terminado en [OK] y un snapshot reciente del droplet
+# 1. Parar a quien escribe en la BBDD
+docker stop monitoring-cron monitoring-python
+# 2. La original se aparta como _old (no se borra todavía) y la restaurada toma su nombre
+docker exec monitoring-postgres sh -c 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d postgres -c "ALTER DATABASE \"$POSTGRES_DB\" RENAME TO \"${POSTGRES_DB}_old\""'
+docker exec monitoring-postgres sh -c 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d postgres -c "ALTER DATABASE \"${POSTGRES_DB}_restored\" RENAME TO \"$POSTGRES_DB\""'
+# 3. Arrancar y comprobar
+docker start monitoring-python monitoring-cron && make status
+# 4. Solo cuando todo funcione, borrar la antigua
+docker exec monitoring-postgres sh -c 'psql -U "$POSTGRES_USER" -d postgres -c "DROP DATABASE \"${POSTGRES_DB}_old\""'
 ```
 ```
 # 🔍 AUDITORÍA
