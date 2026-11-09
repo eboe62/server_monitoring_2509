@@ -1225,6 +1225,25 @@ db-apply-functions:
 	@docker exec monitoring-postgres sh -c 'psql -tA -U "$$POSTGRES_USER" -d "$$POSTGRES_DB" -c "SELECT CASE WHEN prosrc LIKE '"'"'%pg_advisory_xact_lock%'"'"' THEN '"'"'[OK] update_attacking_no() con turno (advisory lock)'"'"' ELSE '"'"'[ERROR] update_attacking_no() sin turno'"'"' END FROM pg_proc WHERE proname = '"'"'update_attacking_no'"'"';"'
 
 # ------------------------------------------
+# Prueba de restauración del último backup (B8, ADR-0009): manual
+# ------------------------------------------
+# El host solo orquesta (docker exec); el script corre dentro de monitoring-cron, con el mismo
+# cliente que hizo el pg_dump, y restaura en una BBDD paralela. Nunca modifica la de producción;
+# sustituirla es manual (README, "Sustituir producción").
+#   make restore-backup                  -> último backup en <db>_restored, verificado
+#   make restore-backup FILE=<x.backup>  -> un backup concreto de /backups
+#   make restore-backup-clean            -> borra <db>_restored
+RESTORE_SCRIPT = ops/services/postgres/scripts/restore_backup.sh
+
+.PHONY: restore-backup restore-backup-clean
+
+restore-backup:
+	@docker exec -i -e FILE=$(FILE) monitoring-cron bash -s < $(RESTORE_SCRIPT)
+
+restore-backup-clean:
+	@docker exec -i -e CLEAN=1 monitoring-cron bash -s < $(RESTORE_SCRIPT)
+
+# ------------------------------------------
 # Recursos de contenedores (B5a): manual
 # ------------------------------------------
 # El host mide (docker stats + docker inspect: plano de control, ADR-0020) y pasa el JSON
