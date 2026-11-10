@@ -1,4 +1,7 @@
 ---
+# Configuración de Loki (B9-1). La usa el contenedor por el 'command:' del compose: sin él,
+# la imagen arranca con su /etc/loki/local-config.yaml y este fichero se ignora.
+# Datos en /loki: el volumen loki-data se monta ahí y hereda el dueño 'loki' (uid 10001) de la imagen.
 auth_enabled: false  # Autenticación deshabilitada
 
 server:
@@ -16,7 +19,7 @@ ingester:
   chunk_retain_period: 30s      # Periodo de retención de chunks cerrados
   wal:
     enabled: true
-    dir: /var/lib/loki/wal  # Directorio para Write Ahead Log (WAL)
+    dir: /loki/wal  # Directorio para Write Ahead Log (WAL)
 
 schema_config:
   configs:
@@ -30,22 +33,25 @@ schema_config:
 
 storage_config:
   boltdb_shipper:
-    active_index_directory: /var/lib/loki/boltdb-shipper-active
-    cache_location: /var/lib/loki/boltdb-shipper-cache
+    active_index_directory: /loki/boltdb-shipper-active
+    cache_location: /loki/boltdb-shipper-cache
+    shared_store: filesystem
   filesystem:
-    directory: /var/lib/loki/chunks
+    directory: /loki/chunks
 
 limits_config:
   allow_structured_metadata: false
   reject_old_samples: true
-  reject_old_samples_max_age: 72h
+  reject_old_samples_max_age: 72h   # al arrancar, Promtail no reenvía líneas de más de 3 días
+  retention_period: 192h            # 8 días: el resumen del viernes ve la semana completa (B9)
 #  max_streams_per_user: 50
 #  max_samples_per_stream: 1000
 
-table_manager:
-  retention_deletes_enabled: true
-  retention_period: 72h       # Retención de 3 días
-
+# La retención la aplica el compactor (borra índice y chunks). table_manager solo borraba
+# tablas de índice, no los chunks del disco.
 compactor:
-  working_directory: /var/lib/loki/compactor
-
+  working_directory: /loki/compactor
+  shared_store: filesystem
+  compaction_interval: 10m
+  retention_enabled: true
+  retention_delete_delay: 2h
