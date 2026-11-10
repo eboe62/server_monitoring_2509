@@ -1,5 +1,5 @@
 # Horario en UTC (zona horaria del contenedor). 21:00 UTC = 22:00 en España en invierno, 23:00 en verano.
-# Cuota de correo limitada (Postmark gratuito): solo alert_risk diario (prueba de vida) y backup semanal (solo si falla).
+# Cuota de correo limitada (Postmark gratuito): alert_risk (lo urgente el mismo día; el correo tranquilo cada 3 días) y backup semanal (solo si falla).
 
 # Auditoria de Binarios (con log propio)
 0 11 * * * python3 -m log_ingestor.auditoria_binarios
@@ -17,7 +17,8 @@
 # Honeypot desactivado (B2): dependía de Loki (Línea B); se retomará cuando la Línea A funcione
 # */10 * * * * python3 -m log_ingestor.log_honeypot_geolocation
 
-# Alerta de riesgo: una al día, 21:10 UTC (después del ciclo de ingesta y geolocalización de las 21:00)
+# Alerta de riesgo: se revisa cada día a las 21:10 UTC (después del ciclo de ingesta y geolocalización de las 21:00).
+# Correo solo si hay algo urgente o si toca el tranquilo (ALERT_ROUTINE_EVERY_DAYS, por defecto 3)
 10 21 * * * python3 -m log_ingestor.alert_risk
 
 # Prueba de alertas (cada minuto, solo si se necesita debug)
