@@ -1158,12 +1158,14 @@ deploy: monitoring-networks build deploy-infra deploy-services containers-map de
 
 
 # 🔑 Infra primero (correcto según ADR-0008)
+# --force-recreate: un fichero de configuración montado (promtail, loki, grafana, relay) puede
+# cambiar sin que cambie el compose; sin recrear, el contenedor seguiría con la configuración vieja (B9-1c).
 deploy-infra:
 	@echo "=== [DEPLOY] Infra stacks ==="
 	@set -e; \
 	for s in $(INFRA_STACKS); do \
 		echo "→ desplegando $$s"; \
-		(cd $(STACK_DIR)/$$s && $(COMPOSE) up -d --build); \
+		(cd $(STACK_DIR)/$$s && $(COMPOSE) up -d --build --force-recreate); \
 	done
 
 # 🔑 Luego micro-stacks
@@ -1172,7 +1174,7 @@ deploy-services:
 	@set -e; \
 	for s in $(SERVICE_STACKS); do \
 		echo "→ desplegando $$s"; \
-		(cd $(SERVICE_DIR)/$$s && $(COMPOSE) up -d --build); \
+		(cd $(SERVICE_DIR)/$$s && $(COMPOSE) up -d --build --force-recreate); \
 	done
 
 # 🔑 Mapa id -> nombre para la sección "Recursos" del correo (B5b, ADR-0031 §2)
