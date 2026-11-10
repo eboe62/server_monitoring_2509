@@ -139,7 +139,8 @@ jobs:
             echo "[ERROR] POSTGRES_PASSWORD_FILE no está presente en resolved compose config"; exit 1; fi
           if grep -q "POSTGRES_PASSWORD:" /tmp/postgres_config.yml; then
             echo "[ERROR] POSTGRES_PASSWORD expuesta en la resolved compose config"; exit 1; fi
-          if ! grep -q "./secrets/postgres_password" /tmp/postgres_config.yml || ! grep -q "/run/secrets/postgres_password" /tmp/postgres_config.yml; then
+          # Se monta la carpeta secrets/ en /run/secrets (B9-1d) y la contraseña se lee de /run/secrets/postgres_password
+          if ! grep -qE "source: .*/postgres/secrets$" /tmp/postgres_config.yml || ! grep -qE "target: /run/secrets$" /tmp/postgres_config.yml || ! grep -q "POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password" /tmp/postgres_config.yml; then
             echo "[ERROR]  El mapeo para el montaje del secret no está presente en resolved compose config"; exit 1; fi
           echo "[OK] Postgres compose secret bindings validated"
 
