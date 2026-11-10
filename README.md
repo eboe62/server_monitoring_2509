@@ -229,7 +229,7 @@ Scripts:
 
 ### 🧩 `observability`
 Stack **Promtail + Loki + Grafana** para centralizar logs.
-- `promtail-config.yml`: lee `/var/log/*.log` con el grupo `adm` (`group_add: "4"`) y etiqueta cada línea solo con `reason` (SSH aceptado / fallido / usuario inválido, fail2ban ban, bloqueos iptables y UFW, Otros). IP, usuario y puerto se extraen al consultar, no son etiquetas.
+- `promtail-config.yml`: lee solo `auth.log`, `ufw.log` y `fail2ban.log` con el grupo `adm` (`group_add: "4"`) y etiqueta cada línea solo con `reason` (SSH aceptado / autenticación fallida / usuario inválido / desconexión / negociación fallida, sudo, fail2ban ban, bloqueo UFW, Otros). IP, usuario y puerto se extraen al consultar, no son etiquetas.
 - `loki-config.yml`: la carga el `command:` del compose; datos en el volumen `loki-data` montado en `/loki`; retención de 8 días con el compactor.
 - `grafana`: en `observability-net` y en `restricted-net` (solo para llegar a smtp-relay: `GF_SMTP_HOST=monitoring-smtp-relay:587`).
 
