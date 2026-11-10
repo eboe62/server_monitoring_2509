@@ -14,133 +14,73 @@ positions:
 scrape_configs:
 #   Logs de autenticación del sistema
 
-# AUTH LOGS (host)
-  - job_name: auth_logs  # Nombre descriptivo del trabajo
-    # Captura de todos los logs .log y sus versiones rotadas
+# AUTH LOGS (host): todos los /var/log/*.log (auth, kern, ufw, fail2ban, ...)
+# Requiere el grupo adm en el contenedor (group_add "4" en el compose): son 640 :adm.
+# Única etiqueta añadida: reason (pocos valores fijos). IP, usuario y puerto NO son etiquetas:
+# cada valor distinto crearía un flujo nuevo en Loki; se extraen al consultar (| regexp).
+  - job_name: auth_logs
     static_configs:
       - targets:
-          - localhost  # Dirección del servidor donde se leen los logs
+          - localhost
         labels:
-          job: auth_logs  # Etiqueta común para los logs
-          service_name: system  # Nombre del servicio que queremos identificar
-          __path__: /var/log/*.log  # Patrón para incluir logs específicos (excluye logs rotados)
+          job: auth_logs
+          service_name: system
+          __path__: /var/log/*.log   # sin los rotados (.log.1, .gz)
 
-    # Configuración del pipeline para procesamiento con deduplicación
     pipeline_stages:
-      # Etapa para excluir logs rotados
-      - match:
-          selector: '{job="auth_logs"}'
-          stages:
-            - drop:
-                expression: ".*\\.log\\.\\d+$"  # Excluye archivos rotados
-#                expression: '.*\\.log\\.\\d+.*'  # Excluye archivos rotados
-
-      # Etapa para excluir logs específicos de ruido
+      # Ruido sin valor de seguridad
       - drop:
-#          expression: "(INPUT DROP|pam_unix\\(sudo:session\\): session (opened|closed)|pam_unix\\(cron:session\\): session (opened|closed)|pam_unix\\(sshd:session\\): session (opened|closed)|CRON|Session\\([^)]+\\)|New session\\([^)]+\\))" # Excluye logs de INPUT DROP, pam_unix, y CRON
-#          expression: "(INPUT DROP|pam_unix\\(.*?:session\\): session (opened|closed)|CRON|Session\\([^)]+\\)|New session\\([^)]+\\))" # Excluye logs de INPUT DROP, pam_unix, y CRON
-          expression: "(INPUT DROP|pam_unix\\(.*?:session\\): session (opened|closed)|CRON|Session \\d+|New session \\d+|banner exchange|Server listening)"
+          expression: "(pam_unix\\(.*?:session\\): session (opened|closed)|CRON|Session \\d+|New session \\d+|banner exchange|Server listening)"
 
-
-      # Etapa para deduplicación basada en contenido
-#      - match:
-#          selector: '{job="auth_logs"}'
-#          stages:
-#            - drop_duplicates:
-#                interval: 5s  # Intervalo para la detección de duplicados
-#            - dedupe: {}  # Activa la deduplicación automática en base al contenido
-
-      # Etapa para extraer información de "Accepted publickey"
+      # Líneas de UFW repetidas en kern.log: se cuentan solo desde ufw.log
       - match:
-          selector: '{job="auth_logs"}'
-          stages:
-            - regex:
-                # Expresión regular corregida para "Accepted publickey"
-                expression: '\\]: (?P<reason>Accepted publickey) (?:for )?(?P<user>\\S+) (?:with )?(?:from )?(?P<ip>[0-9.]+) port (?P<port>[0-9]+)'
-            - labels:
-                reason:
-                user:
-                ip:
-                port:
+          selector: '{job="auth_logs", filename="/var/log/kern.log"} |= "[UFW "'
+          action: drop
 
-      # Etapa para manejar "Connection closed by invalid user"
+      # Clasificación: cada match fija reason; el último que coincide manda
       - match:
-          selector: '{job="auth_logs"}'
+          selector: '{job="auth_logs"} |~ "Accepted (publickey|password)"'
           stages:
-            - regex:
-                # Extraer razón del log "Connection closed by <razón>"
-#                expression: 'Connection closed by (?P<reason>.*?)(?: port \d+|\[.*\]|$)'
-                expression: '\\]: (?P<reason>(Invalid user|Connection closed by invalid user|Disconnected from invalid user)) (?P<user>\\S+) (?:with )?(?:from )?(?P<ip>[0-9.]+) port (?P<port>[0-9]+)'
-            - labels:
-                reason: Invalid user
-                user:
-                ip:
-                port:
-
-      # Etapa para manejar "Received disconnect"
+            - template: {source: reason, template: "SSH aceptado"}
       - match:
-          selector: '{job="auth_logs"}'
+          selector: '{job="auth_logs"} |~ "Connection closed by authenticating user|Failed (password|publickey)"'
           stages:
-            - regex:
-                expression: '\\]: (?P<reason>(Received disconnect|Disconecting authenticating|error: maximum)) from (?P<ip>[0-9.]+) port (?P<port>[0-9]+)'
-            - labels:
-                reason: Desconexion expulsado
-                ip:
-                port:
-
-      # Etapa para manejar "Removed session"
+            - template: {source: reason, template: "SSH autenticación fallida"}
       - match:
-          selector: '{job="auth_logs"}'
+          selector: '{job="auth_logs"} |~ "[Ii]nvalid user"'
           stages:
-            - regex:
-                expression: '\\]: (?P<reason>Removed session) (?P<session_id>\\d+)'
-            - labels:
-                reason:
-                session_id:
-
-      # Etapa para extraer información de "Unable to negotiate with"
+            - template: {source: reason, template: "SSH usuario inválido"}
       - match:
-          selector: '{job="auth_logs"}'
+          selector: '{job="auth_logs"} |~ "Received disconnect|Disconnecting authenticating|error: maximum"'
           stages:
-            - regex:
-                # Extraer razón del log "Unable to negotiate with"
-                expression: '\\]: (?P<reason>Unable to negotiate) (?:with )?(?P<ip>[0-9.]+) port (?P<port>[0-9]+)'
-            - labels:
-                reason:
-                ip:
-                port:
-
-#      - match:
-#          selector: '{job="auth_logs"}'
-#          stages:
-#            - regex:
-#                expression: '\\]: (?P<reason>Session) (?P<session_id>\\d+) logged out'
-#                expression: '\\]: (?P<reason>Session\\([^)]+\\)|New session\\([^)]+\\))'
-#                expression: '\\]: (?P<reason>(?:New )?Session\\([^)]+\\))'
-#            - labels:
-#                reason: '{{ .reason }}'
-#                session_id: '{{ .session_id }}'
-
-
-      # Etapa para capturar razones generales con las dos primeras palabras después de "]:")
-#      - match:
-#          selector: '{job="auth_logs"}'
-#          stages:
-#            - regex:
-                # Captura razón después de "]:" para logs generales
-#                expression: '\\]: (?P<reason>\\S+\\s\\S+)'
-#            - labels:
-#                reason: '{{ .reason }}'  # Asignar razón genérica desde los logs
-
-      # Etapa final para etiquetar logs no categorizados como "Otros"
+            - template: {source: reason, template: "SSH desconexión"}
       - match:
-          selector: '{job="auth_logs"}'
+          selector: '{job="auth_logs"} |= "Unable to negotiate"'
           stages:
-            - template:
-                source: reason
-                template: '{{ if .Value }}{{ .Value }}{{ else }}Otros{{ end }}'
-            - labels:
-                reason:
+            - template: {source: reason, template: "SSH negociación fallida"}
+      - match:
+          selector: '{job="auth_logs"} |= "Removed session"'
+          stages:
+            - template: {source: reason, template: "Sesión cerrada"}
+      - match:
+          selector: '{job="auth_logs", filename="/var/log/fail2ban.log"} |= " Ban "'
+          stages:
+            - template: {source: reason, template: "fail2ban ban"}
+      - match:
+          selector: '{job="auth_logs", filename="/var/log/kern.log"} |= "INPUT DROP"'
+          stages:
+            - template: {source: reason, template: "Bloqueo iptables"}
+      - match:
+          selector: '{job="auth_logs", filename="/var/log/ufw.log"} |= "[UFW BLOCK]"'
+          stages:
+            - template: {source: reason, template: "Bloqueo UFW"}
+
+      # Sin clasificar: "Otros"
+      - template:
+          source: reason
+          template: '{{ if .Value }}{{ .Value }}{{ else }}Otros{{ end }}'
+      - labels:
+          reason:
 
 # DOCKER LOGS (TODOS EXCEPTO HONEYPOT)
   - job_name: container_logs

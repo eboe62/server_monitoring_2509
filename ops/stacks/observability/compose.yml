@@ -17,6 +17,11 @@ services:
 
     command: -config.file=/etc/promtail/promtail-config.yml
 
+    # Grupo adm (gid 4) del host: auth.log, kern.log, ufw.log y fail2ban.log son 640 :adm.
+    # Con cap_drop ALL, root no puede saltarse esos permisos y Promtail no los leía (B9-1, ADR-0022).
+    group_add:
+      - "4"
+
     restart: always
 
     # Hardening incremental
@@ -58,8 +63,10 @@ services:
 
     volumes:
       - ./config/loki-config.yml:/etc/loki/loki-config.yml:ro  # Configuración de Loki
-#      - ./data/loki:/var/lib/loki  # Persistencia de datos para Loki
-      - loki-data:/var/lib/loki  # Persistencia de datos para Loki con logs indexados
+      # Datos en /loki: el volumen hereda el dueño 'loki' (uid 10001) de la imagen (B9-1)
+      - loki-data:/loki
+    # Sin esta línea la imagen usa su local-config.yaml y loki-config.yml se ignora (B9-1)
+    command: -config.file=/etc/loki/loki-config.yml
     ports:
   #      Sin exposición de puertos (solo red interna observability-net)
       - "127.0.0.1:${LOKI_PORT}:3100"  # API de Loki accesible desde el host
@@ -127,12 +134,13 @@ services:
       - GF_SMTP_ENABLED=true
 #      - GF_SMTP_HOST=127.0.0.1:2526  # Al tener network_mode: "host" estamos compartiendo red con el host y ya podemos usar 127.0.0.1
       - GF_SMTP_HOST=${GF_SMTP_HOST}
+      # El certificado del relay interno no es de una autoridad pública (Python tampoco lo
+      # verifica). Del relay a Postmark sí se exige TLS (smtp_tls_security_level=encrypt).
+      - GF_SMTP_SKIP_VERIFY=true
       - GF_SMTP_FROM_ADDRESS=${GF_SMTP_FROM_ADDRESS}
       - GF_SMTP_FROM_NAME=${GF_SMTP_FROM_NAME}
 
-      # Sistema de alertas habilitado
-      - GF_ALERTING_ENABLED=true
-      - GF_ALERTING_EXECUTE_ALERTS=true
+      # Alertas: Grafana 10 usa Unified Alerting por defecto (GF_ALERTING_* era el sistema antiguo)
 
       # Configuración de autenticación/seguridad
 #      - GF_AUTH_ANONYMOUS_ENABLED=${GF_AUTH_ANONYMOUS_ENABLED}
@@ -159,6 +167,7 @@ services:
 
     networks:
       - observability-net # Red de observabilidad (Grafana/Loki/Promtail)
+      - restricted-net    # Solo para llegar a smtp-relay (correo de alertas, B9-1, ADR-0021)
 
 volumes:
   loki-data:
@@ -174,4 +183,6 @@ volumes:
 
 networks:
   observability-net:
+    external: true
+  restricted-net:
     external: true
