@@ -250,6 +250,7 @@ Endurecimiento del host (ADR-0016):
 - límites de CPU/memoria: declarados en cada `compose.yml`, no en scripts del host;
 - SSH: fail2ban (jail sshd) y UFW con política `deny` de entrada;
 - `make deploy` termina con `make audit-host-hardening`, que da FAIL si el crontab del host tiene tareas del proyecto, si algún contenedor no tiene límites o si fail2ban/UFW no están activos.
+- `make deploy` recrea siempre todos los contenedores (`--force-recreate`): así arrancan con los ficheros de configuración del disco aunque el compose no cambie. Los datos están en volúmenes; Postgres y el relay se cortan unos segundos.
 
 ---
 
