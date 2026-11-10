@@ -17,7 +17,7 @@ services:
 
     command: -config.file=/etc/promtail/promtail-config.yml
 
-    # Grupo adm (gid 4) del host: auth.log, kern.log, ufw.log y fail2ban.log son 640 :adm.
+    # Grupo adm (gid 4) del host: auth.log, ufw.log y fail2ban.log son 640 :adm.
     # Con cap_drop ALL, root no puede saltarse esos permisos y Promtail no los leía (B9-1, ADR-0022).
     group_add:
       - "4"
