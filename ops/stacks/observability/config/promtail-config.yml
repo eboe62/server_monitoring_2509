@@ -14,7 +14,9 @@ positions:
 scrape_configs:
 #   Logs de autenticación del sistema
 
-# AUTH LOGS (host): todos los /var/log/*.log (auth, kern, ufw, fail2ban, ...)
+# AUTH LOGS (host): solo los ficheros de seguridad: auth.log, ufw.log y fail2ban.log (B9-1b).
+# kern.log, cloud-init y droplet-agent quedan fuera: arranques del kernel y ruido. Los bloqueos
+# del cortafuegos llegan de ufw.log; los OOM los vigila la Línea A (cgroups).
 # Requiere el grupo adm en el contenedor (group_add "4" en el compose): son 640 :adm.
 # Única etiqueta añadida: reason (pocos valores fijos). IP, usuario y puerto NO son etiquetas:
 # cada valor distinto crearía un flujo nuevo en Loki; se extraen al consultar (| regexp).
@@ -25,25 +27,21 @@ scrape_configs:
         labels:
           job: auth_logs
           service_name: system
-          __path__: /var/log/*.log   # sin los rotados (.log.1, .gz)
+          __path__: /var/log/{auth,ufw,fail2ban}.log   # sin los rotados (.log.1, .gz)
 
     pipeline_stages:
-      # Ruido sin valor de seguridad
+      # Ruido sin valor de seguridad: sesiones de cron/sudo y systemd-logind/polkitd (arranques,
+      # apagados y cierres de sesión; la entrada ya cuenta como "SSH aceptado")
       - drop:
-          expression: "(pam_unix\\(.*?:session\\): session (opened|closed)|CRON|Session \\d+|New session \\d+|banner exchange|Server listening)"
+          expression: "(pam_unix\\(.*?:session\\): session (opened|closed)|CRON|Session \\d+|New session \\d+|banner exchange|Server listening|systemd-logind|polkitd)"
 
-      # Líneas de UFW repetidas en kern.log: se cuentan solo desde ufw.log
+      # Clasificación: cada match fija reason; el último que coincide manda (orden de menos a más concreto)
       - match:
-          selector: '{job="auth_logs", filename="/var/log/kern.log"} |= "[UFW "'
-          action: drop
-
-      # Clasificación: cada match fija reason; el último que coincide manda
-      - match:
-          selector: '{job="auth_logs"} |~ "Accepted (publickey|password)"'
+          selector: '{job="auth_logs"} |~ "Received disconnect|Connection (closed|reset) by [0-9a-f:.]+ port"'
           stages:
-            - template: {source: reason, template: "SSH aceptado"}
+            - template: {source: reason, template: "SSH desconexión"}
       - match:
-          selector: '{job="auth_logs"} |~ "Connection closed by authenticating user|Failed (password|publickey)"'
+          selector: '{job="auth_logs"} |~ "authenticating user|Failed (password|publickey)|error: maximum"'
           stages:
             - template: {source: reason, template: "SSH autenticación fallida"}
       - match:
@@ -51,25 +49,21 @@ scrape_configs:
           stages:
             - template: {source: reason, template: "SSH usuario inválido"}
       - match:
-          selector: '{job="auth_logs"} |~ "Received disconnect|Disconnecting authenticating|error: maximum"'
-          stages:
-            - template: {source: reason, template: "SSH desconexión"}
-      - match:
-          selector: '{job="auth_logs"} |= "Unable to negotiate"'
+          selector: '{job="auth_logs"} |~ "Unable to negotiate|not in PubkeyAcceptedAlgorithms"'
           stages:
             - template: {source: reason, template: "SSH negociación fallida"}
       - match:
-          selector: '{job="auth_logs"} |= "Removed session"'
+          selector: '{job="auth_logs"} |~ "Accepted (publickey|password)"'
           stages:
-            - template: {source: reason, template: "Sesión cerrada"}
+            - template: {source: reason, template: "SSH aceptado"}
+      - match:
+          selector: '{job="auth_logs"} |~ "sudo(\\[\\d+\\])?: .*COMMAND="'
+          stages:
+            - template: {source: reason, template: "sudo"}
       - match:
           selector: '{job="auth_logs", filename="/var/log/fail2ban.log"} |= " Ban "'
           stages:
             - template: {source: reason, template: "fail2ban ban"}
-      - match:
-          selector: '{job="auth_logs", filename="/var/log/kern.log"} |= "INPUT DROP"'
-          stages:
-            - template: {source: reason, template: "Bloqueo iptables"}
       - match:
           selector: '{job="auth_logs", filename="/var/log/ufw.log"} |= "[UFW BLOCK]"'
           stages:
