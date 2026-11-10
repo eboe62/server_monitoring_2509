@@ -86,10 +86,11 @@ if [ -f "$COMPOSE_FILE" ]; then
   fi
 
   # Check mount mapping
-  if grep -q "./secrets/postgres_password" "$COMPOSE_FILE" && grep -q "/run/secrets/postgres_password" "$COMPOSE_FILE"; then
-    echo "[OK] compose monta el secreto en /run/secrets/postgres_password"
+  # Se monta la carpeta secrets/ entera (B9-1d): postgres_password y postgres_ro_password
+  if grep -q "\./secrets:/run/secrets:ro" "$COMPOSE_FILE" && grep -q "POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password" "$COMPOSE_FILE"; then
+    echo "[OK] compose monta ./secrets en /run/secrets y lee /run/secrets/postgres_password"
   else
-    echo "[ERROR] compose no monta ./secrets/postgres_password en /run/secrets/postgres_password:ro"
+    echo "[ERROR] compose no monta ./secrets en /run/secrets:ro o POSTGRES_PASSWORD_FILE no apunta a /run/secrets/postgres_password"
     ERR=1
   fi
 

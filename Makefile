@@ -1152,7 +1152,7 @@ build-cron:
 	docker build --no-cache -f ops/stacks/cron/Dockerfile -t monitoring-cron .
 	@echo ""
 
-deploy: monitoring-networks build deploy-infra deploy-services containers-map deploy-validate audit-host-hardening
+deploy: monitoring-networks build deploy-infra deploy-services containers-map deploy-validate postgres-readonly-role audit-host-hardening
 	@echo "[OK] build completo"
 	@echo "=== [INFO] Despliegue completo ==="; \
 
@@ -1244,6 +1244,13 @@ restore-backup:
 
 restore-backup-clean:
 	@docker exec -i -e CLEAN=1 monitoring-cron bash -s < $(RESTORE_SCRIPT)
+
+# Usuario de solo lectura para el análisis de datos (B9-1d, ADR-0014): lo lanza make deploy.
+# El script corre dentro de monitoring-postgres (socket local); sin el fichero
+# ops/services/postgres/secrets/postgres_ro_password avisa y no hace nada.
+.PHONY: postgres-readonly-role
+postgres-readonly-role:
+	@docker exec -i monitoring-postgres bash -s < ops/services/postgres/scripts/readonly_role.sh
 
 # Custodia local del último backup (B8, ADR-0009). Se ejecuta en el EQUIPO LOCAL (WSL), no en PRO:
 # descarga por SSH (alias de ~/.ssh/config de Windows), verifica sha256 y conserva los 2 últimos.

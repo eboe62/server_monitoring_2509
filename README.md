@@ -206,6 +206,18 @@ POSTGRES_USER = user
 POSTGRES_PASSWORD = 999999999
 ```
 
+### 🔎 Análisis de datos con DBeaver (B9-1d, ADR-0014)
+Postgres se publica solo en `127.0.0.1:5432` del servidor (`POSTGRES_HOST_PORT`): desde Internet sigue cerrado y se entra por túnel SSH, con un usuario de solo lectura.
+
+1. Contraseña, en PRO, elegida por el administrador (sin comillas simples ni `\`). `read -s` no la muestra ni la guarda en el historial:
+   ```bash
+   cd /opt/monitoring && read -rsp "Contraseña de monitoring_ro: " PW && printf '%s' "$PW" > ops/services/postgres/secrets/postgres_ro_password && unset PW && chmod 600 ops/services/postgres/secrets/postgres_ro_password && echo
+   ```
+2. `make deploy` crea el usuario `monitoring_ro` (o `make postgres-readonly-role`). Para cambiar la contraseña: repetir el paso 1 y `make postgres-readonly-role`.
+3. DBeaver: pestaña SSH con el túnel al servidor (usuario y clave de siempre); conexión principal con host `localhost`, puerto `5432`, base de datos `monitoring_db`, usuario `monitoring_ro`.
+
+`monitoring_ro` lee todas las tablas (`pg_read_all_data`), no puede escribir ni crear tablas (solo tablas temporales de su sesión) y admite 3 conexiones a la vez.
+
 ---
 
 ## 🧠 Componentes principales
