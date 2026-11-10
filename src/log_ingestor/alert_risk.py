@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 # alert_risk.py
 """
-Alerta diaria de la Línea A (cron 21:10 UTC).
+Alerta de la Línea A (cron diario 21:10 UTC).
 
-Un correo por ejecución, siempre (prueba de vida):
+Se revisa cada día. Lo urgente (🚨 y ⚠️) se envía el mismo día; el correo tranquilo (✅,
+prueba de vida) solo cada ALERT_ROUTINE_EVERY_DAYS días (por defecto 3, cuota de correo).
+Asuntos:
   🚨 asunto de alerta  -> hay IPs de riesgo > 6 que NO son de administración
   ✅ asunto tranquilo  -> solo accesos de administración (o ninguno)
   ⚠️ asunto de aviso   -> no se ha ingerido ninguna fila en 24 h (la cadena está parada)
@@ -15,6 +17,7 @@ resource_monitor/cgroup_resources.py. Si el montaje /host/cgroup no existe, se i
 Las IPs de administración se declaran en ADMIN_IPS (.env del cron), nunca en el código.
 No se ocultan: aparecen en su propio bloque, separadas de las amenazas.
 """
+import datetime
 import html
 import ipaddress
 import os
@@ -152,6 +155,24 @@ def classify_rows(rows, rules):
     return threats, admins
 
 
+def routine_every_days():
+    """Cada cuántos días sale el correo tranquilo (ALERT_ROUTINE_EVERY_DAYS, por defecto 3)."""
+    try:
+        return max(1, int(os.environ.get("ALERT_ROUTINE_EVERY_DAYS", "3")))
+    except ValueError:
+        return 3
+
+
+def is_routine_day(day, every):
+    """Día de correo tranquilo: cuenta días seguidos (sin saltos a fin de mes)."""
+    return day.toordinal() % every == 0
+
+
+def is_urgent(n_threats, rows_last_24h, n_oom):
+    """Amenazas, cadena parada u OOM: el correo sale cualquier día."""
+    return n_threats > 0 or rows_last_24h == 0 or n_oom > 0
+
+
 def build_subject(n_threats, rows_last_24h, n_oom=0):
     """Asunto según el caso: se distingue sin abrir el correo."""
     oom_txt = f"el kernel ha matado o reiniciado {n_oom} contenedor{'es' if n_oom != 1 else ''}"
@@ -275,6 +296,14 @@ def process_alert():
     except Exception as e:
         log_info(f"[WARN] Recursos no disponibles: {e}")
         resources_html, n_oom = "", 0
+
+    # Cuota de correo: el correo tranquilo solo cada N días; lo urgente sale siempre
+    every = routine_every_days()
+    today = datetime.date.today()
+    if not is_urgent(len(threats), rows_last_24h, n_oom) and not is_routine_day(today, every):
+        next_day = today + datetime.timedelta(days=(-today.toordinal()) % every)
+        log_info(f"[INFO] Sin correo hoy: nada urgente; el correo tranquilo sale cada {every} días (próximo: {next_day})")
+        return True
 
     subject = build_subject(len(threats), rows_last_24h, n_oom)
     html_body = build_html_body(threats, admins, rows_last_24h, last_ingest, resources_html)

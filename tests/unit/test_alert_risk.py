@@ -53,3 +53,32 @@ def test_build_html_body_bloques():
     assert "<strong>42</strong>" in body
     vacio = ar.build_html_body([], [], 0, None)
     assert "Sin amenazas" in vacio and "No ha entrado ningún registro" in vacio
+
+
+def test_correo_tranquilo_cada_n_dias_sin_saltos_a_fin_de_mes():
+    import datetime
+    start = datetime.date(2026, 1, 25)
+    days = [start + datetime.timedelta(days=i) for i in range(30)]
+    routine = [d for d in days if ar.is_routine_day(d, 3)]
+    assert len(routine) == 10
+    # intervalo siempre de 3 días, también al cruzar de enero a febrero
+    assert all((b - a).days == 3 for a, b in zip(routine, routine[1:]))
+    assert all(ar.is_routine_day(d, 1) for d in days)
+
+
+def test_lo_urgente_sale_cualquier_dia():
+    assert ar.is_urgent(1, 500, 0)       # amenazas
+    assert ar.is_urgent(0, 0, 0)         # cadena parada
+    assert ar.is_urgent(0, 500, 2)       # OOM
+    assert not ar.is_urgent(0, 500, 0)   # tranquilo: espera a su día
+
+
+def test_routine_every_days_desde_env(monkeypatch):
+    monkeypatch.delenv("ALERT_ROUTINE_EVERY_DAYS", raising=False)
+    assert ar.routine_every_days() == 3
+    monkeypatch.setenv("ALERT_ROUTINE_EVERY_DAYS", "2")
+    assert ar.routine_every_days() == 2
+    monkeypatch.setenv("ALERT_ROUTINE_EVERY_DAYS", "x")
+    assert ar.routine_every_days() == 3
+    monkeypatch.setenv("ALERT_ROUTINE_EVERY_DAYS", "0")
+    assert ar.routine_every_days() == 1
