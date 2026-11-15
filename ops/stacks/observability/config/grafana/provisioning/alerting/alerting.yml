@@ -94,7 +94,8 @@ groups:
   - orgId: 1
     name: seguridad-resumen
     folder: Seguridad
-    interval: 10m
+    # Cada hora: cada evaluación de 7 días cuesta ~75 s de CPU de Loki; siguen disparadas a las 21:00
+    interval: 1h
     rules:
       - uid: resumen-tipos
         title: Resumen semanal - por tipo
@@ -175,7 +176,8 @@ groups:
   - orgId: 1
     name: seguridad-rafaga
     folder: Seguridad
-    interval: 1m
+    # Cada 5 min: la consulta de 24 h cuesta ~3,5 s de Loki; el aviso puede tardar unos minutos más
+    interval: 5m
     rules:
       # Máximo de fallos en tramos de 10 min durante las últimas 24 h: tras una ráfaga la alerta
       # sigue activa 24 h, así que da un solo correo al día aunque haya varias ráfagas.
