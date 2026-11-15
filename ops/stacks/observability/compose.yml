@@ -149,6 +149,8 @@ services:
       # Alertas: Grafana 10 usa Unified Alerting por defecto (GF_ALERTING_* era el sistema antiguo).
       # Destinatario de las alertas provisionadas (config/grafana/provisioning/alerting, B9-2)
       - ALERT_EMAIL_TO=${ALERT_EMAIL_TO}
+      # Las reglas del resumen consultan 7 días (~25 s en Loki); el límite por defecto es 30 s (B9-2b)
+      - GF_UNIFIED_ALERTING_EVALUATION_TIMEOUT=2m
 
       # Configuración de autenticación/seguridad
 #      - GF_AUTH_ANONYMOUS_ENABLED=${GF_AUTH_ANONYMOUS_ENABLED}
