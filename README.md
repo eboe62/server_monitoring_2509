@@ -244,6 +244,12 @@ Stack **Promtail + Loki + Grafana** para centralizar logs.
 - `promtail-config.yml`: lee solo `auth.log`, `ufw.log` y `fail2ban.log` con el grupo `adm` (`group_add: "4"`) y etiqueta cada línea solo con `reason` (SSH aceptado / autenticación fallida / usuario inválido / desconexión / negociación fallida, sudo, fail2ban ban, bloqueo UFW, Otros). IP, usuario y puerto se extraen al consultar, no son etiquetas.
 - `loki-config.yml`: la carga el `command:` del compose; datos en el volumen `loki-data` montado en `/loki`; retención de 8 días con el compactor.
 - `grafana`: en `observability-net` y en `restricted-net` (solo para llegar a smtp-relay: `GF_SMTP_HOST=monitoring-smtp-relay:587`).
+- `config/grafana/` (B9-2): todo provisionado desde el repo; lo que se cambie en la interfaz no se guarda.
+  - Panel **"Seguridad del host"** (carpeta Seguridad): totales por tipo, SSH por tipo, bloqueos UFW y baneos, top 5 IPs SSH, top 5 puertos UFW y accesos de administración.
+  - **Resumen semanal**: viernes a las 21:00 UTC, un correo con 7 días por tipo, top 5 IPs y top 5 puertos. Se silencia fuera de la franja 21:00–21:05 (una sola revisión del grupo cae dentro: un correo).
+  - **Ráfaga SSH**: más de 50 fallos o usuarios inválidos en 10 min (umbral sobre datos de PRO: mediana 5, p95 15, máximo 103); como mucho un correo al día y sin correos de "resuelto".
+  - Destinatario: `ALERT_EMAIL_TO` del `.env` de observability. `for: 5m` en las reglas evita que, en el primer arranque, una alerta salga por el contacto de ejemplo de Grafana.
+  - Acceso, por túnel SSH (Grafana solo escucha en `127.0.0.1:3001`): `ssh -L 3001:127.0.0.1:3001 vps-server` y abrir `http://localhost:3001`.
 
 ### 🧩 `smtp_relay`
 Contenedor Postfix que actúa como **relay seguro** hacia `smtp.postmarkapp.com`.
@@ -462,7 +468,7 @@ Incluye:
 
 -   [ ] Integración con Prometheus nativa\
 -   [ ] Exportación de métricas personalizadas\
--   [ ] Dashboard Grafana dedicado\
+-   [x] Dashboard Grafana dedicado (B9-2)\
 -   [ ] Sistema de alertas extensible\
 -   [ ] Test unitarios completos del pipeline de ingesta
 

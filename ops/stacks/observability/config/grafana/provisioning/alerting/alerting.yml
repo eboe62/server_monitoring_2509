@@ -1,0 +1,208 @@
+apiVersion: 1
+
+# Alertas de la Línea B (B9-2). Todo provisionado: no se configura a mano en la interfaz.
+#   - Resumen semanal: viernes 21:00 UTC, un correo con 7 días de SSH, UFW y fail2ban.
+#   - Ráfaga de SSH: >50 fallos en 10 min; como mucho un correo al día (opción c).
+# Cuota de correo (Postmark gratuito): sin mensajes de "resuelto" y repeticiones largas.
+# Destinatario: ALERT_EMAIL_TO del .env de observability (no se guarda en el repo).
+# for: 5m en todas las reglas: en el primer arranque, Grafana tarda hasta un minuto en aplicar
+# estas rutas; sin espera, una alerta saldría también por el contacto de ejemplo de Grafana.
+
+contactPoints:
+  - orgId: 1
+    name: correo-seguridad
+    receivers:
+      - uid: correo-seguridad
+        type: email
+        disableResolveMessage: true
+        settings:
+          addresses: $ALERT_EMAIL_TO
+          singleEmail: true
+          subject: '{{ template "seguridad.asunto" . }}'
+          message: '{{ template "seguridad.cuerpo" . }}'
+
+templates:
+  - orgId: 1
+    name: seguridad
+    template: |
+      {{ define "seguridad.asunto" }}{{ if eq .CommonLabels.tipo "resumen" }}📊 Resumen semanal de seguridad{{ else }}⚠️ Ráfaga de intentos SSH{{ end }}{{ end }}
+
+      {{ define "seguridad.fila" }}{{ index .Annotations "fila" }}{{ end }}
+
+      {{ define "seguridad.cuerpo" }}{{ if eq .CommonLabels.tipo "resumen" }}Últimos 7 días (auth.log, ufw.log y fail2ban.log):
+
+      Por tipo:
+      {{ range .Alerts.Firing }}{{ if eq .Labels.bloque "1_tipos" }}  - {{ template "seguridad.fila" . }}
+      {{ end }}{{ end }}
+      Top 5 IPs con más intentos SSH:
+      {{ range .Alerts.Firing }}{{ if eq .Labels.bloque "2_ips" }}  - {{ template "seguridad.fila" . }}
+      {{ end }}{{ end }}
+      Top 5 puertos bloqueados por UFW:
+      {{ range .Alerts.Firing }}{{ if eq .Labels.bloque "3_puertos" }}  - {{ template "seguridad.fila" . }}
+      {{ end }}{{ end }}
+      Detalle en Grafana: panel "Seguridad del host" (túnel SSH a 127.0.0.1:3001).
+      {{ else }}{{ range .Alerts.Firing }}{{ index .Annotations "fila" }}
+      {{ end }}
+      Solo se envía un aviso al día. Detalle en Grafana: panel "Seguridad del host".
+      {{ end }}{{ end }}
+
+# Franja del resumen: se silencia todo salvo el viernes de 21:00 a 21:05 UTC.
+# (Grafana 10.4 no tiene "active time intervals"; se expresa como su complemento.)
+# 5 min = group_interval del resumen: dentro de la franja cae exactamente una revisión del grupo,
+# así que sale un solo correo aunque cambie el top 5 mientras tanto.
+muteTimes:
+  - orgId: 1
+    name: fuera-de-viernes-21utc
+    time_intervals:
+      - weekdays: ['monday:thursday', 'saturday', 'sunday']
+        location: UTC
+      - weekdays: ['friday']
+        times:
+          - start_time: '00:00'
+            end_time: '21:00'
+          - start_time: '21:05'
+            end_time: '24:00'
+        location: UTC
+
+policies:
+  - orgId: 1
+    receiver: correo-seguridad
+    group_by: ['tipo']
+    group_wait: 30s
+    group_interval: 5m
+    repeat_interval: 24h
+    routes:
+      - receiver: correo-seguridad
+        object_matchers:
+          - ['tipo', '=', 'resumen']
+        group_by: ['tipo']
+        group_wait: 1m
+        group_interval: 5m
+        # 167 h, no 168: la repetición cae siempre antes de la franja y sale al abrirse
+        repeat_interval: 167h
+        mute_time_intervals:
+          - fuera-de-viernes-21utc
+      - receiver: correo-seguridad
+        object_matchers:
+          - ['tipo', '=', 'rafaga']
+        group_by: ['tipo']
+        group_wait: 30s
+        group_interval: 5m
+        repeat_interval: 24h
+
+groups:
+  - orgId: 1
+    name: seguridad-resumen
+    folder: Seguridad
+    interval: 10m
+    rules:
+      - uid: resumen-tipos
+        title: Resumen semanal - por tipo
+        condition: C
+        for: 5m
+        noDataState: OK
+        execErrState: OK
+        labels:
+          tipo: resumen
+          bloque: 1_tipos
+        annotations:
+          fila: '{{ $labels.reason }}: {{ $values.B.Value }}'
+        data:
+          - refId: A
+            relativeTimeRange: {from: 604800, to: 0}
+            datasourceUid: loki
+            model:
+              refId: A
+              queryType: instant
+              expr: 'sum by (reason) (count_over_time({job="auth_logs"}[7d]))'
+          - refId: B
+            datasourceUid: __expr__
+            model: {refId: B, type: reduce, expression: A, reducer: last}
+          - refId: C
+            datasourceUid: __expr__
+            model: {refId: C, type: math, expression: '$B >= 0'}
+      - uid: resumen-ips
+        title: Resumen semanal - top 5 IPs SSH
+        condition: C
+        for: 5m
+        noDataState: OK
+        execErrState: OK
+        labels:
+          tipo: resumen
+          bloque: 2_ips
+        annotations:
+          fila: '{{ $labels.ip }}: {{ $values.B.Value }} intentos'
+        data:
+          - refId: A
+            relativeTimeRange: {from: 604800, to: 0}
+            datasourceUid: loki
+            model:
+              refId: A
+              queryType: instant
+              expr: 'topk(5, sum by (ip) (count_over_time({job="auth_logs", reason=~"SSH (autenticación fallida|usuario inválido|desconexión|negociación fallida)"} | regexp `(?P<ip>\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})` [7d])))'
+          - refId: B
+            datasourceUid: __expr__
+            model: {refId: B, type: reduce, expression: A, reducer: last}
+          - refId: C
+            datasourceUid: __expr__
+            model: {refId: C, type: math, expression: '$B >= 0'}
+      - uid: resumen-puertos
+        title: Resumen semanal - top 5 puertos UFW
+        condition: C
+        for: 5m
+        noDataState: OK
+        execErrState: OK
+        labels:
+          tipo: resumen
+          bloque: 3_puertos
+        annotations:
+          fila: 'puerto {{ $labels.port }}: {{ $values.B.Value }} bloqueos'
+        data:
+          - refId: A
+            relativeTimeRange: {from: 604800, to: 0}
+            datasourceUid: loki
+            model:
+              refId: A
+              queryType: instant
+              expr: 'topk(5, sum by (port) (count_over_time({job="auth_logs", reason="Bloqueo UFW"} | regexp `DPT=(?P<port>\d+)` [7d])))'
+          - refId: B
+            datasourceUid: __expr__
+            model: {refId: B, type: reduce, expression: A, reducer: last}
+          - refId: C
+            datasourceUid: __expr__
+            model: {refId: C, type: math, expression: '$B >= 0'}
+
+  - orgId: 1
+    name: seguridad-rafaga
+    folder: Seguridad
+    interval: 1m
+    rules:
+      # Máximo de fallos en tramos de 10 min durante las últimas 24 h: tras una ráfaga la alerta
+      # sigue activa 24 h, así que da un solo correo al día aunque haya varias ráfagas.
+      # Umbral 50: datos de PRO (4 días, 11-15/11): mediana 5, p95 15, máximo 103 por 10 min.
+      - uid: rafaga-ssh
+        title: Ráfaga de intentos SSH
+        condition: C
+        for: 5m
+        noDataState: OK
+        execErrState: OK
+        labels:
+          tipo: rafaga
+        annotations:
+          fila: 'Máximo en 10 min durante las últimas 24 h: {{ $values.B.Value }} intentos SSH fallidos o con usuario inválido (umbral 50).'
+        data:
+          - refId: A
+            relativeTimeRange: {from: 86400, to: 0}
+            datasourceUid: loki
+            model:
+              refId: A
+              queryType: range
+              intervalMs: 600000
+              maxDataPoints: 144
+              expr: 'sum(count_over_time({job="auth_logs", reason=~"SSH (autenticación fallida|usuario inválido)"}[10m]))'
+          - refId: B
+            datasourceUid: __expr__
+            model: {refId: B, type: reduce, expression: A, reducer: max}
+          - refId: C
+            datasourceUid: __expr__
+            model: {refId: C, type: threshold, expression: B, conditions: [{evaluator: {type: gt, params: [50]}}]}

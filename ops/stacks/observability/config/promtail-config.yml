@@ -31,9 +31,10 @@ scrape_configs:
 
     pipeline_stages:
       # Ruido sin valor de seguridad: sesiones de cron/sudo y systemd-logind/polkitd (arranques,
-      # apagados y cierres de sesión; la entrada ya cuenta como "SSH aceptado")
+      # apagados y cierres de sesión; la entrada ya cuenta como "SSH aceptado"). En fail2ban,
+      # "Found" repite cada fallo de SSH y "Unban" el fin de cada ban ya contado (B9-2).
       - drop:
-          expression: "(pam_unix\\(.*?:session\\): session (opened|closed)|CRON|Session \\d+|New session \\d+|banner exchange|Server listening|systemd-logind|polkitd)"
+          expression: "(pam_unix\\(.*?:session\\): session (opened|closed)|CRON|Session \\d+|New session \\d+|banner exchange|Server listening|systemd-logind|polkitd|fail2ban\\.filter .*\\] Found |fail2ban\\.actions .*\\] Unban )"
 
       # Clasificación: cada match fija reason; el último que coincide manda (orden de menos a más concreto)
       - match:
@@ -49,7 +50,7 @@ scrape_configs:
           stages:
             - template: {source: reason, template: "SSH usuario inválido"}
       - match:
-          selector: '{job="auth_logs"} |~ "Unable to negotiate|not in PubkeyAcceptedAlgorithms"'
+          selector: '{job="auth_logs"} |~ "Unable to negotiate|not in PubkeyAcceptedAlgorithms|kex_protocol_error|kex_exchange_identification"'
           stages:
             - template: {source: reason, template: "SSH negociación fallida"}
       - match:

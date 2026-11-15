@@ -1,0 +1,13 @@
+apiVersion: 1
+
+# Paneles versionados en el repo (config/grafana/dashboards). Los cambios hechos en la
+# interfaz no se guardan: se editan aquí y se redespliega (B9-2).
+providers:
+  - name: monitoring
+    orgId: 1
+    folder: Seguridad
+    type: file
+    disableDeletion: true
+    allowUiUpdates: false
+    options:
+      path: /etc/grafana/dashboards

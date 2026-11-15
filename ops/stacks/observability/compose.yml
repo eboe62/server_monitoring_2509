@@ -105,7 +105,13 @@ services:
 #    network_mode: host  # importante para acceso a localhost:2526 y 127.0.0.1 pero innecesario si accedemos por red Docker
     volumes:
       - grafana-data:/var/lib/grafana  # Persistencia de dashboards y configuración interna
-      - ./config/datasource.yml:/etc/grafana/provisioning/datasources/datasource.yml:ro # Provisionamiento automático de datasources
+      # Provisioning (B9-2): datasource Loki, panel "Seguridad del host" y alertas por correo.
+      # Todo sale del repo; lo que se cambie en la interfaz no se guarda.
+      # Solo estas tres carpetas: montar provisioning/ entera taparía plugins/ y notifiers/ de la imagen.
+      - ./config/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./config/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./config/grafana/provisioning/alerting:/etc/grafana/provisioning/alerting:ro
+      - ./config/grafana/dashboards:/etc/grafana/dashboards:ro
 # Grafana expuesto en 3001 para evitar conflictos con CapRover  (3000)
     ports:
       - "127.0.0.1:${GRAFANA_PORT}:3001"
@@ -140,7 +146,9 @@ services:
       - GF_SMTP_FROM_ADDRESS=${GF_SMTP_FROM_ADDRESS}
       - GF_SMTP_FROM_NAME=${GF_SMTP_FROM_NAME}
 
-      # Alertas: Grafana 10 usa Unified Alerting por defecto (GF_ALERTING_* era el sistema antiguo)
+      # Alertas: Grafana 10 usa Unified Alerting por defecto (GF_ALERTING_* era el sistema antiguo).
+      # Destinatario de las alertas provisionadas (config/grafana/provisioning/alerting, B9-2)
+      - ALERT_EMAIL_TO=${ALERT_EMAIL_TO}
 
       # Configuración de autenticación/seguridad
 #      - GF_AUTH_ANONYMOUS_ENABLED=${GF_AUTH_ANONYMOUS_ENABLED}
