@@ -9,3 +9,7 @@ datasources:
     url: http://loki:3100
     isDefault: true
     editable: false
+    jsonData:
+      # Loki (0,5 CPU) tarda ~25 s en 7 días: con el límite por defecto (30 s) las consultas
+      # del panel y del resumen semanal se cortaban (504) (B9-2b)
+      timeout: 120

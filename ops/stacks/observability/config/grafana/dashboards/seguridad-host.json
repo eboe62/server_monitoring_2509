@@ -7,10 +7,10 @@
   ],
   "timezone": "utc",
   "schemaVersion": 39,
-  "version": 1,
+  "version": 2,
   "editable": false,
   "time": {
-    "from": "now-7d",
+    "from": "now-24h",
     "to": "now"
   },
   "refresh": "",
@@ -263,5 +263,5 @@
       }
     }
   ],
-  "description": "Línea B (B9-2): SSH, UFW y fail2ban desde Loki. Provisionado desde el repo; los cambios en la interfaz no se guardan."
+  "description": "Línea B (B9-2): SSH, UFW y fail2ban desde Loki. Provisionado desde el repo; los cambios en la interfaz no se guardan. Rango por defecto 24 h: 7 días tarda ~25 s en Loki (B9-2b)."
 }
