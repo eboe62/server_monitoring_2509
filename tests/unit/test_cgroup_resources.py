@@ -59,7 +59,7 @@ def test_sin_mapa_usa_id_corto_y_sin_limite(tmp_path):
     root = tmp_path / "cgroup"
     root.mkdir()
     d = _scope(root, CID_PG, 10 * MIB, None, "max")
-    rows, map_time = cg.collect(str(root), str(tmp_path / "no-existe"))
+    rows, map_time = cg.collect(str(root), str(tmp_path / "no-existe"), str(tmp_path / "sin-stat"))
     assert map_time is None
     r = rows[0]
     assert r["name"] == CID_PG[:12]
@@ -75,6 +75,35 @@ def test_reinicio_despues_del_deploy_cuenta_como_aviso():
     assert cg.evaluate("x", raw, deploy)["restarted"]
     raw["started"] = deploy + timedelta(seconds=60)   # arranque dentro del propio deploy
     assert not cg.evaluate("x", raw, deploy)["restarted"]
+
+
+def test_snapshot_apagar_y_encender_no_es_reinicio(tmp_path):
+    """B9-2d: deploy, apagado para el snapshot y arranque 17 min después -> sin aviso."""
+    root, mp = _tree(tmp_path, map_age_s=7200)                 # deploy hace 2 h
+    boot = int(time.time() - 3600)                              # servidor encendido hace 1 h
+    stat = tmp_path / "stat"
+    stat.write_text(f"cpu 1 2 3\nbtime {boot}\nprocesses 9\n")
+    for d in (tmp_path / "cgroup").glob("docker-*.scope"):
+        os.utime(d, (boot + 60, boot + 60))                     # contenedores: 1 min tras arrancar
+    rows, ref = cg.collect(root, mp, str(stat))
+    assert ref == datetime.fromtimestamp(boot, tz=timezone.utc)
+    assert not any(r["restarted"] for r in rows)
+    pg = (tmp_path / "cgroup" / f"docker-{CID_PG}.scope")
+    os.utime(pg, (boot + 1800, boot + 1800))                    # reinicio 30 min tras arrancar: sí
+    rows, _ = cg.collect(root, mp, str(stat))
+    assert {r["name"]: r["restarted"] for r in rows}["monitoring-postgres"]
+    assert "arranque del servidor" in cg.build_html(rows, ref)
+
+
+def test_boot_time_y_referencia(tmp_path):
+    stat = tmp_path / "stat"
+    stat.write_text("cpu 1\nbtime 1794700000\n")
+    assert cg.host_boot_time(str(stat)).timestamp() == 1794700000
+    assert cg.host_boot_time(str(tmp_path / "no-existe")) is None
+    a = datetime(2026, 11, 15, 2, 51, tzinfo=timezone.utc)
+    b = datetime(2026, 11, 15, 3, 7, tzinfo=timezone.utc)
+    assert cg.reference_time(a, b) == b and cg.reference_time(a, None) == a
+    assert cg.reference_time(None, None) is None
 
 
 def test_sin_montaje_no_rompe(tmp_path):

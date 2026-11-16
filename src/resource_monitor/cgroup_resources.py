@@ -13,6 +13,9 @@ Sin Docker: el cron monta en solo lectura /sys/fs/cgroup/system.slice -> /host/c
   cpu.stat         "nr_throttled" y "throttled_usec": cuánto le ha frenado su límite de CPU
 
 Los contadores empiezan en 0 cada vez que el contenedor arranca.
+"Reinicio sin deploy": arranque más de 5 min después del último deploy O del último arranque del
+servidor (btime de /proc/stat, que no está aislado por contenedor: es el del host). Así, apagar y
+encender el droplet para un snapshot no cuenta como reinicio (B9-2d).
 El kernel solo conoce el id; el nombre sale de containers.map, que escribe el host al final
 de make deploy (docker ps --no-trunc). Si falta, se muestra el id corto.
 """
@@ -22,6 +25,7 @@ from datetime import datetime, timezone
 
 CGROUP_ROOT = os.environ.get("CGROUP_ROOT", "/host/cgroup")
 CONTAINERS_MAP = os.environ.get("CONTAINERS_MAP", "/host/runtime/containers.map")
+PROC_STAT = os.environ.get("PROC_STAT", "/proc/stat")
 
 THRESHOLD_PEAK = 80.0   # % del límite de memoria alcanzado en el pico
 RESTART_MARGIN_S = 300  # arranque > 5 min después del mapa del deploy = reinicio no planificado
@@ -72,6 +76,21 @@ def load_container_map(path=CONTAINERS_MAP):
     return mapping, mtime
 
 
+def host_boot_time(path=PROC_STAT):
+    """Arranque del servidor: línea 'btime <epoch>' de /proc/stat (None si no se puede leer)."""
+    for line in (_read(path) or "").splitlines():
+        parts = line.split()
+        if len(parts) == 2 and parts[0] == "btime" and parts[1].isdigit():
+            return datetime.fromtimestamp(int(parts[1]), tz=timezone.utc)
+    return None
+
+
+def reference_time(map_time, boot_time):
+    """Lo más reciente entre el último deploy y el último arranque del servidor."""
+    known = [t for t in (map_time, boot_time) if t is not None]
+    return max(known) if known else None
+
+
 def read_scope(scope_dir):
     """Lee una carpeta docker-<id>.scope. Valores en bytes / microsegundos (None si falta)."""
     events = parse_kv(_read(os.path.join(scope_dir, "memory.events")))
@@ -92,23 +111,25 @@ def read_scope(scope_dir):
     }
 
 
-def collect(root=CGROUP_ROOT, map_path=CONTAINERS_MAP):
+def collect(root=CGROUP_ROOT, map_path=CONTAINERS_MAP, proc_stat=PROC_STAT):
     """
-    Devuelve (filas, fecha_del_mapa) o (None, None) si el montaje no existe.
+    Devuelve (filas, referencia) o (None, None) si el montaje no existe. La referencia es lo más
+    reciente entre el último deploy (fecha de containers.map) y el último arranque del servidor.
     Cada fila: name, mem_current/peak/max (MiB), peak_pct, oom_kill, throttled_s, started,
     restarted (bool) y alert (bool).
     """
     if not os.path.isdir(root):
         return None, None
     mapping, map_time = load_container_map(map_path)
+    ref_time = reference_time(map_time, host_boot_time(proc_stat))
     rows = []
     for entry in sorted(os.listdir(root)):
         if not (entry.startswith("docker-") and entry.endswith(".scope")):
             continue
         cid = entry[len("docker-"):-len(".scope")]
-        rows.append(evaluate(mapping.get(cid, cid[:12]), read_scope(os.path.join(root, entry)), map_time))
+        rows.append(evaluate(mapping.get(cid, cid[:12]), read_scope(os.path.join(root, entry)), ref_time))
     rows.sort(key=lambda r: r["name"])
-    return rows, map_time
+    return rows, ref_time
 
 
 def evaluate(name, raw, map_time):
@@ -160,7 +181,7 @@ def build_html(rows, map_time):
     parts = [
         "<h3 style='color:#2c3e50;'>📊 Recursos de los contenedores</h3>",
         "<p style='color:#555;'>Datos del kernel desde el último arranque de cada contenedor "
-        f"(último deploy: {deploy_txt}). En rojo: pico &gt; {THRESHOLD_PEAK:.0f} % del límite, "
+        f"(último deploy o arranque del servidor: {deploy_txt}). En rojo: pico &gt; {THRESHOLD_PEAK:.0f} % del límite, "
         "OOM o reinicio sin deploy.</p>",
         "<table border='1' cellpadding='4' cellspacing='0' style='border-collapse: collapse;'>",
         "<tr style='background-color:#f2f2f2;'><th>Contenedor</th><th>Mem MiB</th><th>Pico MiB</th>"

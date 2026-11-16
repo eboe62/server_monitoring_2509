@@ -44,8 +44,18 @@ limits_config:
   reject_old_samples: true
   reject_old_samples_max_age: 72h   # al arrancar, Promtail no reenvía líneas de más de 3 días
   retention_period: 192h            # 8 días: el resumen del viernes ve la semana completa (B9)
+  # Trozos de 24 h al consultar (por defecto 30 min): 7 días eran 336 trozos por panel, la cola se
+  # llenaba ("too many outstanding requests") y con 0,5 CPU tardaba ~25 s (B9-2c)
+  split_queries_by_interval: 24h
 #  max_streams_per_user: 50
 #  max_samples_per_stream: 1000
+
+# Cola de consultas: el panel lanza varias a la vez (por defecto 100 pendientes por usuario) (B9-2c)
+query_scheduler:
+  max_outstanding_requests_per_tenant: 2048
+
+frontend:
+  max_outstanding_per_tenant: 2048
 
 # La retención la aplica el compactor (borra índice y chunks). table_manager solo borraba
 # tablas de índice, no los chunks del disco.
