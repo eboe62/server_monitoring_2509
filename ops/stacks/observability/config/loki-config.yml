@@ -47,6 +47,9 @@ limits_config:
   # Trozos de 24 h al consultar (por defecto 30 min): 7 días eran 336 trozos por panel, la cola se
   # llenaba ("too many outstanding requests") y con 0,5 CPU tardaba ~25 s (B9-2c)
   split_queries_by_interval: 24h
+  # Series por consulta (por defecto 500): el top 5 de puertos y de IPs cuenta antes cada valor
+  # distinto, y en 7 días los escáneres prueban más de 500 puertos (B9-2e)
+  max_query_series: 20000
 #  max_streams_per_user: 50
 #  max_samples_per_stream: 1000
 
