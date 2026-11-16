@@ -7,7 +7,7 @@
   ],
   "timezone": "utc",
   "schemaVersion": 39,
-  "version": 2,
+  "version": 3,
   "editable": false,
   "time": {
     "from": "now-24h",
@@ -36,7 +36,9 @@
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
-          ]
+          ],
+          "fields": "",
+          "values": false
         },
         "textMode": "value_and_name",
         "colorMode": "none",
@@ -52,7 +54,28 @@
         "y": 0,
         "w": 24,
         "h": 5
-      }
+      },
+      "transformations": [
+        {
+          "id": "rowsToFields",
+          "options": {
+            "mappings": [
+              {
+                "fieldName": "Time",
+                "handlerKey": "__ignore"
+              },
+              {
+                "fieldName": "reason",
+                "handlerKey": "field.name"
+              },
+              {
+                "fieldName": "Value #A",
+                "handlerKey": "field.value"
+              }
+            ]
+          }
+        }
+      ]
     },
     {
       "type": "timeseries",
@@ -148,23 +171,30 @@
       ],
       "transformations": [
         {
-          "id": "reduce",
-          "options": {
-            "reducers": [
-              "lastNotNull"
-            ],
-            "mode": "seriesToRows"
-          }
-        },
-        {
           "id": "sortBy",
           "options": {
             "sort": [
               {
-                "field": "Last *",
+                "field": "Value #A",
                 "desc": true
               }
             ]
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "indexByName": {
+              "ip": 0,
+              "Value #A": 1
+            },
+            "renameByName": {
+              "ip": "IP",
+              "Value #A": "Intentos"
+            }
           }
         }
       ],
@@ -198,23 +228,30 @@
       ],
       "transformations": [
         {
-          "id": "reduce",
-          "options": {
-            "reducers": [
-              "lastNotNull"
-            ],
-            "mode": "seriesToRows"
-          }
-        },
-        {
           "id": "sortBy",
           "options": {
             "sort": [
               {
-                "field": "Last *",
+                "field": "Value #A",
                 "desc": true
               }
             ]
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "indexByName": {
+              "port": 0,
+              "Value #A": 1
+            },
+            "renameByName": {
+              "port": "Puerto",
+              "Value #A": "Bloqueos"
+            }
           }
         }
       ],
