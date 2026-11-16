@@ -235,6 +235,7 @@ Consumo de CPU y memoria de cada contenedor frente a su límite (manual, B5a):
 - `make docker-resources`: el host mide (`docker stats`/`inspect`) y `docker_resources.py` evalúa dentro de monitoring-cron; correo solo si se supera el 80 %
 - `ops/deployment/docker_resources.sh`: vista cruda en el host, sin evaluación
 - Correo diario (B5b): sección "Recursos" en `alert_risk` con memoria, pico, OOM y CPU frenada, leída del kernel (`/sys/fs/cgroup/system.slice:ro`, ADR-0031 §2) por `cgroup_resources.py`
+- "Reinicio sin deploy" (⚠️): un contenedor que arranca más de 5 min después del último deploy **o del último arranque del servidor** (B9-2d). Apagar y encender el droplet para un snapshot ya no avisa; un contenedor que se reinicia solo con el servidor en marcha, sí.
 Scripts:
 - `docker_resources.py` / `.sh`
 - Los límites se declaran en cada `compose.yml` (ADR-0016); no hay script que los reajuste
@@ -248,7 +249,7 @@ Stack **Promtail + Loki + Grafana** para centralizar logs.
   - Panel **"Seguridad del host"** (carpeta Seguridad): totales por tipo, SSH por tipo, bloqueos UFW y baneos, top 5 IPs SSH, top 5 puertos UFW y accesos de administración.
   - **Resumen semanal**: viernes a las 21:00 UTC, un correo con 7 días por tipo, top 5 IPs y top 5 puertos. Se silencia fuera de la franja 21:00–21:05 (una sola revisión del grupo cae dentro: un correo).
   - **Ráfaga SSH**: más de 50 fallos o usuarios inválidos en 10 min (umbral sobre datos de PRO: mediana 5, p95 15, máximo 103); como mucho un correo al día y sin correos de "resuelto".
-  - Rendimiento (B9-2b): Loki tarda ~25 s en 7 días, así que el datasource espera hasta 120 s y las alertas hasta 2 min (`GF_UNIFIED_ALERTING_EVALUATION_TIMEOUT`); el resumen se evalúa cada hora y la ráfaga cada 5 min; el panel abre con 24 h (7 días se elige arriba).
+  - Rendimiento (B9-2b): Loki tarda ~25 s en 7 días, así que el datasource espera hasta 120 s y las alertas hasta 2 min (`GF_UNIFIED_ALERTING_EVALUATION_TIMEOUT`); el resumen se evalúa cada hora y la ráfaga cada 5 min; el panel abre con 24 h (7 días se elige arriba). Loki parte las consultas en trozos de 24 h y admite 2048 en cola (B9-2c).
   - Destinatario: `ALERT_EMAIL_TO` del `.env` de observability. `for: 5m` en las reglas evita que, en el primer arranque, una alerta salga por el contacto de ejemplo de Grafana.
   - Acceso, por túnel SSH (Grafana solo escucha en `127.0.0.1:3001`): `ssh -L 3001:127.0.0.1:3001 vps-server` y abrir `http://localhost:3001`.
 
