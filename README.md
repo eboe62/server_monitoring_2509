@@ -378,7 +378,7 @@ quedan las dos (original y _restored) para compararlas o copiar datos de una a o
 make backup-fetch                # descarga, verifica sha256 y conserva los 2 últimos en /mnt/d/DataBase/BackUps
 # Variables: PRO_SSH=vps-server (alias de ~/.ssh/config de Windows), LOCAL_BACKUP_DIR, KEEP=2
 # La rotación solo mira monitoring_db-*.backup de esa carpeta: lo que esté en subcarpetas no se toca.
-# Cuándo: después del backup semanal (viernes 21:05 UTC).
+# Cuándo: después del backup semanal (viernes 21:05 UTC); lo recuerda el resumen semanal de Grafana (B10-7).
 
 ▶️ Sustituir producción por la copia restaurada (manual, a propósito, paso a paso)
 # 0. Antes: make restore-backup terminado en [OK] y un snapshot reciente del droplet
