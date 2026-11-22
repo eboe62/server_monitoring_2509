@@ -3,9 +3,12 @@ apiVersion: 1
 # Alertas de la Línea B (B9-2). Todo provisionado: no se configura a mano en la interfaz.
 #   - Resumen semanal: viernes 21:00 UTC, un correo con 7 días de SSH, UFW y fail2ban.
 #   - Ráfaga de SSH: >50 fallos en 10 min; como mucho un correo al día (opción c).
+#   - Regla en error (B10-3): si la regla de ráfaga no se puede evaluar durante 15 min, Grafana
+#     dispara "DatasourceError" con tipo=rafaga: mismo camino, como mucho un correo al día.
+#     Las 3 del resumen siguen en OK: un fallo suyo se ve el viernes en el propio resumen.
 # Cuota de correo (Postmark gratuito): sin mensajes de "resuelto" y repeticiones largas.
 # Destinatario: ALERT_EMAIL_TO del .env de observability (no se guarda en el repo).
-# for: 5m en todas las reglas: en el primer arranque, Grafana tarda hasta un minuto en aplicar
+# for: 5m o más en todas las reglas: en el primer arranque, Grafana tarda hasta un minuto en aplicar
 # estas rutas; sin espera, una alerta saldría también por el contacto de ejemplo de Grafana.
 
 contactPoints:
@@ -25,7 +28,7 @@ templates:
   - orgId: 1
     name: seguridad
     template: |
-      {{ define "seguridad.asunto" }}{{ if eq .CommonLabels.tipo "resumen" }}📊 Resumen semanal de seguridad{{ else }}⚠️ Ráfaga de intentos SSH{{ end }}{{ end }}
+      {{ define "seguridad.asunto" }}{{ if eq .CommonLabels.tipo "resumen" }}📊 Resumen semanal de seguridad{{ else if eq .CommonLabels.alertname "DatasourceError" }}⚠️ Regla de Grafana en error{{ else }}⚠️ Ráfaga de intentos SSH{{ end }}{{ end }}
 
       {{ define "seguridad.fila" }}{{ index .Annotations "fila" }}{{ end }}
 
@@ -41,7 +44,7 @@ templates:
       {{ range .Alerts.Firing }}{{ if eq .Labels.bloque "3_puertos" }}  - {{ template "seguridad.fila" . }}
       {{ end }}{{ end }}
       Detalle en Grafana: panel "Seguridad del host" (túnel SSH a 127.0.0.1:3001).
-      {{ else }}{{ range .Alerts.Firing }}{{ index .Annotations "fila" }}
+      {{ else }}{{ range .Alerts.Firing }}{{ if eq .Labels.alertname "DatasourceError" }}La regla "{{ .Labels.rulename }}" no se puede evaluar desde hace 15 min (fuente: {{ .Labels.datasource_uid }}). Revisar Loki y Grafana (docker logs loki / grafana).{{ else }}{{ index .Annotations "fila" }}{{ end }}
       {{ end }}
       Solo se envía un aviso al día. Detalle en Grafana: panel "Seguridad del host".
       {{ end }}{{ end }}
@@ -185,9 +188,10 @@ groups:
       - uid: rafaga-ssh
         title: Ráfaga de intentos SSH
         condition: C
-        for: 5m
+        # 15 min: un fallo puntual de Loki no avisa; tres o más evaluaciones seguidas, sí (B10-3)
+        for: 15m
         noDataState: OK
-        execErrState: OK
+        execErrState: Error
         labels:
           tipo: rafaga
         annotations:
