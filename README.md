@@ -389,9 +389,21 @@ docker exec monitoring-postgres sh -c 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USE
 docker exec monitoring-postgres sh -c 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d postgres -c "ALTER DATABASE \"${POSTGRES_DB}_restored\" RENAME TO \"$POSTGRES_DB\""'
 # 3. Arrancar y comprobar
 docker start monitoring-python monitoring-cron && make status
+# 3b. Si el backup es anterior al 22/11/2026 (B10-1), renombrar sus log_type antiguos
+make db-migrate-log-types
 # 4. Solo cuando todo funcione, borrar la antigua
 docker exec monitoring-postgres sh -c 'psql -U "$POSTGRES_USER" -d postgres -c "DROP DATABASE \"${POSTGRES_DB}_old\""'
 ```
+
+▶️ Nombres de log_type (B10-1)
+make db-migrate-log-types   # aplica funciones y renombra 08_connection_out -> 05_connection_close
+
+💡 El número del log_type ordena por gravedad: hasta 05 nadie ha entrado (02_no_negotiate,
+03_invalid_user, 04_attempts_exceeded, 05_connection_close, 05_unbanned); 06_login_accepted
+es una entrada conseguida. 05_connection_close son desconexiones antes de autenticarse
+("Connection closed/reset", "Disconnected"), antes llamadas 08_connection_out.
+Una sola transacción e idempotente: se puede repetir. Los backups anteriores al 22/11/2026
+traen el nombre antiguo; tras restaurarlos en producción, repetir este paso.
 ```
 # 🔍 AUDITORÍA
 
