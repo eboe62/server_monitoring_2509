@@ -235,6 +235,7 @@ Consumo de CPU y memoria de cada contenedor frente a su límite (manual, B5a):
 - `make docker-resources`: el host mide (`docker stats`/`inspect`) y `docker_resources.py` evalúa dentro de monitoring-cron; correo solo si se supera el 80 %
 - `ops/deployment/docker_resources.sh`: vista cruda en el host, sin evaluación
 - Correo diario (B5b): sección "Recursos" en `alert_risk` con memoria, pico, OOM y CPU frenada, leída del kernel (`/sys/fs/cgroup/system.slice:ro`, ADR-0031 §2) por `cgroup_resources.py`
+- Memoria real (B10-5): `memory.current` menos la caché de disco (`file` de `memory.stat`), que el kernel recupera solo. La fila sale en rojo si la real pasa del 80 % del límite (antes era el pico, que incluye la caché: Postgres salía en rojo sin riesgo), con OOM o con reinicio sin deploy.
 - "Reinicio sin deploy" (⚠️): un contenedor que arranca más de 5 min después del último deploy **o del último arranque del servidor** (B9-2d). Apagar y encender el droplet para un snapshot ya no avisa; un contenedor que se reinicia solo con el servidor en marcha, sí.
 Scripts:
 - `docker_resources.py` / `.sh`
