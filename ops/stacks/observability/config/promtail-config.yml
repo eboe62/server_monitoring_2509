@@ -3,21 +3,19 @@ server:
   grpc_listen_port: 0     # GRPC deshabilitado para simplificar la configuración
 
 clients:
-#  No se debe usar IP pública dentro del cluster Docker.
-#  - url: http://165.22.87.56:3100/loki/api/v1/push  # URL del endpoint de Loki donde se enviarán los logs
-#  En su lugar utilizar endpoint Loki interno vía Docker: http://loki:3100/loki/api/v1/push
+  # Loki por la red interna de Docker (observability-net)
   - url: http://loki:3100/loki/api/v1/push
 
 positions:
   filename: /var/lib/promtail/promtail-positions.yml  # Archivo para rastrear las posiciones de lectura de logs
 
 scrape_configs:
-#   Logs de autenticación del sistema
-
 # AUTH LOGS (host): solo los ficheros de seguridad: auth.log, ufw.log y fail2ban.log (B9-1b).
 # kern.log, cloud-init y droplet-agent quedan fuera: arranques del kernel y ruido. Los bloqueos
 # del cortafuegos llegan de ufw.log; los OOM los vigila la Línea A (cgroups).
 # Requiere el grupo adm en el contenedor (group_add "4" en el compose): son 640 :adm.
+# Es el único trabajo (B10-6): los logs de los contenedores (container_logs y honeypot) eran el 97 %
+# de lo que entraba en Loki y nada los usaba; se ven con docker logs.
 # Única etiqueta añadida: reason (pocos valores fijos). IP, usuario y puerto NO son etiquetas:
 # cada valor distinto crearía un flujo nuevo en Loki; se extraen al consultar (| regexp).
   - job_name: auth_logs
@@ -77,53 +75,3 @@ scrape_configs:
       - labels:
           reason:
 
-# DOCKER LOGS (TODOS EXCEPTO HONEYPOT)
-  - job_name: container_logs
-    static_configs:
-      - targets:
-          - localhost
-        labels:
-          job: container_logs
-          __path__: /var/lib/docker/containers/*/*.log
-
-    pipeline_stages:
-      - json:
-          expressions:
-            log: log
-            stream: stream
-            time: time
-
-      - timestamp:
-          source: time
-          format: RFC3339Nano
-
-      - output:
-          source: log
-
-      - labels:
-          stream:
-
-# HONEYPOT (SOLO ESTE CONTENEDOR)
-# Logs del honeypot nginx (CapRover)
-  - job_name: honeypot # Nombre descriptivo del trabajo
-    static_configs:
-      - targets:
-          - localhost # Dirección del servidor donde se leen los logs
-        labels:
-          job: honeypot # Etiqueta común para los logs
-          service_name: nginx
-          honeypot: "true"
-          __path__: /var/lib/docker/containers/*/*.log # Patrón para incluir logs específicos
-    pipeline_stages:
-      - docker: {}
-      - match:
-          selector: '{container_name=~".*honeypot.*"}'
-          stages:
-            - json:
-                expressions:
-                  log: log
-            - regex:
-                expression: 'client: (?P<client_ip>[0-9.]+)'
-            - labels:
-                client_ip:
-                container_name:
