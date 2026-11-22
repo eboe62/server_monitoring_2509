@@ -12,7 +12,6 @@ services:
       # Se monta en modo "ro" (read-only) por motivos de seguridad.
       - /var/log:/var/log:ro
       - ./config/promtail-config.yml:/etc/promtail/promtail-config.yml:ro  # Configuración de Promtail
-      - /var/lib/docker/containers:/var/lib/docker/containers:ro
       - promtail-data:/var/lib/promtail
 
     command: -config.file=/etc/promtail/promtail-config.yml

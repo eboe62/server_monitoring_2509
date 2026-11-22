@@ -14,8 +14,6 @@
 2-59/10 * * * * python3 -m log_ingestor.log_fail2ban_batch
 4-59/10 * * * * python3 -m log_ingestor.log_kern_batch
 6-59/10 * * * * python3 -m log_ingestor.log_ip_geolocation
-# Honeypot desactivado (B2): dependía de Loki (Línea B); se retomará cuando la Línea A funcione
-# */10 * * * * python3 -m log_ingestor.log_honeypot_geolocation
 
 # Alerta de riesgo: se revisa cada día a las 21:10 UTC (después del ciclo de ingesta y geolocalización de las 21:00).
 # Correo solo si hay algo urgente o si toca el tranquilo (ALERT_ROUTINE_EVERY_DAYS, por defecto 3)

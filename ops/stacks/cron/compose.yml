@@ -34,15 +34,6 @@ services:
       # Traducción id -> nombre que escribe el host al final de make deploy (containers.map)
       - ./runtime:/host/runtime:ro
 
-      # ❌ ELIMINADO (B2) → honeypot desactivado hasta que la Línea A funcione
-      # - /var/lib/docker/containers:/var/lib/docker/containers:ro
-
-      # ❌ ELIMINADO → rompe reproducibilidad
-      # - ../../../:/opt/monitoring
-
-      # Acceso al socket de Docker para los scripts de docker_resources.sh y .py - SE INHABILITA POR SEGURIDAD EN LOS MICRO-STACKS
-      # - /var/run/docker.sock:/var/run/docker.sock
-
     # Grupo adm (gid 4) del host: propietario de lectura de /var/log/auth.log, kern.log, fail2ban.log (640)
     group_add:
       - "4"

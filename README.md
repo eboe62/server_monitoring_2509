@@ -17,7 +17,6 @@ Incluye:
 - Ingesta y análisis de logs
 - Monitorización de recursos
 - Alertas por correo
-- Honeypot PostgreSQL para detección de ataques
 
 ---
 
@@ -418,7 +417,6 @@ Valida:
 - exposición de puertos
 - uso de docker.sock
 - cumplimiento ADR
-./scripts/cleanup_docker.sh
 
 ---
 
@@ -444,15 +442,11 @@ make debug-shell STACK=xxx
 
 ---
 
-## 🧩 Honeypot PostgreSQL (CapRover)
+## 🧩 Honeypot
 
-La antigua base de datos `srv-captain--security250226app` se mantiene activa como **honeypot controlado**:
-- Red aislada `captain-overlay-network`
-- Sin credenciales válidas
-- Permisos mínimos y sin volúmenes compartidos
-- Monitorización de tráfico HTTP/HTTPS a través de `nginx + Promtail`
-
-Esto permite detectar intentos de reconexión, redirecciones fraudulentas o modificaciones no autorizadas.
+Fuera de alcance por ahora (pendiente para después de la implementación). La tabla
+`honeypot_logs` conserva sus datos antiguos; el código y la configuración del Honeypot de
+CapRover se retiraron en B10-6 (siguen en el historial de git).
 
 
 ---
@@ -473,10 +467,9 @@ Incluye:
 
 ## 💡 Recomendaciones
 
-- No usar `:latest` en imágenes críticas (nginx, grafana, postgres).
-- Revisar `logs_summary.txt` y `logs_summary_aaaammdd.txt` tras cada snapshot.
-- Hacer snapshot previo antes de ejecutar `cleanup_docker.sh`.
-- Validar alertas enviadas desde `alert_risk.py` dos veces al día.
+- No usar `:latest` en imágenes: versión fija y digest (grafana, loki, promtail, postgres).
+- Snapshot del droplet antes de cada `make deploy`.
+- Revisar el correo diario de `alert_risk.py` (21:10 UTC) y el resumen semanal de Grafana (viernes 21:00 UTC).
 
 ---
 
