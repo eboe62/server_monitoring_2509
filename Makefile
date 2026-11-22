@@ -244,6 +244,8 @@ test:
 
 .PHONY: clean-dangling validate-dockerfiles
 
+# Al final de make deploy (B10-6): cada build deja sin etiqueta la imagen anterior de python y cron.
+# Solo borra imágenes sin etiqueta y sin contenedor; para volver atrás se usa git y se reconstruye.
 clean-dangling:
 	@echo "Cleaning dangling images (docker image prune -f)"
 	@docker image prune -f || true
@@ -484,15 +486,15 @@ test-resilience-observability:
 
 	@echo "[OK] Loki accesible"
 
-	@echo "[STEP] generando log REAL en contenedor (PID 1)..."
-	@docker exec monitoring-cron sh -c "echo 'SRE_test_$$(date +%s)' >> /proc/1/fd/1" || \
-		(echo "[FAIL] no se puede escribir en stdout del contenedor" && exit 1)
+	@echo "[STEP] generando línea REAL en auth.log (logger, sin sudo)..."
+	@logger -p auth.info "SRE_test_$$(date +%s)" || \
+		(echo "[FAIL] no se puede escribir en auth.log con logger" && exit 1)
 
 	@sleep 7
 
 	@echo "[STEP] verificando ingestión en Loki..."
 	@RESULT=$$(curl -s -G http://127.0.0.1:3100/loki/api/v1/query \
-		--data-urlencode 'query={job="container_logs"} |= "SRE_test_"' \
+		--data-urlencode 'query={job="auth_logs"} |= "SRE_test_"' \
 		| jq '.data.result | length'); \
 	if [ "$$RESULT" -eq 0 ]; then \
 		echo "[FAIL] Loki no ingiere logs"; exit 1; \
@@ -595,15 +597,15 @@ test-observability-core:
 	@echo "[OK] Loki accesible"
 	@echo ""
 
-	@echo "[2] Generando log REAL en contenedor"
-	@docker exec monitoring-cron sh -c "echo 'loki_test_$$(date +%s)' >> /proc/1/fd/1"
+	@echo "[2] Generando línea REAL en auth.log (logger, sin sudo; Promtail solo lee auth/ufw/fail2ban, B10-6)"
+	@logger -p auth.info "loki_test_$$(date +%s)"
 	@echo ""
 
 	@sleep 7
 
 	@echo "[3] Query Loki..."
 	@RESULT=$$(curl -s -G http://127.0.0.1:3100/loki/api/v1/query \
-		--data-urlencode 'query={job="container_logs"} |= "loki_test_"' \
+		--data-urlencode 'query={job="auth_logs"} |= "loki_test_"' \
 		| jq '.data.result | length'); \
 	if [ "$$RESULT" -eq 0 ]; then \
 		echo "[FAIL] Loki no ingiere logs"; exit 1; \
@@ -1152,7 +1154,7 @@ build-cron:
 	docker build --no-cache -f ops/stacks/cron/Dockerfile -t monitoring-cron .
 	@echo ""
 
-deploy: monitoring-networks build deploy-infra deploy-services containers-map deploy-validate postgres-readonly-role audit-host-hardening
+deploy: monitoring-networks build deploy-infra deploy-services containers-map deploy-validate postgres-readonly-role audit-host-hardening clean-dangling
 	@echo "[OK] build completo"
 	@echo "=== [INFO] Despliegue completo ==="; \
 

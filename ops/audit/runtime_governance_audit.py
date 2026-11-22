@@ -56,7 +56,7 @@ ALLOWLIST = {
     },
     "promtail": {
         # promtail may mount host log dirs RO
-        "allowed_ro_mounts": ["/var/log", "/var/lib/docker/containers"],
+        "allowed_ro_mounts": ["/var/log"],
     },
     "monitoring-cron": {
         # Línea A lee /var/log; B5b lee contadores cgroup (ADR-0031 §2)
