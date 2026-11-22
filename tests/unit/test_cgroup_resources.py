@@ -129,3 +129,48 @@ def test_asunto_con_oom():
 def test_cuerpo_incluye_recursos():
     body = ar.build_html_body([], [], 10, None, "<h3>📊 Recursos de los contenedores</h3>")
     assert body.index("Prueba de vida") < body.index("📊 Recursos") < body.index("Un saludo")
+
+
+# ==========================================
+# Memoria real = memory.current - file (B10-5)
+# ==========================================
+
+def _scope_with_stat(tmp_path, current, peak, limit, file_bytes):
+    root = tmp_path / "cgroup"
+    root.mkdir()
+    d = _scope(root, CID_PG, current, peak, limit)
+    if file_bytes is not None:
+        (d / "memory.stat").write_text(f"anon {current - file_bytes}\nfile {file_bytes}\nkernel 1000\n")
+    mp = tmp_path / "containers.map"
+    mp.write_text(f"{CID_PG} monitoring-postgres\n")
+    return str(root), str(mp)
+
+
+def test_cache_alta_no_es_rojo(tmp_path):
+    # Caso Postgres en PRO: pico 84 % casi todo caché de disco -> real baja, sin rojo
+    root, mp = _scope_with_stat(tmp_path, 400 * MIB, 420 * MIB, 500 * MIB, 340 * MIB)
+    (row,), _ = cg.collect(root, mp, str(tmp_path / "sin_stat"))
+    assert round(row["peak_pct"]) == 84
+    assert round(row["mem_real"]) == 60 and round(row["real_pct"]) == 12
+    assert not row["alert"]
+    assert "<td>60.0</td>" in cg.build_html([row], None)
+
+
+def test_memoria_real_alta_es_rojo(tmp_path):
+    root, mp = _scope_with_stat(tmp_path, 450 * MIB, 460 * MIB, 500 * MIB, 20 * MIB)
+    (row,), _ = cg.collect(root, mp, str(tmp_path / "sin_stat"))
+    assert round(row["real_pct"]) == 86 and row["alert"]
+
+
+def test_sin_memory_stat_usa_el_pico(tmp_path):
+    root, mp = _scope_with_stat(tmp_path, 400 * MIB, 450 * MIB, 500 * MIB, None)
+    (row,), _ = cg.collect(root, mp, str(tmp_path / "sin_stat"))
+    assert row["mem_real"] is None and row["alert"]   # pico 90 % > 80 %
+    assert "<td>—</td>" in cg.build_html([row], None)
+
+
+def test_cache_mayor_que_current_no_da_negativo():
+    raw = {"mem_current": 10 * MIB, "mem_peak": 20 * MIB, "mem_max": 100 * MIB, "mem_file": 12 * MIB,
+           "oom_kill": 0, "throttled_usec": 0, "started": None}
+    row = cg.evaluate("x", raw, None)
+    assert row["mem_real"] == 0 and not row["alert"]

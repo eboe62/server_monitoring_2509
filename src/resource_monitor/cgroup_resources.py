@@ -9,10 +9,15 @@ Sin Docker: el cron monta en solo lectura /sys/fs/cgroup/system.slice -> /host/c
   memory.current   memoria en uso (bytes)
   memory.peak      máximo alcanzado desde que arrancó (bytes)
   memory.max       límite (bytes, o "max" si no hay)
+  memory.stat      línea "file N": caché de disco (bytes), que el kernel recupera cuando le hace falta
   memory.events    línea "oom_kill N": veces que el kernel ha matado un proceso por memoria
   cpu.stat         "nr_throttled" y "throttled_usec": cuánto le ha frenado su límite de CPU
 
 Los contadores empiezan en 0 cada vez que el contenedor arranca.
+Memoria real (B10-5) = memory.current - file: lo que el contenedor no puede soltar. El pico
+(memory.peak) incluye la caché y no hay "pico real" en el kernel: el rojo usa la memoria real al
+leer; si un pico real llega al límite, el kernel mata el proceso y queda como OOM (también en rojo).
+Sin memory.stat se vuelve al criterio anterior (pico > 80 %).
 "Reinicio sin deploy": arranque más de 5 min después del último deploy O del último arranque del
 servidor (btime de /proc/stat, que no está aislado por contenedor: es el del host). Así, apagar y
 encender el droplet para un snapshot no cuenta como reinicio (B9-2d).
@@ -27,7 +32,7 @@ CGROUP_ROOT = os.environ.get("CGROUP_ROOT", "/host/cgroup")
 CONTAINERS_MAP = os.environ.get("CONTAINERS_MAP", "/host/runtime/containers.map")
 PROC_STAT = os.environ.get("PROC_STAT", "/proc/stat")
 
-THRESHOLD_PEAK = 80.0   # % del límite de memoria alcanzado en el pico
+THRESHOLD_PEAK = 80.0   # % del límite: memoria real (o pico, si falta memory.stat)
 RESTART_MARGIN_S = 300  # arranque > 5 min después del mapa del deploy = reinicio no planificado
 
 _MIB = 1024 * 1024
@@ -94,6 +99,8 @@ def reference_time(map_time, boot_time):
 def read_scope(scope_dir):
     """Lee una carpeta docker-<id>.scope. Valores en bytes / microsegundos (None si falta)."""
     events = parse_kv(_read(os.path.join(scope_dir, "memory.events")))
+    stat_text = _read(os.path.join(scope_dir, "memory.stat"))
+    mem_file = parse_kv(stat_text).get("file") if stat_text is not None else None
     cpu = parse_kv(_read(os.path.join(scope_dir, "cpu.stat")))
     max_raw = _read(os.path.join(scope_dir, "memory.max"))
     try:
@@ -104,6 +111,7 @@ def read_scope(scope_dir):
         "mem_current": _to_int(_read(os.path.join(scope_dir, "memory.current"))),
         "mem_peak": _to_int(_read(os.path.join(scope_dir, "memory.peak"))),
         "mem_max": None if max_raw in (None, "max") else _to_int(max_raw),
+        "mem_file": mem_file,
         "oom_kill": events.get("oom_kill", 0),
         "nr_throttled": cpu.get("nr_throttled", 0),
         "throttled_usec": cpu.get("throttled_usec", 0),
@@ -139,6 +147,11 @@ def evaluate(name, raw, map_time):
 
     peak = raw["mem_peak"] if raw["mem_peak"] is not None else raw["mem_current"]
     peak_pct = (peak / raw["mem_max"] * 100) if (peak is not None and raw["mem_max"]) else None
+    mem_file = raw.get("mem_file")
+    real = max(raw["mem_current"] - mem_file, 0) if (raw["mem_current"] is not None and mem_file is not None) else None
+    real_pct = (real / raw["mem_max"] * 100) if (real is not None and raw["mem_max"]) else None
+    # Rojo por memoria: la real si se conoce; si no, el pico (criterio anterior a B10-5)
+    mem_pct = real_pct if real is not None else peak_pct
     started = raw["started"]
     restarted = bool(
         map_time and started and (started - map_time).total_seconds() > RESTART_MARGIN_S
@@ -146,6 +159,8 @@ def evaluate(name, raw, map_time):
     return {
         "name": name,
         "mem_current": mib(raw["mem_current"]),
+        "mem_real": mib(real),
+        "real_pct": real_pct,
         "mem_peak": mib(peak),
         "mem_max": mib(raw["mem_max"]),
         "peak_pct": peak_pct,
@@ -153,7 +168,7 @@ def evaluate(name, raw, map_time):
         "throttled_s": raw["throttled_usec"] / 1e6,
         "started": started,
         "restarted": restarted,
-        "alert": raw["oom_kill"] > 0 or restarted or (peak_pct is not None and peak_pct > THRESHOLD_PEAK),
+        "alert": raw["oom_kill"] > 0 or restarted or (mem_pct is not None and mem_pct > THRESHOLD_PEAK),
     }
 
 
@@ -181,10 +196,11 @@ def build_html(rows, map_time):
     parts = [
         "<h3 style='color:#2c3e50;'>📊 Recursos de los contenedores</h3>",
         "<p style='color:#555;'>Datos del kernel desde el último arranque de cada contenedor "
-        f"(último deploy o arranque del servidor: {deploy_txt}). En rojo: pico &gt; {THRESHOLD_PEAK:.0f} % del límite, "
+        f"(último deploy o arranque del servidor: {deploy_txt}). Real = memoria sin la caché de disco, que el "
+        f"kernel recupera solo; el pico la incluye. En rojo: real &gt; {THRESHOLD_PEAK:.0f} % del límite, "
         "OOM o reinicio sin deploy.</p>",
         "<table border='1' cellpadding='4' cellspacing='0' style='border-collapse: collapse;'>",
-        "<tr style='background-color:#f2f2f2;'><th>Contenedor</th><th>Mem MiB</th><th>Pico MiB</th>"
+        "<tr style='background-color:#f2f2f2;'><th>Contenedor</th><th>Mem MiB</th><th>Real MiB</th><th>Pico MiB</th>"
         "<th>Límite MiB</th><th>Pico %</th><th>OOM</th><th>CPU frenada (s)</th><th>Arrancó</th></tr>",
     ]
     for r in rows:
@@ -193,7 +209,7 @@ def build_html(rows, map_time):
         if r["restarted"]:
             started += " ⚠️"
         parts.append(
-            f"<tr{style}><td>{html.escape(r['name'])}</td><td>{_fmt(r['mem_current'])}</td><td>{_fmt(r['mem_peak'])}</td>"
+            f"<tr{style}><td>{html.escape(r['name'])}</td><td>{_fmt(r['mem_current'])}</td><td>{_fmt(r.get('mem_real'))}</td><td>{_fmt(r['mem_peak'])}</td>"
             f"<td>{_fmt(r['mem_max'])}</td><td>{_fmt(r['peak_pct'], '{:.0f} %')}</td>"
             f"<td>{r['oom_kill']}</td><td>{r['throttled_s']:.1f}</td><td>{started}</td></tr>"
         )
