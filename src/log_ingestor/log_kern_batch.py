@@ -8,12 +8,12 @@ from monitoring.common.config import log_files_with_rotated, log_info, connect_d
 
 LOG_FILE = "/var/log/kern.log"
 
-# Expresiones regulares para detectar eventos de red (posibles ataques)
+# Expresiones regulares para detectar eventos de red de Docker en kern.log.
+# B10-2: se retiran 10_trafic_blocked ("INPUT DROP", 0 líneas desde que existe UFW) y
+# 15_port_scan (expresión sin ninguna coincidencia real). Los bloqueos de UFW los cuenta
+# la Línea B desde ufw.log; sus filas antiguas en kern_logs se conservan.
+# regex_patterns y pattern_names se emparejan por posición: cambiarlos juntos.
 regex_patterns = [
-    # 10_trafic_blocked: Detección de tráfico bloqueado por el firewall (INPUT DROP en iptables o nftables).
-    # Indica intentos de conexión denegados, escaneos de puertos, tráfico malicioso o no permitido.
-    r'INPUT DROP: IN=(?P<iface>\S+) OUT=\S* MAC=(?P<mac>(?:[\da-f]{2}:){5}[\da-f]{2}(?::[\da-f]{2})*) SRC=(?P<src_ip>\d{1,3}(?:\.\d{1,3}){3}) DST=(?P<dst_ip>\d{1,3}(?:\.\d{1,3}){3})[^I]*ID=(?P<log_ref>\d+) PROTO=(?P<proto>\w+) SPT=(?P<src_port>\d+) DPT=(?P<dst_port>\d+)',
-
     # 11_interface_multicast_promiscuous: Una interfaz virtual (veth) entra en modo especial como "promiscuous mode" (captura de todos los paquetes) o "allmulticast mode".
     # Ocurre comúnmente al iniciar contenedores en redes Docker; puede estar asociado a sniffers, IDS o bridges.
     r"(?P<iface>veth\w+): entered (promiscuous|allmulticast) mode",
@@ -29,19 +29,13 @@ regex_patterns = [
     # 14_interface_unregister: Desregistro de interfaces veth cuando es eliminada p.e. al detener un contenedor.
     # La interfaz sale de modo promiscuo/multicast y se desvincula del bridge.
     r"(?P<iface>veth\w+) \(unregistering\): left (promiscuous|allmulticast) mode",
-
-    # 15_port_scan: Captura intentos de escaneo de puertos en tráfico de entrada.
-    # Muestra paquetes con puertos de destino múltiples (DPT), típico de reconocimiento activo en un ataque de escaneo de puertos
-    r"\[(?P<log_ref>\d+)\] SRC= (?P<reason>(DPT=\d+)) ?MAC=(?P<user>\S*?) ?SRC=(?P<ip>[0-9.]+) ?SPT=(?P<port>[0-9]+)",
 ]
 
 pattern_names = [
-    "10_trafic_blocked",
     "11_interface_multicast_promiscuous",
     "12_docker_interface_state_change",
     "13_interface_rename",
     "14_interface_unregister",
-    "15_port_scan"
 ]
 
 # Función para actualizar el número de ataques por IP
