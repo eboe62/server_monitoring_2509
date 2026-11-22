@@ -20,10 +20,11 @@ regex_patterns = [
     # Para casos como: "Accepted publickey for user X from Y port Z"
     r"\[(?P<log_ref>\d+)\]: (?P<reason>(Accepted publickey)) (?:for )?(?P<user>\S+) (?:with )?(?:from )?(?P<ip>[0-9.]+) port (?P<port>[0-9]+) ssh2: .+",
 ]
-# Nombres descriptivos para cada tipo de log
+# Nombres descriptivos para cada tipo de log. El número ordena por gravedad:
+# hasta 05 nadie ha entrado; desde 06, sí (B10-1).
 pattern_names = [
     "03_invalid_user",
-    "08_connection_out",
+    "05_connection_close",
     "02_no_negotiate",
     "04_attempts_exceeded",
     "06_login_accepted",

@@ -7,7 +7,7 @@
 --   - En attacking_logs, fail2ban_logs y kern_logs: attacking_no = número
 --     total de registros de su attacking_octets en esa misma tabla.
 --   - honeypot_logs recibe attacking_no y el log_type más grave
---     (06_login_accepted > 04 > 03 > 02 > 08) desde attacking_logs.
+--     (06_login_accepted > 04 > 03 > 02 > 05_connection_close) desde attacking_logs.
 -- alert_risk usa attacking_no para quedarse con un registro por origen.
 --
 -- Concurrencia (B4): varios jobs de ingesta terminan casi a la vez y llaman a
@@ -82,7 +82,7 @@ BEGIN
                     WHEN '04_attempts_exceeded' THEN 4
                     WHEN '03_invalid_user' THEN 3
                     WHEN '02_no_negotiate' THEN 2
-                    WHEN '08_connection_out' THEN 1
+                    WHEN '05_connection_close' THEN 1
                     ELSE 0
                 END DESC
             ) AS rn

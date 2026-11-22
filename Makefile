@@ -1227,6 +1227,21 @@ db-apply-functions:
 	@docker exec monitoring-postgres sh -c 'psql -tA -U "$$POSTGRES_USER" -d "$$POSTGRES_DB" -c "SELECT CASE WHEN prosrc LIKE '"'"'%pg_advisory_xact_lock%'"'"' THEN '"'"'[OK] update_attacking_no() con turno (advisory lock)'"'"' ELSE '"'"'[ERROR] update_attacking_no() sin turno'"'"' END FROM pg_proc WHERE proname = '"'"'update_attacking_no'"'"';"'
 
 # ------------------------------------------
+# BBDD: migración de nombres de log_type (B10-1): manual, después de make deploy
+# ------------------------------------------
+# Primero las funciones (ranking con el nombre nuevo) y luego los datos.
+# Se puede repetir: la segunda vez renombra 0 filas.
+
+MIGRATION_LOG_TYPES = ops/services/postgres/migrations/b10_1_connection_close.sql
+
+.PHONY: db-migrate-log-types
+
+db-migrate-log-types: db-apply-functions
+	@echo "[DB] aplicando $(MIGRATION_LOG_TYPES)"
+	docker exec -i monitoring-postgres sh -c 'psql -v ON_ERROR_STOP=1 -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"' < $(MIGRATION_LOG_TYPES)
+	@docker exec monitoring-postgres sh -c 'psql -tA -U "$$POSTGRES_USER" -d "$$POSTGRES_DB" -c "SELECT CASE WHEN (SELECT COUNT(*) FROM attacking_logs WHERE log_type = '"'"'08_connection_out'"'"') + (SELECT COUNT(*) FROM honeypot_logs WHERE log_type = '"'"'08_connection_out'"'"') = 0 THEN '"'"'[OK] sin filas 08_connection_out'"'"' ELSE '"'"'[ERROR] quedan filas 08_connection_out'"'"' END;"'
+
+# ------------------------------------------
 # Prueba de restauración del último backup (B8, ADR-0009): manual
 # ------------------------------------------
 # El host solo orquesta (docker exec); el script corre dentro de monitoring-cron, con el mismo

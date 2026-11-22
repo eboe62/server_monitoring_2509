@@ -70,10 +70,8 @@ RISK_QUERY = """
         SELECT
             alp.attacking_octets,
             CASE
-                WHEN BOOL_OR(
-                    alp.log_type = '06_login_accepted'
-                    OR alp.log_type = '05_connection_in'
-                )
+                -- Solo 06_login_accepted es una entrada conseguida (B10-1)
+                WHEN BOOL_OR(alp.log_type = '06_login_accepted')
                 THEN 10
                 ELSE LEAST(COUNT(DISTINCT alp.log_type), 108)
             END AS log_type_category
