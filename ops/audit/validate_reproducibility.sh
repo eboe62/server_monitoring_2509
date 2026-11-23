@@ -104,7 +104,11 @@ fi
 
 if command -v docker >/dev/null 2>&1; then
 
-  dangling=$(docker images -f "dangling=true" -q || true)
+  # Las imágenes fijadas por digest (imagen:versión@sha256:...) se guardan sin etiqueta y Docker
+  # las lista como dangling aunque estén en uso (grafana, loki, promtail, postgres). Solo cuentan
+  # las que no usa ningún contenedor: son las que borra make clean-dangling (B10-7).
+  in_use=$(docker ps -aq | xargs -r docker inspect --format '{{.Image}}' 2>/dev/null | cut -c8-19 || true)
+  dangling=$(docker images -f "dangling=true" -q | sort -u | grep -v -x -F -f <(printf '%s\n' "$in_use") || true)
 
   if [ -n "$dangling" ]; then
 
