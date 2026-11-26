@@ -3,9 +3,11 @@ apiVersion: 1
 # Alertas de la Línea B (B9-2). Todo provisionado: no se configura a mano en la interfaz.
 #   - Resumen semanal: jueves 21:00 UTC (viernes hasta B10-8), un correo con 7 días de SSH, UFW y fail2ban.
 #     Lleva al final el recordatorio de make backup-fetch (punto 9, opción a; B10-7).
-#   - Ráfaga de SSH: >50 fallos en 10 min; como mucho un correo al día (opción c).
+#   - Ráfaga de SSH: >50 fallos en 10 min. Opción (b) desde B10-9: solo en el panel ("Ráfagas SSH")
+#     y en Alertas de Grafana, sin correo (antes (c): un correo al día; llegaba a diario, 79-94).
 #   - Regla en error (B10-3): si la regla de ráfaga no se puede evaluar durante 15 min, Grafana
-#     dispara "DatasourceError" con tipo=rafaga: mismo camino, como mucho un correo al día.
+#     dispara "DatasourceError" con tipo=rafaga. Ese sí manda correo (ruta propia, ≤1 al día):
+#     la regla sigue viva para vigilar que Loki y Grafana funcionan.
 #     Las 3 del resumen siguen en OK: un fallo suyo se ve el jueves en el propio resumen.
 # Cuota de correo (Postmark gratuito): sin mensajes de "resuelto" y repeticiones largas.
 # Destinatario: ALERT_EMAIL_TO del .env de observability (no se guarda en el repo).
@@ -29,7 +31,7 @@ templates:
   - orgId: 1
     name: seguridad
     template: |
-      {{ define "seguridad.asunto" }}{{ if eq .CommonLabels.tipo "resumen" }}📊 Resumen semanal de seguridad{{ else if eq .CommonLabels.alertname "DatasourceError" }}⚠️ Regla de Grafana en error{{ else }}⚠️ Ráfaga de intentos SSH{{ end }}{{ end }}
+      {{ define "seguridad.asunto" }}{{ if eq .CommonLabels.tipo "resumen" }}📊 Resumen semanal de seguridad{{ else }}⚠️ Regla de Grafana en error{{ end }}{{ end }}
 
       {{ define "seguridad.fila" }}{{ index .Annotations "fila" }}{{ end }}
 
@@ -50,9 +52,9 @@ templates:
       En tu equipo (WSL), no en el servidor:
         cd /mnt/d/WorkSpace/Proyectos/VPS_DigitalOcean_2410/server_monitoring_2509
         make backup-fetch
-      {{ else }}{{ range .Alerts.Firing }}{{ if eq .Labels.alertname "DatasourceError" }}La regla "{{ .Labels.rulename }}" no se puede evaluar desde hace 15 min (fuente: {{ .Labels.datasource_uid }}). Revisar Loki y Grafana (docker logs loki / grafana).{{ else }}{{ index .Annotations "fila" }}{{ end }}
+      {{ else }}{{ range .Alerts.Firing }}La regla "{{ .Labels.rulename }}" no se puede evaluar desde hace 15 min (fuente: {{ .Labels.datasource_uid }}). Revisar Loki y Grafana (docker logs loki / grafana).
       {{ end }}
-      Solo se envía un aviso al día. Detalle en Grafana: panel "Seguridad del host".
+      Solo se envía un aviso al día. Las ráfagas no mandan correo (B10-9): panel "Seguridad del host".
       {{ end }}{{ end }}
 
 # Franja del resumen: se silencia todo salvo el jueves de 21:00 a 21:05 UTC (B10-8; antes el viernes).
@@ -65,6 +67,12 @@ deleteMuteTimes:
     name: fuera-de-viernes-21utc
 
 muteTimes:
+  # Toda la semana (el domingo es el día 0: 'monday:sunday' no es un rango válido)
+  - orgId: 1
+    name: siempre
+    time_intervals:
+      - weekdays: ['sunday:saturday']
+        location: UTC
   - orgId: 1
     name: fuera-de-franja-resumen
     time_intervals:
@@ -97,6 +105,15 @@ policies:
         repeat_interval: 24h
         mute_time_intervals:
           - fuera-de-franja-resumen
+      # Error de la regla de ráfaga: correo (va antes que la ruta de la ráfaga, que lo capturaría)
+      - receiver: correo-seguridad
+        object_matchers:
+          - ['alertname', '=', 'DatasourceError']
+        group_by: ['alertname']
+        group_wait: 30s
+        group_interval: 5m
+        repeat_interval: 24h
+      # Ráfaga (opción b, B10-9): silenciada siempre; se ve en el panel y en Alertas de Grafana
       - receiver: correo-seguridad
         object_matchers:
           - ['tipo', '=', 'rafaga']
@@ -104,6 +121,8 @@ policies:
         group_wait: 30s
         group_interval: 5m
         repeat_interval: 24h
+        mute_time_intervals:
+          - siempre
 
 groups:
   - orgId: 1

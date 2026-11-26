@@ -7,7 +7,7 @@
   ],
   "timezone": "utc",
   "schemaVersion": 39,
-  "version": 3,
+  "version": 4,
   "editable": false,
   "time": {
     "from": "now-24h",
@@ -268,6 +268,64 @@
       }
     },
     {
+      "type": "timeseries",
+      "title": "Ráfagas SSH: fallos o usuario inválido por 10 min (umbral 50)",
+      "description": "Opción (b) del aviso de ráfaga (B10-9): solo en el panel, sin correo. Línea roja = umbral 50 de la regla rafaga-ssh.",
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "expr": "sum(count_over_time({job=\"auth_logs\", reason=~\"SSH (autenticación fallida|usuario inválido)\"}[10m]))",
+          "queryType": "range",
+          "step": "10m",
+          "legendFormat": "intentos en 10 min"
+        }
+      ],
+      "interval": "10m",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 80,
+            "thresholdsStyle": {
+              "mode": "line"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 50
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        },
+        "overrides": []
+      },
+      "id": 7,
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 22,
+        "w": 24,
+        "h": 8
+      }
+    },
+    {
       "type": "logs",
       "title": "Accesos de administración (SSH aceptado y sudo)",
       "targets": [
@@ -294,7 +352,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 22,
+        "y": 30,
         "w": 24,
         "h": 8
       }
