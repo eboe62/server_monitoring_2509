@@ -1,12 +1,12 @@
 apiVersion: 1
 
 # Alertas de la Línea B (B9-2). Todo provisionado: no se configura a mano en la interfaz.
-#   - Resumen semanal: viernes 21:00 UTC, un correo con 7 días de SSH, UFW y fail2ban.
+#   - Resumen semanal: jueves 21:00 UTC (viernes hasta B10-8), un correo con 7 días de SSH, UFW y fail2ban.
 #     Lleva al final el recordatorio de make backup-fetch (punto 9, opción a; B10-7).
 #   - Ráfaga de SSH: >50 fallos en 10 min; como mucho un correo al día (opción c).
 #   - Regla en error (B10-3): si la regla de ráfaga no se puede evaluar durante 15 min, Grafana
 #     dispara "DatasourceError" con tipo=rafaga: mismo camino, como mucho un correo al día.
-#     Las 3 del resumen siguen en OK: un fallo suyo se ve el viernes en el propio resumen.
+#     Las 3 del resumen siguen en OK: un fallo suyo se ve el jueves en el propio resumen.
 # Cuota de correo (Postmark gratuito): sin mensajes de "resuelto" y repeticiones largas.
 # Destinatario: ALERT_EMAIL_TO del .env de observability (no se guarda en el repo).
 # for: 5m o más en todas las reglas: en el primer arranque, Grafana tarda hasta un minuto en aplicar
@@ -55,17 +55,22 @@ templates:
       Solo se envía un aviso al día. Detalle en Grafana: panel "Seguridad del host".
       {{ end }}{{ end }}
 
-# Franja del resumen: se silencia todo salvo el viernes de 21:00 a 21:05 UTC.
+# Franja del resumen: se silencia todo salvo el jueves de 21:00 a 21:05 UTC (B10-8; antes el viernes).
 # (Grafana 10.4 no tiene "active time intervals"; se expresa como su complemento.)
 # 5 min = group_interval del resumen: dentro de la franja cae exactamente una revisión del grupo,
 # así que sale un solo correo aunque cambie el top 5 mientras tanto.
-muteTimes:
+# La franja anterior (viernes) se borra al provisionar: si no, queda en la BBDD de Grafana sin uso.
+deleteMuteTimes:
   - orgId: 1
     name: fuera-de-viernes-21utc
+
+muteTimes:
+  - orgId: 1
+    name: fuera-de-franja-resumen
     time_intervals:
-      - weekdays: ['monday:thursday', 'saturday', 'sunday']
+      - weekdays: ['monday:wednesday', 'friday', 'saturday', 'sunday']
         location: UTC
-      - weekdays: ['friday']
+      - weekdays: ['thursday']
         times:
           - start_time: '00:00'
             end_time: '21:00'
@@ -87,10 +92,11 @@ policies:
         group_by: ['tipo']
         group_wait: 1m
         group_interval: 5m
-        # 167 h, no 168: la repetición cae siempre antes de la franja y sale al abrirse
-        repeat_interval: 167h
+        # 24 h (B10-8; antes 167 h): la franja solo abre 5 min a la semana, así que sale un correo
+        # por semana igual, y cambiar el día del resumen no deja una semana sin él.
+        repeat_interval: 24h
         mute_time_intervals:
-          - fuera-de-viernes-21utc
+          - fuera-de-franja-resumen
       - receiver: correo-seguridad
         object_matchers:
           - ['tipo', '=', 'rafaga']

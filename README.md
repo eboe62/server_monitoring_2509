@@ -247,9 +247,9 @@ Stack **Promtail + Loki + Grafana** para centralizar logs.
 - `grafana`: en `observability-net` y en `restricted-net` (solo para llegar a smtp-relay: `GF_SMTP_HOST=monitoring-smtp-relay:587`).
 - `config/grafana/` (B9-2): todo provisionado desde el repo; lo que se cambie en la interfaz no se guarda.
   - Panel **"Seguridad del host"** (carpeta Seguridad): totales por tipo, SSH por tipo, bloqueos UFW y baneos, top 5 IPs SSH, top 5 puertos UFW y accesos de administración.
-  - **Resumen semanal**: viernes a las 21:00 UTC, un correo con 7 días por tipo, top 5 IPs y top 5 puertos. Se silencia fuera de la franja 21:00–21:05 (una sola revisión del grupo cae dentro: un correo).
+  - **Resumen semanal**: jueves a las 21:00 UTC (B10-8; antes el viernes), un correo con 7 días por tipo, top 5 IPs y top 5 puertos. Se silencia fuera de la franja 21:00–21:05 (una sola revisión del grupo cae dentro: un correo).
   - **Ráfaga SSH**: más de 50 fallos o usuarios inválidos en 10 min (umbral sobre datos de PRO: mediana 5, p95 15, máximo 103); como mucho un correo al día y sin correos de "resuelto".
-  - **Regla en error** (B10-3): si la regla de ráfaga no se puede evaluar durante 15 min (Loki caído o consultas cortadas), llega "⚠️ Regla de Grafana en error" por el mismo camino (como mucho uno al día). Las 3 reglas del resumen no avisan: un fallo suyo se ve en el propio correo del viernes.
+  - **Regla en error** (B10-3): si la regla de ráfaga no se puede evaluar durante 15 min (Loki caído o consultas cortadas), llega "⚠️ Regla de Grafana en error" por el mismo camino (como mucho uno al día). Las 3 reglas del resumen no avisan: un fallo suyo se ve en el propio correo del jueves.
   - Rendimiento (B9-2b): Loki tarda ~25 s en 7 días, así que el datasource espera hasta 120 s y las alertas hasta 2 min (`GF_UNIFIED_ALERTING_EVALUATION_TIMEOUT`); el resumen se evalúa cada hora y la ráfaga cada 5 min; el panel abre con 24 h (7 días se elige arriba). Loki parte las consultas en trozos de 24 h y admite 2048 en cola (B9-2c).
   - Destinatario: `ALERT_EMAIL_TO` del `.env` de observability. `for: 5m` en las reglas evita que, en el primer arranque, una alerta salga por el contacto de ejemplo de Grafana.
   - Acceso, por túnel SSH (Grafana solo escucha en `127.0.0.1:3001`): `ssh -L 3001:127.0.0.1:3001 vps-server` y abrir `http://localhost:3001`.
@@ -369,7 +369,7 @@ make restore-backup                        # último backup -> monitoring_db_res
 make restore-backup FILE=<nombre.backup>   # un backup concreto de /backups
 make restore-backup-clean                  # borra monitoring_db_restored
 
-💡 Los backups los hace monitoring-cron (pg_dump, semanal: viernes 21:05 UTC) en el volumen monitoring-backups (/backups),
+💡 Los backups los hace monitoring-cron (pg_dump, semanal: jueves 21:05 UTC) en el volumen monitoring-backups (/backups),
 con retención de 28 días. La restauración corre dentro de monitoring-cron con el mismo cliente
 (ops/services/postgres/scripts/restore_backup.sh) y nunca modifica la base de datos de producción:
 quedan las dos (original y _restored) para compararlas o copiar datos de una a otra. Sin correo.
@@ -378,7 +378,7 @@ quedan las dos (original y _restored) para compararlas o copiar datos de una a o
 make backup-fetch                # descarga, verifica sha256 y conserva los 2 últimos en /mnt/d/DataBase/BackUps
 # Variables: PRO_SSH=vps-server (alias de ~/.ssh/config de Windows), LOCAL_BACKUP_DIR, KEEP=2
 # La rotación solo mira monitoring_db-*.backup de esa carpeta: lo que esté en subcarpetas no se toca.
-# Cuándo: después del backup semanal (viernes 21:05 UTC); lo recuerda el resumen semanal de Grafana (B10-7).
+# Cuándo: después del backup semanal (jueves 21:05 UTC); lo recuerda el resumen semanal de Grafana (B10-7).
 
 ▶️ Sustituir producción por la copia restaurada (manual, a propósito, paso a paso)
 # 0. Antes: make restore-backup terminado en [OK] y un snapshot reciente del droplet
@@ -469,7 +469,7 @@ Incluye:
 
 - No usar `:latest` en imágenes: versión fija y digest (grafana, loki, promtail, postgres).
 - Snapshot del droplet antes de cada `make deploy`.
-- Revisar el correo diario de `alert_risk.py` (21:10 UTC) y el resumen semanal de Grafana (viernes 21:00 UTC).
+- Revisar el correo diario de `alert_risk.py` (21:10 UTC) y el resumen semanal de Grafana (jueves 21:00 UTC).
 
 ---
 
