@@ -46,7 +46,7 @@ limits_config:
   allow_structured_metadata: false
   reject_old_samples: true
   reject_old_samples_max_age: 72h   # al arrancar, Promtail no reenvía líneas de más de 3 días
-  retention_period: 192h            # 8 días: el resumen del viernes ve la semana completa (B9)
+  retention_period: 192h            # 8 días: el resumen semanal ve la semana completa (B9)
   # Trozos de 24 h al consultar (por defecto 30 min): 7 días eran 336 trozos por panel, la cola se
   # llenaba ("too many outstanding requests") y con 0,5 CPU tardaba ~25 s (B9-2c)
   split_queries_by_interval: 24h
